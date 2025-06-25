@@ -1,0 +1,71 @@
+.div-bordered{
+    padding: 5px;
+    background-color: #ddd;
+    margin-bottom: 8px;
+}
+
+.no-background{
+    background-color: inherit;
+}
+
+div[name=data-kandang] {
+    margin-bottom: 10px;
+}
+
+.checkbox{
+    padding-left: 27px;
+    margin-top: inherit;
+    margin-bottom: inherit;
+}
+
+input:not(.not-uppercase), textarea {
+    text-transform: uppercase;
+}
+
+h3 .title-panel{
+    margin-top: 0px;
+}
+
+caption {
+    background-color: #ddd;
+    color: #000;
+    font-weight: bolder;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+hr{
+    margin-top: 3px;
+    margin-bottom: 5px;
+}
+
+.form-horizontal .control-label {
+    text-align: right;
+}
+
+table.telepon > thead > tr > th {
+  background-color: #ffffff;
+}
+
+/*div.panel-heading {
+    margin-bottom: 10px;
+}*/
+
+/*fieldset.scheduler-border {
+    border: 1p groove #ddd !important;
+    padding: 0 1.4em 1.4em 1.4em !important;
+    margin: 0 0 1.5em 0 !important;
+    -webkit-box-shadow: 0px 0px 0px 0px #000;
+}*/
+
+span.file {
+  padding-right: 10px;
+}
+
+div.main {
+    font-size: 12px;
+}
+
+.select2-container--default .select2-results__option[aria-disabled=true] {
+    display: none;
+}

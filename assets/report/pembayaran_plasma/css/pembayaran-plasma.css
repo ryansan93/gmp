@@ -1,0 +1,7 @@
+.kurang_bayar td {
+	background-color: #ff9494;
+}
+
+tr.total td {
+	font-weight: bold;
+}

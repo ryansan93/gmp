@@ -1,0 +1,17 @@
+table.telepon > thead > tr > th {
+  background-color: #ffffff;
+}
+
+.modal-footer .btn + .btn {
+    margin-bottom: 0;
+    margin-right: 5px;
+}
+
+div.main {
+    font-size: 12px;
+}
+
+a:not([href]):not([tabindex]) {
+    color: hsl;
+    text-decoration: -moz-none;
+}

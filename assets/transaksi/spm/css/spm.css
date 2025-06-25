@@ -1,0 +1,56 @@
+div.main {
+    font-size: 12px;
+}
+
+div.row {
+	padding-top: 7px;
+	padding-bottom: 7px;
+}
+
+table > div.bootstrap-datetimepicker-widget > table {
+	border: none;
+}
+
+div.bootstrap-datetimepicker-widget .table-condensed thead th {
+    background-color: transparent;
+    border: 0;
+}
+
+div.bootstrap-datetimepicker-widget .table-condensed thead td {
+ 	background-color: transparent;
+    border: 0;   
+}
+
+div.bootstrap-datetimepicker-widget .table-condensed tbody th {
+    border: 0;
+}
+
+div.bootstrap-datetimepicker-widget .table-condensed tbody td {
+    border: 0;   
+}
+
+tr > td.kandang, tr > td.populasi, tr > td.umur, tr > td.setting_kg, tr > td.setting_zak {
+	width: 5%;
+}
+
+tr > td.rcn_kg, tr > td.rcn_zak {
+	width: 7%;
+}
+
+tr > td.setting_tgl {
+	width: 7%;
+}
+
+tr > td.rcn_tgl {
+	width: 12%;
+}
+
+.veryWidth > .modal-dialog {
+	width: 80%;
+	max-width: 100%;
+}
+
+.cetak_spm .modal-header {
+	padding-top: 0px;
+	text-transform: uppercase;
+}

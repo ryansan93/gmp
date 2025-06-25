@@ -1,0 +1,28 @@
+span.btn_add_row_2x:after, td span.btn_add_row_2x:after {
+  right: 4px;
+  margin-top: -14px;
+}
+span.btn_del_row_2x:after, td span.btn_del_row_2x:after {
+  right: 4px;
+  margin-top: -38px;
+}
+
+table.custom_table td, table.custom_table th {
+  background-color: inherit;
+}
+
+.table tr.parent{
+  background-color: #eee;
+}
+
+tr.inactive {
+  display: none !important;
+}
+
+thead > tr > th {
+	text-align: center;
+}
+
+div.main {
+    font-size: 12px;
+}

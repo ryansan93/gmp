@@ -1,0 +1,74 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="col-xs-12 no-padding">
+            <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+                <select class="pelanggan" name="pelanggan[]" multiple="multiple" width="100%" data-required="1">
+                    <option value="all">All</option>
+                    <?php if ( !empty($pelanggan) ): ?>
+                        <?php foreach ($pelanggan as $k_plg => $v_plg): ?>
+                            <option value="<?php echo $v_plg['nomor'] ?>"><?php echo strtoupper($v_plg['nama']).' ('.strtoupper(str_replace('Kab ', '', $v_plg['nama_unit'])).')'; ?></option>
+                        <?php endforeach ?>
+                    <?php endif ?>
+                </select>
+            </div>
+            <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+                <select class="perusahaan" name="perusahaan[]" multiple="multiple" width="100%" data-required="1">
+                    <?php foreach ($perusahaan as $key => $v_perusahaan): ?>
+                        <option value="<?php echo $v_perusahaan['kode']; ?>" > <?php echo strtoupper($v_perusahaan['nama']); ?> </option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+            <div class="col-xs-12 no-padding">
+                <div class="col-xs-12 no-padding">
+                    <label class="control-label">TANGGAL</label>
+                </div>
+                <div class="col-xs-12 no-padding" style="padding-right: 10px;">
+                    <div class="input-group date datetimepicker" name="tanggal" id="Tanggal">
+                        <input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" />
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+                <div class="col-xs-12 no-padding">
+                    <button id="btn-tampil" type="button" data-href="action" class="btn btn-primary cursor-p pull-left col-xs-12" title="TAMPIL" onclick="ss.getLists(this)"><i class="fa fa-search"></i> Tampilkan</button>
+                </div>
+            </div>
+            <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+			<div class="col-xs-12 no-padding">
+                <small>
+                    <table class="table table-bordered" style="margin-bottom: 0px;">
+                        <thead>
+                            <tr>
+                                <td colspan="3"><b>TOTAL</b></td>
+                                <td class="text-right hit_total" data-target="saldo_awal"><b>0</b></td>
+                                <td class="text-right hit_total" data-target="jml_transfer"><b>0</b></td>
+                                <td class="text-right hit_total" data-target="pajak"><b>0</b></td>
+                                <td class="text-right hit_total" data-target="lebih_bayar_non_saldo"><b>0</b></td>
+                                <td class="text-right hit_total" data-target="total_bayar"><b>0</b></td>
+                                <td class="text-right hit_total" data-target="saldo_akhir"><b>0</b></td>
+                            </tr>
+                            <tr>
+                                <th class="col-xs-2">Perusahaan</th>
+                                <th class="col-xs-3">Bakul</th>
+                                <th class="col-xs-1">Tgl Saldo</th>
+                                <th class="col-xs-1">Saldo Awal</th>
+                                <th class="col-xs-1">Jml Transfer</th>
+                                <th class="col-xs-1">Pajak</th>
+                                <th class="col-xs-1">Lebih Bayar Non Saldo</th>
+                                <th class="col-xs-1">Jumlah Tagihan</th>
+                                <th class="col-xs-1">Saldo Akhir</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="10">Data tidak ditemukan.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </small>
+			</div>
+        </div>
+    </div>
+</div>

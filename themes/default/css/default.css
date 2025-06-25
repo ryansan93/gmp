@@ -1,0 +1,154 @@
+#captcha {
+    width: 100px !important;
+    display: inline-block !important;
+}
+
+table.custom_table thead tr th:not(.search) {
+    text-align: center;
+    vertical-align : middle;
+    line-height : 14px;
+}
+table.custom_table thead th>div{
+    margin : 0 auto;
+}
+table.custom_table td,table.custom_table th{
+    background-color: #FFFFFF;
+}
+table.custom_table tbody td{
+    vertical-align : middle;
+    line-height : 14px;
+}
+table.custom_table tbody tr .ftl .highlight td{
+	background-color:#FF9EF4;
+}
+.new-line{
+  	padding-top: 1%;
+}
+
+.largeWidth>div.modal-dialog {
+    margin: 0 auto;
+    width: 80%;
+}
+.veryWidth>div.modal-dialog {
+    margin: 0 auto;
+    width: 95%;
+}
+.ui-datepicker{
+	z-index : 99995 !important
+}
+/* PINGENDO COMMENT DO NOT REMOVE */
+.left-inner-addon {
+  position: relative;
+}
+.left-inner-addon input {
+  padding-left: 30px;
+}
+.left-inner-addon i {
+  position: absolute;
+  padding: 10px 12px;
+  pointer-events: none;
+}
+.right-inner-addon {
+  position: relative;
+}
+.right-inner-addon input {
+  padding-right: 30px;
+}
+.right-inner-addon i {
+  position: absolute;
+  right: 0px;
+  padding: 10px 12px;
+  pointer-events: none;
+}
+
+/* fixed-header */
+table.fixed-header {
+  width : 100%
+}
+table.fixed-header>thead {
+  display : block;
+  padding-right:16px;
+}
+
+table.fixed-header>tbody {
+  display : block;
+  overflow-y : auto;
+  overflow-x : hidden;
+  max-height : 370px;
+}
+
+/* caption */
+caption.biru{
+  background-color: blue;
+  padding : 2px 10px;
+  color : #FFF;
+  font-weight: bolder;
+}
+
+table > caption.abu {
+    background-color: #ddd;
+    color: #000;
+    font-weight: bolder;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    line-height : 2.1em;
+}
+
+.biru {
+  color : blue;
+}
+.merah {
+  color : red;
+}
+
+.link_span{
+	color : blue;
+	text-decoration : underline;
+	cursor : pointer;
+}
+
+/* css untuk input type file */
+   .btn-file {
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-file input[type=file] {
+        position: absolute;
+        top: 0;
+        right: 0;
+        min-width: 100%;
+        min-height: 100%;
+        font-size: 100px;
+        text-align: right;
+        filter: alpha(opacity=0);
+        opacity: 0;
+        outline: none;
+        background: white;
+        cursor: inherit;
+        display: block;
+    }
+
+[data-tipe=integer],[data-tipe=decimal],[data-tipe=angka]{
+  text-align : right;
+}
+.selected{
+  background-color: #5eb7f7
+}
+/* override form-group */
+.form-group{
+  margin-bottom: 5px;
+}
+
+.ui-datepicker-year{
+  background-color: #F7B64C;
+}
+
+.table-bordered > tbody > tr > td.batas_kanan, .table-bordered > tbody > tr > th.batas_kanan, .table-bordered > tfoot > tr > td.batas_kanan, .table-bordered > tfoot > tr > th.batas_kanan, .table-bordered > thead > tr > td.batas_kanan, .table-bordered > thead > tr > th.batas_kanan {
+  border-right : 3px solid #333;
+}

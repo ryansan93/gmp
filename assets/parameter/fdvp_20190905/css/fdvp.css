@@ -1,0 +1,17 @@
+span.btn_add_row_2x:after, td span.btn_add_row_2x:after {
+  right: 3px;
+  margin-top: -38px;
+}
+
+span.btn_del_row_2x:after, td span.btn_del_row_2x:after {
+  right: 3px;
+  margin-top: -17px;
+}
+
+span.select2.select2-container.select2-container--default {
+  width: 100%;
+}
+
+div.main {
+    font-size: 12px;
+}

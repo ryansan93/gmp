@@ -1,0 +1,62 @@
+.bootstrap-select>.dropdown-toggle.bs-placeholder { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder:hover { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle:hover { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.has-error {
+    border: 1px solid #a94442;
+}
+
+tr.head td {
+	background-color: #eae8ff;
+}
+.table.table-nobordered tr:not(.bottom) td {
+	border-top: none;
+}
+.table.table-nobordered tr.bottom td {
+	border-top: none;
+	border-bottom: 1px solid black;
+}
+.table.table-nobordered tr.top td {
+	border-top: 1px solid black;
+	border-bottom: none;
+}
+.table.table-nobordered tr td.kanan {
+	border-right: 1px solid black;
+}
+.table.table-nobordered tr td.kiri {
+	border-left: 1px solid black;
+}
+
+a.lihat:not([href]):not([tabindex]) {
+	color: #337ab7;
+}
+a.lihat:not([href]):not([tabindex]):hover {
+	color: #337ab7;
+	text-decoration: underline;
+}
+
+.table.table-nobordered tr.bonus:first-child td {
+	border-top: 1px solid black;
+	border-bottom: none;
+}
+
+.table.table-nobordered tr.top_bottom td {
+	border-top: 1px solid black;
+	border-bottom: 1px solid black;
+}

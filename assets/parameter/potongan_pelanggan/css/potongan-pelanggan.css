@@ -1,0 +1,60 @@
+table.tbl_list_do > tbody > tr.data > td {
+	vertical-align: middle;
+}
+
+table.tbl_list_pembayaran > tbody > tr.data > td {
+	vertical-align: middle;
+}
+
+.bootstrap-select>.dropdown-menu {
+	min-height: 100px !important;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder.disabled { 
+	color: #555;
+	background-color: #ccc;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder:hover:not(.disabled) { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.disabled { 
+	color: #555; 
+	background-color: #ccc;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle:hover:not(.disabled) { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select.has-error {
+    border: 1px solid #a94442;
+}
+
+.table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
+    padding: 3px;
+}
+.btn-add-row, .btn-remove-row {
+	padding: 0px 3px 0px 3px;
+	font-size: 10px;
+}
+
+span.select2 {
+	width: 100%;
+}
+
+.has-error .select2-selection {
+	border-color: rgb(185, 74, 72) !important;
+}

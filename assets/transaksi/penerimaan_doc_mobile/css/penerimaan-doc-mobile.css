@@ -1,0 +1,120 @@
+.bootstrap-select>.dropdown-menu {
+	min-height: 100px !important;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder.disabled { 
+	color: #555;
+	background-color: #ccc;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder:hover:not(.disabled) { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.disabled { 
+	color: #555; 
+	background-color: #ccc;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle:hover:not(.disabled) { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select.has-error {
+    border: 1px solid #a94442;
+}
+
+#myNekropsi .modal-dialog {
+	max-width: 100%;
+	width: 95%;
+}
+
+#mySolusi .modal-dialog {
+	max-width: 100%;
+	width: 95%;
+}
+
+.myPakan .modal-dialog {
+	max-width: 100%;
+	width: 95%;
+}
+
+.modal-backdrop {
+	max-width: 100%;
+	width: 100%;
+	max-height: 100%;
+	height: 100%;
+}
+
+div.has-error .select2-selection {
+	border:1px solid rgb(185, 74, 72) !important;
+}
+
+.select2-container {
+	width: 100%;
+}
+
+i.has-error {
+	border:1px solid rgb(185, 74, 72) !important;
+	color:rgb(185, 74, 72) !important;
+}
+
+div.attachment, div.preview_file_attachment {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis; 
+	margin-top: 5px;
+}
+
+div.attachment label i, div.preview_file_attachment label i {
+	border: 1px solid #ccc;
+	padding: 3px;
+	border-radius: 3px;
+}
+
+div.attachment label.has-error i {
+	border: 1px solid #a94442;
+	padding: 3px;
+	border-radius: 3px;
+	color: #a94442;
+}
+
+div.attachment label i:hover, div.preview_file_attachment label i:hover {
+	border: 1px solid #8d8d8d;
+	background-color: #ccc;
+}
+
+table.tbl_pakan tbody tr td {
+	vertical-align: middle;
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+table.tbl_sekat tbody tr td {
+	vertical-align: middle;
+}
+
+table.tbl_sekat tbody tr td.no_urut {
+	text-align: center;
+}
+
+table.tbl_pakan tbody tr td table.tbl_list_pakan tbody tr td {
+	vertical-align: middle;
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+#page-content-wrapper {
+	min-width: 100%;
+}

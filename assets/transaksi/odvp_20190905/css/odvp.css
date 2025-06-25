@@ -1,0 +1,39 @@
+span.btn_add_row_2x:after, td span.btn_add_row_2x:after {
+  right: 4px;
+  margin-top: -13px;
+}
+span.btn_del_row_2x:after, td span.btn_del_row_2x:after {
+  right: 4px;
+  margin-top: -38px;
+}
+
+.veryWidth > .modal-dialog {
+	width: 50%;
+	max-width: 100%;
+}
+
+.veryWidth > .voadip {
+	width: 95%;
+	max-width: 100%;
+}
+
+div.voadip span.modal-title {
+	text-align: left;
+	text-transform: uppercase;
+	border-bottom: 0px solid #e2e2e2;
+	/*color: #ffffff;*/
+}
+
+.header {
+	padding-top: 0px;
+}
+
+.body {
+	padding-bottom: 0px;
+}
+
+div.main {
+    font-size: 12px;
+}
+
+.select2-selection.has-error {border:1px solid rgb(185, 74, 72) !important;}

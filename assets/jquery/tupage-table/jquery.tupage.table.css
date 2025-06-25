@@ -1,0 +1,34 @@
+.tu-float-btn{
+	position:fixed;
+	width:35px;
+	height:35px;
+	background-color:#0C9;
+	color:#FFF;
+	border-radius:50px;
+	text-align:center;
+	box-shadow: 1px 1px 2px #999;
+	cursor: pointer;
+	margin-top: 2%;
+	z-index: 100;
+}
+
+.tu-float-btn-right{
+	right: 40px;
+}
+
+.tu-float-btn-left{
+	left: 40px;
+}
+
+.tu-float-btn-bottom{
+	bottom: 40px;
+}
+
+.tu-float-btn-top{
+	top: 40px;
+}
+
+
+.tu-float-btn > i {
+	margin-top: 30%;
+}

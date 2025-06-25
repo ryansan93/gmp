@@ -1,0 +1,32 @@
+#pagination-ry span {
+	/*float: right;*/
+}
+
+#pagination-ry span {
+	border: 1px solid #bbb; 
+	padding: 4px 9px 4px 9px;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+#pagination-ry span:hover {
+	background-color: #aca8ff;
+}
+
+#pagination-ry span.angle-double-left {
+	border-top-left-radius: 3px;
+	border-bottom-left-radius: 3px;
+}
+
+#pagination-ry span.angle-double-right {
+	border-top-right-radius: 3px;
+	border-bottom-right-radius: 3px;
+}
+
+#pagination-ry span:not(.angle-double-left) {
+	margin-left: -1px;
+}
+
+#pagination-ry span[data-aktif='1'] {
+	background-color: #504aff;
+}

@@ -1,0 +1,43 @@
+.table {
+	margin-bottom: 0px;
+}
+
+label {
+	margin-bottom: 0px;
+}
+
+h4.modal-title {
+	text-align: left;
+	text-transform: uppercase;
+	border-bottom: 0px solid #e2e2e2;
+	/*color: #ffffff;*/
+}
+
+/*.modal{
+    overflow-y: auto;
+}*/
+
+tr.line-bottom {
+	border-bottom: 1px solid;
+}
+
+.bottom-align-text {
+	position:absolute; 
+	right:0px; 
+	bottom:0; 
+	margin-bottom:30px; 
+	margin-right:15px;
+}
+
+div#modalHrgKesepakatan .modal-dialog {
+    max-width: 50%;
+    /*margin: 1.75rem auto;*/
+}
+
+div.main {
+    font-size: 12px;
+}
+
+.form-horizontal .checkbox {
+	padding-top: 0px;
+}

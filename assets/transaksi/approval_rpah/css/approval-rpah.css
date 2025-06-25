@@ -1,0 +1,33 @@
+.table {
+    height: 1px;
+}
+
+.table tbody tr:not(.head-unit) td {
+    padding: 3px;
+    height: 100%;
+}
+
+.table tbody tr.head-unit td {
+    padding: 10px 5px;
+    height: 100%;
+}
+
+tr.head td {
+    background-color: #adf0bd;
+}
+
+tr.detail-head td {
+    background-color: #ededed;
+}
+
+tr.head-unit td {
+    background-color: #9daefa;
+}
+
+hr {
+    border: 1px solid #ffffff;
+}
+
+tr.red td {
+    background-color: #ff5e69;
+}

@@ -1,0 +1,59 @@
+div.view_form .control-label {
+	padding-top: 0px;
+	margin-top: 0px;
+}
+
+div.view_form .form-group {
+	margin-bottom: 10px;
+}
+
+tr.head td {
+	background-color: #eae8ff;
+}
+
+legend {
+	width: 35%;
+}
+
+.table.table-nobordered tr:not(.bottom) td {
+	border-top: none;
+}
+
+.table.table-nobordered tr.bottom td {
+	border-top: none;
+	border-bottom: 1px solid black;
+}
+
+.table.table-nobordered tr.top td {
+	border-top: 1px solid black;
+	border-bottom: none;
+}
+
+.table.table-nobordered tr.bonus:first-child td {
+	border-top: 1px solid black;
+	border-bottom: none;
+}
+
+.table.table-nobordered tr.top_bottom td {
+	border-top: 1px solid black;
+	border-bottom: 1px solid black;
+}
+
+.table.table-nobordered tr td.kanan {
+	border-right: 1px solid black;
+}
+
+.table.table-nobordered tr td.kiri {
+	border-left: 1px solid black;
+}
+
+div.date input {
+	padding-left: 15px;
+}
+
+table.tbl-piutang {
+	border: 1px solid black;
+}
+table.tbl-piutang thead tr td, table.tbl-piutang tbody tr td {
+	border: 1px solid black;
+}

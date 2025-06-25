@@ -1,0 +1,12 @@
+table.telepon > thead > tr > th {
+  background-color: #ffffff;
+}
+
+div.main {
+    font-size: 12px;
+}
+
+/*.modal-footer .btn + .btn {
+    margin-bottom: 0;
+    margin-right: 5px;
+}*/

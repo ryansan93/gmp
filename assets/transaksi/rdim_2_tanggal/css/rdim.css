@@ -1,0 +1,65 @@
+span.btn_add_row_2x:after, td span.btn_add_row_2x:after {
+  right: 4px;
+  margin-top: -14px;
+}
+span.btn_del_row_2x:after, td span.btn_del_row_2x:after {
+  right: 4px;
+  margin-top: -38px;
+}
+
+table.custom_table td, table.custom_table th {
+  background-color: inherit;
+}
+
+.table tr.parent{
+  background-color: #eee;
+}
+
+.table tr.parent:hover{
+  background-color: #ddd;
+}
+
+tr.inactive {
+  display: none !important;
+}
+
+thead > tr > th {
+	text-align: center;
+}
+
+div.main {
+    font-size: 12px;
+}
+
+.tu-float-btn-left {
+    left: 100px;
+}
+
+tr.child:hover {
+  background-color: transparent;
+}
+
+tr.child td:hover {
+  background-color: transparent;
+}
+
+span.button.glyphicon-calendar {
+  border: 1px solid #ccc;
+  padding: 3px;
+  border-radius: 3px;
+  font-size: 26px;
+}
+
+span.button.glyphicon-calendar:hover {
+  border: 1px solid #8d8d8d;
+  background-color: #ccc;
+}
+
+span.has-error {
+  border:1px solid rgb(185, 74, 72) !important;
+  color:rgb(185, 74, 72) !important;
+}
+
+select.form-control {
+  padding-left: 3px;
+}

@@ -1,0 +1,15 @@
+/*table.tbl_add_pakan {
+	width: 50%;
+}*/
+
+input[type="date"].form-control {
+	line-height: 15px;
+}
+
+label.input {
+	padding-left: 15px;
+}
+
+span.file {
+  padding-left: 10px;
+}

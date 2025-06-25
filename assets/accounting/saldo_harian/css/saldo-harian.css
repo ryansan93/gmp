@@ -1,0 +1,66 @@
+.bootstrap-select>.dropdown-menu {
+	min-height: 100px !important;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder.disabled { 
+	color: #555;
+	background-color: #ccc;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder:hover:not(.disabled) { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.disabled { 
+	color: #555; 
+	background-color: #ccc;
+	border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle:hover:not(.disabled) { 
+	color: black; 
+	background-color: transparent;
+	border: 1px solid #ccc;
+}
+.bootstrap-select.has-error {
+    border: 1px solid #a94442;
+}
+
+span.select2 {
+	width: 100%!important;
+}
+
+span.select2-selection__arrow {
+	margin-top: 3px!important;
+}
+
+span.select2-selection {
+	height: 34px!important;
+    padding-top: 2px!important;
+}
+
+.has-error .select2-selection {
+	border-color: rgb(185, 74, 72) !important;
+}
+
+.list_data, .list_data_hutang {
+	width: auto;
+}
+
+.list_data tbody tr td, .list_data_hutang tbody tr td {
+	padding: 3px 0px;
+	border-top: none;
+}
+
+input[data-tipe="decimal"], input[data-tipe="integer"], input[data-tipe="angka"] {
+	text-align: right;
+}

@@ -1,0 +1,99 @@
+span.btn_add_row_2x:after, td span.btn_add_row_2x:after {
+  right: 4px;
+  margin-top: -14px;
+}
+span.btn_del_row_2x:after, td span.btn_del_row_2x:after {
+  right: 4px;
+  margin-top: -38px;
+}
+
+table.custom_table td, table.custom_table th {
+  background-color: inherit;
+}
+
+.table tr.parent{
+  background-color: #eee;
+}
+
+tr.inactive {
+  display: none !important;
+}
+
+thead > tr > th {
+	text-align: center;
+}
+
+div.main {
+    font-size: 12px;
+}
+
+.tu-float-btn-left {
+    left: 100px;
+}
+
+table a:not([href]):not([tabindex]) {
+    color: #337ab7;
+    text-decoration: none;
+}
+
+table a:not([href]):not([tabindex]):focus, table a:not([href]):not([tabindex]):hover {
+    color: #23527c;
+    text-decoration: underline;
+}
+
+.bootstrap-select>.dropdown-menu {
+  min-height: 100px !important;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder { 
+  color: black; 
+  background-color: transparent;
+  border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder.disabled { 
+  color: #555;
+  background-color: #ccc;
+  border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.bs-placeholder:hover:not(.disabled) { 
+  color: black; 
+  background-color: transparent;
+  border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle { 
+  color: black; 
+  background-color: transparent;
+  border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle.disabled { 
+  color: #555; 
+  background-color: #ccc;
+  border: 1px solid #ccc;
+}
+.bootstrap-select>.dropdown-toggle:hover:not(.disabled) { 
+  color: black; 
+  background-color: transparent;
+  border: 1px solid #ccc;
+}
+.bootstrap-select.has-error {
+    border: 1px solid #a94442;
+}
+
+span.select2 {
+  width: 100%!important;
+}
+
+span.select2-selection__arrow {
+  margin-top: 3px!important;
+}
+
+span.select2-selection {
+    padding-top: 2px!important;
+}
+
+.select2-container .select2-selection--single {
+  min-height: 34px!important;
+}
+
+.has-error .select2-selection {
+  border-color: rgb(185, 74, 72) !important;
+}

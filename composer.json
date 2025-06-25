@@ -1,0 +1,25 @@
+{
+	"description" : "The CodeIgniter framework",
+    "name" : "codeigniter/framework",
+    "license": "MIT",
+    "require": {
+        "php": ">=5.2.4",
+        "illuminate/database": "5.0.28",
+        "illuminate/events": "5.0.28",
+        "phpoffice/phpspreadsheet": "^1.25",
+		"dompdf/dompdf": "^3.1"
+    },
+    "require-dev": {
+        "mikey179/vfsstream": "1.1.*"
+    },
+    "config": {
+        "allow-plugins": {
+            "kylekatarnls/update-helper": true
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Model\\Storage\\": "application/modules/storage/models/"
+        }
+    }
+}

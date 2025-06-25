@@ -1,0 +1,13 @@
+span.btn_add_row_2x:after, td span.btn_add_row_2x:after {
+  right: 10px;
+  margin-top: -14px;
+}
+
+span.btn_del_row_2x:after, td span.btn_del_row_2x:after {
+  right: 10px;
+  margin-top: -38px;
+}
+
+.table {
+	margin-bottom: 0px;
+}
