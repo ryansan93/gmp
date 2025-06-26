@@ -26,6 +26,7 @@ class ChartOfAccount extends Public_Controller
         if ( $this->akses['a_view'] == 1 ) {
             // $this->set_title('Berita Acara Serah Terima Titip Budidaya');
             $this->add_external_js(array(
+                'assets/jquery/maskedinput/jquery.maskedinput.min.js',
                 'assets/accounting/chart_of_account/js/chart-of-account.js')
             );
             $this->add_external_css(array(
@@ -48,6 +49,34 @@ class ChartOfAccount extends Public_Controller
         } else {
             showErrorAkses();
         }
+    }
+
+    public function cekNoCoa() {
+        $params = $this->input->post('params');
+
+        try {
+            $m_coa = new \Model\Storage\Coa_model();
+            $now = $m_coa->getDate();
+
+            $gol1 = $m_coa->getGol1($params['gol1']);
+            $gol2 = $m_coa->getGol2($params['gol1'].$params['gol2']);
+            $gol3 = $m_coa->getGol3($params['gol1'].$params['gol2'].$params['gol3']);
+            $gol4 = $m_coa->getGol4($params['gol1'].$params['gol2'].$params['gol3'].'.'.$params['gol4']);
+            $gol5 = $m_coa->getGol5($params['gol1'].$params['gol2'].$params['gol3'].'.'.$params['gol4'].'.'.$params['gol5']);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = array(
+                'gol1' => $gol1,
+                'gol2' => $gol2,
+                'gol3' => $gol3,
+                'gol4' => $gol4,
+                'gol5' => $gol5
+            );
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
     }
 
     public function get_lists()
@@ -139,10 +168,16 @@ class ChartOfAccount extends Public_Controller
             $m_coa = new \Model\Storage\Coa_model();
             $m_coa->id_perusahaan = $params['perusahaan'];
             $m_coa->id_unit = $params['unit'];
-            $m_coa->nama_coa = $params['nama'];
             $m_coa->coa = $params['coa'];
+            $m_coa->nama_coa = $params['nama'];
+            $m_coa->gol1 = $params['gol1'];
+            $m_coa->gol2 = $params['gol2'];
+            $m_coa->gol3 = $params['gol3'];
+            $m_coa->gol4 = $params['gol4'];
+            $m_coa->gol5 = $params['gol5'];
             $m_coa->lap = $params['laporan'];
             $m_coa->coa_pos = $params['posisi'];
+            $m_coa->status = 1;
             $m_coa->save();
 
             $id_coa = $m_coa->id;
@@ -150,7 +185,7 @@ class ChartOfAccount extends Public_Controller
             $d_coa = $m_coa->where('id', $id_coa)->first();
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $d_coa, $deskripsi_log );
+            Modules::run( 'base/event/save', $d_coa, $deskripsi_log, null, $params['coa'] );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data COA berhasil disimpan.';
@@ -177,13 +212,19 @@ class ChartOfAccount extends Public_Controller
                     'coa' => $params['coa'],
                     'lap' => $params['laporan'],
                     'coa_pos' => $params['posisi'],
+                    'gol1' => $params['gol1'],
+                    'gol2' => $params['gol2'],
+                    'gol3' => $params['gol3'],
+                    'gol4' => $params['gol4'],
+                    'gol5' => $params['gol5'],
+                    'status' => 1
                 )
             );
 
             $d_coa = $m_coa->where('id', $id_coa)->first();
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_coa, $deskripsi_log );
+            Modules::run( 'base/event/update', $d_coa, $deskripsi_log, null, $params['coa'] );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data COA berhasil di update.';
@@ -202,15 +243,15 @@ class ChartOfAccount extends Public_Controller
             $id_coa = $params['id'];
 
             $m_coa = new \Model\Storage\Coa_model();
+            $d_coa = $m_coa->where('id', $id_coa)->update(array('status' => 0));
+            
             $d_coa = $m_coa->where('id', $id_coa)->first();
 
-            $m_coa->where('id', $id_coa)->delete();
-
-            $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/delete', $d_coa, $deskripsi_log );
+            $deskripsi_log = 'di-non aktifkan oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/delete', $d_coa, $deskripsi_log, null, $params['coa'] );
 
             $this->result['status'] = 1;
-            $this->result['message'] = 'Data COA berhasil di hapus.';
+            $this->result['message'] = 'Data COA berhasil di non aktifkan.';
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }

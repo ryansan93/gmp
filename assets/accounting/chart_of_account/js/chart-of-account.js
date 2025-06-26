@@ -18,6 +18,104 @@ var coa = {
         });
 	}, // end - get_list
 
+	cekNoCoa: function (elm) {
+		var no_coa = $(elm).val().replaceAll('.', '');
+
+		var gol1 = no_coa.substring(0, 1);
+		var gol2 = no_coa.substring(1, 2);
+		var gol3 = no_coa.substring(2, 4);
+		var gol4 = no_coa.substring(4, 6);
+		var gol5 = no_coa.substring(6, 8);
+
+		var params = {
+			'gol1': gol1,
+			'gol2': gol2,
+			'gol3': gol3,
+			'gol4': gol4,
+			'gol5': gol5
+		};
+
+		$.ajax({
+			url: 'accounting/ChartOfAccount/cekNoCoa',
+			data: {
+				'params': params
+			},
+			type: 'POST',
+			dataType: 'JSON',
+			beforeSend: function() { showLoading(); },
+			success: function(data) {
+				hideLoading();
+				if ( data.status == 1 ) {
+					$('input.gol1').attr('disabled', 'disabled');
+					$('input.gol2').attr('disabled', 'disabled');
+					$('input.gol3').attr('disabled', 'disabled');
+					$('input.gol4').attr('disabled', 'disabled');
+					$('input.gol5').attr('disabled', 'disabled');
+
+					if ( !empty(data.content.gol1) ) {
+						$('input.gol1').val( data.content.gol1 );
+					} else {
+						if ( gol1 != '00' ) {
+							$('input.gol1').removeAttr('disabled');
+						} else {
+							$('input.gol1').val('');
+						}
+					}
+
+					if ( !empty(data.content.gol2) ) {
+						$('input.gol2').val( data.content.gol2 );
+					} else {
+						if ( gol2 != '00' ) {
+							$('input.gol2').removeAttr('disabled');
+						} else {
+							$('input.gol2').val('');
+						}
+					}
+
+					if ( !empty(data.content.gol3) ) {
+						$('input.gol3').val( data.content.gol3 );
+					} else {
+						if ( gol3 != '00' ) {
+							$('input.gol3').removeAttr('disabled');
+						} else {
+							$('input.gol3').val('');
+						}
+					}
+
+					if ( !empty(data.content.gol4) ) {
+						$('input.gol4').val( data.content.gol4 );
+					} else {
+						if ( gol4 != '00' ) {
+							$('input.gol4').removeAttr('disabled');
+						} else {
+							$('input.gol4').val('');
+						}
+					}
+
+					if ( !empty(data.content.gol5) ) {
+						$('input.gol5').val( data.content.gol5 );
+					} else {
+						if ( gol5 != '00' ) {
+							$('input.gol5').removeAttr('disabled');
+						} else {
+							$('input.gol5').val('');
+						}
+					}
+
+					coa.cekNamaCoa();
+				} else {
+					bootbox.alert(data.message);
+				}
+			}
+		});
+	}, // end - cekNoCoa
+
+	cekNamaCoa: function () {
+		var val = $('input.gol:not(:disabled):last').val();
+
+		$('input.nama').val( val );
+	}, // end - cekNamaCoa
+
 	add_form: function () {
 		$.get('accounting/ChartOfAccount/add_form',{
         },function(data){
@@ -37,6 +135,8 @@ var coa = {
                 $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal]').each(function(){
                     $(this).priceFormat(Config[$(this).data('tipe')]);
                 });
+
+				$(this).find('input.coa').mask("9999.99.99");
             });
         },'html');
 	}, // end - add_form
@@ -117,8 +217,13 @@ var coa = {
 					var params = {
 						'perusahaan': $(modal).find('#perusahaan').val(),
 						'unit': $(modal).find('.unit').val(),
-						'nama': $(modal).find('.nama').val(),
 						'coa': $(modal).find('.coa').val(),
+						'nama': $(modal).find('.nama').val(),
+						'gol1': $(modal).find('.gol1').val(),
+						'gol2': $(modal).find('.gol2').val(),
+						'gol3': $(modal).find('.gol3').val(),
+						'gol4': $(modal).find('.gol4').val(),
+						'gol5': $(modal).find('.gol5').val(),
 						'laporan': $(modal).find('.laporan').val(),
 						'posisi': $(modal).find('.posisi').val(),
 					};

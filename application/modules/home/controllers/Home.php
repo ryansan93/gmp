@@ -21,7 +21,7 @@ class Home extends Public_Controller
 
 		$data = $this->includes;
 
-		$data['title_menu'] = 'dashboard';
+		$data['title_menu'] = 'Dashboard';
 
 		// $content['list_notif'] = $this->list_notif();
 		// $content['jml_notif'] = count($this->list_notif());

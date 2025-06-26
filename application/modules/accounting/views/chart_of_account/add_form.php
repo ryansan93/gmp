@@ -7,12 +7,12 @@
 		<div class="col-lg-12 no-padding">
 			<table class="table no-border">
 				<tbody>
-					<tr>
+					<tr class="hide">
 						<td class="col-md-3">				
 							<label class="control-label">Perusahaan</label>
 						</td>
 						<td class="col-md-9">
-							<select id="perusahaan" class="form-control" type="text" data-required="1">
+							<select id="perusahaan" class="form-control" type="text">
 								<option value="">Pilih Perusahaan</option>
 								<?php foreach ($perusahaan as $k => $val): ?>
 									<option value="<?php echo $val['kode']; ?>"><?php echo strtoupper($val['nama']); ?></option>
@@ -20,30 +20,71 @@
 							</select>
 						</td>
 					</tr>
-					<tr>
+					<tr class="hide">
 						<td class="col-md-3">				
 							<label class="control-label">Unit</label>
 						</td>
 						<td class="col-md-9">
-							<input type="text" class="col-sm-12 form-control unit uppercase" placeholder="UNIT" data-required="1">
+							<input type="text" class="col-sm-12 form-control unit uppercase" placeholder="UNIT">
 						</td>
 					</tr>
 					<tr>
 						<td class="col-md-3">
-							<label class="control-label">Nama</label>
+							<label class="control-label">No. COA</label>
 						</td>
 						<td class="col-md-9">
-							<input type="text" class="col-sm-4 form-control nama uppercase" placeholder="NAMA COA" data-required="1">
+							<input type="text" class="col-sm-4 form-control coa uppercase" placeholder="No. COA (MAX:10)" data-required="1" maxlength="10" onblur="coa.cekNoCoa(this)">
 						</td>
 					</tr>
 					<tr>
 						<td class="col-md-3">
-							<label class="control-label">COA</label>
+							<label class="control-label">Nama COA</label>
 						</td>
 						<td class="col-md-9">
-							<input type="text" class="col-sm-4 form-control coa uppercase" placeholder="COA" data-required="1">
+							<input type="text" class="col-xs-12 form-control nama uppercase" placeholder="NAMA COA" data-required="1" disabled>
 						</td>
 					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 1</label>
+						</td>
+						<td class="col-md-9">
+							<input type="text" class="col-xs-12 form-control gol gol1 uppercase" placeholder="(MAX : 100)" maxlength="100" onblur="coa.cekNamaCoa()" disabled>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 2</label>
+						</td>
+						<td class="col-md-9">
+							<input type="text" class="col-xs-12 form-control gol gol2 uppercase" placeholder="(MAX : 100)" maxlength="100" onblur="coa.cekNamaCoa()" disabled>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 3</label>
+						</td>
+						<td class="col-md-9">
+							<input type="text" class="col-xs-12 form-control gol gol3 uppercase" placeholder="(MAX : 100)" maxlength="100" onblur="coa.cekNamaCoa()" disabled>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 4</label>
+						</td>
+						<td class="col-md-9">
+							<input type="text" class="col-xs-12 form-control gol gol4 uppercase" placeholder="(MAX : 100)" maxlength="100" onblur="coa.cekNamaCoa()" disabled>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 5</label>
+						</td>
+						<td class="col-md-9">
+							<input type="text" class="col-xs-12 form-control gol gol5 uppercase" placeholder="(MAX : 100)" maxlength="100" onblur="coa.cekNamaCoa()" disabled>
+						</td>
+					</tr>
+					<tr><td colspan="2"><hr></td></tr>
 					<tr>
 						<td class="col-md-3">
 							<label class="control-label">Laporan</label>

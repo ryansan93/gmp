@@ -731,8 +731,6 @@ class KasKecil extends Public_Controller {
         $m_sk = new \Model\Storage\SaldoKas_model();
         $dashboard = $m_sk->getDashboard($status);
 
-        cetak_r( $dashboard );
-
         return $dashboard;
     }
 }

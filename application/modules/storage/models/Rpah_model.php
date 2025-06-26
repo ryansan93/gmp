@@ -169,6 +169,13 @@ class Rpah_model extends Conf {
 						lt.nama_detuser
 QUERY;
 
-		return $this->hydrateRaw ( $sql );
+		$d_conf = $this->hydrateRaw ( $sql );
+
+		$data = null;
+		if ( $d_conf->count() > 0 ) {
+			$data = $d_conf->toArray();
+		}
+
+		return $data;
   	}
 }

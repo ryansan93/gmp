@@ -9,7 +9,7 @@
   <meta name="description" content="">
   <meta name="author" content="Dashboard">
   <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
-  <title>MGB ERP</title>
+  <title>GMP ERP</title>
 
   <!-- Favicons -->
   <!-- <link href="assets/themes/img/favicon.png" rel="icon">
@@ -40,7 +40,7 @@
     <div class="container">
       <div class="form-login">
         <div class="login-heading text-center">
-          <h2 class="form-login-heading">MGB ERP</h2>
+          <h2 class="form-login-heading">GMP ERP</h2>
         </div>
         <!-- <div class="dropdown-divider no-padding"></div> -->
         <div class="login-contain">

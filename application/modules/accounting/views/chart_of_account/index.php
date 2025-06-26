@@ -16,17 +16,23 @@
 				<table class="table table-bordered table-hover tbl_coa" id="dataTable" width="100%" cellspacing="0">
 					<thead>
 						<tr>
-							<th class="col-md-3">Perusahaan</th>
-							<th class="col-md-1">Unit</th>
+							<th class="col-md-3 hide">Perusahaan</th>
+							<th class="col-md-1 hide">Unit</th>
+							<th class="col-md-1">COA</th>
 							<th class="col-md-2">Nama</th>
-							<th class="col-md-2">COA</th>
-							<th class="col-md-2">Laporan</th>
-							<th class="col-md-2">Posisi COA</th>
+							<th class="col-md-1">Gol 1</th>
+							<th class="col-md-1">Gol 2</th>
+							<th class="col-md-1">Gol 3</th>
+							<th class="col-md-1">Gol 4</th>
+							<th class="col-md-1">Gol 5</th>
+							<th class="col-md-1">Laporan</th>
+							<th class="col-md-1">Posisi COA</th>
+							<th class="col-md-1">Status</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
-							<td colspan="4">Data tidak ditemukan.</td>
+							<td colspan="10">Data tidak ditemukan.</td>
 	                   </tr>
 					</tbody>
 				</table>

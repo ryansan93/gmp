@@ -10,7 +10,7 @@
   <meta name="author" content="Dashboard">
   <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
 
-  <title>MGB ERP</title>
+  <title>GMP ERP</title>
 
   <?php // CSS files ?>
   <?php if (isset($css_files) && is_array($css_files)) : ?>
@@ -32,7 +32,7 @@
       <div class="sidebar-heading">
         <!-- <img src="https://d3ki9tyy5l5ruj.cloudfront.net/obj/3ac85a538c3fc5bb08d0206ede04ae8aa13c20b2/inapp__logo_color_ondark_horizontal.svg" width="80%" height="80%"> -->
         <img src="assets/images/logo-mgb.jpg" width="20%" height="20%">
-        MGB ERP
+        GMP ERP
       </div>
       <div class="divider-heading" style="padding: 0rem 1rem;">
         <div class="dropdown-divider" style="margin-top: 0rem;"></div>
@@ -96,8 +96,8 @@
                     $data = Modules::run( $v_mdetail['path_detfitur'].'/model', $status);
 
                     if ( !empty($data) ) {
-                      if ( !is_array($data) ) {
-                        $data = ($data->count() > 0) ? $data->toArray() : null;
+                      if ( is_array($data) ) {
+                        $data = (!empty($data) && $data->count() > 0) ? $data->toArray() : null;
                       }
 
                       $notif[$v_mdetail['path_detfitur']]['data'] = $data;
@@ -114,7 +114,7 @@
                     $data = Modules::run( $v_mdetail['path_detfitur'].'/model', $status);
 
                     if ( !empty($data) ) {
-                      if ( !is_array($data) ) {
+                      if ( is_array($data) ) {
                         $data = ($data->count() > 0) ? $data->toArray() : null;
                       }
 
