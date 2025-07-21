@@ -41,22 +41,23 @@
 		</div>
 	</div>
 	<div class="col-xs-12 action no-padding">
+		<span>Klik pada baris untuk melihat detail</span>
 		<small>
 			<table class="table table-bordered tbl_riwayat" style="margin-bottom: 0px;">
 				<thead>
 					<tr>
 						<th class="col-xs-1">Tgl. Berlaku</th>
 						<th class="col-xs-3">Fitur</th>
-						<th class="col-xs-2">Keterangan</th>
+						<!-- <th class="col-xs-2">Keterangan</th>
 						<th class="col-xs-1">No. COA</th>
 						<th class="col-xs-2">Asal</th>
 						<th class="col-xs-1">No. COA</th>
-						<th class="col-xs-2">Tujuan</th>
+						<th class="col-xs-2">Tujuan</th> -->
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
-						<td colspan="7">Data tidak ditemukan.</td>
+						<td colspan="2">Data tidak ditemukan.</td>
 					</tr>
 				</tbody>
 			</table>

@@ -568,6 +568,7 @@ class Peternak extends Public_Controller {
         $akses = hakAkses($this->url);
 
         $content['title_panel'] = 'Pengajuan Data Mitra';
+        $content['pemilik'] = $this->getMitra();
         $content['tipe_lokasi'] = $this->getTipeLokasi();
         $content['tipe_kandang'] = $this->getTipeKandang();
         $content['status_kandang'] = $this->status_kandang;
@@ -621,6 +622,7 @@ class Peternak extends Public_Controller {
         $data_mitra = $this->getDataMitra($id);
 
         $content['mitra'] = $data_mitra['data'];
+        $content['pemilik'] = $this->getMitra();
         $content['title_panel'] = 'Pengajuan Data Mitra';
         $content['tipe_lokasi'] = $this->getTipeLokasi();
         $content['tipe_kandang'] = $this->getTipeKandang();
@@ -826,7 +828,7 @@ class Peternak extends Public_Controller {
         $data = null;
 
         $m_mitra = new \Model\Storage\Mitra_model();
-        $d_mitra = $m_mitra->with(['telepons', 'lampirans', 'lampirans_jaminan', 'dKecamatan', 'perwakilans', 'logs', 'posisi'])->find($id);
+        $d_mitra = $m_mitra->with(['d_pemilik', 'telepons', 'lampirans', 'lampirans_jaminan', 'dKecamatan', 'perwakilans', 'logs', 'posisi'])->find($id);
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
@@ -879,8 +881,17 @@ class Peternak extends Public_Controller {
 
     public function getJenisMitra()
     {
-        $jenis_mitra = $this->config->item('jenis_mitra');
-        return $jenis_mitra;
+        $m_model = new \Model\Storage\Jenis_model();
+        $d = $m_model->getData();
+
+        $data = null;
+        if ( !empty( $d ) ) {
+            foreach ($d as $key => $value) {
+                $data[$value['kode']] = $value['nama'];
+            }
+        }
+
+        return $data;
     }
 
     public function getListLampiran($jenis)
@@ -1004,6 +1015,9 @@ class Peternak extends Public_Controller {
             $m_mitra->mstatus = 1;
             $m_mitra->version = 1;
             $m_mitra->perusahaan = $params['perusahaan'];
+            $m_mitra->plafon = $params['plafon'];
+            $m_mitra->jatuh_tempo = $params['jatuh_tempo'];
+            $m_mitra->pemilik = (isset($params['pemilik']) && !empty($params['pemilik'])) ? $params['pemilik'] : $nomor_mitra;
             $m_mitra->save();
 
             $telepons = $params['telepons'];
@@ -1120,6 +1134,9 @@ class Peternak extends Public_Controller {
             $m_mitra->mstatus = $d_mitra['mstatus'];
             $m_mitra->version = ((int) $d_mitra['version']) + 1;
             $m_mitra->perusahaan = $params['perusahaan'];
+            $m_mitra->plafon = $params['plafon'];
+            $m_mitra->jatuh_tempo = $params['jatuh_tempo'];
+            $m_mitra->pemilik = (isset($params['pemilik']) && !empty($params['pemilik'])) ? $params['pemilik'] : $nomor_mitra;
             $m_mitra->save();
 
             // NOTE : update telepon mitra
@@ -2159,11 +2176,157 @@ class Peternak extends Public_Controller {
         return $dashboard;
     }
 
-    public function tes()
+    public function injekDariMgb()
     {
-        $id = '';
-        $data = $this->getDataMitra( $id )['data'];
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select mtr1.* from mgb_erp_live.dbo.mitra mtr1
+            right join
+                (select max(id) as id, nomor from mgb_erp_live.dbo.mitra group by nomor) mtr2
+                on
+                    mtr1.id = mtr2.id
+            where
+                mtr1.mstatus = 1
+            order by
+                mtr1.nama asc
+        ";
+        $d_mitra = $m_conf->hydrateRaw( $sql );
 
-        cetak_r( $nomor_mitra );
+        if ( $d_mitra->count() > 0 ) {
+            $d_mitra = $d_mitra->toArray();
+
+            foreach ($d_mitra as $k_mitra => $v_mitra) {
+                $m_mitra = new \Model\Storage\Mitra_model();
+                $id_mitra = $m_mitra->getNextIdentity();
+                $nomor_mitra = $v_mitra['nomor'];
+
+                $m_mitra->id = $id_mitra;
+                $m_mitra->nomor = $nomor_mitra;
+                $m_mitra->nama = $v_mitra['nama'];
+                $m_mitra->ktp = $v_mitra['ktp'];
+                $m_mitra->npwp = $v_mitra['npwp'];
+                $m_mitra->skb = $v_mitra['skb'];
+                $m_mitra->tgl_habis_skb = $v_mitra['tgl_habis_skb'];
+                $m_mitra->alamat_kecamatan = $v_mitra['alamat_kecamatan'];
+                $m_mitra->alamat_kelurahan = $v_mitra['alamat_kelurahan'];
+                $m_mitra->alamat_rt = $v_mitra['alamat_rt'];
+                $m_mitra->alamat_rw = $v_mitra['alamat_rw'];
+                $m_mitra->alamat_jalan = $v_mitra['alamat_jalan'];
+                $m_mitra->bank = $v_mitra['bank'];
+                $m_mitra->rekening_cabang_bank = $v_mitra['rekening_cabang_bank'];
+                $m_mitra->rekening_nomor = $v_mitra['rekening_nomor'];
+                $m_mitra->rekening_pemilik = $v_mitra['rekening_pemilik'];
+                $m_mitra->status = $v_mitra['status'];
+                $m_mitra->keterangan_jaminan = $v_mitra['keterangan_jaminan'];
+                $m_mitra->jenis = $v_mitra['jenis'];
+                $m_mitra->mstatus = $v_mitra['mstatus'];
+                $m_mitra->version = 1;
+                $m_mitra->perusahaan = $v_mitra['perusahaan'];
+                $m_mitra->plafon = (isset($v_mitra['plafon'])) ? $v_mitra['plafon'] : null;
+                $m_mitra->jatuh_tempo = (isset($v_mitra['jatuh_tempo'])) ? $v_mitra['jatuh_tempo'] : null;
+                $m_mitra->pemilik = (isset($v_mitra['pemilik'])) ? $v_mitra['pemilik'] : null;
+                $m_mitra->save();
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select tm.* from mgb_erp_live.dbo.telepon_mitra tm
+                    where
+                        tm.mitra = ".$v_mitra['id']."
+                ";
+                $d_telp = $m_conf->hydrateRaw( $sql );
+                if ( $d_telp->count() > 0 ) {
+                    $d_telp = $d_telp->toArray();
+
+                    foreach ($d_telp as $k_telp => $v_telp) {
+                        $m_telp = new \Model\Storage\TeleponMitra_model();
+                        $m_telp->id = $m_telp->getNextIdentity();
+                        $m_telp->mitra = $id_mitra;
+                        $m_telp->nomor = $v_telp['nomor'];
+                        $m_telp->save();
+                    }
+                }
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select mm.* from mgb_erp_live.dbo.mitra_mapping mm
+                    where
+                        mm.mitra = ".$v_mitra['id']."
+                ";
+                $d_mm = $m_conf->hydrateRaw( $sql );
+                if ( $d_mm->count() > 0 ) {
+                    $d_mm = $d_mm->toArray();
+
+                    foreach ($d_mm as $k_mm => $v_mm) {
+                        $m_mitra_mapping = new \Model\Storage\MitraMapping_model();
+                        $mitra_mapping_id = $m_mitra_mapping->getNextIdentity();
+
+                        $m_mitra_mapping->id = $mitra_mapping_id;
+                        $m_mitra_mapping->mitra = $id_mitra;
+                        $m_mitra_mapping->perwakilan = $v_mm['perwakilan'];
+                        $m_mitra_mapping->nim = $v_mm['nim'];
+                        $m_mitra_mapping->nomor = $v_mm['nomor'];
+                        $m_mitra_mapping->save();
+
+                        $m_conf = new \Model\Storage\Conf();
+                        $sql = "
+                            select kdg.* from mgb_erp_live.dbo.kandang kdg
+                            where
+                                kdg.mitra_mapping = ".$v_mm['id']."
+                        ";
+                        $d_kdg = $m_conf->hydrateRaw( $sql );
+                        if ( $d_kdg->count() > 0 ) {
+                            $d_kdg = $d_kdg->toArray();
+
+                            foreach ($d_kdg as $k_kdg => $v_kdg) {
+                                $m_kandang = new \Model\Storage\Kandang_model();
+                                $kandang_id = $m_kandang->getNextIdentity();
+                                $m_kandang->id = $kandang_id;
+                                $m_kandang->mitra_mapping = $mitra_mapping_id;
+                                $m_kandang->kandang = $v_kdg['kandang'];
+                                $m_kandang->unit = $v_kdg['unit'];
+                                $m_kandang->tipe = $v_kdg['tipe'];
+                                $m_kandang->ekor_kapasitas = $v_kdg['ekor_kapasitas'];
+                                $m_kandang->alamat_kecamatan = $v_kdg['alamat_kecamatan'];
+                                $m_kandang->alamat_kelurahan = $v_kdg['alamat_kelurahan'];
+                                $m_kandang->alamat_rt = $v_kdg['alamat_rt'];
+                                $m_kandang->alamat_rw = $v_kdg['alamat_rw'];
+                                $m_kandang->alamat_jalan = $v_kdg['alamat_jalan'];
+                                $m_kandang->ongkos_angkut = $v_kdg['ongkos_angkut'];
+                                $m_kandang->grup = $v_kdg['grup'];
+                                $m_kandang->status = $v_kdg['status'];
+                                $m_kandang->save();
+
+                                $m_conf = new \Model\Storage\Conf();
+                                $sql = "
+                                    select bk.* from mgb_erp_live.dbo.bangunan_kandang bk
+                                    where
+                                        bk.kandang = ".$v_kdg['id']."
+                                ";
+                                $d_bk = $m_conf->hydrateRaw( $sql );
+                                if ( $d_bk->count() > 0 ) {
+                                    $d_bk = $d_bk->toArray();
+
+                                    foreach ($d_bk as $k_bk => $v_bk) {
+                                        $m_bangunan_kandang = new \Model\Storage\BangunanKandang_model();
+                                        $m_bangunan_kandang->id = $m_bangunan_kandang->getNextIdentity();
+                                        $m_bangunan_kandang->kandang = $kandang_id;
+                                        $m_bangunan_kandang->bangunan = $v_bk['bangunan'];
+                                        $m_bangunan_kandang->meter_panjang = $v_bk['meter_panjang'];
+                                        $m_bangunan_kandang->meter_lebar = $v_bk['meter_lebar'];
+                                        $m_bangunan_kandang->jumlah_unit = $v_bk['jumlah_unit'];
+                                        $m_bangunan_kandang->save();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $d_mitra = $m_mitra->where('id', $id_mitra)->with(['telepons', 'perwakilans'])->first();
+
+                $deskripsi_log_mitra = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/save', $d_mitra, $deskripsi_log_mitra );
+            }
+        }
     }
 }

@@ -454,7 +454,8 @@ var jp = {
 							'unit': $(tr).find('select.unit').select2('val'),
 							'nominal': numeral.unformat($(tr).find('input.nominal').val()),
 							'keterangan': $(tr).find('textarea.keterangan').val().replace(/^\s*|\s*$/g,""),
-							'no_bukti': $(tr).find('input.no_bukti').val()
+							'no_bukti': $(tr).find('input.no_bukti').val(),
+							'kode_jurnal': $(tr).find('input.kode_jurnal').val()
 						};
 
 						return _detail;

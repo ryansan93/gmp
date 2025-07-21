@@ -7,31 +7,27 @@
 
 					<?php if ( $akses['a_ack'] == 1 ): ?>
 						<div class="form-group align-items-center d-flex">
-							<span class="col-sm-6 text-right">NIP</span>
+							<span class="col-sm-6 text-right">No. Induk</span>
 							<div class="col-sm-6">
-								<input class="form-control" type="text" name="nip_supplier" value="<?php echo $data->nomor; ?>" readonly>
+								<input class="form-control" type="text" name="nip_supplier" value="<?php echo $data->nomor; ?>" placeholder="MAX:6" maxlength="6" readonly>
 							</div>
 						</div>
 					<?php endif; ?>
 					<div class="form-group align-items-center d-flex">
-						<?php 
-							$selected_internal = null;
-							$selected_eksternal = null;
-							$selected_ekspedisi = null;
-							if ( $data['jenis'] == 'internal' ) {
-								$selected_internal = 'selected';
-							} else if ( $data['jenis'] == 'eksternal' ) {
-								$selected_eksternal = 'selected';
-							} else {
-								$selected_ekspedisi = 'selected';
-							}
-						?>
 						<span class="col-sm-6 text-right">Jenis Supplier</span>
 						<div class="col-sm-6">
 							<select class="form-control" name="jenis_supl" readonly>
-								<option value="internal" <?php echo $selected_internal; ?> >Internal</option>
-								<option value="eksternal" <?php echo $selected_eksternal; ?> >Eksternal</option>
-								<!-- <option value="ekspedisi" <?php echo $selected_ekspedisi; ?> >Ekspedisi</option> -->
+								<?php if ( !empty($jenis) ) { ?>
+									<?php foreach ($jenis as $key => $value) { ?>
+										<?php
+											$selected = '';
+											if ( $value['kode'] == $data['jenis'] ) {
+												$selected = 'selected';
+											}
+										?>
+										<option value="<?php echo $value['kode']; ?>" <?php echo $selected; ?> ><?php echo $value['nama']; ?></option>
+									<?php } ?>
+								<?php } ?>
 							</select>
 						</div>
 					</div>
@@ -48,12 +44,19 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-sm-4 hide">
+				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Platform</span>
+						<span class="col-sm-6 text-right">Plafon</span>
 						<div class="col-sm-6">
-							<input required="required" class="form-control text-right" type="text" name="platform" placeholder="Platform" data-tipe="integer" value="<?php echo angkaRibuan($data['platform']); ?>" value="0">
+							<input required="required" class="form-control text-right" type="text" name="plafon" placeholder="Plafon" data-tipe="integer" value="<?php echo angkaRibuan($data['plafon']); ?>">
 						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Jatuh Tempo</span>
+						<div class="col-sm-3">
+							<input required="required" class="form-control text-right" type="text" name="jatuh_tempo" placeholder="Jatuh Tempo" data-tipe="integer" value="<?php echo angkaRibuan($data['jatuh_tempo']); ?>">
+						</div>
+						<div class="col-sm-3">Hari</div>
 					</div>
 				</div>
 				<div class="col-sm-12">
@@ -101,7 +104,7 @@
 							<!-- <span class="file"><?php echo $l_ktp['filename']; ?></span> -->
 							<a href="uploads/<?php echo $l_ktp['filename']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_supplier['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_ktp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo $l_ktp['id']; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo $l_ktp['id']; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDS"></i>
 							</label>
 						</div>
@@ -229,7 +232,7 @@
 							<!-- <span class="file"><?php echo $l_npwp['filename']; ?></span> -->
 							<a href="uploads/<?php echo $l_npwp['filename']; ?>" target="_blank"><?php echo $l_npwp['filename']; ?></a>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_usaha_supplier['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_npwp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo $l_npwp['id']; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo $l_npwp['id']; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran NPWP"></i>
 							</label>
 						</div>
@@ -392,7 +395,7 @@
 										<!-- <span class="file"><?php echo $filename; ?></span> -->
 										<a href="uploads/<?php echo $filename; ?>" target="_blank"><?php echo $filename; ?></a>
 										<label class="text-right" data-idnama="<?php echo $list_lampiran_rekening_supplier['id'] ?>">
-											<input type="file" onchange="showNameFile(this)" class="file_lampiran bank_supplier" name="lampiran_dds[]" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran Rekening" data-old="<?php echo $id_old; ?>">
+											<input type="file" onchange="showNameFile(this)" class="file_lampiran bank_supplier" name="lampiran_dds[]" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran Rekening" data-old="<?php echo $id_old; ?>">
 											<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran Rekening"></i>
 										</label>
 									</td>
@@ -411,7 +414,7 @@
 				<!-- <span class="file"><?php echo $l_dds['filename']; ?></span> -->
 				<a href="uploads/<?php echo $l_dds['filename']; ?>" target="_blank"><?php echo $l_dds['filename']; ?></a>
 				<label class="col-sm-2 text-right" data-idnama="<?php echo $list_lampiran_dds_supplier['id'] ?>">
-					<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_dds" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran DDS" data-old="<?php echo $l_dds['id']; ?>">
+					<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_dds" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDS" data-old="<?php echo $l_dds['id']; ?>">
 					<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDS"></i>
 				</label>
 			</div>
@@ -421,6 +424,6 @@
 <div class="col-sm-12 no-padding text-right">
 	<hr>
 	<?php if ( $akses['a_submit'] == 1): ?>
-		<button type="button" class="btn btn-large btn-primary pull-right" id="submit_supplier" onclick="supl.edit()"><i class="fa fa-edit"></i>Edit</button>
+		<button type="button" class="btn btn-large btn-primary pull-right" id="submit_supplier" onclick="supl.edit()"><i class="fa fa-edit"></i> Edit</button>
 	<?php endif; ?>
 </div>

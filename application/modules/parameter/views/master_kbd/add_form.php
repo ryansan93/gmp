@@ -16,7 +16,7 @@
 	</div>
 	<div class="col-lg-2 no-padding action">
 	    <select class="form-control" name="perusahaan" data-required="1">
-	    	<option value="">-- Pilih Perusahaan --</option>
+	    	<!-- <option value="">-- Pilih Perusahaan --</option> -->
 			<?php foreach ($perusahaan as $k_perusahaan => $v_perusahaan) { ?>
 				<option value="<?php echo $v_perusahaan['kode']; ?>"><?php echo strtoupper($v_perusahaan['perusahaan']); ?></option>
 			<?php } ?>

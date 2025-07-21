@@ -10,6 +10,14 @@
 			<form role="form" class="form-horizontal">
 				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-4 d-flex align-items-center no-padding">
+						<div class="col-lg-4">No PO</div>
+						<div class="col-lg-8">
+							<input type="text" class="form-control no_po" placeholder="No. PO" value="<?php echo $data['no_po']; ?>" readonly>
+						</div>
+					</div>
+				</div>
+				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-4 d-flex align-items-center no-padding">
 						<div class="col-lg-4">No Order</div>
 						<div class="col-lg-8">
 							<input type="text" class="form-control no_order" placeholder="No. Order" value="<?php echo $data['no_order']; ?>" readonly>
@@ -96,7 +104,6 @@
 									<tr class="child inactive">
 										<td>
 											<select class="form-control perusahaan" data-required="1">
-												<option value="">-- Pilih Perusahaan --</option>
 												<?php foreach ($perusahaan as $k_perusahaan => $v_perusahaan): ?>
 													<?php
 														$selected = null;

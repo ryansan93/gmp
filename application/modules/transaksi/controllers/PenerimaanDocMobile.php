@@ -493,10 +493,13 @@ class PenerimaanDocMobile extends Public_Controller {
                 }
             }
 
+            $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
+
             $m_terima_doc->id = $id;
             $m_terima_doc->no_terima = $nomor;
             $m_terima_doc->no_order = $params['no_order'];
             $m_terima_doc->no_sj = $params['no_sj'];
+            $m_terima_doc->no_bbm = $no_bbm;
             $m_terima_doc->nopol = $params['nopol'];
             $m_terima_doc->datang = $params['tiba'];
             $m_terima_doc->supplier = $d_order_doc->supplier;
@@ -535,12 +538,14 @@ class PenerimaanDocMobile extends Public_Controller {
                 }
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", NULL, 1";
-            $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", NULL, 1";
+            // $m_conf->hydrateRaw( $sql );
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, null, 1);
 
             $deskripsi_log_terima_doc = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log_terima_doc);
+
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data Terima DOC berhasil disimpan.';
@@ -578,10 +583,13 @@ class PenerimaanDocMobile extends Public_Controller {
 
             $id = $d_terima_doc->id;
 
+            $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
+
             $m_terima_doc->where('id', $id)->update(
                 array(
                     'no_order' => $params['no_order'],
                     'no_sj' => $params['no_sj'],
+                    'no_bbm' => $no_bbm,
                     'nopol' => $params['nopol'],
                     'datang' => $params['tiba'],
                     'supplier' => $d_order_doc->supplier,
@@ -622,12 +630,14 @@ class PenerimaanDocMobile extends Public_Controller {
                 }
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", ".$id.", 2";
-            // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
-            $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", ".$id.", 2";
+            // // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
+            // $m_conf->hydrateRaw( $sql );
 
             $d_terima_doc = $m_terima_doc->where('id', $id)->first();
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
 
             $deskripsi_log_terima_doc = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_terima_doc, $deskripsi_log_terima_doc);
@@ -656,9 +666,11 @@ class PenerimaanDocMobile extends Public_Controller {
             $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
             $m_terima_doc_ket->where('id_header', $d_terima_doc->id)->delete();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$d_terima_doc->id.", ".$d_terima_doc->id.", 3";
-            $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$d_terima_doc->id.", ".$d_terima_doc->id.", 3";
+            // $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, null, $d_terima_doc->id, 3);
 
             $deskripsi_log = 'hapus data penerimaan doc noreg '.$d_order_doc->noreg.' oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_terima_doc, $deskripsi_log);
@@ -688,5 +700,9 @@ class PenerimaanDocMobile extends Public_Controller {
         }
         
         return $mappingFiles;
+    }
+
+    public function tes() {
+        Modules::run( 'base/InsertJurnal/exec', $this->url, null, 1, 3);
     }
 }

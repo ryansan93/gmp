@@ -1,4 +1,4 @@
-<?php if ( count($data) > 0 ): ?>
+<?php if ( !empty($data) && count($data) > 0 ): ?>
 	<?php foreach ($data as $k_data => $v_data): ?>
 		<tr class="search">
 			<td><?php echo strtoupper($v_data['nama']); ?></td>

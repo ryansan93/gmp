@@ -171,6 +171,8 @@ class TransaksiJurnal extends Public_Controller
             $m_jt->kode = $kode;
             $m_jt->nama = $params['nama'];
             $m_jt->unit = $params['peruntukan'];
+            $m_jt->kode_voucher = $params['kode_voucher'];
+            $m_jt->jurnal_manual = $params['jurnal_manual'];
             $m_jt->mstatus = 1;
             $m_jt->save();
 
@@ -189,15 +191,6 @@ class TransaksiJurnal extends Public_Controller
                 $m_djt->kode = $kode_det;
                 $m_djt->save();
             }
-
-            // if ( isset($params['sumber_tujuan']) && !empty($params['sumber_tujuan']) ) {
-            //     foreach ($params['sumber_tujuan'] as $k_det => $v_det) {
-            //         $m_jtst = new \Model\Storage\JurnalTransSumberTujuan_model();
-            //         $m_jtst->id_header = $id;
-            //         $m_jtst->nama = $v_det['nama'];
-            //         $m_jtst->save();
-            //     }
-            // }
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_jt, $deskripsi_log);
@@ -231,6 +224,8 @@ class TransaksiJurnal extends Public_Controller
             $m_jt->kode = $d_jt->kode;
             $m_jt->nama = $params['nama'];
             $m_jt->unit = $params['peruntukan'];
+            $m_jt->kode_voucher = $params['kode_voucher'];
+            $m_jt->jurnal_manual = $params['jurnal_manual'];
             $m_jt->mstatus = 1;
             $m_jt->save();
 

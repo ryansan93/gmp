@@ -589,12 +589,22 @@ class PenerimaanPakanMobile extends Public_Controller {
             $m_kirim_pakan = new \Model\Storage\KirimPakan_model();
             $d_kirim_pakan = $m_kirim_pakan->where('no_sj', $params['no_sj'])->first();
 
+            $no_bbm = null;
+            if ( $d_kirim_pakan->jenis_kirim == 'opks' ) {
+                $no_bbm = 'BBM/PKN/S'.str_replace('OPK', '', $d_kirim_pakan->no_order);
+            } else if ( $d_kirim_pakan->jenis_kirim == 'opkg' ) {
+                $no_bbm = 'BBM/PKN/G'.str_replace('OP', '', $d_kirim_pakan->no_order);
+            } else if ( $d_kirim_pakan->jenis_kirim == 'opkp' ) {
+                $no_bbm = 'BBM/PKN/P'.str_replace('OP', '', $d_kirim_pakan->no_order);
+            }
+
             $m_terima_pakan = new \Model\Storage\TerimaPakan_model();
             $now = $m_terima_pakan->getDate();
 
             $m_terima_pakan->id_kirim_pakan = $d_kirim_pakan->id;
             $m_terima_pakan->tgl_trans = $now['waktu'];
             $m_terima_pakan->tgl_terima = $params['tiba'];
+            $m_terima_pakan->no_bbm = $no_bbm;
             $m_terima_pakan->save();
 
             $id_terima = $m_terima_pakan->id;
@@ -640,12 +650,58 @@ class PenerimaanPakanMobile extends Public_Controller {
         $status_jurnal = $params['status_jurnal'];
 
         try {
+            $noreg1 = null;
+            $noreg2 = null;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+					case
+						when kp.jenis_kirim = 'opkp' then
+							kp.asal
+						else
+							kp.tujuan
+					end as noreg1,
+					case
+						when kp.jenis_kirim = 'opkp' then
+							kp.tujuan
+						else
+							null
+					end as noreg2,
+                    kp.jenis_kirim
+				from terima_pakan tp
+				left join
+					kirim_pakan kp
+					on
+						tp.id_kirim_pakan = kp.id
+				where
+					tp.id = '".$id."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                $noreg1 = $d_conf['noreg1'];
+                $noreg2 = $d_conf['noreg2'];
+            }
+
             $this->insertKonfirmasi( $id, $delete );
 
             $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-
             $d_conf = $conf->hydrateRaw($sql);
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $id_old = null;
+            if ( $status_jurnal <> 1 ) {
+                $id_old = $id;
+            }
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
             $this->result['status'] = 1;
             $this->result['message'] = $message;

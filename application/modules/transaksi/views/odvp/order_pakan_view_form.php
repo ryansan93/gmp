@@ -14,6 +14,12 @@
 						</div>
 					</div>
 					<div class="col-xs-12 no-padding">
+						<div class="col-xs-2 no-padding"><label class="control-label">No PO</label></div>
+						<div class="col-xs-10 no-padding">
+							<label class="control-label">: <?php echo $data['no_po']; ?></label>
+						</div>
+					</div>
+					<div class="col-xs-12 no-padding">
 						<div class="col-xs-2 no-padding"><label class="control-label">Tanggal</label></div>
 						<div class="col-xs-10 no-padding">
 							<label class="control-label">: <?php echo tglIndonesia($data['tgl_trans'], '-', ' '); ?></label>

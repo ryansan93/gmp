@@ -502,8 +502,6 @@ class MasterKBD extends Public_Controller
         $tgl_mulai = null;
 
         try {
-            // cetak_r( $params, 1 );
-
             $m_sk = new \Model\Storage\SapronakKesepakatan_model();
             $m_sk->nomor = $m_sk->getNextDocNum('ADM/HSK');
             $m_sk->pola = $params['pola'];

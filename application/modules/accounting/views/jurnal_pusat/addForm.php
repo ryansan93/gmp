@@ -10,7 +10,7 @@
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-	<div class="col-xs-12 no-padding"><label class="control-label text-left">Transaksi</label></div>
+	<div class="col-xs-12 no-padding"><label class="control-label text-left">Transaksi / Kelompok Jurnal</label></div>
 	<div class="col-xs-12 no-padding">
 		<select class="form-control jurnal_trans" data-required="1">
 			<option value="">-- Pilih --</option>
@@ -33,7 +33,13 @@
 				<tr>
 					<td style="padding: 10px;">
 						<div class="col-xs-12 no-padding">
-							<div class="col-xs-12 no-padding"><label class="control-label" style="padding-top: 0px;">Tanggal</label></div>
+							<div class="col-xs-12 no-padding"><label class="control-label">Kode Jurnal</label></div>
+							<div class="col-xs-12 no-padding">
+								<input type="text" class="form-control kode_jurnal" placeholder="Kode Jurnal" value="<?php echo (!empty($data_rm)) ? $data_rm['kode_jurnal'] : null; ?>" readonly>
+							</div>
+						</div>
+						<div class="col-xs-12 no-padding">
+							<div class="col-xs-12 no-padding"><label class="control-label">Tanggal</label></div>
 							<div class="col-xs-12 no-padding">
 								<div class="input-group date" id="tgl_trans">
 							        <input type="text" class="form-control text-center" data-required="1" placeholder="Tanggal" data-tgl="<?php echo (!empty($data_rm)) ? $data_rm['tanggal'] : null; ?>" />
@@ -125,11 +131,11 @@
 								<div class="col-xs-12 no-padding">
 									<select class="form-control unit" data-required="1">
 										<option value="">-- Pilih --</option>
-										<option value="all">ALL</option>
+										<!-- <option value="all">ALL</option>
 										<option value="pusat">PUSAT GEMUK</option>
 										<option value="pusat_gml">PUSAT GEMILANG</option>
 										<option value="pusat_mv">PUSAT MAVENDRA</option>
-										<option value="pusat_ma">PUSAT MA</option>
+										<option value="pusat_ma">PUSAT MA</option> -->
 										<?php foreach ($unit as $k_unit => $v_unit): ?>
 											<option value="<?php echo $v_unit['kode']; ?>"><?php echo $v_unit['nama']; ?></option>
 										<?php endforeach ?>

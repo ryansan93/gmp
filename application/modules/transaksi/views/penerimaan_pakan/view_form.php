@@ -1,5 +1,13 @@
 <div class="form-group d-flex align-items-center">
     <div class="col-lg-6 d-flex align-items-center no-padding">
+        <div class="col-lg-3 text-left">No. BBM</div>
+        <div class="col-lg-6">
+            <label class="control-label">: <?php echo $data['no_bbm']; ?></label>
+        </div>
+    </div>
+</div>
+<div class="form-group d-flex align-items-center">
+    <div class="col-lg-6 d-flex align-items-center no-padding">
         <div class="col-lg-3 text-left">No. SJ</div>
         <div class="col-lg-6">
             <label class="control-label">: <?php echo $data_kp[0]['no_sj']; ?></label>
@@ -134,7 +142,7 @@
             </div>
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group lock_btn_fiskal" data-date="<?php echo $data['tgl_terima']; ?>">
         <div class="col-lg-12">
             <?php if ( $akses['a_edit'] == 1 ): ?>
                 <button type="button" data-href="penerimaan" class="btn btn-primary cursor-p pull-right" title="EDIT" onclick="pp.changeTabActive(this)" style="margin-left: 10px;" data-id="<?php echo $data['id']; ?>" data-edit="edit"> 

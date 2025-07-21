@@ -1,4 +1,4 @@
-<?php if ( !empty($data) && count($data) ) { ?>
+<?php if ( !empty($data) && count($data) > 0 ) { ?>
     <?php foreach ($data as $k_ln => $v_ln) { ?>
         <?php foreach ($v_ln['data'] as $k => $val) { ?>
             <?php

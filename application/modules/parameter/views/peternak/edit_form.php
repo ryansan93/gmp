@@ -36,15 +36,34 @@
 				</div>
 			</div>
 			<div class="form-group align-items-center d-flex">
-				<span class="col-sm-2 text-right">KTP</span>
-				<div class="col-sm-3">
-					<input type="text" class="form-control" name="ktp" placeholder="nomor ktp" required data-tipe="ktp" value="<?php echo $mitra['ktp'] ?>">
+				<span class="col-sm-2 text-right">Penanggung Jawab</span>
+				<div class="col-sm-5">
+					<input type="text" class="form-control" name="nama_mitra" placeholder="nama mitra" value="<?php echo $mitra['nama'] ?>" required="1">
 				</div>
 			</div>
 			<div class="form-group align-items-center d-flex">
-				<span class="col-sm-2 text-right">Nama Mitra</span>
+				<span class="col-sm-2 text-right">Pemilik</span>
 				<div class="col-sm-5">
-					<input type="text" class="form-control" name="nama_mitra" placeholder="nama mitra" value="<?php echo $mitra['nama'] ?>" required="1">
+					<select class="form-control" name="pemilik">
+						<option value="">-- Pilih Pemilik Jika Ada --</option>
+						<?php if ( !empty( $pemilik ) ) { ?>
+							<?php foreach ($pemilik as $key => $value) { ?>
+								<?php
+									$selected = null;
+									if ( $value['nomor'] == $mitra->d_pemilik->nomor ) {
+										$selected = 'selected';
+									}
+								?>
+								<option value="<?php echo $value['nomor']; ?>" <?php echo $selected; ?> ><?php echo strtoupper($value['nomor'].' | '.$value['nama']); ?></option>
+							<?php } ?>
+						<?php } ?>
+					</select>
+				</div>
+			</div>
+			<div class="form-group align-items-center d-flex">
+				<span class="col-sm-2 text-right">KTP</span>
+				<div class="col-sm-3">
+					<input type="text" class="form-control" name="ktp" placeholder="nomor ktp" required data-tipe="ktp" value="<?php echo $mitra['ktp'] ?>">
 				</div>
 			</div>
 			<div class="form-group align-items-center d-flex">
@@ -94,6 +113,19 @@
 						</tbody>
 					</table>
 				</div>
+			</div>
+			<div class="form-group align-items-center d-flex">
+				<span class="col-sm-2 text-right">Plafon</span>
+				<div class="col-sm-2">
+					<input type="text" class="form-control text-right" name="plafon" placeholder="Plafon" data-tipe="integer" value="<?php echo angkaRibuan($mitra['plafon']); ?>">
+				</div>
+			</div>
+			<div class="form-group align-items-center d-flex">
+				<span class="col-sm-2 text-right">Jatuh Tempo</span>
+				<div class="col-sm-1">
+					<input type="text" class="form-control text-right" name="jatuh_tempo" placeholder="Jatuh Tempo" data-tipe="integer" value="<?php echo angkaRibuan($mitra['jatuh_tempo']); ?>">
+				</div>
+				<div class="col-sm-1">Hari</div>
 			</div>
 
 			<div class="row">

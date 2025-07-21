@@ -97,9 +97,10 @@
 					<td class="col-xs-1 text-center" style="border: transparent;"></td>
 				</tr> -->
 				<tr>
+					<th class="col-xs-1 text-center">Kode Jurnal</th>
 					<th class="col-xs-1 text-center">Tanggal</th>
 					<th class="col-xs-1 text-center">Detail Transaksi</th>
-					<th class="col-xs-1 text-center">Perusahaan</th>
+					<th class="col-xs-2 text-center">Perusahaan</th>
 					<th class="col-xs-1 text-center">Asal</th>
 					<th class="col-xs-1 text-center">Tujuan</th>
 					<th class="col-xs-1 text-center">Unit</th>
@@ -109,7 +110,7 @@
 			</thead>
 			<tbody>
 				<tr>
-					<td colspan="8">Data tidak ditemukan.</td>
+					<td colspan="9">Data tidak ditemukan.</td>
 				</tr>
 			</tbody>
 		</table>

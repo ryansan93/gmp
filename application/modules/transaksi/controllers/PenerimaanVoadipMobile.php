@@ -597,12 +597,22 @@ class PenerimaanVoadipMobile extends Public_Controller {
             $m_kirim_voadip = new \Model\Storage\KirimVoadip_model();
             $d_kirim_voadip = $m_kirim_voadip->where('no_sj', $params['no_sj'])->first();
 
+            $no_bbm = null;
+            if ( $d_kirim_voadip->jenis_kirim == 'opks' ) {
+                $no_bbm = 'BBM/OVK/S'.str_replace('OVO', '', $d_kirim_voadip->no_order);
+            } else if ( $d_kirim_voadip->jenis_kirim == 'opkg' ) {
+                $no_bbm = 'BBM/OVK/G'.str_replace('OP', '', $d_kirim_voadip->no_order);
+            } else if ( $d_kirim_voadip->jenis_kirim == 'opkp' ) {
+                $no_bbm = 'BBM/OVK/P'.str_replace('OP', '', $d_kirim_voadip->no_order);
+            }
+
             $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
             $now = $m_terima_voadip->getDate();
 
             $m_terima_voadip->id_kirim_voadip = $d_kirim_voadip->id;
             $m_terima_voadip->tgl_trans = $now['waktu'];
             $m_terima_voadip->tgl_terima = $params['tiba'];
+            $m_terima_voadip->no_bbm = $no_bbm;
             $m_terima_voadip->save();
 
             $id_terima = $m_terima_voadip->id;
@@ -648,12 +658,58 @@ class PenerimaanVoadipMobile extends Public_Controller {
         $status_jurnal = $params['status_jurnal'];
 
         try {
+            $noreg1 = null;
+            $noreg2 = null;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+					case
+						when kv.jenis_kirim = 'opkp' then
+							kv.asal
+						else
+							kv.tujuan
+					end as noreg1,
+					case
+						when kv.jenis_kirim = 'opkp' then
+							kv.tujuan
+						else
+							null
+					end as noreg2,
+                    kv.jenis_kirim
+				from terima_voadip tv
+				left join
+					kirim_voadip kv
+					on
+						tv.id_kirim_voadip = kv.id
+				where
+					tv.id = '".$id."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                $noreg1 = $d_conf['noreg1'];
+                $noreg2 = $d_conf['noreg2'];
+            }
+
             $this->insertKonfirmasi( $id, $delete );
 
             $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_voadip_by_transaksi 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-
             $d_conf = $conf->hydrateRaw($sql);
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $id_old = null;
+            if ( $status_jurnal <> 1 ) {
+                $id_old = $id;
+            }
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
             $this->result['status'] = 1;
             $this->result['message'] = $message;

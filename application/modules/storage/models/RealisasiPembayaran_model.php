@@ -48,9 +48,14 @@ class RealisasiPembayaran_model extends Conf{
 		return $this->hasMany('\Model\Storage\RealisasiPembayaranDet_model', 'id_header', 'id');
 	}
 
+	public function dn_realisasi_pembayaran()
+	{
+		return $this->hasMany('\Model\Storage\RealisasiPembayaranDn_model', 'id_header', 'id')->with(['d_dn']);
+	}
+
 	public function cn_realisasi_pembayaran()
 	{
-		return $this->hasMany('\Model\Storage\RealisasiPembayaranCn_model', 'id_header', 'id')->with(['det_jurnal']);
+		return $this->hasMany('\Model\Storage\RealisasiPembayaranCn_model', 'id_header', 'id')->with(['d_cn']);
 	}
 
 	public function d_potongan()

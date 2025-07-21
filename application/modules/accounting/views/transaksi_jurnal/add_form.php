@@ -5,14 +5,27 @@
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-	<div class="col-xs-12 no-padding"><label class="control-label text-left">Peruntukan</label></div>
-	<div class="col-xs-12 no-padding">
-		<select class="form-control peruntukan" data-required="1">
-			<option>-- Pilih --</option>
-			<option value="0">NON UNIT</option>
-			<option value="1">UNIT</option>
-		</select>
+	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">Kode Voucher</label></div>
+		<div class="col-xs-12 no-padding">
+			<input type="text" class="form-control text-left uppercase kode_voucher" data-required="1" placeholder="Kode Voucher (MAX:5)" maxlength="5" />
+		</div>
 	</div>
+	<div class="col-xs-6 no-padding" style="padding-left: 5px;">
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">Peruntukan</label></div>
+		<div class="col-xs-12 no-padding">
+			<select class="form-control peruntukan" data-required="1">
+				<option>-- Pilih --</option>
+				<option value="0">NON UNIT</option>
+				<option value="1">UNIT</option>
+			</select>
+		</div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<label class="checkbox-inline">
+		<input type="checkbox" value="1" class="jurnal_manual cursor-p"><label class="control-label" style="margin-top: 0xp; padding-top: 0px;">Jurnal Manual</label>
+	</label>
 </div>
 <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

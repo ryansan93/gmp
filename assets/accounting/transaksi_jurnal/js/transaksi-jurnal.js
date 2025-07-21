@@ -146,21 +146,12 @@ var tj = {
 						return _detail;
 					});
 
-					// var sumber_tujuan = $.map( $(dcontent).find('table.sumber_tujuan tbody tr'), function(tr) {
-					// 	if ( !empty($(tr).find('input').val()) ) {
-					// 		var _sumber_tujuan = {
-					// 			'nama': $(tr).find('input').val()
-					// 		};
-
-					// 		return _sumber_tujuan;
-					// 	}
-					// });
-
 					var data = {
 						'nama': $(dcontent).find('.nama').val().toUpperCase(),
 						'peruntukan': $(dcontent).find('.peruntukan').select2().val(),
-						'detail': detail,
-						// 'sumber_tujuan': sumber_tujuan
+						'kode_voucher': $(dcontent).find('.kode_voucher').val(),
+						'jurnal_manual': ($(dcontent).find('.jurnal_manual').is(':checked')) ? 1 : 0,
+						'detail': detail
 					};
 
 					$.ajax({
@@ -224,22 +215,13 @@ var tj = {
 						return _detail;
 					});
 
-					// var sumber_tujuan = $.map( $(dcontent).find('table.sumber_tujuan tbody tr'), function(tr) {
-					// 	if ( !empty($(tr).find('input').val()) ) {
-					// 		var _sumber_tujuan = {
-					// 			'nama': $(tr).find('input').val()
-					// 		};
-
-					// 		return _sumber_tujuan;
-					// 	}
-					// });
-
 					var data = {
 						'id': $(elm).data('id'),
 						'nama': $(dcontent).find('.nama').val().toUpperCase(),
 						'peruntukan': $(dcontent).find('.peruntukan').select2().val(),
-						'detail': detail,
-						// 'sumber_tujuan': sumber_tujuan
+						'kode_voucher': $(dcontent).find('.kode_voucher').val(),
+						'jurnal_manual': ($(dcontent).find('.jurnal_manual').is(':checked')) ? 1 : 0,
+						'detail': detail
 					};
 
 					$.ajax({

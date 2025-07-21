@@ -5,9 +5,26 @@
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-2 no-padding"><label class="control-label text-left">Kode Voucher</label></div>
+	<div class="col-xs-10 no-padding">
+		<label class="control-label">: <?php echo $data['kode_voucher']; ?></label>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 	<div class="col-xs-2 no-padding"><label class="control-label text-left">Peruntukan</label></div>
 	<div class="col-xs-10 no-padding">
 		<label class="control-label">: <?php echo ($data['unit'] == 1) ? 'UNIT' : 'NON UNIT'; ?></label>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-2 no-padding"><label class="control-label text-left">Jurnal Pusat</label></div>
+	<div class="col-xs-10 no-padding">
+		<label class="control-label">: </label>
+		<?php if ( $data['jurnal_manual'] == 1 ) { ?>
+			<i class="fa fa-check"></i>
+		<?php } else { ?>
+			<i class="fa fa-minus"></i>
+		<?php } ?>
 	</div>
 </div>
 <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
@@ -17,15 +34,19 @@
 		<table class="table table-bordered detail" style="margin-bottom: 0px;">
 			<thead>
 				<tr>
+					<th class="col-xs-1">Kode</th>
 					<th class="col-xs-4">Nama</th>
 					<th class="col-xs-3">Sumber</th>
 					<th class="col-xs-3">Tujuan</th>
-					<th class="col-xs-2 text-center">Submit Periode</th>
+					<th class="col-xs-1 text-center">Submit Periode</th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php foreach ($data['detail'] as $k_det => $v_det): ?>
 					<tr>
+						<td>
+							<?php echo $v_det['kode']; ?>
+						</td>
 						<td>
 							<?php echo $v_det['nama']; ?>
 						</td>

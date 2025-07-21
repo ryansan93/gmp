@@ -97,7 +97,7 @@
 
                     if ( !empty($data) ) {
                       if ( is_array($data) ) {
-                        $data = (!empty($data) && $data->count() > 0) ? $data->toArray() : null;
+                        $data = (!empty($data) && count($data) > 0) ? $data : null;
                       }
 
                       $notif[$v_mdetail['path_detfitur']]['data'] = $data;
@@ -115,7 +115,7 @@
 
                     if ( !empty($data) ) {
                       if ( is_array($data) ) {
-                        $data = ($data->count() > 0) ? $data->toArray() : null;
+                        $data = (!empty($data) && count($data) > 0) ? $data : null;
                       }
 
                       $notif[$v_mdetail['path_detfitur']]['data'] = $data;

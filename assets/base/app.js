@@ -256,4 +256,29 @@ var App = {
             });
         });
     }, // end - setBindSHA1
+
+    setTutupBulan : function(){
+        $.ajax({
+            url : 'base/TutupBulan/getData',
+            data : {},
+            type : 'POST',
+            dataType : 'JSON',
+            beforeSend : function(){},
+            success : function(data){
+                if ( !empty( data.content ) ) {
+                    $.map( $('.lock_fiskal').find('.datetimepicker'), function(d) {
+                        $(d).data("DateTimePicker").minDate(moment(new Date(data.content.minDate)));
+                    });
+
+                    $.map( $('.lock_fiskal').find('.lock_btn_fiskal'), function(btn) {
+                        var val = $(btn).attr('data-date');
+
+                        if ( val < data.content.minDate ) {
+                            $(btn).find('button').remove();
+                        }
+                    });
+                }
+            },
+        });
+    }, // end - setTutupBulan
 };

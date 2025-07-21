@@ -14,9 +14,11 @@
 	<table class="table table-bordered tbl_riwayat" style="margin-bottom: 0px;">
 		<thead>
 			<tr>
-				<th class="col-xs-6">Nama</th>
-				<th class="col-xs-4">Detail</th>
-				<th class="col-xs-2">Status</th>
+				<th class="col-xs-3">Nama</th>
+				<th class="col-xs-1">Kode Voucher</th>
+				<th class="col-xs-1">Jurnal Manual</th>
+				<th class="col-xs-6">Detail</th>
+				<th class="col-xs-1">Status</th>
 				<!-- <th class="col-xs-1">Action</th> -->
 			</tr>
 		</thead>
@@ -25,13 +27,21 @@
 				<?php foreach ($data as $k_data => $v_data): ?>
 					<tr class="cursor-p" onclick="tj.changeTabActive(this)" data-href="action" data-edit="" data-id="<?php echo $v_data['id']; ?>">
 						<td><?php echo $v_data['nama']; ?></td>
+						<td><?php echo $v_data['kode_voucher']; ?></td>
+						<td class="text-center">
+							<?php if ( $v_data['jurnal_manual'] == 1 ) { ?>
+								<i class="fa fa-check"></i>
+							<?php } else { ?>
+								<i class="fa fa-minus"></i>
+							<?php } ?>
+						</td>
 						<td>
 							<?php if ( !empty($v_data['detail']) ): ?>
 								<?php
 									$val = '';
 									$idx_det = 1;
 									foreach ($v_data['detail'] as $k_det => $v_det) {
-										$val .= $v_det['nama'];
+										$val .= $v_det['kode'].' | '.$v_det['nama'];
 										if ( $idx_det < count($v_data['detail']) ) {
 											$val .= '<br>';
 										}

@@ -7,7 +7,7 @@
 						<div class="form-group align-items-center d-flex">
 							<span class="col-sm-6 text-right">NIP</span>
 							<div class="col-sm-6">
-								<input class="form-control" type="text" name="nip_pelanggan" />
+								<input class="form-control" type="text" name="nip_pelanggan" placeholder="MAX:6" maxlength="6" />
 							</div>
 						</div>
 					<?php endif; ?>
@@ -15,8 +15,11 @@
 						<span class="col-sm-6 text-right">Jenis Pelanggan</span>
 						<div class="col-sm-6">
 							<select class="form-control" name="jenis_plg">
-								<option value="internal">Internal</option>
-								<option value="eksternal">Eksternal</option>
+								<?php if ( !empty($jenis) ) { ?>
+									<?php foreach ($jenis as $key => $value) { ?>
+										<option value="<?php echo $value['kode']; ?>"><?php echo $value['nama']; ?></option>
+									<?php } ?>
+								<?php } ?>
 							</select>
 						</div>
 					</div>
@@ -35,10 +38,17 @@
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Platform</span>
+						<span class="col-sm-6 text-right">Plafon</span>
 						<div class="col-sm-6">
-							<input required="required" class="form-control text-right" type="text" name="platform" placeholder="Platform" data-tipe="integer" />
+							<input required="required" class="form-control text-right" type="text" name="plafon" placeholder="Plafon" data-tipe="integer" />
 						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Jatuh Tempo</span>
+						<div class="col-sm-3">
+							<input required="required" class="form-control text-right" type="text" name="jatuh_tempo" placeholder="Jatuh Tempo" data-tipe="integer" />
+						</div>
+						<div class="col-sm-3">Hari</div>
 					</div>
 				</div>
 				<div class="col-sm-12">
@@ -78,7 +88,7 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_pelanggan['id'] ?>">
-								<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" data-required="1" name="lampiran_ktp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran File KTP" />
+								<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" data-required="1" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP" />
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDP"></i>
 							</label>
 						</div>
@@ -163,7 +173,7 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_usaha_pelanggan['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_npwp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran NWPW" />
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW" />
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran NPWP"></i>
 							</label>
 						</div>
@@ -277,7 +287,7 @@
 								<td><input class="form-control" type="text" name="cabang_rekening" placeholder="Cabang Bank" /></td>
 								<td>
 									<label class="text-right" data-idnama="<?php echo $list_lampiran_rekening_pelanggan['id'] ?>">
-										<input type="file" onchange="showNameFile(this)" class="file_lampiran bank_pelanggan" name="lampiran_bank" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran Rekening">
+										<input type="file" onchange="showNameFile(this)" class="file_lampiran bank_pelanggan" name="lampiran_bank" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran Rekening">
 										<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran Rekening"></i>
 									</label>
 								</td>
@@ -293,7 +303,7 @@
 			<div id="lampiran_pelanggan">
 				<div class="col-sm-12"><b>Lampiran DDP</b></div>
 				<label class="col-sm-2 text-right" data-idnama="<?php echo $list_lampiran_ddp_pelanggan['id'] ?>">
-					<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ddp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran DDP">
+					<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ddp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDP">
 					<!-- <input" type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ddp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" placeholder="Lampiran DDP"> -->
 					<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDP"></i>
 				</label>

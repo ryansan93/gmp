@@ -36,11 +36,12 @@ class Supplier extends Public_Controller {
 
 			$content['title_panel'] = 'Master Data Supplier';
 			$content['akses'] = $akses;
-			$content['list_provinsi'] = $this->getLokasi('PV');
-			$content['list_lampiran_supplier'] = $this->getNamaLampiran("SUPPLIER")->first();
-			$content['list_lampiran_usaha_supplier'] = $this->getNamaLampiran("USAHA_SUPPLIER")->first();
-			$content['list_lampiran_rekening_supplier'] = $this->getNamaLampiran("REKENING_SUPPLIER")->first();
-			$content['list_lampiran_dds_supplier'] = $this->getNamaLampiran("LAMPIRAN_SUPPLIER")->first();
+			$content['addForm'] = $this->add_form();
+			// $content['list_provinsi'] = $this->getLokasi('PV');
+			// $content['list_lampiran_supplier'] = $this->getNamaLampiran("SUPPLIER")->first();
+			// $content['list_lampiran_usaha_supplier'] = $this->getNamaLampiran("USAHA_SUPPLIER")->first();
+			// $content['list_lampiran_rekening_supplier'] = $this->getNamaLampiran("REKENING_SUPPLIER")->first();
+			// $content['list_lampiran_dds_supplier'] = $this->getNamaLampiran("LAMPIRAN_SUPPLIER")->first();
 
 			// load list pelanggan
 			// $detail_content['pelanggans'] = $this->getListSupplier();
@@ -94,13 +95,16 @@ class Supplier extends Public_Controller {
         $akses = hakAkses($this->url);
 
         $content['akses'] = $akses;
+		$m_model = new \Model\Storage\Jenis_model();
+        $d_jns = $m_model->getData();
+        $content['jenis'] = !empty($d_jns) ? $d_jns : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_supplier'] = $this->getNamaLampiran("SUPPLIER", "KTP Supplier")->first();
 		$content['list_lampiran_usaha_supplier'] = $this->getNamaLampiran("SUPPLIER", "NPWP Supplier")->first();
 		$content['list_lampiran_rekening_supplier'] = $this->getNamaLampiran("BANK_SUPPLIER", "Rekening Supplier")->first();
 		$content['list_lampiran_dds_supplier'] = $this->getNamaLampiran("SUPPLIER", "DDS Supplier")->first();
         $content['data'] = null;
-        $html = $this->load->view($this->pathView . 'add_form', $content);
+        $html = $this->load->view($this->pathView . 'add_form', $content, true);
         
         return $html;
     }
@@ -160,6 +164,9 @@ class Supplier extends Public_Controller {
 		$content['l_dds'] = $lampiran_dds;
         $content['akses'] = $akses;
 
+		$m_model = new \Model\Storage\Jenis_model();
+        $d_jns = $m_model->getData();
+        $content['jenis'] = !empty($d_jns) ? $d_jns : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_supplier'] = $this->getNamaLampiran("SUPPLIER", "KTP Supplier")->first();
 		$content['list_lampiran_usaha_supplier'] = $this->getNamaLampiran("SUPPLIER", "NPWP Supplier")->first();
@@ -177,7 +184,7 @@ class Supplier extends Public_Controller {
 
         // mengambil data supplier
 		$m_supplier = new \Model\Storage\Supplier_model();
-		$d_supplier = $m_supplier->where('tipe', 'supplier')->where('id', $id)->with('telepons')->with('banks')->with('logs')->first();
+		$d_supplier = $m_supplier->where('tipe', 'supplier')->where('id', $id)->with(['d_jenis', 'telepons', 'banks', 'logs'])->first();
 		
 		// mengambil lokasi
 		$lokasi = new \Model\Storage\Lokasi_model();
@@ -291,72 +298,77 @@ class Supplier extends Public_Controller {
 	public function save() {
 		$params = $this->input->post('params');
 
-		$status = "submit";
+		try {
+			$status = "submit";
+			// supplier
+			$m_supplier = new \Model\Storage\Supplier_model();
+			$supplier_id = $m_supplier->getNextIdentity();
 
-		// supplier
-		$m_supplier = new \Model\Storage\Supplier_model();
-		$supplier_id = $m_supplier->getNextIdentity();
+			$m_supplier->id = $supplier_id;		
+			$m_supplier->jenis = $params['jenis_supplier'];
+			$kode_jenis = 'S';
 
-		$m_supplier->id = $supplier_id;		
-		$m_supplier->jenis = $params['jenis_supplier'];
-		$kode_jenis = ($params['jenis_supplier'] == "internal") ? "A" : "B";
-		$m_supplier->nomor = $m_supplier->getNextNomor($kode_jenis);
-		$m_supplier->nama = $params['nama'];
-		$m_supplier->nik = $params['ktp'];
-		$m_supplier->cp = $params['cp'];
-		$m_supplier->npwp = $params['npwp'];
-		$m_supplier->skb = $params['skb'];
-		$m_supplier->tgl_habis_skb = $params['tgl_habis_skb'];
-		$m_supplier->alamat_kecamatan = $params['alamat_supplier']['kecamatan'];
-		$m_supplier->alamat_kelurahan = $params['alamat_supplier']['kelurahan'];
-		$m_supplier->alamat_rt = $params['alamat_supplier']['rt'] ?: null;
-		$m_supplier->alamat_rw = $params['alamat_supplier']['rw'] ?: null;
-		$m_supplier->alamat_jalan = $params['alamat_supplier']['alamat'] ?: null;
-		$m_supplier->usaha_kecamatan = $params['alamat_usaha']['kecamatan'];
-		$m_supplier->usaha_kelurahan = $params['alamat_usaha']['kelurahan'];
-		$m_supplier->usaha_rt = $params['alamat_usaha']['rt'] ?: null;
-		$m_supplier->usaha_rw = $params['alamat_usaha']['rw'] ?: null;
-		$m_supplier->usaha_jalan = $params['alamat_usaha']['alamat'] ?: null;
-		$m_supplier->status = $status;
-		$m_supplier->mstatus = 1;
-		$m_supplier->tipe = 'supplier';
-		$m_supplier->platform = $params['platform'];
-		$m_supplier->version = 1;
-		$m_supplier->save();
+			$m_supplier->nomor = $m_supplier->getNextNomor($kode_jenis);
+			$m_supplier->nama = $params['nama'];
+			$m_supplier->nik = $params['ktp'];
+			$m_supplier->cp = $params['cp'];
+			$m_supplier->npwp = $params['npwp'];
+			$m_supplier->skb = $params['skb'];
+			$m_supplier->tgl_habis_skb = $params['tgl_habis_skb'];
+			$m_supplier->alamat_kecamatan = $params['alamat_supplier']['kecamatan'];
+			$m_supplier->alamat_kelurahan = $params['alamat_supplier']['kelurahan'];
+			$m_supplier->alamat_rt = $params['alamat_supplier']['rt'] ?: null;
+			$m_supplier->alamat_rw = $params['alamat_supplier']['rw'] ?: null;
+			$m_supplier->alamat_jalan = $params['alamat_supplier']['alamat'] ?: null;
+			$m_supplier->usaha_kecamatan = $params['alamat_usaha']['kecamatan'];
+			$m_supplier->usaha_kelurahan = $params['alamat_usaha']['kelurahan'];
+			$m_supplier->usaha_rt = $params['alamat_usaha']['rt'] ?: null;
+			$m_supplier->usaha_rw = $params['alamat_usaha']['rw'] ?: null;
+			$m_supplier->usaha_jalan = $params['alamat_usaha']['alamat'] ?: null;
+			$m_supplier->status = $status;
+			$m_supplier->mstatus = 1;
+			$m_supplier->tipe = 'supplier';
+			$m_supplier->plafon = $params['plafon'];
+			$m_supplier->jatuh_tempo = $params['jatuh_tempo'];
+			$m_supplier->version = 1;
+			$m_supplier->save();
 
-		$deskripsi_log_supplier = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
-		Modules::run( 'base/event/save', $m_supplier, $deskripsi_log_supplier );
+			$deskripsi_log_supplier = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
+			Modules::run( 'base/event/save', $m_supplier, $deskripsi_log_supplier );
 
-		// telepon supplier
-		$telepons = $params['telepons'];
-		foreach ($telepons as $k => $telepon) {
-			$m_telp = new \Model\Storage\TelpPelanggan_model();
-			$m_telp->id = $m_telp->getNextIdentity();
-			$m_telp->pelanggan = $supplier_id;
-			$m_telp->nomor = $telepon;
-			$m_telp->save();
-			Modules::run( 'base/event/save', $m_telp, $deskripsi_log_supplier );
-    	}
+			// telepon supplier
+			$telepons = $params['telepons'];
+			foreach ($telepons as $k => $telepon) {
+				$m_telp = new \Model\Storage\TelpPelanggan_model();
+				$m_telp->id = $m_telp->getNextIdentity();
+				$m_telp->pelanggan = $supplier_id;
+				$m_telp->nomor = $telepon;
+				$m_telp->save();
+				Modules::run( 'base/event/save', $m_telp, $deskripsi_log_supplier );
+			}
 
-    	// rekening dan bank supplier
-    	$banks = $params['banks'];
-    	foreach ($banks as $k => $bank) {
-    		$m_bank = new \Model\Storage\BankPelanggan_model();
-    		$bank_plg_id = $m_bank->getNextIdentity();
+			// rekening dan bank supplier
+			$banks = $params['banks'];
+			foreach ($banks as $k => $bank) {
+				$m_bank = new \Model\Storage\BankPelanggan_model();
+				$bank_plg_id = $m_bank->getNextIdentity();
 
-    		$m_bank->id = $bank_plg_id;
-    		$m_bank->pelanggan = $supplier_id;
-    		$m_bank->bank = $bank['nama_bank'];
-    		$m_bank->rekening_nomor = $bank['nomer_rekening'];
-    		$m_bank->rekening_pemilik = $bank['nama_pemilik'];
-    		$m_bank->rekening_cabang_bank = $bank['cabang_bank'];
-    		$m_bank->save();
-    		Modules::run( 'base/event/save', $m_telp, $deskripsi_log_supplier );
-    	}
+				$m_bank->id = $bank_plg_id;
+				$m_bank->pelanggan = $supplier_id;
+				$m_bank->bank = $bank['nama_bank'];
+				$m_bank->rekening_nomor = $bank['nomer_rekening'];
+				$m_bank->rekening_pemilik = $bank['nama_pemilik'];
+				$m_bank->rekening_cabang_bank = $bank['cabang_bank'];
+				$m_bank->save();
+				Modules::run( 'base/event/save', $m_telp, $deskripsi_log_supplier );
+			}
 
-    	$this->result['status'] = 1;
-      	$this->result['message'] = 'Data supplier sukses disimpan';
-      	$this->result['content'] = array('id' => $supplier_id);
+			$this->result['status'] = 1;
+			$this->result['message'] = 'Data supplier sukses disimpan';
+			$this->result['content'] = array('id' => $supplier_id);
+		} catch (Exception $e) {
+			$this->result['message'] = $e->getMessage();
+		}
 
     	display_json($this->result);
 	}
@@ -364,75 +376,87 @@ class Supplier extends Public_Controller {
 	public function edit() {
 		$params = $this->input->post('params');
 
-		$supplier_id_old = $params['id'];
-		$status = $params['status'];
-		$mstatus = $params['mstatus'];
-		$version = $params['version'] + 1;
+		try {
+			$supplier_id_old = $params['id'];
+			$status = $params['status'];
+			$mstatus = $params['mstatus'];
+			$version = $params['version'] + 1;
 
-		// supplier
-		$m_supplier = new \Model\Storage\Supplier_model();
-		$supplier_id = $m_supplier->getNextIdentity();
+			$m_supplier = new \Model\Storage\Supplier_model();
+			$m_supplier->where('id', $supplier_id_old)->update(
+				array(
+					'mstatus' => 0
+				)
+			);
 
-		$m_supplier->id = $supplier_id;
-		$m_supplier->jenis = $params['jenis_supplier'];
-		$m_supplier->nomor = $params['nomor'];
-		$m_supplier->nama = $params['nama'];
-		$m_supplier->nik = $params['ktp'];
-		$m_supplier->cp = $params['cp'];
-		$m_supplier->npwp = $params['npwp'];
-		$m_supplier->skb = $params['skb'];
-		$m_supplier->tgl_habis_skb = $params['tgl_habis_skb'];
-		$m_supplier->alamat_kecamatan = $params['alamat_supplier']['kecamatan'];
-		$m_supplier->alamat_kelurahan = $params['alamat_supplier']['kelurahan'];
-		$m_supplier->alamat_rt = $params['alamat_supplier']['rt'] ?: null;
-		$m_supplier->alamat_rw = $params['alamat_supplier']['rw'] ?: null;
-		$m_supplier->alamat_jalan = $params['alamat_supplier']['alamat'] ?: null;
-		$m_supplier->usaha_kecamatan = $params['alamat_usaha']['kecamatan'];
-		$m_supplier->usaha_kelurahan = $params['alamat_usaha']['kelurahan'];
-		$m_supplier->usaha_rt = $params['alamat_usaha']['rt'] ?: null;
-		$m_supplier->usaha_rw = $params['alamat_usaha']['rw'] ?: null;
-		$m_supplier->usaha_jalan = $params['alamat_usaha']['alamat'] ?: null;
-		$m_supplier->status = $status;
-		$m_supplier->mstatus = $mstatus;
-		$m_supplier->tipe = 'supplier';
-		$m_supplier->platform = $params['platform'];
-		$m_supplier->version = $version;
-		$m_supplier->save();
+			// supplier
+			$m_supplier = new \Model\Storage\Supplier_model();
+			$supplier_id = $m_supplier->getNextIdentity();
 
-		$deskripsi_log_supplier = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-		Modules::run( 'base/event/update', $m_supplier, $deskripsi_log_supplier );
+			$m_supplier->id = $supplier_id;
+			$m_supplier->jenis = $params['jenis_supplier'];
+			$m_supplier->nomor = $params['nomor'];
+			$m_supplier->nama = $params['nama'];
+			$m_supplier->nik = $params['ktp'];
+			$m_supplier->cp = $params['cp'];
+			$m_supplier->npwp = $params['npwp'];
+			$m_supplier->skb = $params['skb'];
+			$m_supplier->tgl_habis_skb = $params['tgl_habis_skb'];
+			$m_supplier->alamat_kecamatan = $params['alamat_supplier']['kecamatan'];
+			$m_supplier->alamat_kelurahan = $params['alamat_supplier']['kelurahan'];
+			$m_supplier->alamat_rt = $params['alamat_supplier']['rt'] ?: null;
+			$m_supplier->alamat_rw = $params['alamat_supplier']['rw'] ?: null;
+			$m_supplier->alamat_jalan = $params['alamat_supplier']['alamat'] ?: null;
+			$m_supplier->usaha_kecamatan = $params['alamat_usaha']['kecamatan'];
+			$m_supplier->usaha_kelurahan = $params['alamat_usaha']['kelurahan'];
+			$m_supplier->usaha_rt = $params['alamat_usaha']['rt'] ?: null;
+			$m_supplier->usaha_rw = $params['alamat_usaha']['rw'] ?: null;
+			$m_supplier->usaha_jalan = $params['alamat_usaha']['alamat'] ?: null;
+			$m_supplier->status = $status;
+			$m_supplier->mstatus = $mstatus;
+			$m_supplier->tipe = 'supplier';
+			$m_supplier->plafon = $params['plafon'];
+			$m_supplier->jatuh_tempo = $params['jatuh_tempo'];
+			$m_supplier->version = $version;
+			$m_supplier->save();
 
-		// telepon supplier
-		$telepons = $params['telepons'];
-		foreach ($telepons as $k => $telepon) {
-			$m_telp = new \Model\Storage\TelpPelanggan_model();
-			$m_telp->id = $m_telp->getNextIdentity();
+			$deskripsi_log_supplier = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+			Modules::run( 'base/event/update', $m_supplier, $deskripsi_log_supplier );
 
-			$m_telp->pelanggan = $supplier_id;
-			$m_telp->nomor = $telepon;
-			$m_telp->save();
-			Modules::run( 'base/event/update', $m_telp, $deskripsi_log_supplier );
-    	}
+			// telepon supplier
+			$telepons = $params['telepons'];
+			foreach ($telepons as $k => $telepon) {
+				$m_telp = new \Model\Storage\TelpPelanggan_model();
+				$m_telp->id = $m_telp->getNextIdentity();
 
-    	// rekening dan bank supplier
-    	$banks = $params['banks'];
-    	foreach ($banks as $k => $bank) {
-    		$m_bank = new \Model\Storage\BankPelanggan_model();
-    		$bank_plg_id = $m_bank->getNextIdentity();
+				$m_telp->pelanggan = $supplier_id;
+				$m_telp->nomor = $telepon;
+				$m_telp->save();
+				Modules::run( 'base/event/update', $m_telp, $deskripsi_log_supplier );
+			}
 
-    		$m_bank->id = $bank_plg_id;
-    		$m_bank->pelanggan = $supplier_id;
-    		$m_bank->bank = $bank['nama_bank'];
-    		$m_bank->rekening_nomor = $bank['nomer_rekening'];
-    		$m_bank->rekening_pemilik = $bank['nama_pemilik'];
-    		$m_bank->rekening_cabang_bank = $bank['cabang_bank'];
-    		$m_bank->save();
-    		Modules::run( 'base/event/update', $m_telp, $deskripsi_log_supplier );
-    	}
+			// rekening dan bank supplier
+			$banks = $params['banks'];
+			foreach ($banks as $k => $bank) {
+				$m_bank = new \Model\Storage\BankPelanggan_model();
+				$bank_plg_id = $m_bank->getNextIdentity();
 
-    	$this->result['status'] = 1;
-      	$this->result['message'] = 'Data supplier sukses di edit';
-      	$this->result['content'] = array('id' => $supplier_id);
+				$m_bank->id = $bank_plg_id;
+				$m_bank->pelanggan = $supplier_id;
+				$m_bank->bank = $bank['nama_bank'];
+				$m_bank->rekening_nomor = $bank['nomer_rekening'];
+				$m_bank->rekening_pemilik = $bank['nama_pemilik'];
+				$m_bank->rekening_cabang_bank = $bank['cabang_bank'];
+				$m_bank->save();
+				Modules::run( 'base/event/update', $m_telp, $deskripsi_log_supplier );
+			}
+
+			$this->result['status'] = 1;
+			$this->result['message'] = 'Data supplier sukses di edit';
+			$this->result['content'] = array('id' => $supplier_id);
+		} catch (Exception $e) {
+			$this->resuls['message'] = $e->getMessage();
+		}
 
     	display_json($this->result);
 	}
@@ -574,6 +598,7 @@ class Supplier extends Public_Controller {
 		}
 
 		$m_supplier = new \Model\Storage\Supplier_model();
+		$ket = null;
 		if ( $params['tipe'] == 'aktif' ) {
 			$m_supplier->where('nomor', trim( $params['nomor'] ) )->where('tipe', 'supplier')
 									   ->update(
@@ -581,6 +606,8 @@ class Supplier extends Public_Controller {
 									   			'mstatus' => 1
 									   		)
 									   	);
+
+			$ket = 'aktifkan';
 		} else {
 			$m_supplier->where('nomor', trim( $params['nomor'] ) )->where('tipe', 'supplier')
 									   ->update(
@@ -588,11 +615,13 @@ class Supplier extends Public_Controller {
 									   			'mstatus' => 0
 									   		)
 									   	);
+
+			$ket = 'non aktifkan';
 		}
 
-		$d_supplier = $m_supplier->where('nomor', trim( $params['nomor'] ) )->first();
+		$d_supplier = $m_supplier->where('nomor', trim( $params['nomor'] ) )->orderBy('id', 'desc')->first();
 
-		$deskripsi_log_supplier = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+		$deskripsi_log_supplier = 'di-'.$ket.' oleh ' . $this->userdata['detail_user']['nama_detuser'];
 		Modules::run( 'base/event/update', $d_supplier, $deskripsi_log_supplier );
 
 		$lampirans = $params['lampiran'];

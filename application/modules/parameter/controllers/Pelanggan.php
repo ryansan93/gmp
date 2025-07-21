@@ -404,10 +404,10 @@ class Pelanggan extends Public_Controller {
 
 	        if ( !empty($search_by) && !empty($search_val) ) {
 	            if ( stristr($search_by, 'nama') !== FALSE ) {
-	            	$d_nomor = $m_plg->select('nomor', 'nama')->distinct('nomor')->where($search_by, 'like', '%'.$search_val.'%')->whereIn('id', $d_id)->where('tipe', 'pelanggan')->where('mstatus', 1)->orderBy('nama', 'asc')->get()->toArray();
+	            	$d_nomor = $m_plg->select('nomor', 'nama')->distinct('nomor')->where($search_by, 'like', '%'.$search_val.'%')->whereIn('id', $d_id)->where('tipe', 'pelanggan')->orderBy('nama', 'asc')->get()->toArray();
 	            }
 	        } else {
-	        	$d_nomor = $m_plg->select('nomor', 'nama')->distinct('nomor')->whereIn('id', $d_id)->where('tipe', 'pelanggan')->where('mstatus', 1)->orderBy('nama', 'asc')->get()->toArray();
+	        	$d_nomor = $m_plg->select('nomor', 'nama')->distinct('nomor')->whereIn('id', $d_id)->where('tipe', 'pelanggan')->orderBy('nama', 'asc')->get()->toArray();
 	        }
         }
 
@@ -459,6 +459,9 @@ class Pelanggan extends Public_Controller {
         $akses = hakAkses($this->url);
 
         $content['akses'] = $akses;
+		$m_model = new \Model\Storage\Jenis_model();
+        $d_jns = $m_model->getData();
+        $content['jenis'] = !empty($d_jns) ? $d_jns : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "KTP Pelanggan")->first();
 		$content['list_lampiran_usaha_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "NPWP Pelanggan")->first();
@@ -525,6 +528,9 @@ class Pelanggan extends Public_Controller {
 		$content['l_ddp'] = $lampiran_ddp;
         $content['akses'] = $akses;
 
+		$m_model = new \Model\Storage\Jenis_model();
+        $d_jns = $m_model->getData();
+        $content['jenis'] = !empty($d_jns) ? $d_jns : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "KTP Pelanggan")->first();
 		$content['list_lampiran_usaha_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "NPWP Pelanggan")->first();
@@ -542,7 +548,7 @@ class Pelanggan extends Public_Controller {
 
         // mengambil data pelanggan
 		$m_pelanggan = new \Model\Storage\Pelanggan_model();
-		$d_pelanggan = $m_pelanggan->where('tipe', 'pelanggan')->where('id', $id)->with(['telepons', 'banks', 'posisi', 'logs'])->first();
+		$d_pelanggan = $m_pelanggan->where('tipe', 'pelanggan')->where('id', $id)->with(['d_jenis', 'telepons', 'banks', 'posisi', 'logs'])->first();
 		
 		// mengambil lokasi
 		$lokasi = new \Model\Storage\Lokasi_model();
@@ -658,150 +664,63 @@ class Pelanggan extends Public_Controller {
 	public function save() {
 		$params = $this->input->post('params');
 
-		$status = "submit";
+		try {
+			$status = "submit";
+			// pelanggan
+			$m_pelanggan = new \Model\Storage\Pelanggan_model();
+			$pelanggan_id = $m_pelanggan->getNextIdentity();
 
-		// pelanggan
-		$m_pelanggan = new \Model\Storage\Pelanggan_model();
-		$pelanggan_id = $m_pelanggan->getNextIdentity();
+			$kode_jenis = 'P';
 
-		$kode_jenis = ($params['jenis_pelanggan'] == "internal") ? "A" : "B";
+			$no_pelanggan = $m_pelanggan->getNextNomor($kode_jenis);
 
-		$no_pelanggan = $m_pelanggan->getNextNomor($kode_jenis);
+			$m_pelanggan->id = $pelanggan_id;		
+			$m_pelanggan->jenis = $params['jenis_pelanggan'];
+			$m_pelanggan->nomor = $no_pelanggan;
+			$m_pelanggan->nama = $params['nama'];
+			$m_pelanggan->nik = $params['ktp'];
+			$m_pelanggan->cp = $params['cp'];
+			$m_pelanggan->npwp = $params['npwp'];
+			$m_pelanggan->skb = $params['skb'];
+			$m_pelanggan->tgl_habis_skb = $params['tgl_habis_skb'];
+			$m_pelanggan->alamat_kecamatan = $params['alamat_pelanggan']['kecamatan'];
+			$m_pelanggan->alamat_kelurahan = $params['alamat_pelanggan']['kelurahan'];
+			$m_pelanggan->alamat_rt = $params['alamat_pelanggan']['rt'] ?: null;
+			$m_pelanggan->alamat_rw = $params['alamat_pelanggan']['rw'] ?: null;
+			$m_pelanggan->alamat_jalan = $params['alamat_pelanggan']['alamat'] ?: null;
+			$m_pelanggan->usaha_kecamatan = $params['alamat_usaha']['kecamatan'];
+			$m_pelanggan->usaha_kelurahan = $params['alamat_usaha']['kelurahan'];
+			$m_pelanggan->usaha_rt = $params['alamat_usaha']['rt'] ?: null;
+			$m_pelanggan->usaha_rw = $params['alamat_usaha']['rw'] ?: null;
+			$m_pelanggan->usaha_jalan = $params['alamat_usaha']['alamat'] ?: null;
+			$m_pelanggan->status = $status;
+			$m_pelanggan->mstatus = 1;
+			$m_pelanggan->tipe = 'pelanggan';
+			$m_pelanggan->plafon = $params['plafon'];
+			$m_pelanggan->jatuh_tempo = $params['jatuh_tempo'];
+			$m_pelanggan->version = 1;
+			$m_pelanggan->save();
 
-		$m_pelanggan->id = $pelanggan_id;		
-		$m_pelanggan->jenis = $params['jenis_pelanggan'];
-		$m_pelanggan->nomor = $no_pelanggan;
-		$m_pelanggan->nama = $params['nama'];
-		$m_pelanggan->nik = $params['ktp'];
-		$m_pelanggan->cp = $params['cp'];
-		$m_pelanggan->npwp = $params['npwp'];
-		$m_pelanggan->skb = $params['skb'];
-		$m_pelanggan->tgl_habis_skb = $params['tgl_habis_skb'];
-		$m_pelanggan->alamat_kecamatan = $params['alamat_pelanggan']['kecamatan'];
-		$m_pelanggan->alamat_kelurahan = $params['alamat_pelanggan']['kelurahan'];
-		$m_pelanggan->alamat_rt = $params['alamat_pelanggan']['rt'] ?: null;
-		$m_pelanggan->alamat_rw = $params['alamat_pelanggan']['rw'] ?: null;
-		$m_pelanggan->alamat_jalan = $params['alamat_pelanggan']['alamat'] ?: null;
-		$m_pelanggan->usaha_kecamatan = $params['alamat_usaha']['kecamatan'];
-		$m_pelanggan->usaha_kelurahan = $params['alamat_usaha']['kelurahan'];
-		$m_pelanggan->usaha_rt = $params['alamat_usaha']['rt'] ?: null;
-		$m_pelanggan->usaha_rw = $params['alamat_usaha']['rw'] ?: null;
-		$m_pelanggan->usaha_jalan = $params['alamat_usaha']['alamat'] ?: null;
-		$m_pelanggan->status = $status;
-		$m_pelanggan->mstatus = 1;
-		$m_pelanggan->tipe = 'pelanggan';
-		$m_pelanggan->platform = $params['platform'];
-		$m_pelanggan->version = 1;
-		$m_pelanggan->save();
+			$deskripsi_log_pelanggan = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
+			Modules::run( 'base/event/save', $m_pelanggan, $deskripsi_log_pelanggan );
 
-		$deskripsi_log_pelanggan = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
-		Modules::run( 'base/event/save', $m_pelanggan, $deskripsi_log_pelanggan );
+			// telepon pelanggan
+			$telepons = $params['telepons'];
+			foreach ($telepons as $k => $telepon) {
+				$m_telp = new \Model\Storage\TelpPelanggan_model();
+				$m_telp->id = $m_telp->getNextIdentity();
+				$m_telp->pelanggan = $pelanggan_id;
+				$m_telp->nomor = $telepon;
+				$m_telp->save();
+				Modules::run( 'base/event/save', $m_telp, $deskripsi_log_pelanggan );
+			}
 
-		// telepon pelanggan
-		$telepons = $params['telepons'];
-		foreach ($telepons as $k => $telepon) {
-			$m_telp = new \Model\Storage\TelpPelanggan_model();
-			$m_telp->id = $m_telp->getNextIdentity();
-			$m_telp->pelanggan = $pelanggan_id;
-			$m_telp->nomor = $telepon;
-			$m_telp->save();
-			Modules::run( 'base/event/save', $m_telp, $deskripsi_log_pelanggan );
-    	}
-
-    	// rekening dan bank pelanggan
-    	$banks = $params['banks'];
-    	foreach ($banks as $k => $bank) {
-    		$m_bank = new \Model\Storage\BankPelanggan_model();
-    		$bank_plg_id = $m_bank->getNextIdentity();
-
-    		$m_bank->id = $bank_plg_id;
-    		$m_bank->pelanggan = $pelanggan_id;
-    		$m_bank->bank = $bank['nama_bank'];
-    		$m_bank->rekening_nomor = $bank['nomer_rekening'];
-    		$m_bank->rekening_pemilik = $bank['nama_pemilik'];
-    		$m_bank->rekening_cabang_bank = $bank['cabang_bank'];
-    		$m_bank->save();
-    		Modules::run( 'base/event/save', $m_telp, $deskripsi_log_pelanggan );
-    	}
-
-    	$m_sp = new \Model\Storage\SaldoPelanggan_model();
-		$m_sp->jenis_saldo = 'D';
-		$m_sp->no_pelanggan = $no_pelanggan;
-		$m_sp->id_trans = NULL;
-		$m_sp->tgl_trans = date('Y-m-d');
-		$m_sp->jenis_trans = 'pembayaran_pelanggan';
-		$m_sp->nominal = 0;
-		$m_sp->saldo = 0;
-		$m_sp->tgl_mulai_bayar = prev_date(date('Y-m-d'), 7);
-		$m_sp->save();
-
-    	$this->result['status'] = 1;
-      	$this->result['message'] = 'Data pelanggan sukses disimpan';
-      	$this->result['content'] = array('id'=>$pelanggan_id);
-
-    	display_json($this->result);
-	}
-
-	public function edit() {
-		$params = $this->input->post('params');
-
-		$pelanggan_id_old = $params['id'];
-		$status = $params['status'];
-		$mstatus = $params['mstatus'];
-		$version = $params['version'] + 1;
-
-		// pelanggan
-		$m_pelanggan = new \Model\Storage\Pelanggan_model();
-		$pelanggan_id = $m_pelanggan->getNextIdentity();
-
-		$m_pelanggan->id = $pelanggan_id;
-		$m_pelanggan->jenis = $params['jenis_pelanggan'];
-		$m_pelanggan->nomor = $params['nomor'];
-		$m_pelanggan->nama = $params['nama'];
-		$m_pelanggan->nik = $params['ktp'];
-		$m_pelanggan->cp = $params['cp'];
-		$m_pelanggan->npwp = $params['npwp'];
-		$m_pelanggan->skb = $params['skb'];
-		$m_pelanggan->tgl_habis_skb = $params['tgl_habis_skb'];
-		$m_pelanggan->alamat_kecamatan = $params['alamat_pelanggan']['kecamatan'];
-		$m_pelanggan->alamat_kelurahan = $params['alamat_pelanggan']['kelurahan'];
-		$m_pelanggan->alamat_rt = $params['alamat_pelanggan']['rt'] ?: null;
-		$m_pelanggan->alamat_rw = $params['alamat_pelanggan']['rw'] ?: null;
-		$m_pelanggan->alamat_jalan = $params['alamat_pelanggan']['alamat'] ?: null;
-		$m_pelanggan->usaha_kecamatan = $params['alamat_usaha']['kecamatan'];
-		$m_pelanggan->usaha_kelurahan = $params['alamat_usaha']['kelurahan'];
-		$m_pelanggan->usaha_rt = $params['alamat_usaha']['rt'] ?: null;
-		$m_pelanggan->usaha_rw = $params['alamat_usaha']['rw'] ?: null;
-		$m_pelanggan->usaha_jalan = $params['alamat_usaha']['alamat'] ?: null;
-		$m_pelanggan->status = $status;
-		$m_pelanggan->mstatus = $mstatus;
-		$m_pelanggan->tipe = 'pelanggan';
-		$m_pelanggan->platform = $params['platform'];
-		$m_pelanggan->version = $version;
-		$m_pelanggan->save();
-
-		$deskripsi_log_pelanggan = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-		Modules::run( 'base/event/update', $m_pelanggan, $deskripsi_log_pelanggan );
-
-		// telepon pelanggan
-		$telepons = $params['telepons'];
-		foreach ($telepons as $k => $telepon) {
-			$m_telp = new \Model\Storage\TelpPelanggan_model();
-			$m_telp->id = $m_telp->getNextIdentity();
-
-			$m_telp->pelanggan = $pelanggan_id;
-			$m_telp->nomor = $telepon;
-			$m_telp->save();
-			Modules::run( 'base/event/update', $m_telp, $deskripsi_log_pelanggan );
-    	}
-
-    	// rekening dan bank pelanggan
-    	$banks = isset($params['banks']) ? $params['banks'] : null;
-		if ( !empty($banks) ) {
+			// rekening dan bank pelanggan
+			$banks = $params['banks'];
 			foreach ($banks as $k => $bank) {
 				$m_bank = new \Model\Storage\BankPelanggan_model();
 				$bank_plg_id = $m_bank->getNextIdentity();
-	
+
 				$m_bank->id = $bank_plg_id;
 				$m_bank->pelanggan = $pelanggan_id;
 				$m_bank->bank = $bank['nama_bank'];
@@ -809,13 +728,116 @@ class Pelanggan extends Public_Controller {
 				$m_bank->rekening_pemilik = $bank['nama_pemilik'];
 				$m_bank->rekening_cabang_bank = $bank['cabang_bank'];
 				$m_bank->save();
-				Modules::run( 'base/event/update', $m_telp, $deskripsi_log_pelanggan );
+				Modules::run( 'base/event/save', $m_telp, $deskripsi_log_pelanggan );
 			}
+
+			$m_sp = new \Model\Storage\SaldoPelanggan_model();
+			$m_sp->jenis_saldo = 'D';
+			$m_sp->no_pelanggan = $no_pelanggan;
+			$m_sp->id_trans = NULL;
+			$m_sp->tgl_trans = date('Y-m-d');
+			$m_sp->jenis_trans = 'pembayaran_pelanggan';
+			$m_sp->nominal = 0;
+			$m_sp->saldo = 0;
+			$m_sp->tgl_mulai_bayar = prev_date(date('Y-m-d'), 7);
+			$m_sp->save();
+
+			$this->result['status'] = 1;
+			$this->result['message'] = 'Data pelanggan sukses disimpan';
+			$this->result['content'] = array('id'=>$pelanggan_id);
+		} catch (Exception $e) {
+			$this->result['message'] = $e->getMessage();
 		}
 
-    	$this->result['status'] = 1;
-      	$this->result['message'] = 'Data pelanggan sukses di edit';
-      	$this->result['content'] = array('id'=>$pelanggan_id);
+    	display_json($this->result);
+	}
+
+	public function edit() {
+		$params = $this->input->post('params');
+
+		try {
+			$pelanggan_id_old = $params['id'];
+			$status = $params['status'];
+			$mstatus = $params['mstatus'];
+			$version = $params['version'] + 1;
+
+			$m_pelanggan = new \Model\Storage\Pelanggan_model();
+			$m_pelanggan->where('id', $pelanggan_id_old)->update(
+				array(
+					'mstatus' => 0
+				)
+			);
+
+			// pelanggan
+			$m_pelanggan = new \Model\Storage\Pelanggan_model();
+			$pelanggan_id = $m_pelanggan->getNextIdentity();
+
+			$m_pelanggan->id = $pelanggan_id;
+			$m_pelanggan->jenis = $params['jenis_pelanggan'];
+			$m_pelanggan->nomor = $params['nomor'];
+			$m_pelanggan->nama = $params['nama'];
+			$m_pelanggan->nik = $params['ktp'];
+			$m_pelanggan->cp = $params['cp'];
+			$m_pelanggan->npwp = $params['npwp'];
+			$m_pelanggan->skb = $params['skb'];
+			$m_pelanggan->tgl_habis_skb = $params['tgl_habis_skb'];
+			$m_pelanggan->alamat_kecamatan = $params['alamat_pelanggan']['kecamatan'];
+			$m_pelanggan->alamat_kelurahan = $params['alamat_pelanggan']['kelurahan'];
+			$m_pelanggan->alamat_rt = $params['alamat_pelanggan']['rt'] ?: null;
+			$m_pelanggan->alamat_rw = $params['alamat_pelanggan']['rw'] ?: null;
+			$m_pelanggan->alamat_jalan = $params['alamat_pelanggan']['alamat'] ?: null;
+			$m_pelanggan->usaha_kecamatan = $params['alamat_usaha']['kecamatan'];
+			$m_pelanggan->usaha_kelurahan = $params['alamat_usaha']['kelurahan'];
+			$m_pelanggan->usaha_rt = $params['alamat_usaha']['rt'] ?: null;
+			$m_pelanggan->usaha_rw = $params['alamat_usaha']['rw'] ?: null;
+			$m_pelanggan->usaha_jalan = $params['alamat_usaha']['alamat'] ?: null;
+			$m_pelanggan->status = $status;
+			$m_pelanggan->mstatus = $mstatus;
+			$m_pelanggan->tipe = 'pelanggan';
+			$m_pelanggan->plafon = $params['plafon'];
+			$m_pelanggan->jatuh_tempo = $params['jatuh_tempo'];
+			$m_pelanggan->version = $version;
+			$m_pelanggan->save();
+
+			$deskripsi_log_pelanggan = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+			Modules::run( 'base/event/update', $m_pelanggan, $deskripsi_log_pelanggan );
+
+			// telepon pelanggan
+			$telepons = $params['telepons'];
+			foreach ($telepons as $k => $telepon) {
+				$m_telp = new \Model\Storage\TelpPelanggan_model();
+				$m_telp->id = $m_telp->getNextIdentity();
+
+				$m_telp->pelanggan = $pelanggan_id;
+				$m_telp->nomor = $telepon;
+				$m_telp->save();
+				Modules::run( 'base/event/update', $m_telp, $deskripsi_log_pelanggan );
+			}
+
+			// rekening dan bank pelanggan
+			$banks = isset($params['banks']) ? $params['banks'] : null;
+			if ( !empty($banks) ) {
+				foreach ($banks as $k => $bank) {
+					$m_bank = new \Model\Storage\BankPelanggan_model();
+					$bank_plg_id = $m_bank->getNextIdentity();
+		
+					$m_bank->id = $bank_plg_id;
+					$m_bank->pelanggan = $pelanggan_id;
+					$m_bank->bank = $bank['nama_bank'];
+					$m_bank->rekening_nomor = $bank['nomer_rekening'];
+					$m_bank->rekening_pemilik = $bank['nama_pemilik'];
+					$m_bank->rekening_cabang_bank = $bank['cabang_bank'];
+					$m_bank->save();
+					Modules::run( 'base/event/update', $m_telp, $deskripsi_log_pelanggan );
+				}
+			}
+
+			$this->result['status'] = 1;
+			$this->result['message'] = 'Data pelanggan sukses di edit';
+			$this->result['content'] = array('id'=>$pelanggan_id);
+		} catch (Exception $e) {
+			$this->result['message'] = $e->getMessage();
+		}
 
     	display_json($this->result);
 	}
@@ -953,6 +975,7 @@ class Pelanggan extends Public_Controller {
 		}
 
 		$m_pelanggan = new \Model\Storage\Pelanggan_model();
+		$ket = null;
 		if ( $params['tipe'] == 'aktif' ) {
 			$m_pelanggan->where('nomor', trim( $params['nomor'] ) )->where('tipe', 'pelanggan')
 									   ->update(
@@ -960,6 +983,8 @@ class Pelanggan extends Public_Controller {
 									   			'mstatus' => 1
 									   		)
 									   	);
+			
+			$ket = 'aktifkan';
 		} else {
 			$m_pelanggan->where('nomor', trim( $params['nomor'] ) )->where('tipe', 'pelanggan')
 									   ->update(
@@ -967,11 +992,13 @@ class Pelanggan extends Public_Controller {
 									   			'mstatus' => 0
 									   		)
 									   	);
+
+			$ket = 'non aktifkan';
 		}
 
-		$d_pelanggan = $m_pelanggan->where('nomor', trim( $params['nomor'] ) )->first();
+		$d_pelanggan = $m_pelanggan->where('nomor', trim( $params['nomor'] ) )->orderBy('id', 'desc')->first();
 
-		$deskripsi_log_pelanggan = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+		$deskripsi_log_pelanggan = 'di-'.$ket.' oleh ' . $this->userdata['detail_user']['nama_detuser'];
 		Modules::run( 'base/event/update', $d_pelanggan, $deskripsi_log_pelanggan );
 
 		$lampirans = $params['lampiran'];

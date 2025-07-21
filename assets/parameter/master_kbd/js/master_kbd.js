@@ -877,8 +877,8 @@ var kbd = {
                             var bonus = $.map( $('div.aktif table.bonus').find('tr.data'), function(tr){
                                 var data = {
                                     'pola_kemitraan' : $('select[name=pola_kemitraan]').val(),
-                                    'ip_awal' : numeral.unformat( $(tr).find('td.ip_awal').html() ),
-                                    'ip_akhir' : numeral.unformat( $(tr).find('td.ip_akhir').html() ),
+                                    'ip_awal' : ($(tr).find('input.ip_awal').length > 0) ? numeral.unformat( $(tr).find('input.ip_awal').val() ) : 0,
+                                    'ip_akhir' : ($(tr).find('input.ip_akhir').length > 0) ? numeral.unformat( $(tr).find('input.ip_akhir').val() ) : 0,
                                     'bonus_kematian' : numeral.unformat( $(tr).find('input.bonus_kematian').val() ),
                                     'bonus_harga' : numeral.unformat( $(tr).find('input.bonus_harga').val() )
                                 };

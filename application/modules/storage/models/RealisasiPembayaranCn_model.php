@@ -9,4 +9,9 @@ class RealisasiPembayaranCn_model extends Conf{
 	{
 		return $this->hasOne('\Model\Storage\DetJurnal_model', 'id', 'det_jurnal_id');
 	}
+
+	public function d_cn()
+	{
+		return $this->hasOne('\Model\Storage\Cn_model', 'id', 'id_cn');
+	}
 }

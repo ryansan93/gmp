@@ -8,6 +8,13 @@
 			<input type="hidden" data-terima="<?php echo $data_terima_doc['no_terima']; ?>" data-version="<?php echo $data_terima_doc['version']; ?>">
 			<form role="form" class="form-horizontal">
 				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-2">No. BBM</div>
+					<div class="col-lg-4">
+						<span>:</span>
+						<span><b><?php echo $data_terima_doc['no_bbm']; ?></b></span>
+					</div>
+				</div>
+				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-2">No. Order</div>
 					<div class="col-lg-4">
 						<span>:</span>

@@ -1,4 +1,4 @@
-<?php if ( count($data) > 0 ): ?>
+<?php if ( !empty($data) && count($data) > 0 ): ?>
 	<?php foreach ($data as $k => $val): ?>
 		<tr class="search">
 			<td class="text-center tgl_retur"><?php echo strtoupper(tglIndonesia( $val['tgl_retur'], '-', ' ' )); ?></td>

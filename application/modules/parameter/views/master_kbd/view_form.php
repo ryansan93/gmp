@@ -12,15 +12,17 @@
  				<label class="control-label">Berlaku : <?php echo tglIndonesia($data['mulai'], '-', ' ', true); ?></label>
  			</div>
  			<div class="col-sm-6 text-right no-padding">
- 				<label class="control-label"><label class="control-label">No : <?php echo $data['nomor']; ?></label></label>
+ 				<label class="control-label">No : <?php echo $data['nomor']; ?></label>
  			</div>
  		</div>
-		<div class="col-sm-12">
+		<!-- <div class="col-sm-12">
 			<div class="col-sm-5 no-padding text-left">
 				<?php $hb_len = count($data['hitung_budidaya']) - 1; ?>
 				<label class="control-label">Mitra <?php echo strtoupper($data['hitung_budidaya'][$hb_len]['pola_kerjasama']['item']) . ' ' . strtoupper($data['pola_kerjasama']['item']) . ' ' . $data['item_pola']; ?></label>
 			</div>
-			<div class="col-sm-7 no-padding text-right">
+		</div> -->
+		<div class="col-sm-12">
+			<div class="col-sm-10 no-padding">
 				<?php 
 				$perwakilan = '';
 				$index = 0;
@@ -34,6 +36,10 @@
 				endforeach 
 				?>
 				<label class="control-label">Koordinator Wilayah : <?php echo $perwakilan; ?></label>
+			</div>
+			<div class="col-sm-2 no-padding text-right">
+				<?php $hb_len = count($data['hitung_budidaya']) - 1; ?>
+				<label class="control-label">Mitra <?php echo strtoupper($data['hitung_budidaya'][$hb_len]['pola_kerjasama']['item']) . ' ' . strtoupper($data['pola_kerjasama']['item']) . ' ' . $data['item_pola']; ?></label>
 			</div>
 			<div class="col-sm-12 no-padding">
 				<hr>

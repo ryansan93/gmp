@@ -22,6 +22,11 @@ class Pelanggan_model extends Conf {
 		return $id->nextId;
 	}
 
+	public function d_jenis()
+	{
+		return $this->hasOne('\Model\Storage\Jenis_model', 'kode', 'jenis');
+	}
+
 	public function telepons()
 	{
 		return $this->hasMany('\Model\Storage\TelpPelanggan_model', 'pelanggan', 'id');

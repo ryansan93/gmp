@@ -18,6 +18,11 @@ class Mitra_model extends Conf{
     return $id->nextId;
   }
 
+  public function d_pemilik()
+  {
+    return $this->hasOne('\Model\Storage\Mitra_model', 'nomor', 'pemilik')->orderBy('id', 'desc');
+  }
+
   public function telepons()
   {
     return $this->hasMany('\Model\Storage\TeleponMitra_model', 'mitra', 'id');

@@ -89,7 +89,7 @@ class Rdim extends Public_Controller
 
         $content['rdim_data_perwakilan_mitra'] = $this->getDataPerwakilan();
 
-        // cetak_r($content['rdim_data_perwakilan_mitra'], 1);
+        // cetak_r($content['rdim_data_perwakilan_mitra']);
 
         $status = getStatus('approve');
         $content['periodes'] = $this->getPeriodeRdim($status);
@@ -342,7 +342,14 @@ class Rdim extends Public_Controller
                             k.marketing,
                             k.jabatan,
                             k.status
-                        from karyawan k
+                        from 
+                        (
+                            select k1.* from karyawan k1
+                            right join
+                                (select max(id) as id, nik from karyawan group by nik) k2
+                                on
+                                    k1.id = k2.id
+                        ) k
                         right join
                             unit_karyawan uk
                             on
@@ -361,6 +368,9 @@ class Rdim extends Public_Controller
                             k.marketing,
                             k.jabatan,
                             k.status
+                        order by
+                            k.level asc,
+                            k.nama asc
                     ";
                     $d_karyawan = $m_conf->hydrateRaw( $sql );
 
@@ -540,269 +550,15 @@ class Rdim extends Public_Controller
                                 'kode_perusahaan' => $v_mitra['kode_perusahaan'],
                                 'kandangs' => $data_kandangs[ $key_mitra ]['kandangs']
                             );
-
-                            // $sql = "
-                            //     select 
-                            //         k.id,
-                            //         '".$v_mitra['nim']."' as nim,
-                            //         'G-'+cast(k.grup as varchar(5)) as _group,
-                            //         CASE
-                            //             WHEN k.kandang < 10 THEN
-                            //                 '0'+cast(k.kandang as varchar(5))
-                            //             ELSE
-                            //                 cast(k.kandang as varchar(5))
-                            //         END as nomor,
-                            //         k.tipe,
-                            //         k.ekor_kapasitas as kapasitas,
-                            //         ((bk.meter_panjang * bk.meter_lebar) * bk.jumlah_unit) as luas,
-                            //         CASE
-                            //             WHEN ( ((bk.meter_panjang * bk.meter_lebar) * bk.jumlah_unit) > 0 and k.ekor_kapasitas > 0 ) THEN
-                            //                 k.ekor_kapasitas / ((bk.meter_panjang * bk.meter_lebar) * bk.jumlah_unit)
-                            //         END as densitas,
-                            //         k.alamat_jalan as alamat,
-                            //         kec.nama as kecamatan,
-                            //         kab_kota.nama as kabupaten,
-                            //         w.kode as unit
-                            //     from kandang k
-                            //     left join
-                            //         (
-                            //             select kandang, sum(meter_panjang) as meter_panjang, sum(meter_lebar) as meter_lebar, sum(jumlah_unit) as jumlah_unit from bangunan_kandang group by kandang
-                            //         ) bk
-                            //         on
-                            //             bk.kandang = k.id
-                            //     left join
-                            //         (
-                            //             select * from lokasi where jenis = 'KC'
-                            //         ) kec
-                            //         on
-                            //             k.alamat_kecamatan = kec.id
-                            //     left join
-                            //         (
-                            //             select * from lokasi where jenis = 'KT' or jenis = 'KB'
-                            //         ) kab_kota
-                            //         on
-                            //             kec.induk = kab_kota.id
-                            //     left join
-                            //         wilayah w
-                            //         on
-                            //             w.id = k.unit
-                            //     where
-                            //         k.mitra_mapping = ".$v_mitra['mapping_id']."
-                            // ";
-                            // $d_kdg = $m_conf->hydrateRaw( $sql );
-
-                            // if ( $d_kdg->count() > 0 ) {
-                            //     $d_kdg = $d_kdg->toArray();
-
-                            //     $data_mitra[ $k_mitra ]['kandangs'] = $d_kdg;
-                            // }
                         }
                     }
 
                     $data[ $v_pwk['id'] ]['parent'] = $data_perwakilan;
-                    // $data[ $v_pwk['id'] ]['child'] = $data_mitra;
                 }
             }
         }
 
         return $data;
-
-        // $data = array();
-        // foreach ($d_perwakilan as $perwakilan) {
-        //     $m_mm = new \Model\Storage\MitraMapping_model();
-        //     $d_mm = $m_mm->selectRaw('max(id) as id')->where('perwakilan', $perwakilan['id'])->groupBy('nomor')->get();
-        //     if ( $d_mm->count() > 0 ) {
-        //         $d_mm = $d_mm->toArray();
-
-        //         $m_pm = new \Model\Storage\PerwakilanMaping_model();
-        //         $d_pm = $m_pm->selectRaw('max(id) as id, id_hbi')->where('id_pwk', $perwakilan['id'])->groupBy('id_hbi')->get();
-
-        //         $formatPb = array();
-        //         if ( $d_pm->count() > 0 ) {
-        //             $d_pm = $d_pm->toArray();
-
-        //             foreach ($d_pm as $pm) {
-        //                 $m_hbi = new \Model\Storage\HitungBudidayaItem_model();
-        //                 $d_hbi = $m_hbi->where('id', $pm['id_hbi'])->first();
-        //                 if ( !empty($d_hbi) ) {
-        //                     $m_sk = new \Model\Storage\SapronakKesepakatan_model();
-        //                     $d_sk = $m_sk->where('id', $d_hbi->id_sk)->with(['data_perusahaan', 'pola_kerjasama'])->first();
-
-        //                     if ($d_sk) {
-        //                         $perusahaan = json_decode(json_encode($d_sk->data_perusahaan), True);
-
-        //                         $format = $d_sk->pola_kerjasama->item_code . ' (' .  trim($d_sk->item_pola) . ') ' . $perusahaan['perusahaan'];
-        //                         $pola = $d_sk->pola_kerjasama->item_code . ' (' .  trim($d_sk->item_pola) . ')';
-
-        //                         $formatPb[$d_sk->nomor] = array(
-        //                             'id' => $pm['id'],
-        //                             'tgl_berlaku' => substr($d_sk->mulai, 0, 10),
-        //                             'format' => $format,
-        //                             'pola' => $pola,
-        //                             'perusahaan' => $perusahaan['kode']
-        //                         );
-        //                     }
-        //                 }
-        //             }
-        //         }
-
-        //         $units = array_map(function($item){
-        //             return $item['nama'];
-        //         }, $perwakilan->unit->toArray());
-
-        //         $id_unit = array_map(function($item){
-        //             return $item['id'];
-        //         }, $perwakilan->unit->toArray());
-
-        //         $m_uk = new \Model\Storage\UnitKaryawan_model();
-        //         $d_uk = $m_uk->select('id_karyawan')->distinct('id_karyawan')->whereIn('unit', $id_unit)->get()->toArray();
-
-        //         $ppl = array();
-        //         if ( !empty($id_unit) ) {
-        //             if ( !empty($d_uk) ) {
-        //                 foreach ($d_uk as $k_uk => $v_uk) {
-        //                     $m_k = new \Model\Storage\Karyawan_model();
-        //                     $d_k = $m_k->where('id', $v_uk['id_karyawan'])->where('jabatan', 'ppl')->first();
-
-        //                     if ( !empty($d_k) ) {
-        //                         array_push($ppl, $d_k->toArray());
-        //                     }
-        //                 }
-        //             }
-        //         }
-
-        //         $kanit = array();
-        //         if ( !empty($id_unit) ) {
-        //             // $m_uk = new \Model\Storage\UnitKaryawan_model();
-        //             // $d_uk = $m_uk->select('id_karyawan')->distinct('id_karyawan')->whereIn('unit', $id_unit)->get()->toArray();
-
-        //             if ( !empty($d_uk) ) {
-        //                 foreach ($d_uk as $k_uk => $v_uk) {
-        //                     $m_k = new \Model\Storage\Karyawan_model();
-        //                     $d_k = $m_k->where('id', $v_uk['id_karyawan'])->where('jabatan', 'kepala unit')->first();
-
-        //                     if ( !empty($d_k) ) {
-        //                         array_push($kanit, $d_k->toArray());
-        //                     }
-        //                 }
-        //             }
-        //         }
-
-        //         $marketing = array();
-        //         if ( !empty($id_unit) ) {
-        //             // $m_uk = new \Model\Storage\UnitKaryawan_model();
-        //             // $d_uk = $m_uk->select('id_karyawan')->distinct('id_karyawan')->whereIn('unit', $id_unit)->get()->toArray();
-
-        //             if ( !empty($d_uk) ) {
-        //                 foreach ($d_uk as $k_uk => $v_uk) {
-        //                     $m_k = new \Model\Storage\Karyawan_model();
-        //                     $d_k = $m_k->where('id', $v_uk['id_karyawan'])->where('jabatan', 'marketing')->first();
-
-        //                     if ( !empty($d_k) ) {
-        //                         array_push($marketing, $d_k->toArray());
-        //                     }
-        //                 }
-        //             }
-        //         }
-
-        //         $koordinator = array();
-        //         if ( !empty($id_unit) ) {
-        //             // $m_uk = new \Model\Storage\UnitKaryawan_model();
-        //             // $d_uk = $m_uk->select('id_karyawan')->distinct('id_karyawan')->whereIn('unit', $id_unit)->get()->toArray();
-
-        //             if ( !empty($d_uk) ) {
-        //                 foreach ($d_uk as $k_uk => $v_uk) {
-        //                     $m_k = new \Model\Storage\Karyawan_model();
-        //                     $d_k = $m_k->where('id', $v_uk['id_karyawan'])->where('jabatan', 'koordinator')->first();
-
-        //                     if ( !empty($d_k) ) {
-        //                         array_push($koordinator, $d_k->toArray());
-        //                     }
-        //                 }
-        //             }
-        //         }
-
-        //         $data_perwakilan = array(
-        //             'id' => $perwakilan->id,
-        //             'nama' => $perwakilan->nama,
-        //             'formatPb' => $formatPb,
-        //             'kanit' => $kanit,
-        //             'ppl' => $ppl,
-        //             'marketing' => $marketing,
-        //             'koordinator' => $koordinator,
-        //             'units' => $units
-        //         );
-
-        //         $data_mitra = array();
-        //         foreach ($d_mm as $mm) {
-        //             $m_mapping = new \Model\Storage\MitraMapping_model();
-        //             $d_mapping = $m_mapping->where('id', $mm['id'])->first();
-
-        //             if ( !empty($d_mapping) ) {
-        //                 $m_mitra = new \Model\Storage\Mitra_model();
-        //                 $d_mitra = $m_mitra->select('id', 'nama', 'jenis')->where('nomor', $d_mapping->nomor)->orderBy('id', 'desc')->first();
-
-        //                 if ( !empty($d_mitra) ) {
-        //                     // $m_mm = new \Model\Storage\MitraMapping_model();
-        //                     // $d_mm = $m_mm->select('id')->where('mitra', $d_mitra->id)->orderBy('id', 'desc')->get()->toArray();
-
-        //                     $m_kdg = new \Model\Storage\Kandang_model();
-        //                     $d_kdg = $m_kdg->where('mitra_mapping', $mm['id'])->with(['dKecamatan', 'bangunans'])->get();
-
-        //                     $kandangs = array();
-        //                     foreach ($d_kdg as $kandang) {
-        //                         $total_luas = 0;
-        //                         foreach ($kandang->bangunans as $bangunan) {
-        //                             $panjang = $bangunan->meter_panjang ?: 0;
-        //                             $lebar = $bangunan->meter_lebar ?: 0;
-        //                             $jml = $bangunan->jumlah_unit ?: 0;
-        //                             $luas = ( $panjang * $lebar ) * $jml;
-
-        //                             $total_luas += $luas;
-        //                         }
-
-        //                         $kapasitas = $kandang->ekor_kapasitas ?: 0;
-        //                         $kandangs[] = array(
-        //                             'id' => $kandang->id,
-        //                             'nim' => $d_mapping->nim,
-        //                             'group' => 'G-' . $kandang->grup,
-        //                             'nomor' => strlen($kandang->kandang) < 2 ? '0' . $kandang->kandang : $kandang->kandang,
-        //                             'tipe' => $kandang->tipe,
-        //                             'kapasitas' => $kapasitas,
-        //                             'luas' => $total_luas,
-        //                             'densitas' => ($kapasitas > 0 && $total_luas > 0) ? ($kapasitas / $total_luas) : 0,
-        //                             'alamat'=> $kandang->alamat_jalan,
-        //                             'kecamatan' => $kandang->dKecamatan->nama,
-        //                             'kabupaten' => $kandang->dKecamatan->dKota->nama,
-        //                             'unit' => $kandang->d_unit->kode,
-        //                         );
-        //                     }
-
-        //                     // $mitra_key = $d_mitra->nama . $d_mapping->id;
-        //                     $mitra_key = $d_mitra->nama . $d_mapping->nomor;
-        //                     $data_mitra[$mitra_key] = array(
-        //                         'mapping_id' => $d_mapping->id,
-        //                         'mitra_id' => $d_mitra->id,
-        //                         'nama' => $d_mitra->nama,
-        //                         'nim' => $d_mapping->nim,
-        //                         // 'alamat' => $d_mitra->alamat_jalan,
-        //                         // 'kecamatan' => $d_mitra->dKecamatan->nama,
-        //                         // 'kabupaten' => $d_mitra->dKecamatan->dKota->nama,
-        //                         'jenis' => getJenisMitra($d_mitra->jenis),
-        //                         'kandangs' => $kandangs,
-        //                     );
-        //                 }
-        //             }
-        //         }
-
-        //         ksort($data_mitra);
-
-        //         $data[ $perwakilan->id ]['parent'] = $data_perwakilan;
-        //         $data[ $perwakilan->id ]['child'] = $data_mitra;
-        //     }
-        // }
-
-        // return $data;
     } // end - getDataPerwakilan
 
     public function getDataKandangMitraRDIM()
@@ -810,10 +566,23 @@ class Rdim extends Public_Controller
         $tgl_docin = $this->input->get('tgl_docin');
         $nim = $this->input->get('nim');
         $kandang = $this->input->get('kandang');
+        $data_old = $this->input->get('data_old');
 
-        $noreg = $this->generateNoreg($nim, $kandang, $tgl_docin);
+        $_data_old = json_decode($data_old, true);
 
-        $m = new \Model\Storage\Mitra_model();
+        $noreg = null;
+        if ( !empty($data_old) ) {
+            $nim_old = substr( $_data_old['noreg'], 0, 7 );
+            $kdg_old = $_data_old['kandang'];
+
+            if ( $nim_old != $nim || $kdg_old != (int)$kandang ) {
+                $noreg = $this->generateNoreg($nim, $kandang, $tgl_docin);
+            } else {
+                $noreg = $_data_old['noreg'];
+            }
+        } else {
+            $noreg = $this->generateNoreg($nim, $kandang, $tgl_docin);
+        }
 
         $d = array(
             'ip1' => 0,
@@ -994,59 +763,71 @@ class Rdim extends Public_Controller
 
         // NOTE: preparing data
         $periode = $params['periode'];
-        $details = $params['details'];
+        $details = isset($params['details']) ? $params['details'] : null;
 
-        // NOTE: 1. update header -> rdim
         $id_rdim = $params['id'];
-        $m_rdim = new \Model\Storage\Rdim_model();
+        if ( !empty($details) ) {
+            // NOTE: 1. update header -> rdim
+            $m_rdim = new \Model\Storage\Rdim_model();
+            $m_rdim->where('id', $id_rdim)
+                ->update(
+                        array(
+                            'mulai' => $periode['start'],
+                            'selesai' => $periode['end'],
+                            'g_status' => getStatus('submit')
+                        )
+                    );
 
-        $m_rdim->where('id', $id_rdim)
-               ->update(
-                    array(
-                        'mulai' => $periode['start'],
-                        'selesai' => $periode['end'],
-                        'g_status' => getStatus('submit')
-                    )
-                );
-
-        $d_rdim = $m_rdim->where('id', $id_rdim)->first();
-
-        $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-        Modules::run( 'base/event/update', $d_rdim, $deskripsi_log);
-
-        $m_rs = new \Model\Storage\RdimSubmit_model();
-        $m_rs->where('id_rdim', $id_rdim)->delete();
-
-        // NOTE: 2. save detail -> rdim_submit
-        foreach ($details as $item) {
-            $m_rs_new = new \Model\Storage\RdimSubmit_model();
-            $m_rs_new->id_rdim = $id_rdim;
-            $m_rs_new->tgl_docin = $item['tanggal'] ;
-            $m_rs_new->nim = $item['nim'] ;
-            $m_rs_new->kandang = $item['kandang'] ;
-            $m_rs_new->populasi = $item['populasi'] ;
-            $m_rs_new->noreg = $item['noreg'] ;
-            // $m_rs_new->prokes = $item['program_kesehatan'] ;
-            $m_rs_new->pengawas = $item['pengawas'] ;
-            $m_rs_new->sampling = $item['tim_sampling'] ;
-            $m_rs_new->tim_panen = $item['tim_panen'] ;
-            $m_rs_new->koar = $item['koordinator_area'] ;
-            $m_rs_new->format_pb = $item['formatPb'] ;
-            $m_rs_new->pola_mitra = $item['pola'] ;
-            $m_rs_new->grup = $item['group'];
-            $m_rs_new->status = 1;
-            // $m_rs_new->ip1 = $item['ip_terakhir_1'];
-            // $m_rs_new->ip2 = $item['ip_terakhir_2'];
-            // $m_rs_new->ip3 = $item['ip_terakhir_3'];
-            $m_rs_new->tipe_densitas = $item['tipe_densitas'];
-            $m_rs_new->perusahaan = $item['perusahaan'];
-            $m_rs_new->vaksin = $item['vaksin'];
-            $m_rs_new->save();
+            $d_rdim = $m_rdim->where('id', $id_rdim)->first();
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $m_rs_new, $deskripsi_log);
-        }
+            Modules::run( 'base/event/update', $d_rdim, $deskripsi_log);
 
+            $m_rs = new \Model\Storage\RdimSubmit_model();
+            $m_rs->where('id_rdim', $id_rdim)->delete();
+
+            // NOTE: 2. save detail -> rdim_submit
+            foreach ($details as $item) {
+                $m_rs_new = new \Model\Storage\RdimSubmit_model();
+                $m_rs_new->id_rdim = $id_rdim;
+                $m_rs_new->tgl_docin = $item['tanggal'] ;
+                $m_rs_new->nim = $item['nim'] ;
+                $m_rs_new->kandang = $item['kandang'] ;
+                $m_rs_new->populasi = $item['populasi'] ;
+                $m_rs_new->noreg = $item['noreg'] ;
+                // $m_rs_new->prokes = $item['program_kesehatan'] ;
+                $m_rs_new->pengawas = $item['pengawas'] ;
+                $m_rs_new->sampling = $item['tim_sampling'] ;
+                $m_rs_new->tim_panen = $item['tim_panen'] ;
+                $m_rs_new->koar = $item['koordinator_area'] ;
+                $m_rs_new->format_pb = $item['formatPb'] ;
+                $m_rs_new->pola_mitra = $item['pola'] ;
+                $m_rs_new->grup = $item['group'];
+                $m_rs_new->status = 1;
+                // $m_rs_new->ip1 = $item['ip_terakhir_1'];
+                // $m_rs_new->ip2 = $item['ip_terakhir_2'];
+                // $m_rs_new->ip3 = $item['ip_terakhir_3'];
+                $m_rs_new->tipe_densitas = $item['tipe_densitas'];
+                $m_rs_new->perusahaan = $item['perusahaan'];
+                $m_rs_new->vaksin = $item['vaksin'];
+                $m_rs_new->save();
+
+                $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $m_rs_new, $deskripsi_log);
+            }
+        } else {
+            $m_rs = new \Model\Storage\RdimSubmit_model();
+            $m_rs->where('id_rdim', $id_rdim)->delete();
+
+            $m_rdim = new \Model\Storage\Rdim_model();
+            $d_rdim = $m_rdim->where('id', $id_rdim)->first();
+
+            $m_rdim->where('id', $id_rdim)->delete();
+
+            $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/delete', $d_rdim, $deskripsi_log);
+        }
+        
         $this->result['status'] = 1;
         $this->result['message'] = 'Data berhasil diubah';
         $this->result['content'] = array('id' => $id_rdim);

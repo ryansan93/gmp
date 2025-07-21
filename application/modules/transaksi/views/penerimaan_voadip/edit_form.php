@@ -33,6 +33,14 @@
 <hr style="margin-top: 10px; margin-bottom: 10px;">
 <div class="form-group d-flex align-items-center">
     <div class="col-xs-6 d-flex align-items-center no-padding">
+        <div class="col-xs-3 text-left">No. BBM</div>
+        <div class="col-xs-4">
+            <input type="text" class="form-control no_bbm" placeholder="No. BBM" value="<?php echo $data['no_bbm'] ?>" readonly>
+        </div>
+    </div>
+</div>
+<div class="form-group d-flex align-items-center">
+    <div class="col-xs-6 d-flex align-items-center no-padding">
         <div class="col-xs-3 text-left">No. SJ</div>
         <div class="col-xs-6">
             <select class="form-control no_sj" data-required="1" onchange="pv.get_data_by_sj(this)" data-id="<?php echo $data['kirim_voadip']['id']; ?>" data-noorder="<?php echo $data['kirim_voadip']['no_order']; ?>">

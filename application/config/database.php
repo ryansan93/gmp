@@ -83,6 +83,7 @@ $server = array(
 
 $server_aktif = $server[$aktif_server];
 
+
 $dsn = strtoupper ( substr ( PHP_OS, 0, 3 ) ) === 'WIN' ? 'sqlsrv:server=' . $server_aktif['ip'] . ';database='.$server_aktif['dbname'].'' : 'dblib:host=' . $server_aktif['ip'] . ';dbname='.$server_aktif['dbname'];
 
 $db['default'] = array(

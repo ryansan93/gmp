@@ -923,7 +923,7 @@
 											<legend>
 												Hutang Peternak
 												<?php if ( empty($id) ) { ?>
-													<button type="button" class="btn btn-primary pull-right" style="padding: 0px 6px;" onclick="rg.modalPiutang()"><i class="fa fa-plus"></i> Tambah Hutang Plasma Lain</button>
+													<button type="button" class="btn btn-primary pull-right" style="padding: 0px 6px;" onclick="rg.modalPiutang(this)" data-kode="<?php echo $data['nomor']; ?>"><i class="fa fa-plus"></i> Tambah Hutang Plasma Lain</button>
 												<?php } ?>
 											</legend>
 											<small>

@@ -26,6 +26,8 @@ var ptk = {
 			$('#tglHbsBerlaku').data('DateTimePicker').date(new Date(tgl));
 		}
 
+		$('select[name=pemilik]').select2();
+
 		if ( $('#history').attr('data-ismobile') == 1 ) {
 			// $('select.unit').select2();
 			$('select.unit').select2().on('select2:select', function(e) {
@@ -93,6 +95,8 @@ var ptk = {
 				if ( !empty(tgl) ) {
 					$('#tglHbsBerlaku').data('DateTimePicker').date(new Date(tgl));
 				}
+
+				$('select[name=pemilik]').select2();
 				
 				$('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
 					$(this).priceFormat(Config[$(this).data('tipe')]);
@@ -631,6 +635,9 @@ var ptk = {
 							return telp;
 						}
 					});
+					var pemilik = $(div_mitra).find('select[name=pemilik]').select2().val();
+					var plafon = numeral.unformat($(div_mitra).find('input[name=plafon]').val());
+					var jatuh_tempo = numeral.unformat($(div_mitra).find('input[name=jatuh_tempo]').val());
 
 					var alamat_mitra = {
 						'kecamatan' : $(div_mitra).find('select[name=kecamatan]').val(),
@@ -749,6 +756,9 @@ var ptk = {
 						'npwp' : npwp,
 						'skb' : skb,
 						'tgl_habis_skb' : tgl_habis_skb,
+						'pemilik': pemilik,
+						'plafon': plafon,
+						'jatuh_tempo': jatuh_tempo,
 						'telepons' : telepons,
 						'alamat' : alamat_mitra,
 						// 'lampirans' : lampiran_mitra,
@@ -871,6 +881,9 @@ var ptk = {
 							return telp;
 						}
 					});
+					var pemilik = $(div_mitra).find('select[name=pemilik]').select2().val();
+					var plafon = numeral.unformat($(div_mitra).find('input[name=plafon]').val());
+					var jatuh_tempo = numeral.unformat($(div_mitra).find('input[name=jatuh_tempo]').val());
 
 					var alamat_mitra = {
 						'kecamatan' : $(div_mitra).find('select[name=kecamatan]').val(),
@@ -1017,6 +1030,9 @@ var ptk = {
 						'npwp' : npwp,
 						'skb' : skb,
 						'tgl_habis_skb' : tgl_habis_skb,
+						'pemilik': pemilik,
+						'plafon': plafon,
+						'jatuh_tempo': jatuh_tempo,
 						'telepons' : telepons,
 						'alamat' : alamat_mitra,
 						// 'lampirans' : lampiran_mitra,

@@ -274,9 +274,11 @@ class OrderDoc extends Public_Controller {
                                 }
 
                                 $nomor = $m_order_doc->getNextNomor('ODC/'.$kode_unit);
+                                $no_po = $no_po = 'PO/DOC'.str_replace('ODC', '', $nomor);
 
                                 $m_order_doc->id = $m_order_doc->getNextIdentity();
                                 $m_order_doc->no_order = $nomor;
+                                $m_order_doc->no_po = $no_po;
                                 $m_order_doc->noreg = $v_data['noreg'];
                                 $m_order_doc->supplier = $v_data['supplier'];
                                 $m_order_doc->item = $v_data['item'];

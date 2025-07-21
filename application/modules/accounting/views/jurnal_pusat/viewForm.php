@@ -1,18 +1,18 @@
-<div class="col-xs-12 no-padding">
-	<div class="col-xs-1 no-padding"><label class="control-label">Tanggal</label></div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-2 no-padding"><label class="control-label">Tanggal</label></div>
 	<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
-	<div class="col-xs-10 no-padding"><label class="control-label"><?php echo strtoupper(tglIndonesia($data['tanggal'], '-', ' ')); ?></label></div>
+	<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper(tglIndonesia($data['tanggal'], '-', ' ')); ?></label></div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-	<div class="col-xs-1 no-padding"><label class="control-label">Transaksi</label></div>
+	<div class="col-xs-2 no-padding"><label class="control-label">Transaksi / Kelompok Jurnal</label></div>
 	<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
-	<div class="col-xs-10 no-padding"><label class="control-label"><?php echo strtoupper($data['nama_jurnal_trans']); ?></label></div>
+	<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper($data['nama_jurnal_trans']); ?></label></div>
 	<!-- <div class="col-xs-10 no-padding"><label class="control-label"><?php echo strtoupper($data['jurnal_trans']['nama']); ?></label></div> -->
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-	<div class="col-xs-1 no-padding"><label class="control-label">Total</label></div>
+	<div class="col-xs-2 no-padding"><label class="control-label">Total</label></div>
 	<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
-	<div class="col-xs-10 no-padding"><label class="control-label total">0</label></div>
+	<div class="col-xs-9 no-padding"><label class="control-label total">0</label></div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 	<small>
@@ -27,9 +27,14 @@
 					<tr>
 						<td style="padding: 10px;">
 							<div class="col-xs-12 no-padding">
-								<div class="col-xs-2 no-padding"><label class="control-label" style="padding-top: 0px;">Tanggal</label></div>
-								<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label" style="padding-top: 0px;">:</label></div>
-								<div class="col-xs-9 no-padding"><label class="control-label" style="padding-top: 0px;"><?php echo strtoupper(tglIndonesia($v_det['tanggal'], '-', ' ')); ?></label></div>
+								<div class="col-xs-2 no-padding"><label class="control-label">Kode Jurnal</label></div>
+								<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
+								<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper($v_det['kode_jurnal']); ?></label></div>
+							</div>
+							<div class="col-xs-12 no-padding">
+								<div class="col-xs-2 no-padding"><label class="control-label">Tanggal</label></div>
+								<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
+								<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper(tglIndonesia($v_det['tanggal'], '-', ' ')); ?></label></div>
 							</div>
 							<div class="col-xs-12 no-padding">
 								<div class="col-xs-2 no-padding"><label class="control-label">Detail Transaksi</label></div>
@@ -77,15 +82,15 @@
 									// cetak_r( $v_det['id'] );
 									$unit = str_replace('kab ', '', $v_det['nama_unit']);
 									$unit = str_replace('kota ', '', $unit);
-									if ( $v_det['unit'] == 'pusat_gml' ) {
-										$unit = strtoupper('pusat gemilang');
-									} else if (  $v_det['unit'] == 'pusat'  ) {
-										$unit = strtoupper('pusat gemuk');
-									} else if (  $v_det['unit'] == 'pusat_mv'  ) {
-										$unit = strtoupper('pusat MAVENDRA');
-									} else if (  $v_det['unit'] == 'pusat_ma'  ) {
-										$unit = strtoupper('pusat MA');
-									}
+									// if ( $v_det['unit'] == 'pusat_gml' ) {
+									// 	$unit = strtoupper('pusat gemilang');
+									// } else if (  $v_det['unit'] == 'pusat'  ) {
+									// 	$unit = strtoupper('pusat gemuk');
+									// } else if (  $v_det['unit'] == 'pusat_mv'  ) {
+									// 	$unit = strtoupper('pusat MAVENDRA');
+									// } else if (  $v_det['unit'] == 'pusat_ma'  ) {
+									// 	$unit = strtoupper('pusat MA');
+									// }
 
 									// if ( !empty($v_det['d_unit']) ) {
 									// 	$unit = str_replace('kab ', '', $v_det['nama_unit']);
@@ -108,7 +113,7 @@
 							<div class="col-xs-12 no-padding">
 								<div class="col-xs-2 no-padding"><label class="control-label">No. Bukti</label></div>
 								<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
-								<div class="col-xs-9 no-padding"><label class="control-label"><?php echo $v_det['no_bukti']; ?></label></label></div>
+								<div class="col-xs-9 no-padding"><label class="control-label"><?php echo !empty($v_det['no_bukti']) ? $v_det['no_bukti'] : '-'; ?></label></label></div>
 							</div>
 						</td>
 					</tr>

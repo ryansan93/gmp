@@ -170,14 +170,16 @@ var rdim = {
 
     changeMitraRow: function (elm, resubmit = null) {
         let row = $(elm).closest('tr');
-        var dataKandangs = $(elm).find('option:selected').attr('data-kandangs');
+
+        let dataOld = $(row).attr('data-old');
+        let dataKandangs = $(elm).find('option:selected').attr('data-kandangs');
         let eSelectKandang = row.find('select[name=kandang]');
         let eTglDocin = row.find('div#datetimepicker3');
         let jenis = $(elm).find('option:selected').attr('data-jenis');
 
         /** reset value ketika mitra diubah */
         // $(row).find('input:not([name=tanggal]), select:not([name=mitra])').val('');
-        $(row).find('td.kecamatan, td.kabupaten').html('');
+        // $(row).find('td.kecamatan, td.kabupaten').html('');
         $(row).find('input[name=jenis]').val(jenis);
 
         var no_kdg = null;
@@ -214,7 +216,7 @@ var rdim = {
                     $(row).find('input:not([name=tanggal], [name=jenis]), select:not([name=mitra], [name=kandang])').val('');
                 }
 
-                $(row).find('td.kecamatan, td.kabupaten').html('');
+                // $(row).find('td.kecamatan, td.kabupaten').html('');
                 let i = $(row).find('select[name=kandang] option:selected').index();
                 let idKandang = $(row).find('select[name=kandang]').val();
                 if (i > 0) {
@@ -237,7 +239,7 @@ var rdim = {
                     var tgl_docin = dateSQL( $(row).find('div#datetimepicker3').data('DateTimePicker').date() );
 
                     if ( !empty($(row).find('div#datetimepicker3 input').val()) ) {
-                        rdim.getDataKandangMitraRDIM(row, tgl_docin, kandang, jenis);
+                        rdim.getDataKandangMitraRDIM(row, tgl_docin, kandang, jenis, dataOld);
                     }
                 }
             });
@@ -249,9 +251,10 @@ var rdim = {
                     $(row).find('input:not([name=tanggal], [name=jenis]), select:not([name=mitra], [name=kandang])').val('');
                 }
 
-                $(row).find('td.kecamatan, td.kabupaten').html('');
+                // $(row).find('td.kecamatan, td.kabupaten').html('');
                 let i = $(this).find('option:selected').index();
                 let idKandang = $(this).val();
+
                 if (i > 0) {
                     let kandang = jsonObjectKandangs[--i];
 
@@ -272,7 +275,7 @@ var rdim = {
                     var tgl_docin = dateSQL( $(row).find('div#datetimepicker3').data('DateTimePicker').date() );
 
                     if ( !empty($(row).find('div#datetimepicker3 input').val()) ) {
-                        rdim.getDataKandangMitraRDIM(row, tgl_docin, kandang, jenis);
+                        rdim.getDataKandangMitraRDIM(row, tgl_docin, kandang, jenis, dataOld);
                     }
                 }
             });
@@ -280,20 +283,21 @@ var rdim = {
 
         }
 
-        if ( !empty(resubmit) ) {
-            $(eSelectKandang).change();
-        };
+        // if ( !empty(resubmit) ) {
+        //     $(eSelectKandang).change();
+        // };
     }, // end - changeMitraRow
 
-    getDataKandangMitraRDIM: function(row, tgl_docin, kandang, jenis) {
-        // console.log( kandang );
+    getDataKandangMitraRDIM: function(row, tgl_docin, kandang, jenis, dataOld = null) {
+        console.log( kandang );
 
         $.ajax({
             url: 'transaksi/Rdim/getDataKandangMitraRDIM',
             data: { 
                 'tgl_docin': tgl_docin, 
                 'nim': kandang.nim, 
-                'kandang': kandang.nomor
+                'kandang': kandang.nomor,
+                'data_old': dataOld
             },
             type: 'GET',
             dataType: 'JSON',

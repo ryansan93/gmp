@@ -398,6 +398,7 @@ class TSDRHPP extends Public_Controller {
             $d_rhpp_plasma = !empty($d_rhpp_plasma) ? $d_rhpp_plasma->toArray() : null;
 
             $id_tutup_siklus = $d_rhpp_inti['id_ts'];
+            $no_mitra = $d_rs['mitra']['d_mitra']['nomor'];
             $mitra = $d_rhpp_inti['mitra'];
             $noreg = $d_rhpp_inti['noreg'];
             $populasi = $d_rhpp_inti['populasi'];
@@ -691,6 +692,7 @@ class TSDRHPP extends Public_Controller {
 
             $data_piutang_plasma = $this->get_data_piutang( $d_rs['mitra']['d_mitra']['nomor'] );
             
+            $no_mitra = $d_rs['mitra']['d_mitra']['nomor'];
             $mitra = $d_rs['mitra']['d_mitra']['nama'];
             $noreg = $_noreg;
             $kandang = (int) substr($noreg, -2);
@@ -825,6 +827,7 @@ class TSDRHPP extends Public_Controller {
 
         $data = array(
             'id' => $id_tutup_siklus,
+            'no_mitra' => $no_mitra,
             'mitra' => $mitra,
             'jenis_mitra' => $jenis_mitra,
             'noreg' => $noreg,
@@ -6596,6 +6599,8 @@ class TSDRHPP extends Public_Controller {
     }
 
     public function modalPiutang() {
+        $no_mitra = $this->input->get('kode');
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select 
@@ -6673,7 +6678,8 @@ class TSDRHPP extends Public_Controller {
                     p.kode = bp.piutang_kode
             where
                 p.jenis = 'mitra' and
-                (p.nominal - isnull(bp.nominal, 0)) > 0
+                (p.nominal - isnull(bp.nominal, 0)) > 0 and
+                mtr.pemilik = '".$no_mitra."'
             order by
                 p.tanggal desc,
                 mtr.nama asc

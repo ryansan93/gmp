@@ -101,7 +101,39 @@
 					</div>
 					<div id="voadip" class="tab-pane fade">
 						<?php if ( $akses['a_submit'] == 1 ): ?>
-							<div class="col-lg-8 search no-padding d-flex align-items-center">
+							<div class="col-sm-12 no-padding">
+								<button id="btn-add" type="button" data-href="action" class="col-sm-12 btn btn-success cursor-p pull-left" title="ADD" onclick="odvp.order_voadip_form()"><i class="fa fa-plus" aria-hidden="true"></i> ADD</button>
+							</div>
+							<div class="col-sm-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
+							<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
+								<div class="col-sm-6 no-padding" style="padding-right: 5px;">
+									<div class="col-sm-12 no-padding"><label class="control-label">Tgl Awal</label></div>
+									<div class="col-sm-12 no-padding">
+										<div class="input-group date datetimepicker" name="startDate" id="StartDate_VOADIP">
+											<input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
+											<span class="input-group-addon">
+												<span class="glyphicon glyphicon-calendar"></span>
+											</span>
+										</div>
+									</div>
+								</div>
+								<div class="col-sm-6 no-padding" style="padding-left: 5px;">
+									<div class="col-sm-12 no-padding"><label class="control-label">Tgl Akhir</label></div>
+									<div class="col-sm-12 no-padding">
+										<div class="input-group date datetimepicker" name="endDate" id="EndDate_VOADIP">
+											<input type="text" class="form-control text-center" placeholder="End Date" data-required="1" />
+											<span class="input-group-addon">
+												<span class="glyphicon glyphicon-calendar"></span>
+											</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-12 no-padding">
+								<button id="btn-tampil" type="button" data-href="action" class="col-sm-12 btn btn-primary cursor-p pull-left" title="TAMPIL" onclick="odvp.get_lists_voadip()">Tampilkan</button>
+							</div>
+							<div class="col-sm-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
+							<!-- <div class="col-lg-8 search no-padding d-flex align-items-center">
 								<div class="col-sm-1 no-padding">
 									<span> Periode </label>
 								</div>
@@ -128,9 +160,9 @@
 								<div class="col-sm-2">
 									<button id="btn-add" type="button" data-href="action" class="btn btn-primary cursor-p pull-left" title="ADD" onclick="odvp.order_voadip_form()"><i class="fa fa-plus" aria-hidden="true"></i> ADD</button>
 								</div>
-							</div>
-							<div class="col-lg-4 action no-padding">
-								<div class="col-lg-4 search left-inner-addon no-padding pull-right" style="margin-left: 10px;">
+							</div> -->
+							<div class="col-sm-12 action no-padding">
+								<div class="col-sm-12 search left-inner-addon no-padding pull-right" style="margin-left: 10px;">
 									<i class="glyphicon glyphicon-search"></i><input class="form-control" type="search" data-table="tbl_odvp" placeholder="Search" onkeyup="filter_all(this)">
 								</div>
 							</div>

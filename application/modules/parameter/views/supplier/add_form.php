@@ -5,9 +5,9 @@
 				<div class="col-sm-4">
 					<?php if ( $akses['a_ack'] == 1 ): ?>
 						<div class="form-group align-items-center d-flex">
-							<span class="col-sm-6 text-right">NIP</span>
+							<span class="col-sm-6 text-right">No. Induk</span>
 							<div class="col-sm-6">
-								<input class="form-control" type="text" name="nip_supplier" >
+								<input class="form-control" type="text" name="nip_supplier" placeholder="MAX:6" maxlength="6" >
 							</div>
 						</div>
 					<?php endif; ?>
@@ -15,8 +15,13 @@
 						<span class="col-sm-6 text-right">Jenis Supplier</span>
 						<div class="col-sm-6">
 							<select class="form-control" name="jenis_supl">
-								<option value="internal">Internal</option>
-								<option value="eksternal">Eksternal</option>
+								<?php if ( !empty($jenis) ) { ?>
+									<?php foreach ($jenis as $key => $value) { ?>
+										<option value="<?php echo $value['kode']; ?>"><?php echo $value['nama']; ?></option>
+									<?php } ?>
+								<?php } ?>
+								<!-- <option value="internal">Internal</option>
+								<option value="eksternal">Eksternal</option> -->
 								<!-- <option value="ekspedisi">Ekspedisi</option> -->
 							</select>
 						</div>
@@ -34,12 +39,19 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-sm-4 hide">
+				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Platform</span>
+						<span class="col-sm-6 text-right">Plafon</span>
 						<div class="col-sm-6">
-							<input required="required" class="form-control text-right" type="text" name="platform" placeholder="Platform" data-tipe="integer" value="0">
+							<input required="required" class="form-control text-right" type="text" name="plafon" placeholder="Plafon" data-tipe="integer" value="0">
 						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Jatuh Tempo</span>
+						<div class="col-sm-3">
+							<input required="required" class="form-control text-right" type="text" name="jatuh_tempo" placeholder="Jatuh Tempo" data-tipe="integer" value="0">
+						</div>
+						<div class="col-sm-3">Hari</div>
 					</div>
 				</div>
 				<div class="col-sm-12">
@@ -79,7 +91,7 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_supplier['id'] ?>">
-								<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran supplier" data-required="1" name="lampiran_ktp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran File KTP">
+								<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran supplier" data-required="1" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDS"></i>
 							</label>
 						</div>
@@ -167,7 +179,7 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_usaha_supplier['id'] ?>">
-								<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran supplier" data-required="1" name="lampiran_npwp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran NWPW">
+								<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran supplier" data-required="1" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran NPWP"></i>
 							</label>
 						</div>
@@ -281,7 +293,7 @@
 								<td><input required="required" class="form-control" type="text" name="cabang_rekening" placeholder="Cabang Bank"></td>
 								<td>
 									<label class="text-right" data-idnama="<?php echo $list_lampiran_rekening_supplier['id'] ?>">
-										<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran bank_supplier" data-required="1" name="lampiran_dds[]" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran Rekening">
+										<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran bank_supplier" data-required="1" name="lampiran_dds[]" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran Rekening">
 										<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran Rekening"></i>
 									</label>
 								</td>
@@ -297,7 +309,7 @@
 			<div id="lampiran_supplier">
 				<div class="col-sm-12"><b>Lampiran DDS</b></div>
 				<label class="col-sm-2 text-right" data-idnama="<?php echo $list_lampiran_dds_supplier['id'] ?>">
-					<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran supplier" data-required="1" name="lampiran_dds" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran DDS">
+					<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran supplier" data-required="1" name="lampiran_dds" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDS">
 					<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDS"></i>
 				</label>
 			</div>
@@ -307,6 +319,6 @@
 <div class="col-sm-12 no-padding text-right">
 	<hr>
 	<?php if ( $akses['a_submit'] == 1): ?>
-		<button type="button" class="btn btn-large btn-primary pull-right" id="submit_supplier" onclick="supl.save()"><i class="fa fa-save"></i>Simpan</button>
+		<button type="button" class="btn btn-large btn-primary pull-right" id="submit_supplier" onclick="supl.save()"><i class="fa fa-save"></i> Simpan</button>
 	<?php endif; ?>
 </div>

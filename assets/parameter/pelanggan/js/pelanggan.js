@@ -433,7 +433,7 @@ var plg = {
 		if (error > 0) {
 			bootbox.alert('Data belum lengkap : <br> ' + lbl_errors.join('<br>') );
 		} else {
-			bootbox.confirm('Apakah anda yakin data mitra akan disimpan?', function(result){
+			bootbox.confirm('Apakah anda yakin ingin menyimpan data pelanggan ?', function(result){
     			if (result) {
     				var div_pelanggan = $('div[name=data-pelanggan]');
     				var rek_pelanggan = $('div#rekening_pelanggan');
@@ -453,7 +453,8 @@ var plg = {
     				var jenis_pelanggan = $(div_pelanggan).find('select[name=jenis_plg]').val();
     				var nama_pelanggan = $(div_pelanggan).find('input[name=nama_plg]').val();
     				var contact_person = $(div_pelanggan).find('input[name=contact_plg]').val();
-    				var platform = numeral.unformat( $(div_pelanggan).find('input[name=platform]').val() );
+    				var plafon = numeral.unformat( $(div_pelanggan).find('input[name=plafon]').val() );
+    				var jatuh_tempo = numeral.unformat( $(div_pelanggan).find('input[name=jatuh_tempo]').val() );
 
     				var telepons = $.map( $(div_pelanggan).find('input[name=telp_plg]'), function(ipt) {
 						var telp = $(ipt).mask();
@@ -493,7 +494,8 @@ var plg = {
 						'alamat_pelanggan' : alamat_pelanggan,
 						'alamat_usaha' : alamat_usaha,
 						'banks' : banks,
-						'platform' : platform
+						'plafon' : plafon,
+						'jatuh_tempo' : jatuh_tempo
 					};
 
 					var params = data_pelanggan;
@@ -538,7 +540,7 @@ var plg = {
 		if (error > 0) {
 			bootbox.alert('Data belum lengkap : <br> ' + lbl_errors.join('<br>') );
 		} else {
-			bootbox.confirm('Apakah anda yakin data mitra akan disimpan?', function(result){
+			bootbox.confirm('Apakah anda yakin meng-ubah data pelanggan ?', function(result){
     			if (result) {
     				var div_pelanggan = $('div[name=data-pelanggan]');
     				var rek_pelanggan = $('div#rekening_pelanggan');
@@ -565,7 +567,8 @@ var plg = {
     				var jenis_pelanggan = $(div_pelanggan).find('select[name=jenis_plg]').val();
     				var nama_pelanggan = $(div_pelanggan).find('input[name=nama_plg]').val();
     				var contact_person = $(div_pelanggan).find('input[name=contact_plg]').val();
-    				var platform = numeral.unformat( $(div_pelanggan).find('input[name=platform]').val() );
+    				var plafon = numeral.unformat( $(div_pelanggan).find('input[name=plafon]').val() );
+    				var jatuh_tempo = numeral.unformat( $(div_pelanggan).find('input[name=jatuh_tempo]').val() );
 
     				var telepons = $.map( $(div_pelanggan).find('input[name=telp_plg]'), function(ipt) {
 						var telp = $(ipt).mask();
@@ -610,7 +613,8 @@ var plg = {
 						'alamat_pelanggan' : alamat_pelanggan,
 						'alamat_usaha' : alamat_usaha,
 						'banks' : banks,
-						'platform' : platform
+						'plafon' : plafon,
+						'jatuh_tempo' : jatuh_tempo
 					};
 
 					var params = data_pelanggan;
@@ -719,7 +723,7 @@ var plg = {
 					} else {
 						hideLoading();
 						bootbox.alert(data.message,function() {
-							plg.getLists();
+							plg.set_pagination();
 							plg.load_form(data.content.id);
 
 							idxUploadFile = 0;
@@ -774,7 +778,7 @@ var plg = {
 				hideLoading();
 				if(data.status){
 					bootbox.alert(data.message,function() {
-						plg.getLists();
+						plg.set_pagination();
 					});
 				} else {
 					bootbox.alert(data.message);
@@ -801,7 +805,7 @@ var plg = {
 						hideLoading();
 						if(data.status){
 							bootbox.alert(data.message,function(){
-								plg.getLists();
+								plg.set_pagination();
 								plg.load_form(data.content.id);
 							});
 						}else{

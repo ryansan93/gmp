@@ -19,10 +19,15 @@
 					</div>
 				</div>
 				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-4">No PO</div>
+					<div class="col-lg-3">
+						<input type="text" class="form-control no_po" value="<?php echo $data_order_doc['no_po']; ?>" data-version="<?php echo $data_order_doc['version'];  ?>" readonly>
+					</div>
+				</div>
+				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-4">Perusahaan</div>
 					<div class="col-lg-6">
 						<select class="form-control perusahaan" data-required="1">
-							<option value="">-- Pilih Perusahaan --</option>
 							<?php foreach ($perusahaan as $k_perusahaan => $v_perusahaan): ?>
 								<?php
 									$selected = null;

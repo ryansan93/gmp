@@ -318,6 +318,7 @@ class ODVP extends Public_Controller {
 
         $data['id'] = $d_order_voadip['id'];
         $data['no_order'] = $d_order_voadip['no_order'];
+        $data['no_po'] = $d_order_voadip['no_po'];
         $data['tanggal'] = $d_order_voadip['tanggal'];
         $data['no_supl'] = $d_order_voadip['supplier'];
         $data['version'] = $d_order_voadip['version'];
@@ -375,6 +376,7 @@ class ODVP extends Public_Controller {
 
         $data['id'] = $d_order_voadip['id'];
         $data['no_order'] = $d_order_voadip['no_order'];
+        $data['no_po'] = $d_order_voadip['no_po'];
         $data['tanggal'] = $d_order_voadip['tanggal'];
         $data['no_supl'] = $d_order_voadip['supplier'];
         $data['nama_supl'] = $d_order_voadip['d_supplier']['nama'];
@@ -775,9 +777,11 @@ class ODVP extends Public_Controller {
             }
 
             $nomor = $m_order_doc->getNextNomor('ODC/'.$kode_unit);
+            $no_po = 'PO/DOC'.str_replace('ODC', '', $nomor);
 
             $m_order_doc->id = $m_order_doc->getNextIdentity();
             $m_order_doc->no_order = $nomor;
+            $m_order_doc->no_po = $no_po;
             $m_order_doc->noreg = $params['noreg'];
             $m_order_doc->supplier = $params['supplier'];
             $m_order_doc->item = $params['item'];
@@ -821,6 +825,7 @@ class ODVP extends Public_Controller {
 
             $m_order_doc->id = $m_order_doc->getNextIdentity();
             $m_order_doc->no_order = $nomor;
+            $m_order_doc->no_po = $params['no_po'];
             $m_order_doc->noreg = $params['noreg'];
             $m_order_doc->supplier = $params['supplier'];
             $m_order_doc->item = $params['item'];
@@ -1001,10 +1006,13 @@ class ODVP extends Public_Controller {
 
                     $id_terima = $m_terima_doc->getNextIdentity();
 
+                    $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
+
                     $m_terima_doc->id = $id_terima;
                     $m_terima_doc->no_terima = $nomor;
                     $m_terima_doc->no_order = $params['no_order'];
                     $m_terima_doc->no_sj = $params['no_sj'];
+                    $m_terima_doc->no_bbm = $no_bbm;
                     $m_terima_doc->nopol = $params['nopol'];
                     $m_terima_doc->datang = $params['datang'];
                     $m_terima_doc->supplier = $params['supplier'];
@@ -1023,9 +1031,11 @@ class ODVP extends Public_Controller {
                     $m_terima_doc->uniformity = $params['uniformity'];
                     $m_terima_doc->save();
 
-                    $m_conf = new \Model\Storage\Conf();
-                    $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", NULL, 1";
-                    $d_conf = $m_conf->hydrateRaw( $sql );
+                    // $m_conf = new \Model\Storage\Conf();
+                    // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", NULL, 1";
+                    // $d_conf = $m_conf->hydrateRaw( $sql );
+
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id_terima, null, 1);
 
                     $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                     Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log);
@@ -1079,11 +1089,14 @@ class ODVP extends Public_Controller {
                 $now = $m_terima_doc->getDate();
 
                 $id_terima = $m_terima_doc->getNextIdentity();
+                
+                $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
 
                 $m_terima_doc->id = $id_terima;
                 $m_terima_doc->no_terima = $params['no_terima'];
                 $m_terima_doc->no_order = $params['no_order'];
                 $m_terima_doc->no_sj = $params['no_sj'];
+                $m_terima_doc->no_bbm = $no_bbm;
                 $m_terima_doc->nopol = $params['nopol'];
                 $m_terima_doc->datang = $params['datang'];
                 $m_terima_doc->supplier = $params['supplier'];
@@ -1102,9 +1115,11 @@ class ODVP extends Public_Controller {
                 $m_terima_doc->uniformity = $params['uniformity'];
                 $m_terima_doc->save();
 
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
-                $d_conf = $m_conf->hydrateRaw( $sql );
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
+                // $d_conf = $m_conf->hydrateRaw( $sql );
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_terima, $id_old, 2);
 
                 $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/update', $m_terima_doc, $deskripsi_log);
@@ -1127,9 +1142,11 @@ class ODVP extends Public_Controller {
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $d_terima_doc = $m_terima_doc->where('id', $params)->first();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$params.", ".$params.", 3";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$params.", ".$params.", 3";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, null, $params, 3);
 
             $m_terima_doc->where('id', $params)->delete();
 
@@ -1173,8 +1190,10 @@ class ODVP extends Public_Controller {
             }
 
             $nomor = $m_order_voadip->getNextNomor('OVO/'.$kode_unit);
+            $no_po = 'PO/OVK'.str_replace('OVO', '', $nomor);
 
             $m_order_voadip->no_order = $nomor;
+            $m_order_voadip->no_po = $no_po;
             $m_order_voadip->supplier = $params['supplier'];
             $m_order_voadip->tanggal = $params['tanggal'];
             $m_order_voadip->user_submit = $this->userid;
@@ -1227,6 +1246,7 @@ class ODVP extends Public_Controller {
             $nomor = $params['no_order'];
 
             $m_order_voadip->no_order = $nomor;
+            $m_order_voadip->no_po = $params['no_po'];
             $m_order_voadip->supplier = $params['supplier'];
             $m_order_voadip->tanggal = $params['tanggal'];
             $m_order_voadip->user_submit = $this->userid;
@@ -1283,7 +1303,6 @@ class ODVP extends Public_Controller {
 
             $m_op = new \Model\Storage\OrderVoadip_model();
             $m_op->where('id', $params)->delete();
-
 
             $deskripsi_log_order_voadip = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_order_voadip, $deskripsi_log_order_voadip);
@@ -1746,8 +1765,10 @@ class ODVP extends Public_Controller {
             }
 
             $nomor = $m_op->getNextNomor('OPK/'.$kode_unit);
+            $no_po = 'PO/PKN'.str_replace('OPK', '', $nomor);
 
             $m_op->no_order = $nomor;
+            $m_op->no_po = $no_po;
             $m_op->tgl_trans = $params['tgl_trans'];
             $m_op->rcn_kirim = $params['rcn_kirim'];
             $m_op->supplier = $params['supplier'];

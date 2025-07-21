@@ -233,8 +233,10 @@ class OrderPakan extends Public_Controller {
                                     }
 
                                     $nomor = $m_op->getNextNomor('OPK/'.$kode_unit);
+                                    $no_po = 'PO/PKN'.str_replace('OPK', '', $nomor);
 
                                     $m_op->no_order = $nomor;
+                                    $m_op->no_po = $no_po;
                                     $m_op->tgl_trans = $v_data['TGL ORDER'];
                                     $m_op->rcn_kirim = $v_data['TGL KIRIM'];
                                     $m_op->supplier = $v_data['SUPPLIER'];

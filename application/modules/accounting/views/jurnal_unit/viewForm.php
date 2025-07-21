@@ -1,43 +1,32 @@
 <div class="col-xs-12 no-padding">
-	<div class="col-xs-1 no-padding"><label class="control-label">Tanggal</label></div>
+	<div class="col-xs-2 no-padding"><label class="control-label">Tanggal</label></div>
 	<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
-	<div class="col-xs-10 no-padding"><label class="control-label"><?php echo strtoupper(tglIndonesia($data['tanggal'], '-', ' ')); ?></label></div>
+	<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper(tglIndonesia($data['tanggal'], '-', ' ')); ?></label></div>
 </div>
 <div class="col-xs-12 no-padding">
-	<div class="col-xs-1 no-padding"><label class="control-label">Unit</label></div>
+	<div class="col-xs-2 no-padding"><label class="control-label">Unit</label></div>
 	<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
 	<?php
-		$unit = null;
-		if ( !empty($data['nama_unit']) ) {
-			$unit = str_replace('kab ', '', $data['nama_unit']);
-        	$unit = str_replace('kota ', '', $unit);
-		} else {
-			if ( $data['unit'] == 'pusat_gml' ) {
-				$unit = strtoupper('pusat gemilang');
-			} else if ( $data['unit'] == 'pusat' ) {
-				$unit = strtoupper('pusat gemuk');
-			} else if ( $data['unit'] == 'pusat_ma' ) {
-				$unit = strtoupper('pusat ma');
-			}
-		}
+		$unit = str_replace('kab ', '', $data['nama_unit']);
+		$unit = str_replace('kota ', '', $unit);
 	?>
-	<div class="col-xs-10 no-padding"><label class="control-label"><?php echo strtoupper($unit); ?></label></div>
+	<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper($unit); ?></label></div>
 </div>
 <div class="col-xs-12 no-padding">
-	<div class="col-xs-1 no-padding"><label class="control-label">Perusahaan</label></div>
+	<div class="col-xs-2 no-padding"><label class="control-label">Perusahaan</label></div>
 	<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
-	<div class="col-xs-10 no-padding"><label class="control-label"><?php echo strtoupper($data['nama_perusahaan']); ?></label></div>
+	<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper($data['nama_perusahaan']); ?></label></div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-	<div class="col-xs-1 no-padding"><label class="control-label">Transaksi</label></div>
+	<div class="col-xs-2 no-padding"><label class="control-label">Transaksi / Kelompok Jurnal</label></div>
 	<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
-	<div class="col-xs-10 no-padding"><label class="control-label"><?php echo strtoupper($data['nama_jurnal_trans']); ?></label></div>
+	<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper($data['nama_jurnal_trans']); ?></label></div>
 </div>
 <?php if ( isset($data['plasma']) && !empty($data['plasma']) ): ?>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-1 no-padding"><label class="control-label">Plasma</label></div>
+		<div class="col-xs-2 no-padding"><label class="control-label">Plasma</label></div>
 		<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
-		<div class="col-xs-10 no-padding"><label class="control-label"><?php echo strtoupper($data['plasma']['tgl_terima'].' | '.'KDG : '.$data['plasma']['kandang'].' | '.$data['plasma']['nama_mitra']); ?></label></div>
+		<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper($data['plasma']['tgl_terima'].' | '.'KDG : '.$data['plasma']['kandang'].' | '.$data['plasma']['nama_mitra']); ?></label></div>
 	</div>
 <?php endif ?>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -53,9 +42,14 @@
 					<tr>
 						<td style="padding: 10px;">
 							<div class="col-xs-12 no-padding">
-								<div class="col-xs-2 no-padding"><label class="control-label" style="padding-top: 0px;">Tanggal</label></div>
-								<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label" style="padding-top: 0px;">:</label></div>
-								<div class="col-xs-9 no-padding"><label class="control-label" style="padding-top: 0px;"><?php echo strtoupper(tglIndonesia($v_det['tanggal'], '-', ' ')); ?></label></div>
+								<div class="col-xs-2 no-padding"><label class="control-label">Kode Jurnal</label></div>
+								<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
+								<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper($v_det['kode_jurnal']); ?></label></div>
+							</div>
+							<div class="col-xs-12 no-padding">
+								<div class="col-xs-2 no-padding"><label class="control-label">Tanggal</label></div>
+								<div class="col-xs-1 no-padding text-center" style="max-width: 2%;"><label class="control-label">:</label></div>
+								<div class="col-xs-9 no-padding"><label class="control-label"><?php echo strtoupper(tglIndonesia($v_det['tanggal'], '-', ' ')); ?></label></div>
 							</div>
 							<div class="col-xs-12 no-padding">
 								<div class="col-xs-2 no-padding"><label class="control-label">Detail Transaksi</label></div>

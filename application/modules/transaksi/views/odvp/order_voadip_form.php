@@ -24,6 +24,14 @@
 				    </div>
 				</div>
 			</div>
+			<div class="col-lg-8 action d-flex align-items-center">
+				<div class="col-sm-1 no-padding">
+					<span>No. PO</label>
+				</div>
+				<div class="col-sm-3">
+					<input type="text" class="form-control no_po" placeholder="No. PO" readonly>
+				</div>
+			</div>
 			<div class="col-lg-8 action left-inner-addon d-flex align-items-center">
 				<div class="col-sm-1 no-padding">
 					<span>Supplier</label>
@@ -56,19 +64,18 @@
 								<th class="col-sm-1 text-center" rowspan="2">Jumlah</th>
 								<th class="col-sm-1 text-center" rowspan="2">Total Beli</th>
 								<th class="col-sm-1 text-center" rowspan="2">Tgl Kirim</th>
-								<th class="text-center" colspan="2">Kirim</th>
-								<th class="text-center hide" rowspan="2">Alamat</th>
+								<th class="text-center">Kirim</th>
+								<th class="text-center" rowspan="2">Alamat</th>
 							</tr>
 							<tr class="v-center">
 								<th class="col-sm-1 text-center">Gudang</th>
-								<th class="col-sm-1 text-center">Peternak</th>
+								<th class="col-sm-1 text-center hide">Peternak</th>
 							</tr>
 						</thead>
 						<tbody class="list">
 							<tr class="child inactive">
 								<td>
-									<select class="form-control perusahaan" data-required="1">
-										<option value="">-- Pilih Perusahaan --</option>
+									<select class="form-control perusahaan" data-required="1" disabled>
 										<?php foreach ($perusahaan as $k_perusahaan => $v_perusahaan): ?>
 											<option value="<?php echo $v_perusahaan['kode']; ?>"><?php echo strtoupper($v_perusahaan['perusahaan']); ?></option>
 										<?php endforeach ?>
@@ -113,20 +120,20 @@
 										<?php endforeach ?>
 									</select>
 								</td>
-								<td>
+								<td class="hide">
 									<select class="form-control peternak" data-jenis="peternak" data-required="1" onchange="odvp.set_alamat_order_pakan(this)">
 										<option value="">-- Pilih Peternak --</option>
 										<?php foreach ($peternak as $k_peternak => $v_peternak): ?>
 											<option value="<?php echo $v_peternak['noreg']; ?>" data-alamat="<?php echo $v_peternak['alamat']; ?>"><?php echo strtoupper($v_peternak['kode_unit']).' | '.strtoupper($v_peternak['nama']).' ('.$v_peternak['noreg'].')'; ?></option>
 										<?php endforeach ?>
 									</select>
+								</td>
+								<td class="alamat">
+									<div class="alamat">-</div>
 									<div class="btn-ctrl">
 										<span onclick="odvp.removeRowChild(this)" class="btn_del_row_2x hide"></span>
 										<span onclick="odvp.addRowChildVoadip(this)" class="btn_add_row_2x"></span>
 									</div>
-								</td>
-								<td class="alamat hide">
-									<div class="alamat">-</div>
 								</td>
 								<!-- <td class="hide">
 									<input type="text" class="form-control alamat_peternak" placeholder="Alamat Peternak" readonly>

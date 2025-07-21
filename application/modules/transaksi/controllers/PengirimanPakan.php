@@ -159,140 +159,208 @@ class PengirimanPakan extends Public_Controller {
         // $d_kirim_pakan = $m_kirim_pakan->whereBetween('tgl_kirim', [$params['start_date'], $params['end_date']])->with(['terima'])->get();
 
         $m_conf = new \Model\Storage\Conf();
+        $sql_asal_tujuan = "
+            (
+                select cast(plg1.nomor as varchar(15)) as kode, plg1.nama, null as unit from pelanggan plg1
+                right join
+                    (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) plg2
+                    on
+                        plg1.id = plg2.id
+
+                union all
+
+                select 
+                    cast(gdg.id as varchar(15)) as kode, 
+                    gdg.nama,
+                    w.kode as unit
+                from gudang gdg
+                left join
+                    wilayah w
+                    on
+                        gdg.unit = w.id
+
+                union all
+
+                select
+                    cast(rs.noreg as varchar(15)) as kode,
+                    mtr.nama,
+                    w.kode as unit
+                from rdim_submit rs
+                left join
+                    kandang k
+                    on
+                        rs.kandang = k.id
+                left join
+                    wilayah w
+                    on
+                        k.unit = w.id
+                left join
+                    (
+                        select mm1.* from mitra_mapping mm1
+                        right join
+                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                            on
+                                mm1.id = mm2.id
+                    ) mm
+                    on
+                        rs.nim = mm.nim
+                left join
+                    mitra mtr
+                    on
+                        mtr.id = mm.mitra
+            )
+        ";
         $sql = "
             select 
-                kp.*,
+                kp.id,
+                kp.no_order,
+                kp.tgl_kirim,
+                asal.nama as asal,
+                tujuan.nama as tujuan,
+                kp.no_polisi as nopol,
                 tp.tgl_terima
             from kirim_pakan kp
             left join
                 terima_pakan tp
                 on
                     kp.id = tp.id_kirim_pakan
+            left join
+                ".$sql_asal_tujuan." asal
+                on
+                    kp.asal = asal.kode
+            left join
+                ".$sql_asal_tujuan." tujuan
+                on
+                    kp.tujuan = tujuan.kode
             where
-                kp.tgl_kirim between '".$params['start_date']."' and '".$params['end_date']."'
+                kp.tgl_kirim between '".$params['start_date']."' and '".$params['end_date']."' and
+                ((asal.unit = '".$kode_unit."') or (tujuan.unit = '".$kode_unit."'))
+            order by
+                kp.tgl_kirim desc,
+                kp.id desc
         ";
         $d_kirim_pakan = $m_conf->hydrateRaw( $sql );
 
         $data = null;
         if ( !empty($d_kirim_pakan) ) {
-            $d_kirim_pakan = $d_kirim_pakan->toArray();
+            $data = $d_kirim_pakan->toArray();
 
-            foreach ($d_kirim_pakan as $k_kp => $v_kp) {
-                $tampil = 0;
+            // foreach ($d_kirim_pakan as $k_kp => $v_kp) {
+            //     $tampil = 0;
 
-                if ( $v_kp['jenis_kirim'] == 'opks' || $v_kp['jenis_kirim'] == 'opkg' ) {
-                    if ( $kode_unit != 'all' ) {
-                        if ( stristr($v_kp['no_order'], $kode_unit) ) {
-                            $tampil = 1;
-                        }
-                    } else {
-                        $tampil = 1;
-                    }
-                } else if ( $v_kp['jenis_kirim'] == 'opkp' ) {
-                    if ( $kode_unit != 'all' ) {
-                        $m_conf = new \Model\Storage\Conf();
-                        $sql = "
-                            select w.kode from rdim_submit rs
-                            right join
-                                kandang k
-                                on
-                                    rs.kandang = k.id
-                            right join
-                                wilayah w
-                                on
-                                    k.unit = w.id
-                            where
-                                rs.noreg = '".$v_kp['asal']."'
-                            group by
-                                w.kode
-                        ";
-                        $d_asal = $m_conf->hydrateRaw( $sql );
-                        $kode_unit_asal = null;
-                        if ( $d_asal->count() > 0 ) {
-                            $d_asal = $d_asal->toArray()[0];
-                            $kode_unit_asal = $d_asal['kode'];
-                        }
+            //     if ( $v_kp['jenis_kirim'] == 'opks' || $v_kp['jenis_kirim'] == 'opkg' ) {
+            //         if ( $kode_unit != 'all' ) {
+            //             if ( stristr($v_kp['no_order'], $kode_unit) ) {
+            //                 $tampil = 1;
+            //             }
+            //         } else {
+            //             $tampil = 1;
+            //         }
+            //     } else if ( $v_kp['jenis_kirim'] == 'opkp' ) {
+            //         if ( $kode_unit != 'all' ) {
+            //             $m_conf = new \Model\Storage\Conf();
+            //             $sql = "
+            //                 select w.kode from rdim_submit rs
+            //                 right join
+            //                     kandang k
+            //                     on
+            //                         rs.kandang = k.id
+            //                 right join
+            //                     wilayah w
+            //                     on
+            //                         k.unit = w.id
+            //                 where
+            //                     rs.noreg = '".$v_kp['asal']."'
+            //                 group by
+            //                     w.kode
+            //             ";
+            //             $d_asal = $m_conf->hydrateRaw( $sql );
+            //             $kode_unit_asal = null;
+            //             if ( $d_asal->count() > 0 ) {
+            //                 $d_asal = $d_asal->toArray()[0];
+            //                 $kode_unit_asal = $d_asal['kode'];
+            //             }
 
-                        $sql = "
-                            select w.kode from rdim_submit rs
-                            right join
-                                kandang k
-                                on
-                                    rs.kandang = k.id
-                            right join
-                                wilayah w
-                                on
-                                    k.unit = w.id
-                            where
-                                rs.noreg = '".$v_kp['tujuan']."'
-                            group by
-                                w.kode
-                        ";
-                        $d_tujuan = $m_conf->hydrateRaw( $sql );
-                        $kode_unit_tujuan = null;
-                        if ( $d_tujuan->count() > 0 ) {
-                            $d_tujuan = $d_tujuan->toArray()[0];
-                            $kode_unit_tujuan = $d_tujuan['kode'];
-                        }
+            //             $sql = "
+            //                 select w.kode from rdim_submit rs
+            //                 right join
+            //                     kandang k
+            //                     on
+            //                         rs.kandang = k.id
+            //                 right join
+            //                     wilayah w
+            //                     on
+            //                         k.unit = w.id
+            //                 where
+            //                     rs.noreg = '".$v_kp['tujuan']."'
+            //                 group by
+            //                     w.kode
+            //             ";
+            //             $d_tujuan = $m_conf->hydrateRaw( $sql );
+            //             $kode_unit_tujuan = null;
+            //             if ( $d_tujuan->count() > 0 ) {
+            //                 $d_tujuan = $d_tujuan->toArray()[0];
+            //                 $kode_unit_tujuan = $d_tujuan['kode'];
+            //             }
 
-                        if ( stristr($kode_unit_asal, $kode_unit) || stristr($kode_unit_tujuan, $kode_unit) ) {
-                            $tampil = 1;
-                        }
-                    } else {
-                        $tampil = 1;
-                    }
-                }
+            //             if ( stristr($kode_unit_asal, $kode_unit) || stristr($kode_unit_tujuan, $kode_unit) ) {
+            //                 $tampil = 1;
+            //             }
+            //         } else {
+            //             $tampil = 1;
+            //         }
+            //     }
 
-                if ( $tampil == 1 ) {
-                    $asal = null;
-                    $tujuan = null;
+            //     if ( $tampil == 1 ) {
+            //         $asal = null;
+            //         $tujuan = null;
 
-                    $m_supplier = new \Model\Storage\Pelanggan_model();
-                    $m_peternak = new \Model\Storage\RdimSubmit_model();
-                    $m_gudang = new \Model\Storage\Gudang_model();
-                    // ASAL
-                    if ( $v_kp['jenis_kirim'] == 'opks' ) {
-                        $d_supplier = $m_supplier->where('nomor', $v_kp['asal'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('id', 'desc')->first();
-                        $asal = $d_supplier->nama;
-                    } else if ( $v_kp['jenis_kirim'] == 'opkp' ) {
-                        $d_peternak = $m_peternak->where('noreg', $v_kp['asal'])->with(['mitra'])->orderBy('id', 'desc')->first();
-                        if ( !$d_peternak ) {
-                            // cetak_r( $v_kp['asal'] );
-                        } else {
-                            $asal = $d_peternak->mitra->dMitra->nama;
-                        }
-                    } else if ( $v_kp['jenis_kirim'] == 'opkg' ) {
-                        $d_gudang = $m_gudang->where('id', $v_kp['asal'])->orderBy('id', 'desc')->first();
-                        $asal = $d_gudang->nama;
-                    }
-                    // TUJUAN
-                    if ( $v_kp['jenis_tujuan'] == 'peternak' ) {
-                        $d_peternak = $m_peternak->where('noreg', $v_kp['tujuan'])->with(['mitra'])->orderBy('id', 'desc')->first();
-                        if ( $d_peternak ) {
-                            $tujuan = $d_peternak->mitra->dMitra->nama.' ('.$v_kp['tujuan'].')';
-                        }
-                    } else if ( $v_kp['jenis_tujuan'] == 'gudang' ) {
-                        $d_gudang = $m_gudang->where('id', $v_kp['tujuan'])->orderBy('id', 'desc')->first();
-                        $tujuan = $d_gudang->nama;
-                    }
+            //         $m_supplier = new \Model\Storage\Pelanggan_model();
+            //         $m_peternak = new \Model\Storage\RdimSubmit_model();
+            //         $m_gudang = new \Model\Storage\Gudang_model();
+            //         // ASAL
+            //         if ( $v_kp['jenis_kirim'] == 'opks' ) {
+            //             $d_supplier = $m_supplier->where('nomor', $v_kp['asal'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('id', 'desc')->first();
+            //             $asal = $d_supplier->nama;
+            //         } else if ( $v_kp['jenis_kirim'] == 'opkp' ) {
+            //             $d_peternak = $m_peternak->where('noreg', $v_kp['asal'])->with(['mitra'])->orderBy('id', 'desc')->first();
+            //             if ( !$d_peternak ) {
+            //                 // cetak_r( $v_kp['asal'] );
+            //             } else {
+            //                 $asal = $d_peternak->mitra->dMitra->nama;
+            //             }
+            //         } else if ( $v_kp['jenis_kirim'] == 'opkg' ) {
+            //             $d_gudang = $m_gudang->where('id', $v_kp['asal'])->orderBy('id', 'desc')->first();
+            //             $asal = $d_gudang->nama;
+            //         }
+            //         // TUJUAN
+            //         if ( $v_kp['jenis_tujuan'] == 'peternak' ) {
+            //             $d_peternak = $m_peternak->where('noreg', $v_kp['tujuan'])->with(['mitra'])->orderBy('id', 'desc')->first();
+            //             if ( $d_peternak ) {
+            //                 $tujuan = $d_peternak->mitra->dMitra->nama.' ('.$v_kp['tujuan'].')';
+            //             }
+            //         } else if ( $v_kp['jenis_tujuan'] == 'gudang' ) {
+            //             $d_gudang = $m_gudang->where('id', $v_kp['tujuan'])->orderBy('id', 'desc')->first();
+            //             $tujuan = $d_gudang->nama;
+            //         }
 
-                    $key = str_replace('-', '', $v_kp['tgl_kirim']).'|'.$v_kp['id'];
-                    $data[ $key ] = array(
-                        'id' => $v_kp['id'],
-                        'no_order' => $v_kp['no_order'],
-                        'tgl_kirim' => $v_kp['tgl_kirim'],
-                        'asal' => $asal,
-                        'tujuan' => $tujuan,
-                        'nopol' => $v_kp['no_polisi'],
-                        'tgl_terima' => !empty($v_kp['tgl_terima']) ? $v_kp['tgl_terima'] : null
-                    );
-                }
-            }
+            //         $key = str_replace('-', '', $v_kp['tgl_kirim']).'|'.$v_kp['id'];
+            //         $data[ $key ] = array(
+            //             'id' => $v_kp['id'],
+            //             'no_order' => $v_kp['no_order'],
+            //             'tgl_kirim' => $v_kp['tgl_kirim'],
+            //             'asal' => $asal,
+            //             'tujuan' => $tujuan,
+            //             'nopol' => $v_kp['no_polisi'],
+            //             'tgl_terima' => !empty($v_kp['tgl_terima']) ? $v_kp['tgl_terima'] : null
+            //         );
+            //     }
+            // }
         }
 
-    	if ( !empty($data) ) {
-    		krsort($data);
-    	}
+    	// if ( !empty($data) ) {
+    	// 	krsort($data);
+    	// }
 
         $content['data'] = $data;
         $html = $this->load->view('transaksi/pengiriman_pakan/list', $content, true);
@@ -486,6 +554,7 @@ class PengirimanPakan extends Public_Controller {
                 op.tgl_trans,
                 op.rcn_kirim,
                 op.supplier,
+                op.no_po,
                 supl.nomor,
                 supl.nama,
                 opd.perusahaan,

@@ -10,12 +10,22 @@
 					<div class="col-xs-4 no-padding"><h4><b>Tagihan</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total" data-val="<?php echo $data['total']; ?>"><h4><b><?php echo angkaDecimal($data['total']); ?></b></h4></div>
 				</div>
-				<?php if ( $data['jenis_pembayaran'] == 'supplier' ): ?>
-					<div class="col-xs-12 no-padding">
-						<div class="col-xs-4 no-padding"><h4><b>Credit Note</b></h4></div>
-						<div class="col-xs-8 text-right no-padding total_cn" data-val="<?php echo $data['total_cn']; ?>"><h4><b><?php echo angkaDecimal($data['total_cn']); ?></b></h4></div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-4 no-padding"><h4><b>Debit Note</b></h4></div>
+					<div class="col-xs-8 text-right no-padding total_dn" data-val="<?php echo $data['total_dn']; ?>"><h4><b><?php echo angkaDecimal($data['total_dn']); ?></b></h4></div>
+				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-4 no-padding">&nbsp;</div>
+					<div class="col-xs-8 no-padding">
+						<hr style="margin-top: 10px; margin-bottom: 10px;">
 					</div>
-				<?php endif ?>
+				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-4 no-padding"><h4><b>Credit Note</b></h4></div>
+					<div class="col-xs-8 text-right no-padding total_cn" data-val="<?php echo $data['total_cn']; ?>"><h4><b><?php echo angkaDecimal($data['total_cn']); ?></b></h4></div>
+				</div>
+				<!-- <?php if ( $data['jenis_pembayaran'] == 'supplier' ): ?>
+				<?php endif ?> -->
 				<div class="col-xs-12 no-padding">
 					<div class="col-xs-4 no-padding"><h4><b>Potongan</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total_potongan" data-val="<?php echo $data['total_potongan']; ?>"><h4><b><?php echo angkaDecimal($data['total_potongan']); ?></b></h4></div>
@@ -23,6 +33,12 @@
 				<div class="col-xs-12 no-padding">
 					<div class="col-xs-4 no-padding"><h4><b>Bayar</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total_bayar" data-val="<?php echo $data['total_bayar']; ?>"><h4><b><?php echo angkaDecimal($data['total_bayar']); ?></b></h4></div>
+				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-4 no-padding">&nbsp;</div>
+					<div class="col-xs-8 no-padding">
+						<hr style="margin-top: 10px; margin-bottom: 10px;">
+					</div>
 				</div>
 				<div class="col-xs-12 no-padding">
 					<div class="col-xs-4 no-padding"><h4><b>Kurang Bayar</b></h4></div>
@@ -141,6 +157,13 @@
 					</div>
 				</div>
 				<?php if ( $data['jenis_pembayaran'] == 'supplier' ): ?>
+					<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+						<div class="col-xs-4 no-padding">Debit Note</div>
+						<div class="col-xs-1 no-padding text-center">:</div>
+						<div class="col-xs-7 no-padding">
+							<button type="button" class="btn btn-default" onclick="rp.modalPilihDN(this)">Pilih DN yang akan di gunakan</button>
+						</div>
+					</div>
 					<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 						<div class="col-xs-4 no-padding">Credit Note</div>
 						<div class="col-xs-1 no-padding text-center">:</div>

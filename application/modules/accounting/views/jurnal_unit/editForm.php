@@ -15,10 +15,10 @@
 		<div class="col-xs-12 no-padding">
 			<select class="form-control unit" data-required="1">
 				<option value="">-- Pilih --</option>
-				<option value="all" <?php echo ($data['unit'] == 'all') ? 'selected' : null; ?> >ALL</option>
+				<!-- <option value="all" <?php echo ($data['unit'] == 'all') ? 'selected' : null; ?> >ALL</option>
 				<option value="pusat" <?php echo ($data['unit'] == 'pusat') ? 'selected' : null; ?> >PUSAT GEMUK</option>
 				<option value="pusat_gml" <?php echo ($data['unit'] == 'pusat_gml') ? 'selected' : null; ?> >PUSAT GEMILANG</option>
-				<option value="pusat_ma" <?php echo ($data['unit'] == 'pusat_ma') ? 'selected' : null; ?> >PUSAT MA</option>
+				<option value="pusat_ma" <?php echo ($data['unit'] == 'pusat_ma') ? 'selected' : null; ?> >PUSAT MA</option> -->
 				<?php foreach ($unit as $k_unit => $v_unit): ?>
 					<?php
 						$selected = null;
@@ -50,7 +50,7 @@
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-	<div class="col-xs-12 no-padding"><label class="control-label text-left">Transaksi</label></div>
+	<div class="col-xs-12 no-padding"><label class="control-label text-left">Transaksi / Kelompok Jurnal</label></div>
 	<div class="col-xs-12 no-padding">
 		<select class="form-control jurnal_trans" data-required="1">
 			<option value="">-- Pilih --</option>
@@ -91,7 +91,13 @@
 					<tr>
 						<td style="padding: 10px;">
 							<div class="col-xs-12 no-padding">
-								<div class="col-xs-12 no-padding"><label class="control-label" style="padding-top: 0px;">Tanggal</label></div>
+								<div class="col-xs-12 no-padding"><label class="control-label">Kode Jurnal</label></div>
+								<div class="col-xs-12 no-padding">
+									<input type="text" class="form-control kode_jurnal" placeholder="Kode Jurnal" value="<?php echo $v_det['kode_jurnal']; ?>" readonly>
+								</div>
+							</div>
+							<div class="col-xs-12 no-padding">
+								<div class="col-xs-12 no-padding"><label class="control-label">Tanggal</label></div>
 								<div class="col-xs-12 no-padding">
 									<div class="input-group date" id="tgl_trans">
 								        <input type="text" class="form-control text-center" data-required="1" placeholder="Tanggal" data-tgl="<?php echo $v_det['tanggal']; ?>" />
@@ -150,9 +156,7 @@
 							<div class="col-xs-12 no-padding">
 								<div class="col-xs-12 no-padding"><label class="control-label">Keterangan</label></div>
 								<div class="col-xs-12 no-padding">
-									<textarea class="form-control keterangan" data-required="1" placeholder="Keterangan">
-										<?php echo $v_det['keterangan']; ?>
-									</textarea>
+									<textarea class="form-control keterangan" data-required="1" placeholder="Keterangan"><?php echo $v_det['keterangan']; ?></textarea>
 								</div>
 							</div>
 						</td>

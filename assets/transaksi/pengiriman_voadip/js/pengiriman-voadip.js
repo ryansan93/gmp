@@ -331,7 +331,7 @@ var pv = {
 			success: function(data) {
 				var option = '<option value="">-- Pilih Peternak --</option>';
 				if ( data.status == 1 ) {
-					var idx = 1;
+					var idx = 0;
 					for (var i = 0; i < data.content.length; i++) {
 						var selected = '';
 						if ( !empty(noreg) ) {
@@ -342,6 +342,10 @@ var pv = {
 						option += '<option value="'+data.content[i].noreg+'" '+selected+'>'+data.content[i].kode_unit.toUpperCase()+' | '+data.content[i].tgl_terima+' | '+data.content[i].nama.toUpperCase()+' ('+data.content[i].noreg.toUpperCase()+')</option>';
 
 						idx++;
+
+						// console.log(idx);
+						// console.log(data.content.length);
+
 						if ( idx == data.content.length ) {
 							hideLoading();
 						}

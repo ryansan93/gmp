@@ -69,6 +69,8 @@ var pp = {
             $(ipt).data("DateTimePicker").date(new Date(tgl));
         });
 
+		App.setTutupBulan();
+
 		pp.setBindSHA1();
 	}, // end - setting_up
 

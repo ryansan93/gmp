@@ -660,6 +660,153 @@ class ReturVoadip extends Public_Controller
         display_json($this->result);
     }
 
+    public function edit()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $id_rv = $params['id'];
+
+            $m_rv = new \Model\Storage\ReturVoadip_model();
+            $d_rv_old = $m_rv->where('id', $id_rv)->first();
+
+            $m_rv->where('id', $id_rv)->update(
+                array(
+                    'tgl_retur' => $params['tgl_retur'],
+                    'no_order' => $params['no_order'],
+                    'jenis_retur' => $params['jenis_retur'],
+                    'asal' => $params['asal'],
+                    'id_asal' => $params['id_asal'],
+                    'tujuan' => $params['tujuan'],
+                    'id_tujuan' => $params['id_tujuan'],
+                    'ongkos_angkut' => $params['ongkos_angkut'],
+                    'keterangan' => $params['keterangan'],
+                )
+            );
+
+            $m_drv = new \Model\Storage\DetReturVoadip_model;
+            $m_drv->where('id_header', $id_rv)->delete();
+
+            if ( !empty($params['data_detail']) ) {
+                foreach ($params['data_detail'] as $k_det => $v_det) {
+                    $m_drv = new \Model\Storage\DetReturVoadip_model();
+                    $m_drv->id_header = $id_rv;
+                    $m_drv->item = $v_det['kode_brg'];
+                    $m_drv->jumlah = $v_det['jml_retur'];
+                    $m_drv->kondisi = $v_det['kondisi'];
+                    $m_drv->nilai_retur = $v_det['nilai_retur'];
+                    $m_drv->save();
+                }
+            }
+
+            $d_rv = $m_rv->where('id', $id_rv)->with(['det_retur_voadip'])->first();
+
+            $tgl_trans = $d_rv->tgl_retur;
+            if ( $d_rv_old->tgl_retur < $tgl_trans ) {
+                $tgl_trans = $d_rv_old->tgl_retur;
+            }
+
+            $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/update', $d_rv, $deskripsi_log);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = array(
+                'id' => $id_rv,
+                'tanggal' => $tgl_trans,
+                'delete' => 0,
+                'message' => 'Data berhasil di update',
+                'status_jurnal' => 2
+            );
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = "Gagal : " . $e->getMessage();
+        }
+
+        display_json($this->result);
+    }
+
+    public function delete()
+    {
+        $id = $this->input->post('id');
+
+        try {
+            $m_rv = new \Model\Storage\ReturVoadip_model();
+            $id_rv = $id;
+
+            $d_rv = $m_rv->where('id', $id_rv)->with(['det_retur_voadip'])->first();
+
+            // $m_drv = new \Model\Storage\DetReturVoadip_model();
+            // $m_drv->where('id_header', $id_rv)->delete();
+
+            // $m_rv = new \Model\Storage\ReturVoadip_model();
+            // $m_rv->where('id', $id_rv)->delete();
+
+            $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/delete', $d_rv, $deskripsi_log);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = array(
+                'id' => $id_rv,
+                'tanggal' => $d_rv->tgl_retur,
+                'delete' => 1,
+                'message' => 'Data berhasil di hapus',
+                'status_jurnal' => 3
+            );            
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = "Gagal : " . $e->getMessage();
+        }
+
+        display_json($this->result);
+    }
+
+    public function hitungStokByTransaksi()
+    {
+        $params = $this->input->post('params');
+
+        $id = $params['id'];
+        $tanggal = $params['tanggal'];
+        $delete = $params['delete'];
+        $message = $params['message'];
+        $status_jurnal = $params['status_jurnal'];
+
+        try {
+            $noreg1 = null;
+            $noreg2 = null;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+					rv.id_asal as noreg1,
+					null as noreg2
+				from retur_voadip rv
+				where
+					rv.id = ".$id."
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                $noreg1 = $d_conf['noreg1'];
+                $noreg2 = $d_conf['noreg2'];
+            }
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_voadip_by_transaksi 'retur_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal;
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'voadip', 'retur_voadip', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $this->result['status'] = 1;
+            $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function hitungStokAwal()
     {
         $params = $this->input->post('params');
@@ -916,130 +1063,6 @@ class ReturVoadip extends Public_Controller
                 }
             }
         }
-    }
-
-    public function edit()
-    {
-        $params = $this->input->post('params');
-
-        try {
-            $id_rv = $params['id'];
-
-            $m_rv = new \Model\Storage\ReturVoadip_model();
-            $d_rv_old = $m_rv->where('id', $id_rv)->first();
-
-            $m_rv->where('id', $id_rv)->update(
-                array(
-                    'tgl_retur' => $params['tgl_retur'],
-                    'no_order' => $params['no_order'],
-                    'jenis_retur' => $params['jenis_retur'],
-                    'asal' => $params['asal'],
-                    'id_asal' => $params['id_asal'],
-                    'tujuan' => $params['tujuan'],
-                    'id_tujuan' => $params['id_tujuan'],
-                    'ongkos_angkut' => $params['ongkos_angkut'],
-                    'keterangan' => $params['keterangan'],
-                )
-            );
-
-            $m_drv = new \Model\Storage\DetReturVoadip_model;
-            $m_drv->where('id_header', $id_rv)->delete();
-
-            if ( !empty($params['data_detail']) ) {
-                foreach ($params['data_detail'] as $k_det => $v_det) {
-                    $m_drv = new \Model\Storage\DetReturVoadip_model();
-                    $m_drv->id_header = $id_rv;
-                    $m_drv->item = $v_det['kode_brg'];
-                    $m_drv->jumlah = $v_det['jml_retur'];
-                    $m_drv->kondisi = $v_det['kondisi'];
-                    $m_drv->nilai_retur = $v_det['nilai_retur'];
-                    $m_drv->save();
-                }
-            }
-
-            $d_rv = $m_rv->where('id', $id_rv)->with(['det_retur_voadip'])->first();
-
-            $tgl_trans = $d_rv->tgl_retur;
-            if ( $d_rv_old->tgl_retur < $tgl_trans ) {
-                $tgl_trans = $d_rv_old->tgl_retur;
-            }
-
-            $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_rv, $deskripsi_log);
-
-            $this->result['status'] = 1;
-            $this->result['content'] = array(
-                'id' => $id_rv,
-                'tanggal' => $tgl_trans,
-                'delete' => 0,
-                'message' => 'Data berhasil di update',
-                'status_jurnal' => 2
-            );
-        } catch (\Illuminate\Database\QueryException $e) {
-            $this->result['message'] = "Gagal : " . $e->getMessage();
-        }
-
-        display_json($this->result);
-    }
-
-    public function delete()
-    {
-        $id = $this->input->post('id');
-
-        try {
-            $m_rv = new \Model\Storage\ReturVoadip_model();
-            $id_rv = $id;
-
-            $d_rv = $m_rv->where('id', $id_rv)->with(['det_retur_voadip'])->first();
-
-            // $m_drv = new \Model\Storage\DetReturVoadip_model();
-            // $m_drv->where('id_header', $id_rv)->delete();
-
-            // $m_rv = new \Model\Storage\ReturVoadip_model();
-            // $m_rv->where('id', $id_rv)->delete();
-
-            $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/delete', $d_rv, $deskripsi_log);
-
-            $this->result['status'] = 1;
-            $this->result['content'] = array(
-                'id' => $id_rv,
-                'tanggal' => $d_rv->tgl_retur,
-                'delete' => 1,
-                'message' => 'Data berhasil di hapus',
-                'status_jurnal' => 3
-            );            
-        } catch (\Illuminate\Database\QueryException $e) {
-            $this->result['message'] = "Gagal : " . $e->getMessage();
-        }
-
-        display_json($this->result);
-    }
-
-    public function hitungStokByTransaksi()
-    {
-        $params = $this->input->post('params');
-
-        // cetak_r( $params, 1 );
-
-        $id = $params['id'];
-        $tanggal = $params['tanggal'];
-        $delete = $params['delete'];
-        $message = $params['message'];
-        $status_jurnal = $params['status_jurnal'];
-
-        try {
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_voadip_by_transaksi 'retur_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal;
-            $d_conf = $conf->hydrateRaw($sql);
-
-            $this->result['status'] = 1;
-            $this->result['message'] = $message;
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
     }
 
     public function listActivity()

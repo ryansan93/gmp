@@ -1022,7 +1022,7 @@ var rg = {
 	modalPiutang: function(elm) {
 		var kode = $(elm).attr('data-kode');
 
-		showLoading();
+		// showLoading();
 
 		$.get('transaksi/RhppGroup/modalPiutang',{
 			'kode': kode
@@ -1033,7 +1033,7 @@ var rg = {
 				size : 'large',
 			};
 			bootbox.dialog(_options).bind('shown.bs.modal', function(){
-				hideLoading();
+				// hideLoading();
 
 				$(this).find('.modal-body:first()').css({'padding-top': '0px'});
 			});

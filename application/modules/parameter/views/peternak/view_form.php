@@ -17,7 +17,7 @@
                     <?php elseif( $akses['a_ack'] == 1 && $mitra->status == 'submit' ): ?>
                         <button type="button" class="btn btn-large btn-primary" onclick="ptk.ack_reject(this)" data-action="ack" data-id="<?php echo $mitra['id'] ?>"><i class="fa fa-check"></i> ACK</button>
                     <?php else: ?>
-                        <button type="button" class="btn btn-large btn-primary" onclick="ptk.formPindahPerusahaan(this)" data-id="<?php echo $mitra['id'] ?>"><i class="fa fa-exchange"></i> Pindah Perusahaan</button>
+                        <!-- <button type="button" class="btn btn-large btn-primary" onclick="ptk.formPindahPerusahaan(this)" data-id="<?php echo $mitra['id'] ?>"><i class="fa fa-exchange"></i> Pindah Perusahaan</button> -->
                     <?php endif; ?>
                 </div>
             </div><hr>
@@ -58,28 +58,23 @@
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <!-- <div class="col-sm-6">
-                                <?php 
-                                    $disabled = 'disabled';
-                                    if ( !empty($mitra['posisi']) ) {
-                                        $disabled = null;
-                                    } 
-                                ?>
-                                <a type="button" class="btn btn-default pull-right <?php echo $disabled; ?>" href="uploads/<?php echo $mitra['posisi']['foto_kunjungan'] ?>" target="_blank">
-                                    <i class="fa fa-camera"></i> Foto
-                                </a>
-                            </div> -->
+                        </div>
+                        <div class="form-group align-items-center d-flex">
+                            <span class="col-sm-2 text-right">Penanggung Jawab</span>
+                            <div class="col-sm-5">
+                                <input type="text" class="form-control" name="nama_mitra" placeholder="nama mitra" value="<?php echo $mitra['nama'] ?>" required="1" readonly="">
+                            </div>
+                        </div>
+                        <div class="form-group align-items-center d-flex">
+                            <span class="col-sm-2 text-right">Pemilik</span>
+                            <div class="col-sm-5">
+                                <input type="text" class="form-control" name="pemilik" placeholder="pemilik" value="<?php echo $mitra->d_pemilik->nomor.' - '.$mitra['d_pemilik']['nama']; ?>" required="1" readonly="">
+                            </div>
                         </div>
                         <div class="form-group align-items-center d-flex">
                             <span class="col-sm-2 text-right">KTP</span>
                             <div class="col-sm-3">
                                 <input type="text" class="form-control" name="ktp" placeholder="nomor ktp" value="<?php echo $mitra['ktp'] ?>" required="1" readonly="">
-                            </div>
-                        </div>
-                        <div class="form-group align-items-center d-flex">
-                            <span class="col-sm-2 text-right">Nama Mitra</span>
-                            <div class="col-sm-5">
-                                <input type="text" class="form-control" name="nama_mitra" placeholder="nama mitra" value="<?php echo $mitra['nama'] ?>" required="1" readonly="">
                             </div>
                         </div>
                         <div class="form-group align-items-center d-flex">
@@ -123,6 +118,19 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                        <div class="form-group align-items-center d-flex">
+                            <span class="col-sm-2 text-right">Plafon</span>
+                            <div class="col-sm-2">
+                                <input type="text" class="form-control text-right" name="plafon" placeholder="Plafon" data-tipe="integer" value="<?php echo angkaRibuan($mitra['plafon']); ?>" readonly="">
+                            </div>
+                        </div>
+                        <div class="form-group align-items-center d-flex">
+                            <span class="col-sm-2 text-right">Jatuh Tempo</span>
+                            <div class="col-sm-1">
+                                <input type="text" class="form-control text-right" name="jatuh_tempo" placeholder="Jatuh Tempo" data-tipe="integer" value="<?php echo angkaRibuan($mitra['jatuh_tempo']); ?>" readonly="">
+                            </div>
+                            <div class="col-sm-1">Hari</div>
                         </div>
 
 

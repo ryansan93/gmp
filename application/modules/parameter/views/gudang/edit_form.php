@@ -66,8 +66,7 @@
 							<label class="control-label">Perusahaan</label>
 						</td>
 						<td class="col-md-9">
-							<select class="col-sm-6 form-control perusahaan" data-required="1">
-	                            <option value="">Pilih Perusahaan</option>
+							<select class="col-sm-6 form-control perusahaan" data-required="1" disabled>
 	                            <?php if ( count($perusahaan) > 0 ): ?>
 	                                <?php foreach ($perusahaan as $k_prs => $v_prs): ?>
 	                                	<?php

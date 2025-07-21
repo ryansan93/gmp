@@ -49,6 +49,14 @@
 	</div>
 	<div class="col-xs-12 no-padding">
 		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+			<div class="col-xs-2 no-padding"><label class="control-label text-left">Jumlah DN</label></div>
+			<div class="col-xs-10 no-padding">
+				<label class="control-label text-left"><?php echo ': '.angkaDecimal($data['dn']); ?></label>
+			</div>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding">
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 			<div class="col-xs-2 no-padding"><label class="control-label text-left">Total Bayar</label></div>
 			<div class="col-xs-10 no-padding">
 				<label class="control-label text-left"><?php echo ': '.angkaDecimal($data['jumlah_bayar']); ?></label>
@@ -131,6 +139,44 @@
 </small>
 <div class="col-xs-12 search left-inner-addon no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
 <div class="col-xs-12 search left-inner-addon no-padding">
+	<label class="control-label">DEBIT NOTE</label>
+</div>
+<small>
+	<table class="table table-bordered tbl_transaksi" style="margin-bottom: 0px;">
+		<thead>
+			<tr>
+				<th class="col-xs-1">No DN</th>
+				<th class="col-xs-1">Tgl DN</th>
+				<th class="col-xs-6">Nama DN</th>
+				<th class="col-xs-1">Saldo</th>
+				<th class="col-xs-1">Terpakai</th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php if ( !empty($data['dn_realisasi_pembayaran']) && count($data['dn_realisasi_pembayaran']) > 0 ): ?>
+				<?php foreach ($data['dn_realisasi_pembayaran'] as $k_dn => $v_dn): ?>
+					<tr>
+						<td><?php echo $v_dn['d_dn']['nomor']; ?></td>
+						<td><?php echo tglIndonesia($v_dn['d_dn']['tanggal'], '-', ' '); ?></td>
+						<td><?php echo $v_dn['d_dn']['ket_dn']; ?></td>
+						<td class="text-right"><?php echo angkaDecimal($v_dn['saldo']); ?></td>
+						<?php
+							// $terpakai = $v_dn['saldo'] - $v_dn['sisa_saldo'];
+							$terpakai = $v_dn['pakai'];
+						?>
+						<td class="text-right"><?php echo angkaDecimal($terpakai); ?></td>
+					</tr>
+				<?php endforeach ?>
+			<?php else: ?>
+				<tr>
+					<td colspan="5">Tidak ada CN</td>
+				</tr>
+			<?php endif ?>
+		</tbody>
+	</table>
+</small>
+<div class="col-xs-12 search left-inner-addon no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
+<div class="col-xs-12 search left-inner-addon no-padding">
 	<label class="control-label">POTONGAN</label>
 </div>
 <small>
@@ -169,7 +215,9 @@
 	<table class="table table-bordered tbl_transaksi" style="margin-bottom: 0px;">
 		<thead>
 			<tr>
-				<th class="col-xs-4">Nama CN</th>
+				<th class="col-xs-1">No CN</th>
+				<th class="col-xs-1">Tgl CN</th>
+				<th class="col-xs-6">Nama CN</th>
 				<th class="col-xs-1">Saldo</th>
 				<th class="col-xs-1">Terpakai</th>
 			</tr>
@@ -178,17 +226,20 @@
 			<?php if ( !empty($data['cn_realisasi_pembayaran']) && count($data['cn_realisasi_pembayaran']) > 0 ): ?>
 				<?php foreach ($data['cn_realisasi_pembayaran'] as $k_cn => $v_cn): ?>
 					<tr>
-						<td><?php echo $v_cn['det_jurnal']['keterangan']; ?></td>
+						<td><?php echo $v_cn['d_cn']['nomor']; ?></td>
+						<td><?php echo tglIndonesia($v_cn['d_cn']['tanggal'], '-', ' '); ?></td>
+						<td><?php echo $v_cn['d_cn']['ket_cn']; ?></td>
 						<td class="text-right"><?php echo angkaDecimal($v_cn['saldo']); ?></td>
 						<?php
-							$terpakai = $v_cn['saldo'] - $v_cn['sisa_saldo'];
+							// $terpakai = $v_cn['saldo'] - $v_cn['sisa_saldo'];
+							$terpakai = $v_cn['pakai'];
 						?>
 						<td class="text-right"><?php echo angkaDecimal($terpakai); ?></td>
 					</tr>
 				<?php endforeach ?>
 			<?php else: ?>
 				<tr>
-					<td colspan="2">Tidak ada CN</td>
+					<td colspan="5">Tidak ada CN</td>
 				</tr>
 			<?php endif ?>
 		</tbody>

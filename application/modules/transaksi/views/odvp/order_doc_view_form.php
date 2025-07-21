@@ -18,6 +18,13 @@
 					</div>
 				</div>
 				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-4">No PO</div>
+					<div class="col-lg-4">
+						<span>:</span>
+						<span><?php echo $data_order_doc['no_po']; ?></span>
+					</div>
+				</div>
+				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-4">Perusahaan</div>
 					<div class="col-lg-6">
 						<span>:</span>

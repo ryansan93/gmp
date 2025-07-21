@@ -7,7 +7,7 @@
 					
 					<?php if ( $akses['a_ack'] == 1 ): ?>
 						<div class="form-group align-items-center d-flex">
-							<span class="col-sm-6 text-right">NIP</span>
+							<span class="col-sm-6 text-right">No. Induk</span>
 							<div class="col-sm-6">
 								<input class="form-control" type="text" name="nip_supplier" value="<?php echo $data->nomor; ?>" readonly>
 							</div>
@@ -16,7 +16,7 @@
 					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-6 text-right">Jenis Supplier</span>
 						<div class="col-sm-6">
-							<input class="form-control" type="text" name="jenis_supl" value="<?php echo $data['jenis']; ?>" readonly>
+							<input class="form-control" type="text" name="jenis_supl" value="<?php echo $data->d_jenis->nama; ?>" readonly>
 						</div>
 					</div>
 					<div class="form-group align-items-center d-flex">
@@ -32,12 +32,19 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-sm-4 hide">
+				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Platform</span>
+						<span class="col-sm-6 text-right">Plafon</span>
 						<div class="col-sm-6">
-							<input required="required" class="form-control text-right" type="text" name="platform" placeholder="Platform" data-tipe="integer" value="<?php echo 0; ?>" readonly>
+							<input required="required" class="form-control text-right" type="text" name="platform" placeholder="Platform" data-tipe="inetegr" value="<?php echo angkaRibuan($data['plafon']); ?>" readonly>
 						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Jatuh Tempo</span>
+						<div class="col-sm-3">
+							<input required="required" class="form-control text-right" type="text" name="jatuh_tempo" placeholder="Jatuh Tempo" data-tipe="integer" value="<?php echo angkaRibuan($data['jatuh_tempo']); ?>" readonly>
+						</div>
+						<div class="col-sm-3">Hari</div>
 					</div>
 				</div>
 				<div class="col-sm-12">
@@ -323,7 +330,7 @@
 	<?php if ( $akses['a_ack'] == 1 ): ?>
 		<?php if ( $data->status == getStatus(1) ): ?>
 			<div class="col-sm-12">
-				<button type="button" class="btn btn-large btn-primary pull-right" id="submit_supplier" onclick="supl.ack()"><i class="fa fa-check"></i>ACK</button>
+				<button type="button" class="btn btn-large btn-primary pull-right" id="submit_supplier" onclick="supl.ack()"><i class="fa fa-check"></i> ACK</button>
 			</div>
 		<?php endif ?>
 	<?php endif ?>

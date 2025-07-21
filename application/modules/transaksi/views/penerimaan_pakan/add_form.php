@@ -27,6 +27,14 @@
 <hr style="margin-top: 10px; margin-bottom: 10px;">
 <div class="form-group d-flex align-items-center">
     <div class="col-lg-6 d-flex align-items-center no-padding">
+        <div class="col-lg-3 text-left">No. BBM</div>
+        <div class="col-lg-6">
+            <input type="text" class="form-control no_bbm" placeholder="No. BBM" readonly>
+        </div>
+    </div>
+</div>
+<div class="form-group d-flex align-items-center">
+    <div class="col-lg-6 d-flex align-items-center no-padding">
         <div class="col-lg-3 text-left">No. SJ</div>
         <div class="col-lg-6">
             <select class="form-control no_sj" data-required="1" onchange="pp.get_data_by_sj(this)" disabled>

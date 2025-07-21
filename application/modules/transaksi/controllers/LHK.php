@@ -1046,6 +1046,10 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 1, '".$d_lhk->noreg."', null";
+            $d_conf = $conf->hydrateRaw($sql);
+
             $deskripsi_log = 'di-simpan oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_lhk, $deskripsi_log);
 
@@ -1303,6 +1307,10 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, '".$d_lhk->noreg."', null";
+            $d_conf = $conf->hydrateRaw($sql);
+
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_lhk, $deskripsi_log);
 
@@ -1374,6 +1382,10 @@ class LHK extends Public_Controller
             }
 
             $m_lhk->where('id', $id)->delete();
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
+            $d_conf = $conf->hydrateRaw($sql);
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di hapus.';

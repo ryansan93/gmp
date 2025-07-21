@@ -10,13 +10,6 @@
 		            <span class="glyphicon glyphicon-calendar"></span>
 		        </span>
 		    </div>
-
-			<!-- <div class="input-group">
-				<input value="" type="text" class="form-control text-center date" placeholder="Start Date" id="StartDate_RDIM" name="startPeriode" readonly data-required="1">
-				<span class="input-group-addon">
-					<span class="glyphicon glyphicon-calendar"></span>
-				</span>
-			</div> -->
 		</div>
 		<div class="col-sm-1 text-center" style="max-width: 4%; margin-top:7px;">s/d</div>
 		<div class="col-sm-2">
@@ -26,13 +19,6 @@
 		            <span class="glyphicon glyphicon-calendar"></span>
 		        </span>
 		    </div>
-
-			<!-- <div class="input-group">
-				<input value="" type="text" class="form-control text-center date" placeholder="End Date" id="EndDate_RDIM" name="endPeriode" readonly data-required="1" disabled>
-				<span class="input-group-addon">
-					<span class="glyphicon glyphicon-calendar"></span>
-				</span>
-			</div> -->
 		</div>
 	</form>
 </div>
@@ -58,17 +44,14 @@
 				<th rowspan="2" class="page0 col-sm-2">Mitra</th>
 				<th rowspan="2" class="page0 col-sm-1 batas_kanan">Kandang</th>
 				<th rowspan="2" class="page1">Populasi</th>
-				<!-- <th rowspan="1" class="page1 hide" colspan="3">IP Terakhir</th> -->
 				<th rowspan="2" class="page1">Kapasitas Kandang</th>
 				<th rowspan="2" class="page1 hide">Istirahat Kandang</th>
-				<!-- <th rowspan="1" class="page1 hide" colspan="2">Simp (Hutang) Mitra</th> -->
 				<th rowspan="2" class="page1">Kecamatan</th>
 				<th rowspan="2" class="page1">Kabupaten</th>
 				<th rowspan="2" class="page1 col-sm-2">Noreg</th>
 				<th rowspan="2" class="page1">Vaksin</th>
 
 				<!-- page 2 -->
-				<!-- <th rowspan="2" class="page2 hide">Program Kesehatan</th> -->
 				<th rowspan="2" class="page2">Kanit</th>
 				<th rowspan="2" class="page2">PPL</th>
 				<th rowspan="2" class="page2">Marketing</th>
@@ -78,17 +61,10 @@
 				<th rowspan="2" class="page2 hide">Pola</th>
 				<th rowspan="2" class="page2 hide">Group</th>
 			</tr>
-			<!-- <tr>
-				<th class="page1 hide">1</th>
-				<th class="page1 hide">2</th>
-				<th class="page1 hide">3</th>
-				<th class="page1 hide">Hutang</th>
-				<th class="page1 hide">JUT</th>
-			</tr> -->
 		</thead>
 		<tbody class="list">
 			<?php foreach ($rdim_data_perwakilan_mitra as $key => $perwakilan): ?>
-				<?php if ($perwakilan['child']): ?>
+				<?php if (isset($perwakilan['child']) && !empty($perwakilan['child'])): ?>
 
 					<tr class="parent v-center" data-key="<?php echo $key ?>">
 						<th colspan="14">
@@ -121,7 +97,7 @@
 										
 										$unit = !empty($_unit) ? '('.implode(', ', $_unit).')' : null;
 									?>
-									<option value="<?php echo $mitra['mitra_id'] ?>" data-jenis="<?php echo $mitra['jenis'] ?>" data-kandangs='<?php echo json_encode($mitra['kandangs']) ?>' ><?php echo $mitra['kode_perusahaan'].' | '.$mitra['nama'].' '.$unit; ?></option>
+									<option value="<?php echo $mitra['mitra_id'] ?>" data-jenis="<?php echo $mitra['jenis'] ?>" data-kandangs='<?php echo json_encode($mitra['kandangs']) ?>' ><?php echo $mitra['nama'].' '.$unit; ?></option>
 								<?php endforeach; ?>
 							</select>
 						</td>
@@ -131,13 +107,8 @@
 							</select>
 						</td>
 						<td class="page1"><input class="form-control text-right" type="text" name="populasi" value="" data-tipe="integer" onkeyup="rdim.checkBatasPopulasi(this)"></td>
-						<!-- <td class="page1 hide"><input class="form-control no-check text-right" type="text" name="ip_terakhir_1" value="" data-tipe="integer" readonly></td>
-						<td class="page1 hide"><input class="form-control no-check text-right" type="text" name="ip_terakhir_2" value="" data-tipe="integer" readonly></td>
-						<td class="page1 hide"><input class="form-control no-check text-right" type="text" name="ip_terakhir_3" value="" data-tipe="integer" readonly></td> -->
-						<td class="page1 hide"><input class="form-control text-right" type="text" name="kapasitas_kandang" value="" data-tipe="integer" readonly></td>
-						<td class="page1"><input class="form-control no-check" type="text" name="istirahat_kandang" value="" data-tipe="integer" readonly></td>
-						<!-- <td class="page1 hide"><input class="form-control no-check text-right" type="text" name="hutang" value="" data-tipe="integer" readonly></td>
-						<td class="page1 hide"><input class="form-control no-check text-right" type="text" name="jut" value="" data-tipe="integer" readonly></td> -->
+						<td class="page1"><input class="form-control text-right" type="text" name="kapasitas_kandang" value="" data-tipe="integer" readonly></td>
+						<td class="page1 hide"><input class="form-control no-check" type="text" name="istirahat_kandang" value="" data-tipe="integer" readonly></td>
 						<td class="page1 kecamatan">Kecamatan</td>
 						<td class="page1 kabupaten">Kabupaten</td>
 						<td class="page1">
@@ -157,54 +128,45 @@
 						</td>
 
 						<!-- page 2 -->
-						<!-- <td class="page2 hide"><input class="form-control" type="text" name="program_kesehatan" value="" data-tipe="text"></td> -->
 						<td class="page2">
 							<select class="form-control" name="pengawas">
 								<option value="">-- Pilih Kanit --</option>
 								<?php foreach ($perwakilan['parent']['kanit'] as $k_kanit => $v_kanit): ?>
-									<option value="<?php echo $v_kanit['nik']; ?>"><?php echo $v_kanit['nama']; ?></option>
+									<option value="<?php echo $v_kanit['nik']; ?>"><?php echo strtoupper($v_kanit['jabatan'].' | '.$v_kanit['nama']); ?></option>
 								<?php endforeach ?>
 							</select>
-							<!-- <input class="form-control" type="text" name="pengawas" value="" data-tipe="text"> -->
 						</td>
 						<td class="page2">
 							<select class="form-control" name="tim_sampling">
 								<option value="">-- Pilih PPL --</option>
 								<?php foreach ($perwakilan['parent']['ppl'] as $k_ppl => $v_ppl): ?>
-									<option value="<?php echo $v_ppl['nik']; ?>"><?php echo $v_ppl['nama']; ?></option>
+									<option value="<?php echo $v_ppl['nik']; ?>"><?php echo strtoupper($v_ppl['jabatan'].' | '.$v_ppl['nama']); ?></option>
 								<?php endforeach ?>
 							</select>
-							<!-- <input class="form-control" type="text" name="tim_sampling" value="" data-tipe="text"> -->
 						</td>
 						<td class="page2">
 							<select class="form-control" name="tim_panen">
 								<option value="">-- Pilih Marketing --</option>
 								<?php foreach ($perwakilan['parent']['marketing'] as $k_marketing => $v_marketing): ?>
-									<option value="<?php echo $v_marketing['nik']; ?>"><?php echo $v_marketing['nama']; ?></option>
+									<option value="<?php echo $v_marketing['nik']; ?>"><?php echo strtoupper($v_marketing['jabatan'].' | '.$v_marketing['nama']); ?></option>
 								<?php endforeach ?>
 							</select>
-							<!-- <select class="form-control" name="tim_panen">
-								<option value="">-- pilih --</option>
-								<?php foreach ($tim_panens as $tp): ?>
-									<option value="<?php echo $tp->nik_timpanen ?>"><?php echo $tp->nama_timpanen ?></option>
-								<?php endforeach; ?>
-							</select> -->
 						</td>
 						<td class="page2">
 							<select class="form-control" name="koordinator_area">
 								<option value="">-- Pilih Koordinator --</option>
 								<?php foreach ($perwakilan['parent']['koordinator'] as $k_koordinator => $v_koordinator): ?>
-									<option value="<?php echo $v_koordinator['nik']; ?>"><?php echo $v_koordinator['nama']; ?></option>
+									<option value="<?php echo $v_koordinator['nik']; ?>"><?php echo strtoupper($v_koordinator['jabatan'].' | '.$v_koordinator['nama']); ?></option>
 								<?php endforeach ?>
 							</select>
-							<!-- <input class="form-control" type="text" name="koordinator_area" value="" data-tipe="text"> -->
 						</td>
 						<td class="page2"><input class="form-control" type="text" name="tipe_densitas" value="" data-tipe="text" readonly></td>
 						<td class="page2">
 							<select class="form-control formatPb" name="formatPb">
 								<option value="">pilih</option>
 								<?php foreach ($perwakilan['parent']['formatPb'] as $format): ?>
-									<option value="<?php echo $format['id'] ?>" data-perusahaan="<?php echo $format['perusahaan']; ?>" data-pola="<?php echo $format['pola']; ?>" ><?php echo tglIndonesia($format['tgl_berlaku'], '-', ' ').' - '.$format['format']; ?></option>
+									<!-- <option value="<?php echo $format['id'] ?>" data-perusahaan="<?php echo $format['perusahaan']; ?>" data-pola="<?php echo $format['pola']; ?>" ><?php echo tglIndonesia($format['tgl_berlaku'], '-', ' ').' - '.$format['format']; ?></option> -->
+									<option value="<?php echo $format['id'] ?>" data-perusahaan="<?php echo $format['perusahaan']; ?>" data-pola="<?php echo $format['pola']; ?>" ><?php echo strtoupper($format['nomor']); ?></option>
 								<?php endforeach; ?>
 							</select>
 							<div class="btn-ctrl">

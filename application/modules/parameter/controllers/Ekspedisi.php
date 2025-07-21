@@ -799,16 +799,106 @@ class Ekspedisi extends Public_Controller {
         return $dashboard;
     }
 
-    public function tes()
+    public function injekDariMgb()
     {
-    	$file_path = 'C:\xampp_php7\htdocs\mgberp\//uploads/BPRO00018.jpg';
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select eks1.* from mgb_erp_live.dbo.ekspedisi eks1
+            right join
+                (select max(id) as id, nomor from mgb_erp_live.dbo.ekspedisi group by nomor) eks2
+                on
+                    eks1.id = eks2.id
+            where
+                eks1.mstatus = 1
+            order by
+                eks1.nama asc
+        ";
+        $d_eks = $m_conf->hydrateRaw( $sql );
 
-    	// cetak_r( file_exists($file_path) );
+        if ( $d_eks->count() > 0 ) {
+            $d_eks = $d_eks->toArray();
 
-    	if ( file_exists($file_path) ) {
-    		cetak_r( 'coba' );
-    	} else {
-    		cetak_r( 'coba gagal' );
-    	}
+            foreach ($d_eks as $k_eks => $v_eks) {
+                $status = "submit";
+
+				// ekspedisi
+				$m_ekspedisi = new \Model\Storage\Ekspedisi_model();
+				$ekspedisi_id = $m_ekspedisi->getNextIdentity();
+
+				$m_ekspedisi->id = $ekspedisi_id;
+				$m_ekspedisi->jenis = $v_eks['jenis'];
+				$m_ekspedisi->nomor = $v_eks['nomor'];
+				$m_ekspedisi->nama = $v_eks['nama'];
+				$m_ekspedisi->nik = $v_eks['nik'];
+				$m_ekspedisi->cp = $v_eks['cp'];
+				$m_ekspedisi->npwp = $v_eks['npwp'];
+				$m_ekspedisi->skb = $v_eks['skb'];
+				$m_ekspedisi->tgl_habis_skb = $v_eks['tgl_habis_skb'];
+				$m_ekspedisi->alamat_kecamatan = $v_eks['alamat_kecamatan'];
+				$m_ekspedisi->alamat_kelurahan = $v_eks['alamat_kelurahan'];
+				$m_ekspedisi->alamat_rt = $v_eks['alamat_rt'];
+				$m_ekspedisi->alamat_rw = $v_eks['alamat_rw'];
+				$m_ekspedisi->alamat_jalan = $v_eks['alamat_jalan'];
+				$m_ekspedisi->usaha_kecamatan = $v_eks['usaha_kecamatan'];
+				$m_ekspedisi->usaha_kelurahan = $v_eks['usaha_kelurahan'];
+				$m_ekspedisi->usaha_rt = $v_eks['usaha_rt'];
+				$m_ekspedisi->usaha_rw = $v_eks['usaha_rw'];
+				$m_ekspedisi->usaha_jalan = $v_eks['usaha_jalan'];
+				$m_ekspedisi->status = $v_eks['status'];
+				$m_ekspedisi->mstatus = $v_eks['mstatus'];
+				$m_ekspedisi->platform = $v_eks['platform'];
+				$m_ekspedisi->version = $v_eks['version'];
+				$m_ekspedisi->potongan_pph_id = $v_eks['potongan_pph_id'];
+				$m_ekspedisi->save();
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select te.* from mgb_erp_live.dbo.telp_ekspedisi te
+                    where
+                        te.ekspedisi_id = ".$v_eks['id']."
+                ";
+                $d_telp = $m_conf->hydrateRaw( $sql );
+                if ( $d_telp->count() > 0 ) {
+                    $d_telp = $d_telp->toArray();
+
+                    foreach ($d_telp as $k_telp => $v_telp) {
+                        $m_telp = new \Model\Storage\TelpEkspedisi_model();
+						$m_telp->id = $m_telp->getNextIdentity();
+						$m_telp->ekspedisi_id = $ekspedisi_id;
+						$m_telp->nomor = $v_telp['nomor'];
+						$m_telp->save();
+                    }
+                }
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select be.* from mgb_erp_live.dbo.bank_ekspedisi be
+                    where
+                        be.ekspedisi_id = ".$v_eks['id']."
+                ";
+                $d_bank = $m_conf->hydrateRaw( $sql );
+                if ( $d_bank->count() > 0 ) {
+                    $d_bank = $d_bank->toArray();
+
+                    foreach ($d_bank as $k_bank => $v_bank) {
+                        $m_bank = new \Model\Storage\BankEkspedisi_model();
+						$bank_ekspedisi_id = $m_bank->getNextIdentity();
+
+						$m_bank->id = $bank_ekspedisi_id;
+						$m_bank->ekspedisi_id = $ekspedisi_id;
+						$m_bank->bank = $v_bank['bank'];
+						$m_bank->rekening_nomor = $v_bank['rekening_nomor'];
+						$m_bank->rekening_pemilik = $v_bank['rekening_pemilik'];
+						$m_bank->rekening_cabang_bank = $v_bank['rekening_cabang_bank'];
+						$m_bank->save();
+                    }
+                }
+
+                $d_eks = $m_ekspedisi->where('id', $ekspedisi_id)->with(['telepons', 'banks'])->first();
+
+                $deskripsi_log = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
+				Modules::run( 'base/event/save', $d_eks, $deskripsi_log );
+            }
+        }
     }
 }

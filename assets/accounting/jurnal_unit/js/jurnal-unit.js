@@ -426,6 +426,7 @@ var ju = {
 						var supplier = $(tr).find('select.supplier').val();
 
 						var _detail = {
+							'kode_jurnal': $(tr).find('.kode_jurnal').val(),
 							'tanggal': dateSQL($(tr).find('#tgl_trans').data('DateTimePicker').date()),
 							'det_jurnal_trans_id': $(tr).find('select.jurnal_trans_detail').select2('val'),
 							'sumber': $(tr).find('.sumber_coa label').text(),
@@ -434,7 +435,7 @@ var ju = {
 							'tujuan_coa': $(tr).find('.tujuan_coa').attr('data-coa'),
 							'pic': $(tr).find('.pic').val(),
 							'nominal': numeral.unformat($(tr).find('input.nominal').val()),
-							'keterangan': $(tr).find('textarea.keterangan').val(),
+							'keterangan': $(tr).find('textarea.keterangan').val().replace(/^\s*|\s*$/g,"")
 						};
 
 						return _detail;

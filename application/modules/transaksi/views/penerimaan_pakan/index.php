@@ -81,7 +81,7 @@
                             </table>
                         </small>
                     </div>
-                    <div id="penerimaan" class="tab-pane fade">
+                    <div id="penerimaan" class="tab-pane fade lock_fiskal">
                         <?php echo $add_form; ?>
                     </div>
                 </div>

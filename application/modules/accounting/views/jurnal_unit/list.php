@@ -1,6 +1,7 @@
 <?php if ( !empty($data) ): ?>
 	<?php foreach ($data as $key => $v_det): ?>
 		<tr class="cursor-p" onclick="ju.changeTabActive(this)" data-href="action" data-id="<?php echo $v_det['id_header']; ?>">
+			<td><?php echo strtoupper($v_det['kode_jurnal']); ?></td>
 			<td><?php echo strtoupper(tglIndonesia($v_det['tanggal'], '-', ' ')); ?></td>
 			<td class="detail_jurnal"><?php echo (isset($v_det['nama']) && !empty($v_det['nama'])) ? strtoupper($v_det['nama']) : '-'; ?></td>
 			<td class="perusahaan"><?php echo strtoupper($v_det['perusahaan']); ?></td>

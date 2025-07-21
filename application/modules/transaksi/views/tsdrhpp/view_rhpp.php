@@ -861,7 +861,7 @@
 											<legend>
 												Hutang Peternak
 												<?php if ( $data['tutup_siklus'] <> 1 ) { ?>
-													<button type="button" class="btn btn-primary pull-right" style="padding: 0px 6px;" onclick="tsdrhpp.modalPiutang()"><i class="fa fa-plus"></i> Tambah Hutang Plasma Lain</button>
+													<button type="button" class="btn btn-primary pull-right" style="padding: 0px 6px;" onclick="tsdrhpp.modalPiutang(this)" data-kode="<?php echo $data['no_mitra']; ?>"><i class="fa fa-plus"></i> Tambah Hutang Plasma Lain</button>
 												<?php } ?>
 											</legend>
 											<small>

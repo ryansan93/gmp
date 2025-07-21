@@ -659,6 +659,153 @@ class ReturPakan extends Public_Controller
         display_json($this->result);
     }
 
+    public function edit()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $id_rp = $params['id'];
+
+            $m_rp = new \Model\Storage\ReturPakan_model();
+            $d_rp_old = $m_rp->where('id', $id_rp)->first();
+
+            $m_rp->where('id', $id_rp)->update(
+                array(
+                    'tgl_retur' => $params['tgl_retur'],
+                    'no_order' => $params['no_order'],
+                    'jenis_retur' => $params['jenis_retur'],
+                    'asal' => $params['asal'],
+                    'id_asal' => $params['id_asal'],
+                    'tujuan' => $params['tujuan'],
+                    'id_tujuan' => $params['id_tujuan'],
+                    'ongkos_angkut' => $params['ongkos_angkut'],
+                    'ekspedisi' => $params['ekspedisi'],
+                    'ekspedisi_id' => $params['ekspedisi_id'],
+                    'no_polisi' => $params['nopol'],
+                    'sopir' => $params['sopir'],
+                    'keterangan' => $params['keterangan'],
+                )
+            );
+
+            $m_drp = new \Model\Storage\DetReturPakan_model;
+            $m_drp->where('id_header', $id_rp)->delete();
+
+            if ( !empty($params['data_detail']) ) {
+                foreach ($params['data_detail'] as $k_det => $v_det) {
+                    $m_drp = new \Model\Storage\DetReturPakan_model();
+                    $m_drp->id_header = $id_rp;
+                    $m_drp->item = $v_det['kode_brg'];
+                    $m_drp->jumlah = $v_det['jml_retur'];
+                    $m_drp->kondisi = $v_det['kondisi'];
+                    $m_drp->save();
+                }
+            }
+
+            $d_rp = $m_rp->where('id', $id_rp)->with(['det_retur_pakan'])->first();
+
+            $tgl_trans = $d_rp->tgl_retur;
+            if ( $d_rp_old->tgl_retur < $tgl_trans ) {
+                $tgl_trans = $d_rp_old->tgl_retur;
+            }
+
+            $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/update', $d_rp, $deskripsi_log);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = array(
+                'id' => $id_rp,
+                'tanggal' => $tgl_trans,
+                'delete' => 0,
+                'message' => 'Data berhasil di update'
+            );
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = "Gagal : " . $e->getMessage();
+        }
+
+        display_json($this->result);
+    }
+
+    public function delete()
+    {
+        $id = $this->input->post('id');
+
+        try {
+            $m_rp = new \Model\Storage\ReturPakan_model();
+            $id_rp = $id;
+
+            $d_rp = $m_rp->where('id', $id_rp)->with(['det_retur_pakan'])->first();
+
+            // $m_drp = new \Model\Storage\DetReturPakan_model();
+            // $m_drp->where('id_header', $id_rp)->delete();
+
+            // $m_rp = new \Model\Storage\ReturPakan_model();
+            // $m_rp->where('id', $id_rp)->delete();
+
+            $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/delete', $d_rp, $deskripsi_log);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = array(
+                'id' => $id_rp,
+                'tanggal' => $d_rp->tgl_retur,
+                'delete' => 1,
+                'message' => 'Data berhasil di hapus'
+            );
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = "Gagal : " . $e->getMessage();
+        }
+
+        display_json($this->result);
+    }
+
+    public function hitungStokByTransaksi()
+    {
+        $params = $this->input->post('params');
+
+        $id = $params['id'];
+        $tanggal = $params['tanggal'];
+        $delete = $params['delete'];
+        $message = $params['message'];
+
+        try {
+            $noreg1 = null;
+            $noreg2 = null;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+					rp.id_asal as noreg1,
+					null as noreg2
+				from retur_pakan rp
+				where
+					rp.id = ".$id."
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                $noreg1 = $d_conf['noreg1'];
+                $noreg2 = $d_conf['noreg2'];
+            }
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_pakan_by_transaksi 'retur_pakan', '".$id."', '".$tanggal."', ".$delete.", 0";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'retur_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $this->result['status'] = 1;
+            $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function hitungStokAwal()
     {
         $params = $this->input->post('params');
@@ -916,129 +1063,6 @@ class ReturPakan extends Public_Controller
                 }
             }
         }
-    }
-
-    public function edit()
-    {
-        $params = $this->input->post('params');
-
-        try {
-            $id_rp = $params['id'];
-
-            $m_rp = new \Model\Storage\ReturPakan_model();
-            $d_rp_old = $m_rp->where('id', $id_rp)->first();
-
-            $m_rp->where('id', $id_rp)->update(
-                array(
-                    'tgl_retur' => $params['tgl_retur'],
-                    'no_order' => $params['no_order'],
-                    'jenis_retur' => $params['jenis_retur'],
-                    'asal' => $params['asal'],
-                    'id_asal' => $params['id_asal'],
-                    'tujuan' => $params['tujuan'],
-                    'id_tujuan' => $params['id_tujuan'],
-                    'ongkos_angkut' => $params['ongkos_angkut'],
-                    'ekspedisi' => $params['ekspedisi'],
-                    'ekspedisi_id' => $params['ekspedisi_id'],
-                    'no_polisi' => $params['nopol'],
-                    'sopir' => $params['sopir'],
-                    'keterangan' => $params['keterangan'],
-                )
-            );
-
-            $m_drp = new \Model\Storage\DetReturPakan_model;
-            $m_drp->where('id_header', $id_rp)->delete();
-
-            if ( !empty($params['data_detail']) ) {
-                foreach ($params['data_detail'] as $k_det => $v_det) {
-                    $m_drp = new \Model\Storage\DetReturPakan_model();
-                    $m_drp->id_header = $id_rp;
-                    $m_drp->item = $v_det['kode_brg'];
-                    $m_drp->jumlah = $v_det['jml_retur'];
-                    $m_drp->kondisi = $v_det['kondisi'];
-                    $m_drp->save();
-                }
-            }
-
-            $d_rp = $m_rp->where('id', $id_rp)->with(['det_retur_pakan'])->first();
-
-            $tgl_trans = $d_rp->tgl_retur;
-            if ( $d_rp_old->tgl_retur < $tgl_trans ) {
-                $tgl_trans = $d_rp_old->tgl_retur;
-            }
-
-            $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_rp, $deskripsi_log);
-
-            $this->result['status'] = 1;
-            $this->result['content'] = array(
-                'id' => $id_rp,
-                'tanggal' => $tgl_trans,
-                'delete' => 0,
-                'message' => 'Data berhasil di update'
-            );
-        } catch (\Illuminate\Database\QueryException $e) {
-            $this->result['message'] = "Gagal : " . $e->getMessage();
-        }
-
-        display_json($this->result);
-    }
-
-    public function delete()
-    {
-        $id = $this->input->post('id');
-
-        try {
-            $m_rp = new \Model\Storage\ReturPakan_model();
-            $id_rp = $id;
-
-            $d_rp = $m_rp->where('id', $id_rp)->with(['det_retur_pakan'])->first();
-
-            // $m_drp = new \Model\Storage\DetReturPakan_model();
-            // $m_drp->where('id_header', $id_rp)->delete();
-
-            // $m_rp = new \Model\Storage\ReturPakan_model();
-            // $m_rp->where('id', $id_rp)->delete();
-
-            $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/delete', $d_rp, $deskripsi_log);
-
-            $this->result['status'] = 1;
-            $this->result['content'] = array(
-                'id' => $id_rp,
-                'tanggal' => $d_rp->tgl_retur,
-                'delete' => 1,
-                'message' => 'Data berhasil di hapus'
-            );
-        } catch (\Illuminate\Database\QueryException $e) {
-            $this->result['message'] = "Gagal : " . $e->getMessage();
-        }
-
-        display_json($this->result);
-    }
-
-    public function hitungStokByTransaksi()
-    {
-        $params = $this->input->post('params');
-
-        $id = $params['id'];
-        $tanggal = $params['tanggal'];
-        $delete = $params['delete'];
-        $message = $params['message'];
-
-        try {
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_pakan_by_transaksi 'retur_pakan', '".$id."', '".$tanggal."', ".$delete.", 0";
-
-            $d_conf = $conf->hydrateRaw($sql);
-
-            $this->result['status'] = 1;
-            $this->result['message'] = $message;
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
     }
 
     public function listActivity()

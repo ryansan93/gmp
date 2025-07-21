@@ -868,6 +868,7 @@ var odvp = {
 				if ( result ) {
 					var data = {
 						'no_order': $(div).find('input.no_order').val(),
+						'no_po': $(div).find('input.no_po').val(),
 						'noreg': $(div).find('input[type=hidden]').data('noreg'),
 						'supplier': $(div).find('select.supplier').select2('val'),
 						'item': $(div).find('select.jns_doc').select2('val'),
@@ -1324,6 +1325,7 @@ var odvp = {
 					if ( result ) {
 						var data = {
 							'no_order': $(div).find('input.no_order').val(),
+							'no_po': $(div).find('input.no_po').val(),
 							'tanggal': dateSQL( $('[name=tgl_order_voadip]').data('DateTimePicker').date() ),
 							'supplier': $(div).find('select.supplier').val(),
 							'version': $(div).find('input.no_order').data('version'),

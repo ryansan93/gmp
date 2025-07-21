@@ -325,7 +325,7 @@ var supl = {
 		if (error > 0) {
 			bootbox.alert('Data belum lengkap : <br> ' + lbl_errors.join('<br>') );
 		} else {
-			bootbox.confirm('Apakah anda yakin data mitra akan disimpan?', function(result){
+			bootbox.confirm('Apakah anda yakin ingin menyimpan data supplier ?', function(result){
     			if (result) {
     				var div_supplier = $('div[name=data-supplier]');
     				var rek_supplier = $('div#rekening_supplier');
@@ -345,7 +345,8 @@ var supl = {
     				var jenis_supplier = $(div_supplier).find('select[name=jenis_supl]').val();
     				var nama_supplier = $(div_supplier).find('input[name=nama_supl]').val();
     				var contact_person = $(div_supplier).find('input[name=contact_supl]').val();
-    				var platform = 0;
+    				var plafon = numeral.unformat( $(div_supplier).find('input[name=plafon]').val() );
+    				var jatuh_tempo = numeral.unformat( $(div_supplier).find('input[name=jatuh_tempo]').val() );
 
     				var telepons = $.map( $(div_supplier).find('input[name=telp_supl]'), function(ipt) {
 						var telp = $(ipt).mask();
@@ -385,7 +386,8 @@ var supl = {
 						'alamat_supplier' : alamat_supplier,
 						'alamat_usaha' : alamat_usaha,
 						'banks' : banks,
-						'platform' : platform
+						'plafon' : plafon,
+						'jatuh_tempo' : jatuh_tempo
 					};
 
 					var params = data_supplier;
@@ -429,7 +431,7 @@ var supl = {
 		if (error > 0) {
 			bootbox.alert('Data belum lengkap : <br> ' + lbl_errors.join('<br>') );
 		} else {
-			bootbox.confirm('Apakah anda yakin data mitra akan disimpan?', function(result){
+			bootbox.confirm('Apakah anda yakin ingin meng-ubah data supplier ?', function(result){
     			if (result) {
     				var div_supplier = $('div[name=data-supplier]');
     				var rek_supplier = $('div#rekening_supplier');
@@ -456,7 +458,8 @@ var supl = {
     				var jenis_supplier = $(div_supplier).find('select[name=jenis_supl]').val();
     				var nama_supplier = $(div_supplier).find('input[name=nama_supl]').val();
     				var contact_person = $(div_supplier).find('input[name=contact_supl]').val();
-    				var platform = 0;
+    				var plafon = numeral.unformat( $(div_supplier).find('input[name=plafon]').val() );
+    				var jatuh_tempo = numeral.unformat( $(div_supplier).find('input[name=jatuh_tempo]').val() );
 
     				var telepons = $.map( $(div_supplier).find('input[name=telp_supl]'), function(ipt) {
 						var telp = $(ipt).mask();
@@ -501,7 +504,8 @@ var supl = {
 						'alamat_supplier' : alamat_supplier,
 						'alamat_usaha' : alamat_usaha,
 						'banks' : banks,
-						'platform' : platform
+						'plafon' : plafon,
+						'jatuh_tempo' : jatuh_tempo
 					};
 
 					var params = data_supplier;

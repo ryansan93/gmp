@@ -26,7 +26,6 @@
 				<thead>
 					<tr>
 						<th rowspan="2" class="page0 col-sm-1" style="height: 64px">Tanggal DOC In</th>
-						<th rowspan="2" class="page0 col-sm-1">Perusahaan</th>
 						<th rowspan="2" class="page0 col-sm-2">Mitra</th>
 						<th rowspan="2" class="page0 col-sm-1 batas_kanan">Kandang</th>
 						<th rowspan="2" class="page1 col-sm-1">Populasi</th>
@@ -74,7 +73,6 @@
 						<?php foreach ($rs['details'] as $detail): ?>
 							<tr class="child" data-key="<?php echo $perwakilan_id ?>" data-id="<?php echo $detail['id'] ?>">
 								<td class="page0"> <?php echo tglIndonesia($detail['tanggal']) ?> </td>
-								<td class="page0"> <?php echo $detail['kode_perusahaan'] ?> </td>
 								<!-- <td class="page0"> <?php echo $detail['mitra'] ?> </td> -->
 								<td class="page0"> 
 									<a href="transaksi/Rdim/cetak_kontrak/<?php echo $detail['id']; //str_replace('/','_URT_',$data['nomor_ppah']); ?>" target="_blank" title="CETAK"><?php echo $detail['mitra'] ?></a> 
@@ -108,7 +106,8 @@
 									<a class="cursor-p" onclick="rdim.formPenanggungJawabKandang(this)" data-id="<?php echo $detail['id']; ?>"><?php echo strtoupper($detail['koar']) ?></a>
 								</td>
 								<td class="page2"><?php echo $detail['densitas'] ?></td>
-								<td class="page2"><?php echo tglIndonesia($detail['tgl_sk'], '-', ' ').' - '.$detail['format_pb'] ?></td>
+								<!-- <td class="page2"><?php echo tglIndonesia($detail['tgl_sk'], '-', ' ').' - '.$detail['format_pb'] ?></td> -->
+								<td class="page2"><?php echo strtoupper($detail['nomor_sk']) ?></td>
 								<td class="page2 hide"><?php echo $detail['pola'] ?></td>
 								<td class="page2 text-right hide"><?php echo $detail['group'] ?></td>
 							</tr>

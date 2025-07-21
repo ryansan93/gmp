@@ -7,7 +7,7 @@
 		<div class="col-lg-12 no-padding">
 			<table class="table no-border">
 				<tbody>
-					<tr>
+					<tr class="hide">
 						<td class="col-md-3">				
 							<label class="control-label">Perusahaan</label>
 						</td>
@@ -15,7 +15,7 @@
 							<label class="control-label">: <?php echo strtoupper($data['d_perusahaan']['perusahaan']); ?></label>
 						</td>
 					</tr>
-					<tr>
+					<tr class="hide">
 						<td class="col-md-3">				
 							<label class="control-label">Unit</label>
 						</td>
@@ -25,7 +25,15 @@
 					</tr>
 					<tr>
 						<td class="col-md-3">
-							<label class="control-label">Nama</label>
+							<label class="control-label">No. COA</label>
+						</td>
+						<td class="col-md-9">
+							<label class="control-label">: <?php echo strtoupper($data['coa']); ?></label>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Nama COA</label>
 						</td>
 						<td class="col-md-9">
 							<label class="control-label">: <?php echo strtoupper($data['nama_coa']); ?></label>
@@ -33,12 +41,45 @@
 					</tr>
 					<tr>
 						<td class="col-md-3">
-							<label class="control-label">COA</label>
+							<label class="control-label">Golongan 1</label>
 						</td>
 						<td class="col-md-9">
-							<label class="control-label">: <?php echo strtoupper($data['coa']); ?></label>
+							<label class="control-label">: <?php echo !empty($data['gol1']) ? strtoupper($data['gol1']) : '-'; ?></label>
 						</td>
 					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 2</label>
+						</td>
+						<td class="col-md-9">
+							<label class="control-label">: <?php echo !empty($data['gol2']) ? strtoupper($data['gol2']) : '-'; ?></label>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 3</label>
+						</td>
+						<td class="col-md-9">
+							<label class="control-label">: <?php echo !empty($data['gol3']) ? strtoupper($data['gol3']) : '-'; ?></label>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 4</label>
+						</td>
+						<td class="col-md-9">
+							<label class="control-label">: <?php echo !empty($data['gol4']) ? strtoupper($data['gol4']) : '-'; ?></label>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Golongan 5</label>
+						</td>
+						<td class="col-md-9">
+							<label class="control-label">: <?php echo !empty($data['gol5']) ? strtoupper($data['gol5']) : '-'; ?></label>
+						</td>
+					</tr>
+					<tr><td colspan="2"><hr></td></tr>
 					<tr>
 						<td class="col-md-3">
 							<label class="control-label">Laporan</label>

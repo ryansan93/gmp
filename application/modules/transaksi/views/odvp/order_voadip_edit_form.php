@@ -24,6 +24,14 @@
 				    </div>
 				</div>
 			</div>
+			<div class="col-lg-8 action d-flex align-items-center">
+				<div class="col-sm-1 no-padding">
+					<span>No. PO</label>
+				</div>
+				<div class="col-sm-3">
+					<input type="text" class="form-control no_po" placeholder="No. Order" value="<?php echo $data['no_po']; ?>" data-version="<?php echo $data['version']; ?>" readonly>
+				</div>
+			</div>
 			<div class="col-lg-8 action left-inner-addon d-flex align-items-center">
 				<div class="col-sm-1 no-padding">
 					<span>Supplier</label>
@@ -70,7 +78,7 @@
 								<th class="col-sm-1 text-center" rowspan="2">Total Beli</th>
 								<th class="col-sm-1 text-center" rowspan="2">Tgl Kirim</th>
 								<th class="text-center" colspan="1">Kirim</th>
-								<th class="text-center hide" rowspan="2">Alamat</th>
+								<th class="text-center" rowspan="2">Alamat</th>
 							</tr>
 							<tr class="v-center">
 								<th class="col-sm-1 text-center">Gudang</th>
@@ -84,7 +92,6 @@
 								<tr class="child inactive">
 									<td>
 										<select class="form-control perusahaan" data-required="1">
-											<option value="">-- Pilih Perusahaan --</option>
 											<?php foreach ($perusahaan as $k_perusahaan => $v_perusahaan): ?>
 												<?php
 													$selected = null;
@@ -169,6 +176,9 @@
 										<?php if ( $index == count($data['detail']) ): ?>
 											<?php $display = null; ?>
 										<?php endif ?>
+									</td>
+									<td class="alamat">
+										<div class="alamat"><?php echo $v_detail['alamat']; ?></div>
 										<div class="btn-ctrl" style="<?php echo $display; ?>">
 											<?php $hide = null; ?>
 											<?php if ( $index == 1 ): ?>
@@ -177,9 +187,6 @@
 											<span onclick="odvp.removeRowChild(this)" class="btn_del_row_2x <?php echo $hide; ?>"></span>
 											<span onclick="odvp.addRowChildVoadip(this)" class="btn_add_row_2x"></span>
 										</div>
-									</td>
-									<td class="alamat hide">
-										<div class="alamat"><?php echo $v_detail['alamat']; ?></div>
 									</td>
 									<!-- <td class="hide">
 										<input type="text" class="form-control alamat_peternak" placeholder="Alamat Peternak" value="<?php echo $v_detail['alamat']; ?>" readonly>

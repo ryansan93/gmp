@@ -232,8 +232,10 @@ class OrderVoadip extends Public_Controller {
                                     }
 
                                     $nomor = $m_order_voadip->getNextNomor('OVO/'.$kode_unit);
+                                    $no_po = 'PO/OVK'.str_replace('OVO', '', $nomor);
 
                                     $m_order_voadip->no_order = $nomor;
+                                    $m_order_voadip->no_po = $no_po;
                                     $m_order_voadip->supplier = $v_data['SUPPLIER'];
                                     $m_order_voadip->tanggal = $v_data['TGL ORDER'];
                                     $m_order_voadip->user_submit = $this->userid;

@@ -102,7 +102,8 @@ class JurnalPusat extends Public_Controller
                 dj.tbl_id,
                 djt.nama as jurnal_trans_detail_nama,
                 p.perusahaan as nama_perusahaan,
-                w.nama as nama_unit
+                w.nama as nama_unit,
+                dj.kode_jurnal
             from det_jurnal dj
             left join
                 det_jurnal_trans djt
@@ -141,7 +142,7 @@ class JurnalPusat extends Public_Controller
                     dj.id_header = j.id
             where
                 dj.tanggal between '".$start_date."' and '".$end_date."' and
-                (jt.unit is null or jt.unit = '0')
+                ((jt.unit is null or jt.unit = '0') and jt.jurnal_manual = 1)
                 ".$sql_jurnal_trans_detail."
                 ".$sql_perusahaan."
             group by
@@ -165,7 +166,8 @@ class JurnalPusat extends Public_Controller
                 dj.tbl_id,
                 djt.nama,
                 p.perusahaan,
-                w.nama
+                w.nama,
+                dj.kode_jurnal
             order by
                 dj.tanggal desc
         ";
@@ -234,7 +236,7 @@ class JurnalPusat extends Public_Controller
         $d_jt = $m_jt->where(function ($query) {
                                 $query->where('unit', 0)
                                       ->orWhereNull('unit');
-                            })->where('mstatus', 1)->orderBy('nama', 'asc')->with(['detail', 'sumber_tujuan'])->get();
+                            })->where('mstatus', 1)->where('jurnal_manual', 1)->orderBy('nama', 'asc')->with(['detail', 'sumber_tujuan'])->get();
                             
         $data = null;
         if ( $d_jt->count() > 0 ) {
@@ -436,7 +438,8 @@ class JurnalPusat extends Public_Controller
                 dj.noreg,
                 dj.periode,
                 dj.invoice,
-                dj.no_bukti
+                dj.no_bukti,
+                dj.kode_jurnal
             from det_jurnal dj
             right join
                 jurnal j
@@ -561,6 +564,7 @@ class JurnalPusat extends Public_Controller
                     'periode' => $value['periode'],
                     'invoice' => $value['invoice'],
                     'no_bukti' => $value['no_bukti'],
+                    'kode_jurnal' => $value['kode_jurnal'],
                     'list_id' => $data_list_id_detail
                 );
             }
@@ -623,6 +627,33 @@ class JurnalPusat extends Public_Controller
                     }
                 }
 
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    DECLARE @kode_voucher varchar(10), @kode_jurnal varchar(50), @unit varchar(10)
+
+                    SET @unit = '".$v_det['unit']."'
+
+                    select
+                        @kode_voucher = cast(jt.kode_voucher as varchar(10))
+                    from jurnal_trans jt
+                    where
+                        jt.id = '".$params['jurnal_trans_id']."'
+
+                    select
+                        @kode_jurnal = cast(@kode_voucher+'/'+@unit+'/'+right(year(current_timestamp),2)+'/'+replace(str(month(getdate()),2),' ',0)+'/'+replace(str(substring(coalesce(max(kode_jurnal),'00000'),(LEN(@kode_voucher+'/'+@unit)+1+7),5)+1,5), ' ', '0') as varchar(50))
+                    from det_jurnal
+                    where
+                        SUBSTRING(kode_jurnal,0,(LEN(@kode_voucher+'/'+@unit)+1+6)) = @kode_voucher+'/'+@unit+'/'+cast(right(year(current_timestamp),2) as char(2))+'/'+replace(str(month(getdate()),2),' ',0)
+
+                    select @kode_jurnal
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+
+                $kode_jurnal = null;
+                if ( $d_conf->count() > 0 ) {
+                    $kode_jurnal = $d_conf->toArray()[0][''];
+                }
+
                 $m_dj = new \Model\Storage\DetJurnal_model();
                 $m_dj->id_header = $id;
                 $m_dj->tanggal = $v_det['tanggal'];
@@ -640,6 +671,7 @@ class JurnalPusat extends Public_Controller
                 $m_dj->periode = (isset($v_det['submit_periode']) && !empty($v_det['submit_periode'])) ? $v_det['submit_periode'] : null;
                 $m_dj->invoice = (isset($v_det['invoice']) && !empty($v_det['invoice'])) ? $v_det['invoice'] : null;
                 $m_dj->no_bukti = $no_bukti;
+                $m_dj->kode_jurnal = $kode_jurnal;
                 $m_dj->save();
             }
 
@@ -724,6 +756,37 @@ class JurnalPusat extends Public_Controller
                     }
                 }
 
+                $kode_jurnal = null;
+                if ( isset($v_det['kode_jurnal']) && !empty($v_det['kode_jurnal']) ) {
+                    $kode_jurnal = $v_det['kode_jurnal'];
+                } else {
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        DECLARE @kode_voucher varchar(10), @kode_jurnal varchar(50), @unit varchar(10)
+    
+                        SET @unit = '".$v_det['unit']."'
+    
+                        select
+                            @kode_voucher = cast(jt.kode_voucher as varchar(10))
+                        from jurnal_trans jt
+                        where
+                            jt.id = '".$params['jurnal_trans_id']."'
+    
+                        select
+                            @kode_jurnal = cast(@kode_voucher+'/'+@unit+'/'+right(year(current_timestamp),2)+'/'+replace(str(month(getdate()),2),' ',0)+'/'+replace(str(substring(coalesce(max(kode_jurnal),'00000'),(LEN(@kode_voucher+'/'+@unit)+1+7),5)+1,5), ' ', '0') as varchar(50))
+                        from det_jurnal
+                        where
+                            SUBSTRING(kode_jurnal,0,(LEN(@kode_voucher+'/'+@unit)+1+6)) = @kode_voucher+'/'+@unit+'/'+cast(right(year(current_timestamp),2) as char(2))+'/'+replace(str(month(getdate()),2),' ',0)
+    
+                        select @kode_jurnal
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+    
+                    if ( $d_conf->count() > 0 ) {
+                        $kode_jurnal = $d_conf->toArray()[0][''];
+                    }
+                }
+
                 $m_dj = new \Model\Storage\DetJurnal_model();
                 $m_dj->id_header = $id;
                 $m_dj->tanggal = $v_det['tanggal'];
@@ -741,6 +804,7 @@ class JurnalPusat extends Public_Controller
                 $m_dj->periode = (isset($v_det['submit_periode']) && !empty($v_det['submit_periode'])) ? $v_det['submit_periode'] : null;
                 $m_dj->invoice = (isset($v_det['invoice']) && !empty($v_det['invoice'])) ? $v_det['invoice'] : null;
                 $m_dj->no_bukti = $no_bukti;
+                $m_dj->kode_jurnal = $kode_jurnal;
                 $m_dj->save();
             }
 

@@ -2894,6 +2894,8 @@ class RhppGroup extends Public_Controller {
     }
 
     public function modalPiutang() {
+        $no_mitra = $this->input->get('kode');
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select 
@@ -2971,7 +2973,8 @@ class RhppGroup extends Public_Controller {
                     p.kode = bp.piutang_kode
             where
                 p.jenis = 'mitra' and
-                (p.nominal - isnull(bp.nominal, 0)) > 0
+                (p.nominal - isnull(bp.nominal, 0)) > 0 and
+                mtr.pemilik = '".$no_mitra."'
             order by
                 p.tanggal desc,
                 mtr.nama asc

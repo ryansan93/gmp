@@ -1,3 +1,4 @@
+var dn = null;
 var cn = null;
 var potongan = null;
 
@@ -513,6 +514,95 @@ var rp = {
         }
     }, // end - submit
 
+    modalPilihDN: function(elm) {
+        let div = $('div#transaksi');
+        var jenis_pembayaran = $(div).find('select.jenis_pembayaran').select2('val');
+        var jenis_transaksi = $(div).find('div.'+jenis_pembayaran+' select.jenis_transaksi').select2('val');
+        var supplier = $(div).find('select.supplier').select2('val');
+        var perusahaan = $(div).find('select.perusahaan_non_multiple').val();
+
+        var params = {
+            'jenis_pembayaran': jenis_pembayaran,
+            'jenis_transaksi': jenis_transaksi,
+            'supplier': supplier,
+            'perusahaan': perusahaan
+        };
+
+        $.get('pembayaran/RealisasiPembayaran/modalPilihDN',{
+            'params': params
+        },function(data){
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                var modal_dialog = $(this).find('.modal-dialog');
+                var modal_body = $(this).find('.modal-body');
+
+                $(modal_dialog).css({'max-width' : '60%'});
+                $(modal_dialog).css({'width' : '100%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+
+                $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+                    $(this).priceFormat(Config[$(this).data('tipe')]);
+                });
+            });
+        },'html');
+    }, // end - modalPilihDN
+
+    cekPakaiDN: function(elm) {
+        var tr = $(elm).closest('tr');
+
+        var saldo = numeral.unformat( $(tr).find('td.saldo').text() );
+        var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
+
+        if ( pakai > saldo ) {
+            bootbox.alert('DN yang anda masukkan melebihi saldo DN, harap cek kembali.', function () {
+                $(tr).find('input.pakai').val( 0 );
+            });
+        }
+    }, // end - cekPakaiDN
+
+    pilihDN: function(elm) {
+        var div = $(elm).closest('.modal-body');
+
+        var total_dn = 0;
+        if ( $(div).find('[type=checkbox]').length > 0 ) {
+            dn = $.map( $(div).find('[type=checkbox]'), function(ipt) {
+                if ( $(ipt).is(':checked') ) {
+                    var tr = $(ipt).closest('tr');
+
+                    var saldo = numeral.unformat( $(tr).find('td.saldo').text() );
+                    var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
+                    var sisa_saldo = saldo - pakai;
+
+                    var _dn = {
+                        'id': $(ipt).attr('data-id'),
+                        'saldo': saldo,
+                        'pakai': pakai,
+                        'sisa_saldo': sisa_saldo
+                    };
+
+                    total_dn += pakai;
+
+                    return _dn;
+                }
+            });
+        } else {
+            dn = null;
+        }
+
+        $('.total_dn').attr('data-val', total_dn);
+        $('.total_dn').find('h4 b').text(numeral.formatDec(total_dn));
+
+        $(div).find('.btn-danger').click();
+
+        rp.hit_jml_bayar();
+    }, // end - pilihDN
+
     modalPilihCN: function(elm) {
         let div = $('div#transaksi');
         var jenis_pembayaran = $(div).find('select.jenis_pembayaran').select2('val');
@@ -559,7 +649,7 @@ var rp = {
         var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
 
         if ( pakai > saldo ) {
-            bootboxa.alert('CN yang anda masukkan melebihi saldo CN, harap cek kembali.', function () {
+            bootbox.alert('CN yang anda masukkan melebihi saldo CN, harap cek kembali.', function () {
                 $(tr).find('input.pakai').val( 0 );
             });
         }
@@ -668,6 +758,7 @@ var rp = {
 
     hit_jml_bayar: function() {
         var total = ($('.total').length > 0) ? $('.total').attr('data-val') : 0;
+        var total_dn = ($('.total_dn').length > 0) ? $('.total_dn').attr('data-val') : 0;
         var total_cn = ($('.total_cn').length > 0) ? $('.total_cn').attr('data-val') : 0;
         var total_potongan = parseFloat($('.total_potongan').attr('data-val'));
         var total_uang_muka = numeral.unformat($('.uang_muka').val());
@@ -795,7 +886,7 @@ var rp = {
         //     $('table.tbl_tagihan tbody tr:last').find('td.bayar').text(numeral.formatDec(nilai));
         // }
 
-        var kurang_bayar = total - tot_bayar;
+        var kurang_bayar = (parseFloat(total) + parseFloat(total_dn)) - tot_bayar;
 
         $('.total_bayar').attr('data-val', tot_bayar);
         $('.total_bayar h4 b').text(numeral.formatDec(tot_bayar));
@@ -831,7 +922,7 @@ var rp = {
         if ( err > 0 ) {
             bootbox.alert('Harap lengkapi data terlebih dahulu.');
         } else {
-            var tagihan = $(modal_body).find('.total').attr('data-val');
+            var tagihan = parseFloat($(modal_body).find('.total').attr('data-val')) + parseFloat($(modal_body).find('.total_dn').attr('data-val'));
             var total_bayar = $(modal_body).find('.total_bayar').attr('data-val');
 
             var ket = null;
@@ -889,6 +980,7 @@ var rp = {
 
         var data = {
             'tagihan': $(modal_body).find('.total').attr('data-val'),
+            'total_dn': ($(modal_body).find('.total_dn').length > 0) ? $(modal_body).find('.total_dn').attr('data-val') : 0,
             'total_cn': ($(modal_body).find('.total_cn').length > 0) ? $(modal_body).find('.total_cn').attr('data-val') : 0,
             'total_potongan': ($(modal_body).find('.total_potongan').length > 0) ? $(modal_body).find('.total_potongan').attr('data-val') : 0,
             'uang_muka': numeral.unformat($(modal_body).find('.uang_muka').val()),
@@ -901,6 +993,7 @@ var rp = {
             'ekspedisi': $(modal_body).find('.ekspedisi').attr('data-val'),
             'no_rek': $(modal_body).find('.rekening').val(),
             'no_bukti': $(modal_body).find('.no_bukti').val(),
+            'dn': !empty(dn) ? dn : null,
             'cn': !empty(cn) ? cn : null,
             'potongan': !empty(potongan) ? potongan : null,
             'keterangan': ket,
@@ -1088,6 +1181,7 @@ var rp = {
                         hideLoading();
                         if ( data.status == 1 ) {
                             bootbox.alert(data.message, function() {
+                                dn = null;
                                 cn = null;
                                 potongan = null;
 
