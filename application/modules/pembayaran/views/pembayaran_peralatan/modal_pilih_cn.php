@@ -1,5 +1,5 @@
 <div class="modal-header no-padding">
-	<span class="modal-title"><b>PILIH DN</b></span>
+	<span class="modal-title"><b>PILIH CN</b></span>
 </div>
 <div class="modal-body" style="padding-bottom: 0px;">
 	<div class="row detailed">
@@ -7,9 +7,9 @@
 			<table class="table table-bordered" style="margin-bottom: 0px;">
 				<thead>
 					<tr>
-						<th class="col-xs-1 text-center">No. DN</th>
-						<th class="col-xs-1 text-center">Tgl DN</th>
-						<th class="col-xs-5 text-center">Ket DN</th>
+						<th class="col-xs-1 text-center">No. CN</th>
+						<th class="col-xs-1 text-center">Tgl CN</th>
+						<th class="col-xs-5 text-center">Ket CN</th>
 						<th class="col-xs-2 text-center">Saldo</th>
 						<th class="col-xs-2 text-center">Pakai</th>
 						<th class="col-xs-1 text-center">Pilih</th>
@@ -24,7 +24,7 @@
 								<td><?php echo $v_data['keterangan']; ?></td>
 								<td class="text-right saldo"><?php echo angkaDecimal($v_data['saldo']); ?></td>
 								<td class="text-right">
-									<input type="text" class="form-control uppercase text-right pakai" placeholder="Pakai" data-tipe="decimal" data-required="1" onblur="rp.cekPakaiDN(this)">
+									<input type="text" class="form-control uppercase text-right pakai" placeholder="Pakai" data-tipe="decimal" data-required="1" onblur="pp.cekPakaiCN(this)">
 								</td>
 								<td class="text-center">
 									<input type="checkbox" class="cursor-p check" data-id="<?php echo $v_data['id']; ?>">
@@ -47,7 +47,7 @@
 				<button type="button" class="col-xs-12 btn btn-danger" data-dismiss="modal"><i class="fa fa-times"></i> Batal</button>
 			</div>
 			<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-				<button type="button" class="col-xs-12 btn btn-primary" onclick="rp.pilihDN(this)"><i class="fa fa-check"></i> Pilih</button>
+				<button type="button" class="col-xs-12 btn btn-primary" onclick="pp.pilihCN(this)"><i class="fa fa-check"></i> Pilih</button>
 			</div>
 		</div>
 	</div>

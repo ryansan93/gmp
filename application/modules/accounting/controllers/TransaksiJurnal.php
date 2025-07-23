@@ -83,6 +83,38 @@ class TransaksiJurnal extends Public_Controller
         return $data;
     }
 
+    public function getFitur() {
+		$m_conf = new \Model\Storage\Conf();
+		$sql = "
+			select 
+				mf.nama_fitur,
+				df.id_detfitur, 
+				df.nama_detfitur 
+			from detail_fitur df 
+			left join
+				ms_fitur mf
+				on
+					df.id_fitur = mf.id_fitur
+			where
+				mf.status = 1
+			group by
+				mf.nama_fitur,
+				df.id_detfitur, 
+				df.nama_detfitur
+			order by 
+				mf.nama_fitur asc,
+				df.nama_detfitur asc
+		";
+		$d_conf = $m_conf->hydrateRaw( $sql );
+
+		$data = null;
+		if ( $d_conf->count() > 0 ) {
+			$data = $d_conf->toArray();
+		}
+
+		return $data;
+	}
+
     public function riwayat()
     {
         $data = null;
@@ -117,6 +149,7 @@ class TransaksiJurnal extends Public_Controller
 
 	public function add_form()
 	{
+        $content['fitur'] = $this->getFitur();
         $content['coa'] = $this->getDataCoa();
 		$html = $this->load->view($this->pathView . 'add_form', $content, true);
 
@@ -126,16 +159,48 @@ class TransaksiJurnal extends Public_Controller
     public function detail_form($id)
     {
         $m_jt = new \Model\Storage\JurnalTrans_model();
-        $d_jt = $m_jt->where('id', $id)->orderBy('nama', 'asc')->with(['detail', 'sumber_tujuan'])->first();
+        $d_jt = $m_jt->where('id', $id)->orderBy('nama', 'asc')->with(['fitur', 'detail', 'sumber_tujuan'])->first();
 
         $data = null;
+        $fitur = null;
         if ( $d_jt ) {
             $d_jt = $d_jt->toArray();
 
             $data = $d_jt;
+
+            if ( isset($data['fitur']) && !empty($data['fitur']) ) {
+                foreach ($data['fitur'] as $k_fitur => $v_fitur) {
+                    $m_conf = new \Model\Storage\JurnalTrans_model();
+                    $sql = "
+                        select 
+                            mf.nama_fitur,
+                            df.id_detfitur, 
+                            df.nama_detfitur 
+                        from detail_fitur df 
+                        left join
+                            ms_fitur mf
+                            on
+                                df.id_fitur = mf.id_fitur
+                        where
+                            df.id_detfitur = '".$v_fitur['det_fitur_id']."'
+                        group by
+                            mf.nama_fitur,
+                            df.id_detfitur, 
+                            df.nama_detfitur
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+
+                    if ( $d_conf->count() > 0 ) {
+                        $d_conf = $d_conf->toArray()[0];
+
+                        $fitur[] = $d_conf['nama_fitur'].' | '.$d_conf['nama_detfitur'];
+                    }
+                }
+            }
         }
 
         $content['data'] = $data;
+        $content['d_fitur'] = $fitur;
         $html = $this->load->view($this->pathView . 'detail_form', $content, true);
 
         return $html;
@@ -144,17 +209,26 @@ class TransaksiJurnal extends Public_Controller
     public function edit_form($id)
     {
         $m_jt = new \Model\Storage\JurnalTrans_model();
-        $d_jt = $m_jt->where('id', $id)->orderBy('nama', 'asc')->with(['detail', 'sumber_tujuan'])->first();
+        $d_jt = $m_jt->where('id', $id)->orderBy('nama', 'asc')->with(['fitur', 'detail', 'sumber_tujuan'])->first();
 
         $data = null;
+        $fitur = null;
         if ( $d_jt ) {
             $d_jt = $d_jt->toArray();
 
             $data = $d_jt;
+
+            if ( isset($data['fitur']) && !empty($data['fitur']) ) {
+                foreach ($data['fitur'] as $k_fitur => $v_fitur) {
+                    $fitur[] = $v_fitur['det_fitur_id'];
+                }
+            }
         }
 
+        $content['fitur'] = $this->getFitur();
         $content['coa'] = $this->getDataCoa();
         $content['data'] = $data;
+        $content['d_fitur'] = $fitur;
         $html = $this->load->view($this->pathView . 'edit_form', $content, true);
 
         return $html;
@@ -177,6 +251,16 @@ class TransaksiJurnal extends Public_Controller
             $m_jt->save();
 
             $id = $m_jt->id;
+
+            if ( isset($params['fitur']) && !empty($params['fitur']) ) {
+                foreach ($params['fitur'] as $k_fitur => $v_fitur) {
+                    $m_jtf = new \Model\Storage\JurnalTransFitur_model();
+                    $m_jtf->id_header = $id;
+                    $m_jtf->det_fitur_id = $v_fitur;
+                    $m_jtf->save();
+                }
+            }
+
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_djt = new \Model\Storage\DetJurnalTrans_model();
                 $kode_det = $m_djt->getNextIdDJT( $kode );
@@ -228,8 +312,18 @@ class TransaksiJurnal extends Public_Controller
             $m_jt->jurnal_manual = $params['jurnal_manual'];
             $m_jt->mstatus = 1;
             $m_jt->save();
-
+            
             $id = $m_jt->id;
+            
+            if ( isset($params['fitur']) && !empty($params['fitur']) ) {
+                foreach ($params['fitur'] as $k_fitur => $v_fitur) {
+                    $m_jtf = new \Model\Storage\JurnalTransFitur_model();
+                    $m_jtf->id_header = $id;
+                    $m_jtf->det_fitur_id = $v_fitur;
+                    $m_jtf->save();
+                }
+            }
+
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
@@ -249,18 +343,6 @@ class TransaksiJurnal extends Public_Controller
                 $m_djt->kode = $kode_det;
                 $m_djt->save();
             }
-
-            // $m_jtst = new \Model\Storage\JurnalTransSumberTujuan_model();
-            // $m_jtst->where('id_header', $id)->delete();
-
-            // if ( isset($params['sumber_tujuan']) && !empty($params['sumber_tujuan']) ) {
-            //     foreach ($params['sumber_tujuan'] as $k_det => $v_det) {
-            //         $m_jtst = new \Model\Storage\JurnalTransSumberTujuan_model();
-            //         $m_jtst->id_header = $id;
-            //         $m_jtst->nama = $v_det['nama'];
-            //         $m_jtst->save();
-            //     }
-            // }
 
             $d_jt = $m_jt->where('id', $id)->first();
 

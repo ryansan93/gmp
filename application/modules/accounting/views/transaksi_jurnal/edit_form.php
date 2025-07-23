@@ -4,11 +4,28 @@
 		<input type="text" class="form-control text-left uppercase nama" data-required="1" placeholder="Nama" value="<?php echo $data['nama']; ?>" />
 	</div>
 </div>
+<div class="col-xs-12 no-padding" style="rgin-bottom: 5px;">
+	<div class="col-xs-12 no-padding"><label class="control-label text-left">Kode Voucher</label></div>
+	<div class="col-xs-2 no-padding">
+		<input type="text" class="form-control text-left uppercase kode_voucher" data-required="1" placeholder="Kode Voucher (MAX:5)" maxlength="5" value="<?php echo $data['kode_voucher']; ?>" />
+	</div>
+</div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
-		<div class="col-xs-12 no-padding"><label class="control-label text-left">Kode Voucher</label></div>
+		<div class="col-xs-12 no-padding"><label class="control-label">Fitur</label></div>
 		<div class="col-xs-12 no-padding">
-			<input type="text" class="form-control text-left uppercase kode_voucher" data-required="1" placeholder="Kode Voucher (MAX:5)" maxlength="5" value="<?php echo $data['kode_voucher']; ?>" />
+			<select class="form-control fitur" multiple="multiple">
+				<option value="">-- Pilih Fitur --</option>
+				<?php foreach ($fitur as $key => $value) { ?>
+					<?php
+						$selected = null;
+						if ( !empty($d_fitur) && in_array($value['id_detfitur'], $d_fitur) ) {
+							$selected = 'selected';
+						}	
+					?>
+					<option value="<?php echo $value['id_detfitur'] ?>" <?php echo $selected; ?> ><?php echo $value['nama_fitur'].' | '.$value['nama_detfitur'] ?></option>
+				<?php } ?>
+			</select>
 		</div>
 	</div>
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">

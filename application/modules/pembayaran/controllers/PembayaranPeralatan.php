@@ -394,6 +394,260 @@ class PembayaranPeralatan extends Public_Controller
         return $data;
     }
 
+    public function modalPilihDN()
+    {
+        $params = $this->input->get('params');
+
+        $supplier = $params['supplier'];
+        $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
+
+        $sql_id = null;
+        if ( !empty($id) ) {
+            $sql_id = "where id_header <> '".$id."'";
+        }
+
+        $data = null;
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                d.id,
+                d.nomor,
+                d.tanggal,
+                d.ket_dn as keterangan,
+                (d.tot_dn - isnull(rpd.pakai, 0)) as saldo
+            from dn d
+            left join
+                (
+                    select
+                        sum(pakai) as pakai, id_dn
+                    from
+                    (
+                        select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+
+                        union all
+
+                        select sum(pakai) as pakai, id_dn from bayar_peralatan_dn ".$sql_id." group by id_dn
+                    ) rpd
+                    group by
+                        rpd.id_dn
+                ) rpd
+                on
+                    d.id = rpd.id_dn
+            where
+                d.supplier = '".$supplier."' and 
+                d.nomor like '%NS%' and
+                (d.tot_dn - isnull(rpd.pakai, 0)) > 0
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                $_key = str_replace('-', '', $value['tanggal']).' | '.$value['nomor'];
+
+                $data[ $_key ] = $value;
+            }
+        }
+
+        if ( !empty( $data ) ) {
+            ksort( $data );
+        }
+
+        $content['data'] = $data;
+        $html = $this->load->view($this->path.'modal_pilih_dn', $content, true);
+
+        echo $html;
+    }
+
+    public function modalPilihCN()
+    {
+        $params = $this->input->get('params');
+
+        $supplier = $params['supplier'];
+        $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
+
+        $sql_id = null;
+        if ( !empty($id) ) {
+            $sql_id = "where id_header <> '".$id."'";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                c.id,
+                c.nomor,
+                c.tanggal,
+                c.ket_cn as keterangan,
+                (c.tot_cn - isnull(rpc.pakai, 0)) as saldo
+            from cn c
+            left join
+                (
+                    select
+                        sum(isnull(pakai, 0)) as pakai, id_cn
+                    from
+                    (
+                        select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+
+                        union all
+
+                        select sum(pakai) as pakai, id_cn from bayar_peralatan_cn ".$sql_id." group by id_cn
+                    ) rpc
+                    group by
+                        rpc.id_cn
+                ) rpc
+                on
+                    c.id = rpc.id_cn
+            where
+                c.supplier = '".$supplier."' and 
+                c.nomor like '%NS%' and
+                (c.tot_cn - isnull(rpc.pakai, 0)) > 0
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                $_key = str_replace('-', '', $value['tanggal']).' | '.$value['nomor'];
+
+                $data[ $_key ] = $value;
+            }
+        }
+
+        if ( !empty( $data ) ) {
+            ksort( $data );
+        }
+
+        $content['data'] = $data;
+        $html = $this->load->view($this->path.'modal_pilih_cn', $content, true);
+
+        echo $html;
+    }
+
+    public function getData( $id ) {
+        $data = null;
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                bp.*,
+                mtr.nama as nama_mitra,
+                supl.nomor as supplier,
+                supl.nama as nama_supplier
+            from bayar_peralatan bp
+            left join
+                order_peralatan op
+                on
+                    bp.no_order = op.no_order
+            left join
+                (
+                    select mtr1.* from mitra mtr1
+                    right join
+                        (select max(id) as id, nomor from mitra group by nomor) mtr2
+                        on
+                            mtr1.id = mtr2.id
+                ) mtr
+                on
+                    op.mitra = mtr.nomor
+            left join
+                (
+                    select p2.* from pelanggan p2
+                    right join
+                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p1
+                        on
+                            p2.id = p1.id
+                ) supl
+                on
+                    op.supplier = supl.nomor
+            where
+                bp.id = ".$id."
+        ";
+        $d_pp = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_pp->count() > 0 ) {
+            $d_pp = $d_pp->toArray()[0];
+
+            $data = $d_pp;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    opd.*,
+                    brg.nama as nama_barang
+                from order_peralatan_detail opd
+                left join
+                    order_peralatan op
+                    on
+                        op.id = opd.id_header
+                left join
+                    (
+                        select brg1.* from barang brg1
+                        right join
+                            (select max(id) as id, kode from barang group by kode) brg2
+                            on
+                                brg1.id = brg2.id
+                    ) brg
+                    on
+                        opd.kode_barang = brg.kode
+                where
+                    op.no_order = '".$d_pp['no_order']."'
+            ";
+            $d_opd = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_opd->count() > 0 ) {
+                $data['detail'] = $d_opd->toArray();
+            }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    bpcn.*,
+                    c.nomor,
+                    c.tanggal as tgl_cn,
+                    c.ket_cn
+                from bayar_peralatan_cn bpcn
+                left join
+                    cn c
+                    on
+                        bpcn.id_cn = c.id
+                where
+                    bpcn.id_header = '".$id."'
+            ";
+            $d_bpcn = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_bpcn->count() > 0 ) {
+                $data['cn'] = $d_bpcn->toArray();
+            }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    bpdn.*,
+                    d.nomor,
+                    d.tanggal as tgl_dn,
+                    d.ket_dn
+                from bayar_peralatan_dn bpdn
+                left join
+                    dn d
+                    on
+                        bpdn.id_dn = d.id
+                where
+                    bpdn.id_header = '".$id."'
+            ";
+            $d_bpdn = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_bpdn->count() > 0 ) {
+                $data['dn'] = $d_bpdn->toArray();
+            }
+        }
+
+        return $data;
+    }
+
     public function riwayat()
     {
         $content['mitra'] = $this->getMitra();
@@ -415,96 +669,7 @@ class PembayaranPeralatan extends Public_Controller
 
     public function viewForm($id)
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select 
-                bp.id, 
-                bp.tgl_bayar,
-                supl.nama as nama_supplier,
-                mtr.nama as nama_mitra,
-                bp.no_order,
-                bp.no_faktur,
-                bp.jml_tagihan,
-                bp.saldo,
-                bp.jml_bayar,
-                bp.tot_bayar,
-                bp.lampiran,
-                opd.*, 
-                brg.nama as nama_barang 
-            from order_peralatan_detail opd
-            right join
-                (
-                    select brg1.* from barang brg1
-                    right join
-                        (select max(id) as id, kode from barang group by kode) brg2
-                        on
-                            brg1.id = brg2.id
-                ) brg
-                on
-                    opd.kode_barang = brg.kode
-            right join
-                order_peralatan op
-                on
-                    op.id = opd.id_header
-            right join
-                (
-                    select mtr1.* from mitra mtr1
-                    right join
-                        (select max(id) as id, nomor from mitra group by nomor) mtr2
-                        on
-                            mtr1.id = mtr2.id
-                ) mtr
-                on
-                    op.mitra = mtr.nomor
-            right join
-                (
-                    select p2.* from pelanggan p2
-                    right join
-                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p1
-                        on
-                            p2.id = p1.id
-                ) supl
-                on
-                    op.supplier = supl.nomor
-            right join
-                bayar_peralatan bp
-                on
-                    bp.no_order = op.no_order
-            where
-                bp.id = '".$id."'
-            order by
-                brg.nama asc
-        ";
-        $d_pp = $m_conf->hydrateRaw( $sql );
-
-        $data = null;
-        if ( $d_pp->count() > 0 ) {
-            $d_pp = $d_pp->toArray();
-
-            $data = array(
-                'id' => $d_pp[0]['id'],
-                'tgl_bayar' => $d_pp[0]['tgl_bayar'],
-                'nama_supplier' => $d_pp[0]['nama_supplier'],
-                'nama_mitra' => $d_pp[0]['nama_mitra'],
-                'no_order' => $d_pp[0]['no_order'],
-                'no_faktur' => $d_pp[0]['no_faktur'],
-                'jml_tagihan' => $d_pp[0]['jml_tagihan'],
-                'saldo' => $d_pp[0]['saldo'],
-                'jml_bayar' => $d_pp[0]['jml_bayar'],
-                'tot_bayar' => $d_pp[0]['tot_bayar'],
-                'lampiran' => $d_pp[0]['lampiran'],
-                'detail' => null,
-            );
-            foreach ($d_pp as $key => $value) {
-                $data['detail'][ $key ] = array(
-                    'kode_barang' => $value['kode_barang'],
-                    'jumlah' => $value['jumlah'],
-                    'harga' => $value['harga'],
-                    'total' => $value['total'],
-                    'nama_barang' => $value['nama_barang']
-                );
-            }
-        }
+        $data = $this->getData( $id );
 
         $content['data'] = $data;
 
@@ -515,100 +680,7 @@ class PembayaranPeralatan extends Public_Controller
 
     public function editForm($id)
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select 
-                bp.id, 
-                bp.tgl_bayar,
-                op.supplier,
-                op.mitra,
-                supl.nama as nama_supplier,
-                mtr.nama as nama_mitra,
-                bp.no_order,
-                bp.no_faktur,
-                bp.jml_tagihan,
-                bp.saldo,
-                bp.jml_bayar,
-                bp.tot_bayar,
-                bp.lampiran,
-                opd.*, 
-                brg.nama as nama_barang 
-            from order_peralatan_detail opd
-            right join
-                (
-                    select brg1.* from barang brg1
-                    right join
-                        (select max(id) as id, kode from barang group by kode) brg2
-                        on
-                            brg1.id = brg2.id
-                ) brg
-                on
-                    opd.kode_barang = brg.kode
-            right join
-                order_peralatan op
-                on
-                    op.id = opd.id_header
-            right join
-                (
-                    select mtr1.* from mitra mtr1
-                    right join
-                        (select max(id) as id, nomor from mitra group by nomor) mtr2
-                        on
-                            mtr1.id = mtr2.id
-                ) mtr
-                on
-                    op.mitra = mtr.nomor
-            right join
-                (
-                    select p2.* from pelanggan p2
-                    right join
-                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p1
-                        on
-                            p2.id = p1.id
-                ) supl
-                on
-                    op.supplier = supl.nomor
-            right join
-                bayar_peralatan bp
-                on
-                    bp.no_order = op.no_order
-            where
-                bp.id = '".$id."'
-            order by
-                brg.nama asc
-        ";
-        $d_pp = $m_conf->hydrateRaw( $sql );
-
-        $data = null;
-        if ( $d_pp->count() > 0 ) {
-            $d_pp = $d_pp->toArray();
-
-            $data = array(
-                'id' => $d_pp[0]['id'],
-                'tgl_bayar' => $d_pp[0]['tgl_bayar'],
-                'supplier' => $d_pp[0]['supplier'],
-                'mitra' => $d_pp[0]['mitra'],
-                'nama_supplier' => $d_pp[0]['nama_supplier'],
-                'nama_mitra' => $d_pp[0]['nama_mitra'],
-                'no_order' => $d_pp[0]['no_order'],
-                'no_faktur' => $d_pp[0]['no_faktur'],
-                'jml_tagihan' => $d_pp[0]['jml_tagihan'],
-                'saldo' => $d_pp[0]['saldo'],
-                'jml_bayar' => $d_pp[0]['jml_bayar'],
-                'tot_bayar' => $d_pp[0]['tot_bayar'],
-                'lampiran' => $d_pp[0]['lampiran'],
-                'detail' => null,
-            );
-            foreach ($d_pp as $key => $value) {
-                $data['detail'][ $key ] = array(
-                    'kode_barang' => $value['kode_barang'],
-                    'jumlah' => $value['jumlah'],
-                    'harga' => $value['harga'],
-                    'total' => $value['total'],
-                    'nama_barang' => $value['nama_barang']
-                );
-            }
-        }
+        $data = $this->getData( $id );
 
         $content['supplier'] = $this->getSupplier();
         $content['data'] = $data;
@@ -644,7 +716,36 @@ class PembayaranPeralatan extends Public_Controller
                 $m_bp->status = ($data['jml_tagihan'] <= $data['tot_bayar']) ? 'LUNAS' : 'BELUM';
                 $m_bp->no_faktur = $data['no_faktur'];
                 $m_bp->lampiran = $path_name;
+                $m_bp->tot_dn = $data['tot_dn'];
+                $m_bp->tot_cn = $data['tot_cn'];
+                $m_bp->tot_tagihan = $data['tot_tagihan'];
                 $m_bp->save();
+
+                $id = $m_bp->id;
+
+                if ( isset($data['dn']) && !empty($data['dn']) ) {
+                    foreach ($data['dn'] as $k_dn => $v_dn) {
+                        $m_rpd = new \Model\Storage\BayarPeralatanDn_model();
+                        $m_rpd->id_header = $id;
+                        $m_rpd->id_dn = $v_dn['id'];
+                        $m_rpd->saldo = $v_dn['saldo'];
+                        $m_rpd->sisa_saldo = $v_dn['sisa_saldo'];
+                        $m_rpd->pakai = $v_dn['pakai'];
+                        $m_rpd->save();
+                    }
+                }
+
+                if ( isset($data['cn']) && !empty($data['cn']) ) {
+                    foreach ($data['cn'] as $k_cn => $v_cn) {
+                        $m_rpc = new \Model\Storage\BayarPeralatanCn_model();
+                        $m_rpc->id_header = $id;
+                        $m_rpc->id_cn = $v_cn['id'];
+                        $m_rpc->saldo = $v_cn['saldo'];
+                        $m_rpc->sisa_saldo = $v_cn['sisa_saldo'];
+                        $m_rpc->pakai = $v_cn['pakai'];
+                        $m_rpc->save();
+                    }
+                }
 
                 $m_conf = new \Model\Storage\Conf();
                 $sql = "exec insert_jurnal 'PERALATAN', '".$data['no_order']."', NULL, 0, 'bayar_peralatan', ".$m_bp->id.", NULL, 1";
@@ -688,8 +789,10 @@ class PembayaranPeralatan extends Public_Controller
                 $path_name = $moved['path'];
             }
 
+            $id = $data['id'];
+
             $m_bp = new \Model\Storage\BayarPeralatan_model();
-            $m_bp->where('id', $data['id'])->update(
+            $m_bp->where('id', $id)->update(
                 array(
                     'no_order' => $data['no_order'],
                     'tgl_bayar' => $data['tgl_bayar'],
@@ -699,19 +802,52 @@ class PembayaranPeralatan extends Public_Controller
                     'tot_bayar' => $data['tot_bayar'],
                     'status' => ($data['jml_tagihan'] <= $data['tot_bayar']) ? 'LUNAS' : 'BELUM',
                     'no_faktur' => $data['no_faktur'],
-                    'lampiran' => $path_name
+                    'lampiran' => $path_name,
+                    'tot_dn' => $data['tot_dn'],
+                    'tot_cn' => $data['tot_cn'],
+                    'tot_tagihan' => $data['tot_tagihan'],
                 )
             );
 
+            if ( isset($data['dn']) && !empty($data['dn']) ) {
+                $m_rpd = new \Model\Storage\BayarPeralatanDn_model();
+                $m_rpd->where('id_header', $id)->delete();
+
+                foreach ($data['dn'] as $k_dn => $v_dn) {
+                    $m_rpd = new \Model\Storage\BayarPeralatanDn_model();
+                    $m_rpd->id_header = $id;
+                    $m_rpd->id_dn = $v_dn['id'];
+                    $m_rpd->saldo = $v_dn['saldo'];
+                    $m_rpd->sisa_saldo = $v_dn['sisa_saldo'];
+                    $m_rpd->pakai = $v_dn['pakai'];
+                    $m_rpd->save();
+                }
+            }
+
+            if ( isset($data['cn']) && !empty($data['cn']) ) {
+                $m_rpc = new \Model\Storage\BayarPeralatanCn_model();
+                $m_rpc->where('id_header', $id)->delete();
+
+                foreach ($data['cn'] as $k_cn => $v_cn) {
+                    $m_rpc = new \Model\Storage\BayarPeralatanCn_model();
+                    $m_rpc->id_header = $id;
+                    $m_rpc->id_cn = $v_cn['id'];
+                    $m_rpc->saldo = $v_cn['saldo'];
+                    $m_rpc->sisa_saldo = $v_cn['sisa_saldo'];
+                    $m_rpc->pakai = $v_cn['pakai'];
+                    $m_rpc->save();
+                }
+            }
+
             $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'PERALATAN', '".$data['no_order']."', NULL, 0, 'bayar_peralatan', ".$data['id'].", ".$data['id'].", 2";
+            $sql = "exec insert_jurnal 'PERALATAN', '".$data['no_order']."', NULL, 0, 'bayar_peralatan', ".$id.", ".$id.", 2";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'di-ubah oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $m_bp, $deskripsi_log);
 
             $this->result['status'] = 1;
-            $this->result['content'] = array('id' => $data['id']);
+            $this->result['content'] = array('id' => $id);
             $this->result['message'] = 'Data berhasil di ubah.';
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();

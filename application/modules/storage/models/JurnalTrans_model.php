@@ -16,6 +16,11 @@ class JurnalTrans_model extends Conf{
         return $id->nextId;
     }
 
+    public function fitur()
+    {
+      	return $this->hasMany('\Model\Storage\JurnalTransFitur_model', 'id_header', 'id');
+    }
+
     public function detail()
     {
       	return $this->hasMany('\Model\Storage\DetJurnalTrans_model', 'id_header', 'id');

@@ -60,7 +60,7 @@ span.select2-selection__arrow {
 }
 
 span.select2-selection {
-	height: 34px!important;
+	min-height: 34px!important;
     padding-top: 2px!important;
 }
 

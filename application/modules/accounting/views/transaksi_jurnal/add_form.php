@@ -5,10 +5,21 @@
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-12 no-padding"><label class="control-label text-left">Kode Voucher</label></div>
+	<div class="col-xs-2 no-padding">
+		<input type="text" class="form-control text-left uppercase kode_voucher" data-required="1" placeholder="Kode Voucher (MAX:5)" maxlength="5" />
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
-		<div class="col-xs-12 no-padding"><label class="control-label text-left">Kode Voucher</label></div>
+		<div class="col-xs-12 no-padding"><label class="control-label">Fitur</label></div>
 		<div class="col-xs-12 no-padding">
-			<input type="text" class="form-control text-left uppercase kode_voucher" data-required="1" placeholder="Kode Voucher (MAX:5)" maxlength="5" />
+			<select class="form-control fitur" multiple="multiple">
+				<option value="">-- Pilih Fitur --</option>
+				<?php foreach ($fitur as $key => $value) { ?>
+					<option value="<?php echo $value['id_detfitur'] ?>"><?php echo $value['nama_fitur'].' | '.$value['nama_detfitur'] ?></option>
+				<?php } ?>
+			</select>
 		</div>
 	</div>
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">

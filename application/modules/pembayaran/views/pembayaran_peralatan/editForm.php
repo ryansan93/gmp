@@ -1,3 +1,4 @@
+<input type="hidden" id="id" value="<?php echo $data['id']; ?>">
 <div class="col-xs-12 no-padding">
 	<div class="col-xs-12 no-padding"><label class="control-label text-left">Tanggal Bayar</label></div>
 	<div class="input-group date" name="tglBayar" id="TglBayar">
@@ -27,12 +28,6 @@
 			</select>
 		</div>
 	</div>
-	<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-		<div class="col-xs-12 no-padding"><label class="control-label text-left">Plasma</label></div>
-	    <div class="col-xs-12 no-padding">
-	    	<input type="text" class="form-control text-left mitra" data-required="1" placeholder="Plasma" value="<?php echo $data['nama_mitra']; ?>" readonly />
-	    </div>
-	</div>
 </div>
 <div class="col-xs-12 no-padding">
 	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
@@ -44,6 +39,14 @@
 		</div>
 	</div>
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">Plasma</label></div>
+	    <div class="col-xs-12 no-padding">
+	    	<input type="text" class="form-control text-left mitra" data-required="1" placeholder="Plasma" value="<?php echo $data['nama_mitra']; ?>" readonly />
+	    </div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding">
+	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-12 no-padding"><label class="control-label text-left">No. Faktur</label></div>
 		<div class="col-xs-12 no-padding">
 			<input type="text" class="form-control text-right no_faktur" data-required="1" placeholder="No. Faktur" value="<?php echo $data['no_faktur']; ?>" />
@@ -75,9 +78,39 @@
 </div>
 <div class="col-xs-12 no-padding">
 	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">CN</label></div>
+		<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+			<input type="text" class="form-control text-right tot_cn" placeholder="CN" value="<?php echo angkaDecimal($data['tot_cn']) ?>" readonly />
+		</div>
+		<div class="col-xs-4 no-padding" style="padding-left: 5px;">
+			<button type="button" class="btn btn-default" onclick="pp.modalPilihCN(this)">Pilih CN yang akan di gunakan</button>
+		</div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding">
+	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">DN</label></div>
+		<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+			<input type="text" class="form-control text-right tot_dn" placeholder="DN" value="<?php echo angkaDecimal($data['tot_dn']) ?>" readonly />
+		</div>
+		<div class="col-xs-4 no-padding" style="padding-left: 5px;">
+			<button type="button" class="btn btn-default" onclick="pp.modalPilihDN(this)">Pilih DN yang akan di gunakan</button>
+		</div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding">
+	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-12 no-padding"><label class="control-label text-left">Jumlah Tagihan</label></div>
 		<div class="col-xs-12 no-padding">
 			<input type="text" class="form-control text-right jumlah_tagihan" data-required="1" placeholder="Tagihan" value="<?php echo angkaDecimal($data['jml_tagihan']); ?>" readonly />
+		</div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding">
+	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">Total Tagihan</label></div>
+		<div class="col-xs-12 no-padding">
+			<input type="text" class="form-control text-right tot_tagihan" data-required="1" placeholder="Tagihan" value="<?php echo angkaDecimal($data['tot_tagihan']); ?>" readonly />
 		</div>
 	</div>
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">

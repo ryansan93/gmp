@@ -1,30 +1,42 @@
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 	<div class="col-xs-2 no-padding"><label class="control-label text-left">Nama</label></div>
-	<div class="col-xs-10 no-padding">
-		<label class="control-label">: <?php echo $data['nama']; ?></label>
+	<div class="col-xs-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+	<div class="col-xs-9 no-padding">
+		<label class="control-label"><?php echo $data['nama']; ?></label>
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 	<div class="col-xs-2 no-padding"><label class="control-label text-left">Kode Voucher</label></div>
-	<div class="col-xs-10 no-padding">
-		<label class="control-label">: <?php echo $data['kode_voucher']; ?></label>
+	<div class="col-xs-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+	<div class="col-xs-9 no-padding">
+		<label class="control-label"><?php echo $data['kode_voucher']; ?></label>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-2 no-padding"><label class="control-label text-left">Fitur</label></div>
+	<div class="col-xs-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+	<div class="col-xs-9 no-padding">
+		<label class="control-label col-xs-12 no-padding text-left"><?php echo !empty($d_fitur) ? implode('<br>', $d_fitur) : '-'; ?></label>
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 	<div class="col-xs-2 no-padding"><label class="control-label text-left">Peruntukan</label></div>
-	<div class="col-xs-10 no-padding">
-		<label class="control-label">: <?php echo ($data['unit'] == 1) ? 'UNIT' : 'NON UNIT'; ?></label>
+	<div class="col-xs-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+	<div class="col-xs-9 no-padding">
+		<label class="control-label"><?php echo ($data['unit'] == 1) ? 'UNIT' : 'NON UNIT'; ?></label>
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-	<div class="col-xs-2 no-padding"><label class="control-label text-left">Jurnal Pusat</label></div>
-	<div class="col-xs-10 no-padding">
-		<label class="control-label">: </label>
-		<?php if ( $data['jurnal_manual'] == 1 ) { ?>
-			<i class="fa fa-check"></i>
-		<?php } else { ?>
-			<i class="fa fa-minus"></i>
-		<?php } ?>
+	<div class="col-xs-2 no-padding"><label class="control-label text-left">Jurnal Manual</label></div>
+	<div class="col-xs-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+	<div class="col-xs-9 no-padding">
+		<label class="control-label">
+			<?php if ( $data['jurnal_manual'] == 1 ) { ?>
+				<i class="fa fa-check"></i>
+			<?php } else { ?>
+				-
+			<?php } ?>
+		</label>
 	</div>
 </div>
 <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>

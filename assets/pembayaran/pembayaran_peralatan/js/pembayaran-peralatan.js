@@ -1,3 +1,5 @@
+var dn = null;
+var cn = null;
 var formData = null;
 
 var pp = {
@@ -156,10 +158,181 @@ var pp = {
                 	$('div#'+href).find('.supplier').trigger("select2:select");
                 }
 
+				cn = null;
+				dn = null;
+
                 hideLoading();
             }
         });
 	}, // end - loadForm
+
+	modalPilihDN: function(elm) {
+        let div = $('div#action');
+        var supplier = $(div).find('select.supplier').select2('val');
+		var id = $(div).find('input#id').val();
+
+        var params = {
+            'supplier': supplier,
+            'id': id
+        };
+
+        $.get('pembayaran/PembayaranPeralatan/modalPilihDN',{
+            'params': params
+        },function(data){
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                var modal_dialog = $(this).find('.modal-dialog');
+                var modal_body = $(this).find('.modal-body');
+
+                $(modal_dialog).css({'max-width' : '60%'});
+                $(modal_dialog).css({'width' : '100%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+
+                $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+                    $(this).priceFormat(Config[$(this).data('tipe')]);
+                });
+            });
+        },'html');
+    }, // end - modalPilihDN
+
+    cekPakaiDN: function(elm) {
+        var tr = $(elm).closest('tr');
+
+        var saldo = numeral.unformat( $(tr).find('td.saldo').text() );
+        var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
+
+        if ( pakai > saldo ) {
+            bootbox.alert('DN yang anda masukkan melebihi saldo DN, harap cek kembali.', function () {
+                $(tr).find('input.pakai').val( 0 );
+            });
+        }
+    }, // end - cekPakaiDN
+
+    pilihDN: function(elm) {
+        var div = $(elm).closest('.modal-body');
+
+        var total_dn = 0;
+        if ( $(div).find('[type=checkbox]').length > 0 ) {
+            dn = $.map( $(div).find('[type=checkbox]'), function(ipt) {
+                if ( $(ipt).is(':checked') ) {
+                    var tr = $(ipt).closest('tr');
+
+                    var saldo = numeral.unformat( $(tr).find('td.saldo').text() );
+                    var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
+                    var sisa_saldo = saldo - pakai;
+
+                    var _dn = {
+                        'id': $(ipt).attr('data-id'),
+                        'saldo': saldo,
+                        'pakai': pakai,
+                        'sisa_saldo': sisa_saldo
+                    };
+
+                    total_dn += pakai;
+
+                    return _dn;
+                }
+            });
+        } else {
+            dn = null;
+        }
+
+        $('.tot_dn').val(numeral.formatDec(total_dn));
+
+        $(div).find('.btn-danger').click();
+
+        pp.hitTotalTagihan();
+    }, // end - pilihDN
+
+    modalPilihCN: function(elm) {
+        let div = $('div#action');
+        var supplier = $(div).find('select.supplier').select2().val();
+        var id = $(div).find('input#id').val();
+
+        var params = {
+            'supplier': supplier,
+            'id': id
+        };
+
+        $.get('pembayaran/PembayaranPeralatan/modalPilihCN',{
+            'params': params
+        },function(data){
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                var modal_dialog = $(this).find('.modal-dialog');
+                var modal_body = $(this).find('.modal-body');
+
+                $(modal_dialog).css({'max-width' : '60%'});
+                $(modal_dialog).css({'width' : '100%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+
+                $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+                    $(this).priceFormat(Config[$(this).data('tipe')]);
+                });
+            });
+        },'html');
+    }, // end - modalPilihCN
+
+    cekPakaiCN: function(elm) {
+        var tr = $(elm).closest('tr');
+
+        var saldo = numeral.unformat( $(tr).find('td.saldo').text() );
+        var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
+
+        if ( pakai > saldo ) {
+            bootbox.alert('CN yang anda masukkan melebihi saldo CN, harap cek kembali.', function () {
+                $(tr).find('input.pakai').val( 0 );
+            });
+        }
+    }, // end - cekPakaiCN
+
+    pilihCN: function(elm) {
+        var div = $(elm).closest('.modal-body');
+
+        var total_cn = 0;
+        if ( $(div).find('[type=checkbox]').length > 0 ) {
+            cn = $.map( $(div).find('[type=checkbox]'), function(ipt) {
+                if ( $(ipt).is(':checked') ) {
+                    var tr = $(ipt).closest('tr');
+
+                    var saldo = numeral.unformat( $(tr).find('td.saldo').text() );
+                    var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
+                    var sisa_saldo = saldo - pakai;
+
+                    var _cn = {
+                        'id': $(ipt).attr('data-id'),
+                        'saldo': saldo,
+                        'pakai': pakai,
+                        'sisa_saldo': sisa_saldo
+                    };
+
+                    total_cn += pakai;
+
+                    return _cn;
+                }
+            });
+        } else {
+            cn = null;
+        }
+
+        $('.tot_cn').val(numeral.formatDec(total_cn));
+
+        $(div).find('.btn-danger').click();
+
+        pp.hitTotalTagihan();
+    }, // end - pilihCN
 
 	getLists: function () {
 		var div = $('#riwayat');
@@ -238,6 +411,7 @@ var pp = {
             				$(div).find('.saldo').val(0);
 
             				pp.getDetailOrder( no_order );
+            				pp.hitTotalTagihan();
             			});
             		} else {
             			$(div).find('select.no_order').html(option);
@@ -276,6 +450,18 @@ var pp = {
         });
 	}, // end - getDetailOrder
 
+	hitTotalTagihan: function() {
+		var div = $('#action');
+
+		var jumlah_tagihan = numeral.unformat( $(div).find('.jumlah_tagihan').val() );
+		var cn = numeral.unformat( $(div).find('.tot_cn').val() );
+		var dn = numeral.unformat( $(div).find('.tot_dn').val() );
+
+		var tot_tagihan = (jumlah_tagihan + dn) - cn;
+
+		$(div).find('.tot_tagihan').val( numeral.formatDec( tot_tagihan ) );
+	}, // end - hitTotalTagihan
+
 	hitTotalBayar: function() {
 		var div = $('#action');
 
@@ -303,11 +489,11 @@ var pp = {
 		if ( err > 0 ) {
 			bootbox.alert('Harap lengkapi data terlebih dahulu.');
 		} else {
-			var jml_tagihan = numeral.unformat($(div).find('.jumlah_tagihan').val());
+			var tot_tagihan = numeral.unformat($(div).find('.tot_tagihan').val());
 			var tot_bayar = numeral.unformat($(div).find('.total_bayar').val());
 
 			var ket = '';
-			if ( jml_tagihan <= tot_bayar ) {
+			if ( tot_tagihan <= tot_bayar ) {
 				ket = 'Apakah anda yakin ingin menyimpan data pembayaran ?';
 			} else {
 				ket = 'Total bayar kurang dari jumlah tagihan, apakah anda yakin ingin tetep menyimpan data pembayaran?';
@@ -319,10 +505,15 @@ var pp = {
 						'no_order': $(div).find('.no_order').select2('val'),
 						'tgl_bayar': dateSQL($(div).find('#TglBayar').data('DateTimePicker').date()),
 						'jml_tagihan': numeral.unformat($(div).find('.jumlah_tagihan').val()),
+						'tot_dn': numeral.unformat($(div).find('.tot_dn').val()),
+						'tot_cn': numeral.unformat($(div).find('.tot_cn').val()),
+						'tot_tagihan': numeral.unformat($(div).find('.tot_tagihan').val()),
 						'saldo': numeral.unformat($(div).find('.saldo').val()),
 						'jml_bayar':  numeral.unformat($(div).find('.jumlah_bayar').val()),
 						'tot_bayar': tot_bayar,
-						'no_faktur': $(div).find('.no_faktur').val()
+						'no_faktur': $(div).find('.no_faktur').val(),
+						'dn': !empty(dn) ? dn : null,
+            			'cn': !empty(cn) ? cn : null,
 					};
 
 					formData.append('data', JSON.stringify( params ));
@@ -369,11 +560,11 @@ var pp = {
 		if ( err > 0 ) {
 			bootbox.alert('Harap lengkapi data terlebih dahulu.');
 		} else {
-			var jml_tagihan = numeral.unformat($(div).find('.jumlah_tagihan').val());
+			var tot_tagihan = numeral.unformat($(div).find('.tot_tagihan').val());
 			var tot_bayar = numeral.unformat($(div).find('.total_bayar').val());
 
 			var ket = '';
-			if ( jml_tagihan <= tot_bayar ) {
+			if ( tot_tagihan <= tot_bayar ) {
 				ket = 'Apakah anda yakin ingin menyimpan data pembayaran ?';
 			} else {
 				ket = 'Total bayar kurang dari jumlah tagihan, apakah anda yakin ingin tetep menyimpan data pembayaran?';
@@ -386,10 +577,15 @@ var pp = {
 						'no_order': $(div).find('.no_order').select2('val'),
 						'tgl_bayar': dateSQL($(div).find('#TglBayar').data('DateTimePicker').date()),
 						'jml_tagihan': numeral.unformat($(div).find('.jumlah_tagihan').val()),
+						'tot_dn': numeral.unformat($(div).find('.tot_dn').val()),
+						'tot_cn': numeral.unformat($(div).find('.tot_cn').val()),
+						'tot_tagihan': numeral.unformat($(div).find('.tot_tagihan').val()),
 						'saldo': numeral.unformat($(div).find('.saldo').val()),
 						'jml_bayar':  numeral.unformat($(div).find('.jumlah_bayar').val()),
 						'tot_bayar': tot_bayar,
-						'no_faktur': $(div).find('.no_faktur').val()
+						'no_faktur': $(div).find('.no_faktur').val(),
+						'dn': !empty(dn) ? dn : null,
+            			'cn': !empty(cn) ? cn : null,
 					};
 
 					formData.append('data', JSON.stringify( params ));

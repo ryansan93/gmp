@@ -1952,6 +1952,8 @@ class RealisasiPembayaran extends Public_Controller
             $m_rpd->where('id_header', $id)->delete();
             $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
             $m_rpcn->where('id_header', $id)->delete();
+            $m_rpdn = new \Model\Storage\RealisasiPembayaranDn_model();
+            $m_rpdn->where('id_header', $id)->delete();
             $m_rpp = new \Model\Storage\RealisasiPembayaranPotongan_model();
             $m_rpp->where('id_header', $id)->delete();
 
@@ -1984,7 +1986,20 @@ class RealisasiPembayaran extends Public_Controller
                     (d.tot_dn - isnull(rpd.pakai, 0)) as saldo
                 from dn d
                 left join
-                    (select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn) rpd
+                    (
+                        select
+                            sum(pakai) as pakai, id_dn
+                        from
+                        (
+                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+
+                            union all
+
+                            select sum(pakai) as pakai, id_dn from bayar_peralatan_dn group by id_dn
+                        ) rpd
+                        group by
+                            rpd.id_dn
+                    ) rpd
                     on
                         d.id = rpd.id_dn
                 where
@@ -2015,7 +2030,20 @@ class RealisasiPembayaran extends Public_Controller
                     (d.tot_dn - isnull(rpd.pakai, 0)) as saldo
                 from dn d
                 left join
-                    (select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn) rpd
+                    (
+                        select
+                            sum(pakai) as pakai, id_dn
+                        from
+                        (
+                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+
+                            union all
+
+                            select sum(pakai) as pakai, id_dn from bayar_peralatan_dn group by id_dn
+                        ) rpd
+                        group by
+                            rpd.id_dn
+                    ) rpd
                     on
                         d.id = rpd.id_dn
                 where
@@ -2046,11 +2074,68 @@ class RealisasiPembayaran extends Public_Controller
                     (d.tot_dn - isnull(rpd.pakai, 0)) as saldo
                 from dn d
                 left join
-                    (select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn) rpd
+                    (
+                        select
+                            sum(pakai) as pakai, id_dn
+                        from
+                        (
+                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+
+                            union all
+
+                            select sum(pakai) as pakai, id_dn from bayar_peralatan_dn group by id_dn
+                        ) rpd
+                        group by
+                            rpd.id_dn
+                    ) rpd
                     on
                         d.id = rpd.id_dn
                 where
                     d.nomor like '%OVK%' and
+                    (d.tot_dn - isnull(rpd.pakai, 0)) > 0
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray();
+
+                foreach ($d_conf as $key => $value) {
+                    $_key = str_replace('-', '', $value['tanggal']).' | '.$value['nomor'];
+
+                    $data[ $_key ] = $value;
+                }
+            }
+        }
+
+        if ( in_array('peternak', $params['jenis_transaksi']) ) {
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    d.id,
+                    d.nomor,
+                    d.tanggal,
+                    d.ket_dn as keterangan,
+                    (d.tot_dn - isnull(rpd.pakai, 0)) as saldo
+                from dn d
+                left join
+                    (
+                        select
+                            sum(pakai) as pakai, id_dn
+                        from
+                        (
+                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+
+                            union all
+
+                            select sum(pakai) as pakai, id_dn from bayar_peralatan_dn group by id_dn
+                        ) rpd
+                        group by
+                            rpd.id_dn
+                    ) rpd
+                    on
+                        d.id = rpd.id_dn
+                where
+                    d.nomor like '%RHPP%' and
                     (d.tot_dn - isnull(rpd.pakai, 0)) > 0
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
@@ -2093,7 +2178,20 @@ class RealisasiPembayaran extends Public_Controller
                     (c.tot_cn - isnull(rpc.pakai, 0)) as saldo
                 from cn c
                 left join
-                    (select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn) rpc
+                    (
+                        select
+                            sum(isnull(pakai, 0)) as pakai, id_cn
+                        from
+                        (
+                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+
+                            union all
+
+                            select sum(pakai) as pakai, id_cn from bayar_peralatan_cn group by id_cn
+                        ) rpc
+                        group by
+                            rpc.id_cn
+                    ) rpc
                     on
                         c.id = rpc.id_cn
                 where
@@ -2124,7 +2222,20 @@ class RealisasiPembayaran extends Public_Controller
                     (c.tot_cn - isnull(rpc.pakai, 0)) as saldo
                 from cn c
                 left join
-                    (select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn) rpc
+                    (
+                        select
+                            sum(isnull(pakai, 0)) as pakai, id_cn
+                        from
+                        (
+                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+
+                            union all
+
+                            select sum(pakai) as pakai, id_cn from bayar_peralatan_cn group by id_cn
+                        ) rpc
+                        group by
+                            rpc.id_cn
+                    ) rpc
                     on
                         c.id = rpc.id_cn
                 where
@@ -2155,7 +2266,20 @@ class RealisasiPembayaran extends Public_Controller
                     (c.tot_cn - isnull(rpc.pakai, 0)) as saldo
                 from cn c
                 left join
-                    (select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn) rpc
+                    (
+                        select
+                            sum(isnull(pakai, 0)) as pakai, id_cn
+                        from
+                        (
+                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+
+                            union all
+
+                            select sum(pakai) as pakai, id_cn from bayar_peralatan_cn group by id_cn
+                        ) rpc
+                        group by
+                            rpc.id_cn
+                    ) rpc
                     on
                         c.id = rpc.id_cn
                 where
@@ -2175,139 +2299,53 @@ class RealisasiPembayaran extends Public_Controller
             }
         }
 
+        if ( in_array('peternak', $params['jenis_transaksi']) ) {
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    c.id,
+                    c.nomor,
+                    c.tanggal,
+                    c.ket_cn as keterangan,
+                    (c.tot_cn - isnull(rpc.pakai, 0)) as saldo
+                from cn c
+                left join
+                    (
+                        select
+                            sum(isnull(pakai, 0)) as pakai, id_cn
+                        from
+                        (
+                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+
+                            union all
+
+                            select sum(pakai) as pakai, id_cn from bayar_peralatan_cn group by id_cn
+                        ) rpc
+                        group by
+                            rpc.id_cn
+                    ) rpc
+                    on
+                        c.id = rpc.id_cn
+                where
+                    c.nomor like '%RHPP%' and
+                    (c.tot_cn - isnull(rpc.pakai, 0)) > 0
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray();
+
+                foreach ($d_conf as $key => $value) {
+                    $_key = str_replace('-', '', $value['tanggal']).' | '.$value['nomor'];
+
+                    $data[ $_key ] = $value;
+                }
+            }
+        }
+
         if ( !empty( $data ) ) {
             ksort( $data );
         }
-
-        // // CREDIT NOTE
-        // $m_jurnalt = new \Model\Storage\JurnalTrans_model();
-        // $d_jurnalt = $m_jurnalt->select('id')->where('nama', 'like', '%CREDIT NOTE%')->get();
-
-        // $det_jurnal_trans_id = null;
-        // if ( $d_jurnalt ) {
-        //     $d_jurnalt = $d_jurnalt->toArray();
-
-        //     $m_djurnalt = new \Model\Storage\DetJurnalTrans_model();
-        //     if ( $params['jenis_transaksi'][0] == 'all' ) {
-        //         $d_djurnalt = $m_djurnalt->whereIn('id_header', $d_jurnalt)->get();
-        //         if ( $d_djurnalt->count() > 0 ) {
-        //             $d_djurnalt = $d_djurnalt->toArray();
-
-        //             foreach ($d_djurnalt as $k_djurnalt => $v_djurnalt) {
-        //                 $det_jurnal_trans_id[] = $v_djurnalt['id'];
-        //             }
-        //         }
-        //     } else {
-        //         foreach ($params['jenis_transaksi'] as $k_jt => $v_jt) {
-        //             $d_djurnalt = $m_djurnalt->whereIn('id_header', $d_jurnalt)->where('nama', 'like', '%'.$v_jt.'%')->get();
-
-        //             if ( $d_djurnalt->count() > 0 ) {
-        //                 $d_djurnalt = $d_djurnalt->toArray();
-
-        //                 foreach ($d_djurnalt as $k_djurnalt => $v_djurnalt) {
-        //                     $det_jurnal_trans_id[] = $v_djurnalt['id'];
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        // $m_djurnal = new \Model\Storage\DetJurnal_model();
-        // // $d_djurnal = $m_djurnal->where('supplier', $params['supplier'])->where('perusahaan', $params['perusahaan'])->where('saldo', '>', 0)->whereIn('det_jurnal_trans_id', $det_jurnal_trans_id)->with(['jurnal_trans_detail', 'd_supplier', 'd_perusahaan'])->orderBy('tanggal', 'asc')->get();
-        // $d_djurnal = $m_djurnal->where('supplier', $params['supplier'])->where('perusahaan', $params['perusahaan'])->where('saldo', '>', 0)->whereIn('det_jurnal_trans_id', $det_jurnal_trans_id)->orderBy('tanggal', 'asc')->get();
-        // if ( $d_djurnal->count() > 0 ) {
-        //     $d_djurnal = $d_djurnal->toArray();
-        //     foreach ($d_djurnal as $key => $value) {
-        //         $data[] = $value;
-        //     }
-        // }
-        // // END - CREDIT NOTE
-
-        // // UANG MUKA OVK
-        // $det_jurnal_trans_id = null;
-        // $ambil_uang_muka_ovk = 0;
-        // if ( $params['jenis_transaksi'][0] == 'all' ) {
-        //     $ambil_uang_muka_ovk = 1;
-        // } else {
-        //     foreach ($params['jenis_transaksi'] as $k_jt => $v_jt) {
-        //         if ( $v_jt == 'voadip' ) {
-        //             $ambil_uang_muka_ovk = 1;
-        //         }
-        //     }
-        // }
-
-        // if ( $ambil_uang_muka_ovk == 1 ) {
-        //     $m_jurnalt = new \Model\Storage\JurnalTrans_model();
-        //     $d_jurnalt = $m_jurnalt->select('id')->where('nama', 'like', '%OVK%')->get();
-
-        //     if ( $d_jurnalt ) {
-        //         $d_jurnalt = $d_jurnalt->toArray();
-
-        //         $m_djurnalt = new \Model\Storage\DetJurnalTrans_model();
-        //         $d_djurnalt = $m_djurnalt->select('id')->whereIn('id_header', $d_jurnalt)->where('nama', 'like', '%UANG MUKA PEMBELIAN%')->get();
-
-                
-        //         if ( $d_djurnalt->count() > 0 ) {
-        //             $d_djurnalt = $d_djurnalt->toArray();
-                    
-                    
-        //             foreach ($d_djurnalt as $k_djurnalt => $v_djurnalt) {
-        //                 $det_jurnal_trans_id[] = $v_djurnalt['id'];
-        //             }
-        //         }
-        //     }
-        // }
-
-
-        // $m_djurnal = new \Model\Storage\DetJurnal_model();
-        // // $d_djurnal = $m_djurnal->where('supplier', $params['supplier'])->where('perusahaan', $params['perusahaan'])->where('saldo', '>', 0)->whereIn('det_jurnal_trans_id', $det_jurnal_trans_id)->orderBy('tanggal', 'asc')->get();
-        // $sql = "
-        //     select 
-        //         dj.id,
-        //         dj.id_header,
-        //         dj.tanggal,
-        //         dj.det_jurnal_trans_id,
-        //         dj.jurnal_trans_sumber_tujuan_id,
-        //         dj.supplier,
-        //         dj.perusahaan,
-        //         dj.keterangan,
-        //         dj.nominal,
-        //         (dj.nominal - isnull(rpc.jumlah_dipakai, 0)) as saldo,
-        //         -- dj.saldo,
-        //         dj.ref_id,
-        //         dj.asal,
-        //         dj.coa_asal,
-        //         dj.tujuan,
-        //         dj.coa_tujuan,
-        //         dj.unit,
-        //         dj.pic,
-        //         dj.tbl_name,
-        //         dj.tbl_id,
-        //         dj.noreg,
-        //         dj.periode,
-        //         dj.invoice,
-        //         dj.no_bukti
-        //     from det_jurnal dj
-        //     left join
-        //         (select det_jurnal_id, isnull(sum(saldo-sisa_saldo), 0) as jumlah_dipakai from realisasi_pembayaran_cn group by det_jurnal_id) rpc
-        //         on
-        //             dj.id = rpc.det_jurnal_id
-        //     where
-        //         (dj.nominal - isnull(rpc.jumlah_dipakai, 0)) > 0 and
-        //         dj.supplier = '".$params['supplier']."' and
-        //         dj.perusahaan = '".$params['perusahaan']."' and
-        //         dj.det_jurnal_trans_id in (".implode(", ", $det_jurnal_trans_id).")
-        //     order by
-        //         dj.tanggal asc
-        // ";
-        // $d_djurnal = $m_djurnal->hydrateRaw( $sql );
-        // if ( $d_djurnal->count() > 0 ) {
-        //     $d_djurnal = $d_djurnal->toArray();
-        //     foreach ($d_djurnal as $key => $value) {
-        //         $data[] = $value;
-        //     }
-        // }
-        // // END - UANG MUKA OVK
 
         $content['data'] = $data;
         $html = $this->load->view('pembayaran/realisasi_pembayaran/modal_pilih_cn', $content, true);

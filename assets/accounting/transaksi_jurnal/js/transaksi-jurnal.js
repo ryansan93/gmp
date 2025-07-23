@@ -18,6 +18,7 @@ var tj = {
         //     $('.unit').next('span.select2').css('width', '100%');
         // });
         // $('.unit').next('span.select2').css('width', '100%');
+        $('.fitur').select2();
         $('.sumber').select2();
         $('.tujuan').select2();
         $('.peruntukan').select2();
@@ -150,6 +151,7 @@ var tj = {
 						'nama': $(dcontent).find('.nama').val().toUpperCase(),
 						'peruntukan': $(dcontent).find('.peruntukan').select2().val(),
 						'kode_voucher': $(dcontent).find('.kode_voucher').val(),
+						'fitur': $(dcontent).find('.fitur').select2().val(),
 						'jurnal_manual': ($(dcontent).find('.jurnal_manual').is(':checked')) ? 1 : 0,
 						'detail': detail
 					};
@@ -220,6 +222,7 @@ var tj = {
 						'nama': $(dcontent).find('.nama').val().toUpperCase(),
 						'peruntukan': $(dcontent).find('.peruntukan').select2().val(),
 						'kode_voucher': $(dcontent).find('.kode_voucher').val(),
+						'fitur': $(dcontent).find('.fitur').select2().val(),
 						'jurnal_manual': ($(dcontent).find('.jurnal_manual').is(':checked')) ? 1 : 0,
 						'detail': detail
 					};
