@@ -59,28 +59,32 @@
 					<table class="table table-bordered" style="table-layout: auto;">
 						<thead>
 							<tr>
-								<td class="text-right" colspan="4"><b>Total</b></td>
-								<td class="text-right total_tonase"><b>0</b></td>
-								<td class="text-right"><b></b></td>
-								<td class="text-right total_tagihan"><b>0</b></td>
-								<td class="text-right total_sisa_tagiahn"><b>0</b></td>
-								<td class="text-center"></td>
+								<td class="text-right" colspan="3"><b>Total</b></td>
+								<td class="text-right grandTotal" data-target="tonase"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="tagihan"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="cn"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="dn"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="bayar"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="sisa_tagiahn"><b>0</b></td>
+								<td class="text-center" colspan="2"></td>
 							</tr>
 							<tr>
-								<th class="col-xs-1" style="vertical-align: middle;">Tanggal</th>
-								<th class="col-xs-1" style="vertical-align: middle;">No. Nota</th>
-								<th class="col-xs-1" style="vertical-align: middle;">No. DO</th>
 								<th class="col-xs-2" style="vertical-align: middle;">Plasma</th>
+								<th class="col-xs-1" style="vertical-align: middle;">Tanggal</th>
+								<th class="col-xs-1" style="vertical-align: middle;">No. Invoice</th>
 								<th class="col-xs-1" style="vertical-align: middle;">Tonase</th>
-								<th class="col-xs-1" style="vertical-align: middle;">Harga</th>
 								<th class="col-xs-1" style="vertical-align: middle;">Total</th>
-								<th class="col-xs-1" style="vertical-align: middle;">Sisa Tagihan</th>
-								<th class="col-xs-1" style="vertical-align: middle;">Lama Belum Bayar (Hari)</th>
+								<th class="col-xs-1" style="vertical-align: middle;">CN</th>
+								<th class="col-xs-1" style="vertical-align: middle;">DN</th>
+								<th class="col-xs-1" style="vertical-align: middle;">Bayar</th>
+								<th class="col-xs-1" style="vertical-align: middle;">Sisa</th>
+								<th class="col-xs-1" style="vertical-align: middle;">Umur Invoice</th>
+								<th class="col-xs-1" style="vertical-align: middle;">Umur Invoice Dari Jatuh Tempo</th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr>
-								<td colspan="8">Data tidak ditemukan.</td>
+								<td colspan="11">Data tidak ditemukan.</td>
 							</tr>
 						</tbody>
 					</table>

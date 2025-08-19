@@ -407,7 +407,7 @@ var rv = {
             success : function(data){
                 if ( data.status == 1 ) {
                     // rv.hitungStokAwal( data.content.id );
-                    rv.hitungStokByTransaksi(data.content.id, data.content.tanggal, data.content.delete, data.content.message, data.content.status_jurnal);
+                    rv.hitungStokByTransaksi(data.content);
                 } else {
                     hideLoading();
                     bootbox.alert( data.message );
@@ -545,7 +545,7 @@ var rv = {
             beforeSend : function(){ showLoading(); },
             success : function(data){
                 if ( data.status == 1 ) {
-                    rv.hitungStokByTransaksi(data.content.id, data.content.tanggal, data.content.delete, data.content.message, data.content.status_jurnal);
+                    rv.hitungStokByTransaksi(data.content);
                     // bootbox.alert( data.message, function() {
                     //     // rv.get_lists();
                     //     rv.load_form();
@@ -573,7 +573,7 @@ var rv = {
                     beforeSend : function(){ showLoading(); },
                     success : function(data){
                         if ( data.status == 1 ) {
-                            rv.hitungStokByTransaksi(data.content.id, data.content.tanggal, data.content.delete, data.content.message, data.content.status_jurnal);
+                            rv.hitungStokByTransaksi(data.content);
                             // bootbox.alert( data.message, function() {
                             //     rv.get_lists();
                             //     rv.load_form();
@@ -588,14 +588,8 @@ var rv = {
         });
     }, // end - delete
 
-    hitungStokByTransaksi: function(id, tanggal, _delete, message, status_jurnal) {
-        var params = {
-            'id': id,
-            'tanggal': tanggal,
-            'delete': _delete,
-            'message': message,
-            'status_jurnal': status_jurnal
-        }
+    hitungStokByTransaksi: function(_params) {
+        var params = _params;
 
         $.ajax({
             url: 'transaksi/ReturVoadip/hitungStokByTransaksi',
@@ -610,9 +604,13 @@ var rv = {
             success: function(data) {
                 hideLoading();
                 if ( data.status == 1 ) {
-                    bootbox.alert(message, function() {
+                    bootbox.alert(data.message, function() {
                         rv.get_lists();
-                        rv.load_form();
+                        if ( params.delete == 1 ) {
+                            rv.load_form();
+                        } else {
+                            rv.load_form( data.content.id );
+                        }
                     });
                 } else {
                     bootbox.alert(data.message);

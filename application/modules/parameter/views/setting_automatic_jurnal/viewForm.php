@@ -28,9 +28,7 @@
             <label class="control-label">Query</label>
         </div>
         <div class="col-xs-12 no-padding">
-            <textarea class="form-control query" placeholder="QUERY" style="height: 300p;" readonly>
-                <?php echo $data['_query']; ?>
-            </textarea>
+            <textarea class="form-control query" placeholder="QUERY" style="height: 300p;" readonly><?php echo $data['_query']; ?></textarea>
         </div>
     </div>
     <div class="col-xs-12 no-padding">

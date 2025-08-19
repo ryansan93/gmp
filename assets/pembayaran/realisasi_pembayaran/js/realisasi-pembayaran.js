@@ -1,6 +1,6 @@
-var dn = null;
-var cn = null;
-var potongan = null;
+let dn = [];
+let cn = [];
+let potongan = null;
 
 var rp = {
     start_up: function () {
@@ -122,8 +122,10 @@ var rp = {
                 var last_select = option[0].params.data.id;
 
                 $(div).find('div.ovk').addClass('hide');
-                $(div).find('div.ovk select, input').removeAttr('data-required', 0);
+                $(div).find('div.ovk select, input').removeAttr('data-required');
                 if ( last_select == 'voadip' ) {
+                    console.log('coba');
+
                     $(div).find('div.ovk').removeClass('hide');
                     $(div).find('div.ovk select.unit_ovk').attr('data-required', 1);
                 }
@@ -186,23 +188,15 @@ var rp = {
         var jenis = $(elm).val();
 
         $('div.jenis').addClass('hide');
-        $('div.jenis').find('input, select').removeAttr('data-required', 1);
+        $('div.jenis').find('input:not(.select2-search__field), select').removeAttr('data-required');
         $('div.'+jenis).removeClass('hide');
-        $('div.'+jenis).find('input, select').attr('data-required', 1);
+        $('div.'+jenis).find('input:not(.select2-search__field), select').attr('data-required', 1);
 
-        // var div_plasma = $('div.plasma');
-        // var div_supplier = $('div.supplier');
-        // if ( jenis == 'plasma' ) {
-        //     $(div_plasma).removeClass('hide');
-        //     $(div_plasma).find('input, select').attr('data-required', 1);
-        //     $(div_supplier).addClass('hide');
-        //     $(div_supplier).find('input, select').removeAttr('data-required', 1);
-        // } else {
-        //     $(div_supplier).removeClass('hide');
-        //     $(div_supplier).find('input, select').attr('data-required', 1);
-        //     $(div_plasma).addClass('hide');
-        //     $(div_plasma).find('input, select').removeAttr('data-required', 1);
-        // }
+        var jenis_transaksi = $('div.'+jenis).find('select.jenis_transaksi').select2('val');
+
+        if ( !empty(jenis_transaksi) && jenis_transaksi.indexOf('voadip') === -1 ) {
+            $('div.ovk').find('input:not(.select2-search__field), select').removeAttr('data-required');
+        }
     }, // end - jenis_pembayaran
 
     changeTabActive: function(elm) {
@@ -243,6 +237,22 @@ var rp = {
                 App.hideLoaderInContent(dcontent, html);
 
                 rp.setting_up();
+
+                cn = [];
+                dn = [];
+                potongan = null;
+
+                if ( !empty(edit) ) {
+                    var div = $('div#transaksi');
+                    var jenis_pembayaran = $(div).find('select.jenis_pembayaran').select2('val');
+                    var jenis_transaksi = $(div).find('div.'+jenis_pembayaran+' select.jenis_transaksi').select2('val');
+
+                    if ( !empty(jenis_transaksi) && jenis_transaksi.indexOf('peternak') !== -1 ) {
+                        rp.get_mitra( $('select.unit') );
+                    } else {
+                        $(div).find('button#btn-get-lists').click();
+                    }
+                }
             },
         });
     }, // end - load_form
@@ -299,7 +309,7 @@ var rp = {
                 'kode_unit': kode_unit
             };
 
-            var nomor = $(select_peternak).data('val');
+            var nomor = $(select_peternak).attr('data-val');
 
             $.ajax({
                 url : 'pembayaran/RealisasiPembayaran/get_mitra',
@@ -326,8 +336,6 @@ var rp = {
                         $(select_peternak).attr('disabled', 'disabled');
                     }
 
-                    console.log( option );
-
                     $(select_peternak).html( option );
 
                     $(select_peternak).select2("destroy");
@@ -342,7 +350,7 @@ var rp = {
         }
     }, // end - get_mitra
 
-    get_data_rencana_bayar: function() {
+    get_data_rencana_bayar: function(elm) {
         let div = $('div#transaksi');
         let dcontent = $(div).find('table.tbl_transaksi tbody');
 
@@ -362,6 +370,7 @@ var rp = {
             var jenis_pembayaran = $(div).find('select.jenis_pembayaran').select2('val');
 
             var params = {
+                'id': $(elm).attr('data-id'),
                 'jenis_pembayaran': jenis_pembayaran,
                 'jenis_transaksi': $(div).find('div.'+jenis_pembayaran+' select.jenis_transaksi').select2('val'),
                 'kode_unit_ovk': $(div).find('select.unit_ovk').select2('val'),
@@ -398,8 +407,6 @@ var rp = {
 
                         rp.hit_total_pilih( this );
                     });
-
-                    // $(div).find('.unit').next('span.select2').css('width', '100%');
                 },
             });
         }
@@ -411,13 +418,22 @@ var rp = {
         var thead = $(table).find('thead');
 
         var total_tagihan = 0;
+        var total_dn = 0;
+        var total_cn = 0;
+        var total_transfer = 0;
         var total_bayar = 0;
         var total_sisa = 0;
         $.map( $(tbody).find('tr'), function(tr) {
             var _tagihan = parseFloat($(tr).find('td._tagihan').attr('data-val'));
+            var _dn = parseFloat($(tr).find('td._dn').attr('data-val'));
+            var _cn = parseFloat($(tr).find('td._cn').attr('data-val'));
+            var _transfer = parseFloat($(tr).find('td._transfer').attr('data-val'));
             var _bayar = parseFloat($(tr).find('td._bayar').attr('data-val'));
-            total_bayar += _bayar;
             total_tagihan += _tagihan;
+            total_dn += _dn;
+            total_cn += _cn;
+            total_transfer += _transfer;
+            total_bayar += _bayar;
             
             var checkbox = $(tr).find('input[type=checkbox]');
             if ( $(checkbox).prop('checked') ) {
@@ -428,6 +444,9 @@ var rp = {
         });
 
         $(thead).find('td.total_tagihan b').html( numeral.formatDec(total_tagihan) );
+        $(thead).find('td.total_dn b').html( numeral.formatDec(total_dn) );
+        $(thead).find('td.total_cn b').html( numeral.formatDec(total_cn) );
+        $(thead).find('td.total_transfer b').html( numeral.formatDec(total_transfer) );
         $(thead).find('td.total_bayar b').html( numeral.formatDec(total_bayar) );
         $(thead).find('td.total_sisa b').html( numeral.formatDec(total_sisa) );
     }, // end - hit_total_pilih
@@ -435,7 +454,7 @@ var rp = {
     submit: function(elm) {
         var div = $('div#transaksi');
 
-        var id = $(elm).data('id');
+        var id = $(elm).attr('data-id');
 
         var jenis_pembayaran = $(div).find('select.jenis_pembayaran').select2('val');
         var jenis_transaksi = $(div).find('div.'+jenis_pembayaran+' select.jenis_transaksi').select2('val');
@@ -508,7 +527,43 @@ var rp = {
                         $(this).priceFormat(Config[$(this).data('tipe')]);
                     });
 
-                    cn = null;
+                    if ( !empty(id) ) {
+                        var d_cn = [];
+                        var d_dn = [];
+                        if ( (empty(cn) || cn.length <= 0) ) {
+                            var json_cn = $(modal_body).find('span.d_cn').text();
+                            var d_cn = !empty(json_cn) ? JSON.parse(json_cn) : [];
+                        }
+
+                        if ( (empty(dn) || dn.length <= 0) ) {
+                            var json_dn = $(modal_body).find('span.d_dn').text();
+                            var d_dn = !empty(json_dn) ? JSON.parse(json_dn) : [];
+                        }
+
+                        if ( !empty(d_cn) && d_cn.length > 0 ) {
+                            for (let i = 0; i < d_cn.length; i++) {                                
+                                cn[i] = {
+                                    'id': parseInt(d_cn[i].id_cn),
+                                    'saldo': parseFloat(d_cn[i].saldo),
+                                    'sisa_saldo': parseFloat(d_cn[i].sisa_saldo),
+                                    'pakai': parseFloat(d_cn[i].pakai)
+                                };
+                            }
+                        }
+
+                        if ( !empty(d_dn) && d_dn.length > 0 ) {
+                            for (let i = 0; i < d_dn.length; i++) {                                
+                                dn[i] = {
+                                    'id': parseInt(d_dn[i].id_dn),
+                                    'saldo': parseFloat(d_dn[i].saldo),
+                                    'sisa_saldo': parseFloat(d_dn[i].sisa_saldo),
+                                    'pakai': parseFloat(d_dn[i].pakai)
+                                };
+                            }
+                        }
+
+                        rp.hit_jml_bayar();
+                    }
                 });
             },'html');
         }
@@ -518,13 +573,18 @@ var rp = {
         let div = $('div#transaksi');
         var jenis_pembayaran = $(div).find('select.jenis_pembayaran').select2('val');
         var jenis_transaksi = $(div).find('div.'+jenis_pembayaran+' select.jenis_transaksi').select2('val');
-        var supplier = $(div).find('select.supplier').select2('val');
+        var _supplier = ($(div).find('select.supplier').closest('div.jenis:not(.hide)').length > 0) ? $(div).find('select.supplier').select2('val') : null;
+        var _ekspedisi = ($(div).find('select.ekspedisi').closest('div.jenis:not(.hide)').length > 0) ? $(div).find('select.ekspedisi').select2('val') : null;
+        var supplier = (!empty(_supplier)) ? _supplier : _ekspedisi;
+        var mitra = ($(div).find('select.mitra').closest('div.jenis:not(.hide)').length > 0) ? $(div).find('select.mitra').select2('val') : null;
         var perusahaan = $(div).find('select.perusahaan_non_multiple').val();
 
         var params = {
+            'id': $(elm).attr('data-id'),
             'jenis_pembayaran': jenis_pembayaran,
             'jenis_transaksi': jenis_transaksi,
             'supplier': supplier,
+            'mitra': mitra,
             'perusahaan': perusahaan
         };
 
@@ -549,6 +609,19 @@ var rp = {
                 $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
                     $(this).priceFormat(Config[$(this).data('tipe')]);
                 });
+
+                if ( !empty(dn) && dn.length > 0 ) {
+                    $.map( $(modal_body).find('table tbody tr.data'), function(tr) {
+                        var id_dn = $(tr).find('input[type="checkbox"]').attr('data-id');
+
+                        for (var i = 0; i < dn.length; i++) {
+                            if ( id_dn == dn[i].id ) {
+                                $(tr).find('input[type="checkbox"]').prop('checked', true);
+                                $(tr).find('input.pakai').val(numeral.formatDec(dn[i].pakai));
+                            }
+                        }
+                    });
+                }
             });
         },'html');
     }, // end - modalPilihDN
@@ -567,38 +640,37 @@ var rp = {
     }, // end - cekPakaiDN
 
     pilihDN: function(elm) {
-        var div = $(elm).closest('.modal-body');
+        var modal_dialog = $(elm).closest('.modal-dialog');
+        var div = $(modal_dialog).find('.modal_dn');
 
+        dn = [];
         var total_dn = 0;
-        if ( $(div).find('[type=checkbox]').length > 0 ) {
-            dn = $.map( $(div).find('[type=checkbox]'), function(ipt) {
-                if ( $(ipt).is(':checked') ) {
-                    var tr = $(ipt).closest('tr');
+        if ( $(div).find('[type=checkbox]:checked').length > 0 ) {
+            var idx = 0;
+            $.map( $(div).find('[type=checkbox]:checked'), function(check) {
+                var tr = $(check).closest('tr');
 
-                    var saldo = numeral.unformat( $(tr).find('td.saldo').text() );
-                    var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
-                    var sisa_saldo = saldo - pakai;
+                var saldo = parseFloat($(tr).find('td.saldo').attr('data-val'));
+                var sisa_saldo = parseFloat($(tr).find('td.saldo').attr('data-val'));
+                var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
 
-                    var _dn = {
-                        'id': $(ipt).attr('data-id'),
-                        'saldo': saldo,
-                        'pakai': pakai,
-                        'sisa_saldo': sisa_saldo
-                    };
+                dn[idx] = {
+                    'id': $(check).attr('data-id'),
+                    'saldo': saldo,
+                    'sisa_saldo': sisa_saldo,
+                    'pakai': pakai
+                };  
 
-                    total_dn += pakai;
+                total_dn += pakai;
 
-                    return _dn;
-                }
+                idx++;
             });
-        } else {
-            dn = null;
         }
 
         $('.total_dn').attr('data-val', total_dn);
         $('.total_dn').find('h4 b').text(numeral.formatDec(total_dn));
 
-        $(div).find('.btn-danger').click();
+        $(modal_dialog).find('.btn-danger').click();
 
         rp.hit_jml_bayar();
     }, // end - pilihDN
@@ -607,13 +679,18 @@ var rp = {
         let div = $('div#transaksi');
         var jenis_pembayaran = $(div).find('select.jenis_pembayaran').select2('val');
         var jenis_transaksi = $(div).find('div.'+jenis_pembayaran+' select.jenis_transaksi').select2('val');
-        var supplier = $(div).find('select.supplier').select2('val');
+        var _supplier = ($(div).find('select.supplier').closest('div.jenis:not(.hide)').length > 0) ? $(div).find('select.supplier').select2('val') : null;
+        var _ekspedisi = ($(div).find('select.ekspedisi').closest('div.jenis:not(.hide)').length > 0) ? $(div).find('select.ekspedisi').select2('val') : null;
+        var supplier = (!empty(_supplier)) ? _supplier : _ekspedisi;
+        var mitra = ($(div).find('select.mitra').closest('div.jenis:not(.hide)').length > 0) ? $(div).find('select.mitra').select2('val') : null;
         var perusahaan = $(div).find('select.perusahaan_non_multiple').val();
 
         var params = {
+            'id': $(elm).attr('data-id'),
             'jenis_pembayaran': jenis_pembayaran,
             'jenis_transaksi': jenis_transaksi,
             'supplier': supplier,
+            'mitra': mitra,
             'perusahaan': perusahaan
         };
 
@@ -638,6 +715,19 @@ var rp = {
                 $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
                     $(this).priceFormat(Config[$(this).data('tipe')]);
                 });
+
+                if ( !empty(cn) && cn.length > 0 ) {
+                    $.map( $(modal_body).find('table tbody tr.data'), function(tr) {
+                        var id_cn = $(tr).find('input[type="checkbox"]').attr('data-id');
+
+                        for (var i = 0; i < cn.length; i++) {
+                            if ( id_cn == cn[i].id ) {
+                                $(tr).find('input[type="checkbox"]').prop('checked', true);
+                                $(tr).find('input.pakai').val(numeral.formatDec(cn[i].pakai));
+                            }
+                        }
+                    });
+                }
             });
         },'html');
     }, // end - modalPilihCN
@@ -656,38 +746,37 @@ var rp = {
     }, // end - cekPakaiCN
 
     pilihCN: function(elm) {
-        var div = $(elm).closest('.modal-body');
+        var modal_dialog = $(elm).closest('.modal-dialog');
+        var div = $(modal_dialog).find('.modal_cn');
 
+        cn = [];
         var total_cn = 0;
-        if ( $(div).find('[type=checkbox]').length > 0 ) {
-            cn = $.map( $(div).find('[type=checkbox]'), function(ipt) {
-                if ( $(ipt).is(':checked') ) {
-                    var tr = $(ipt).closest('tr');
+        if ( $(div).find('[type=checkbox]:checked').length > 0 ) {
+            var idx = 0;
+            $.map( $(div).find('[type=checkbox]:checked'), function(check) {
+                var tr = $(check).closest('tr');
 
-                    var saldo = numeral.unformat( $(tr).find('td.saldo').text() );
-                    var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
-                    var sisa_saldo = saldo - pakai;
+                var saldo = parseFloat($(tr).find('td.saldo').attr('data-val'));
+                var sisa_saldo = parseFloat($(tr).find('td.saldo').attr('data-val'));
+                var pakai = numeral.unformat( $(tr).find('input.pakai').val() );
 
-                    var _cn = {
-                        'id': $(ipt).attr('data-id'),
-                        'saldo': saldo,
-                        'pakai': pakai,
-                        'sisa_saldo': sisa_saldo
-                    };
+                cn[idx] = {
+                    'id': $(check).attr('data-id'),
+                    'saldo': saldo,
+                    'sisa_saldo': sisa_saldo,
+                    'pakai': pakai
+                };  
 
-                    total_cn += pakai;
+                total_cn += pakai;
 
-                    return _cn;
-                }
+                idx++;
             });
-        } else {
-            cn = null;
         }
 
         $('.total_cn').attr('data-val', total_cn);
         $('.total_cn').find('h4 b').text(numeral.formatDec(total_cn));
 
-        $(div).find('.btn-danger').click();
+        $(modal_dialog).find('.btn-danger').click();
 
         rp.hit_jml_bayar();
     }, // end - pilihCN
@@ -757,134 +846,187 @@ var rp = {
     }, // end - simpanPotongan
 
     hit_jml_bayar: function() {
+        var div = $('.modal-body');
+
         var total = ($('.total').length > 0) ? $('.total').attr('data-val') : 0;
-        var total_dn = ($('.total_dn').length > 0) ? $('.total_dn').attr('data-val') : 0;
-        var total_cn = ($('.total_cn').length > 0) ? $('.total_cn').attr('data-val') : 0;
+        var total_dn = ($(div).find('.total_dn').length > 0) ? $(div).find('.total_dn').attr('data-val') : 0;
+        var total_cn = ($(div).find('.total_cn').length > 0) ? $(div).find('.total_cn').attr('data-val') : 0;
         var total_potongan = parseFloat($('.total_potongan').attr('data-val'));
         var total_uang_muka = numeral.unformat($('.uang_muka').val());
         var total_jml_transfer = numeral.unformat($('.jml_transfer').val()) + total_potongan + total_uang_muka;
 
         var tot_bayar = parseFloat(total_cn) + parseFloat(total_jml_transfer);
 
-        if ( !empty(cn) ) {
+        if ( !empty(dn) && dn.length > 0 ) {
+            for (var i = 0; i < dn.length; i++) {
+                dn[i].sisa_saldo = dn[i].pakai;
+            }
+        }
+
+        if ( !empty(cn) && cn.length > 0 ) {
             for (var i = 0; i < cn.length; i++) {
-                cn[i].sisa_saldo = cn[i].saldo;
+                cn[i].sisa_saldo = cn[i].pakai;
             }
         }
 
         var idx_cn = 0;
-        var idx_cn_old = null;
-        var pakai = 0;
         var stts_cn = 1;
+        var idx_dn = 0;
         $.map( $('table.tbl_tagihan tbody tr'), function(tr) {
-            var tagihan = $(tr).find('td.tagihan').attr('data-val');
+            var no_bayar = $(tr).find('td.no_bayar').attr('data-val');
+            var _tagihan = $(tr).find('td.tagihan').attr('data-val');
+            
+            var _dn = 0;
+            var tagihan = parseFloat(_tagihan);
+            if ( total_dn > 0 ) {
+                var prs = _tagihan/total;
+                var _dn = total_dn * (prs);
 
-            var bayar = 0;
-            var txt_bayar = 0;
+                $(tr).find('td.dn').attr('data-val', _dn);
+                $(tr).find('td.dn').text(numeral.formatDec(_dn));
 
-            if ( !empty(cn) && cn[idx_cn] != 'undefined' && stts_cn == 1 ) {
-                // var sisa_saldo = cn[idx_cn].sisa_saldo;
-                if ( idx_cn != idx_cn_old ) {
-                    pakai = cn[idx_cn].pakai;
-                }                
+                tagihan += parseFloat(_dn);
 
-                while ( tagihan > 0 ) {
-                    if ( pakai > 0 ) {
-                        if ( pakai <= tagihan ) {
-                            tagihan -= pakai;
-                            bayar += pakai;
-                            txt_bayar = pakai;
-                            // pakai += pakai;
+                while ( _dn > 0) {
+                    if ( dn[idx_dn].sisa_saldo >= _dn ) {
+                        dn[idx_dn].sisa_saldo -= _dn;
 
-                            cn[idx_cn].sisa_saldo -= pakai;
-
-                            pakai = 0;
-
-                            // cn[idx_cn].pakai = pakai;
-
-                            idx_cn++;
+                        if ( typeof dn[idx_dn].detail == 'undefined' ) {
+                            dn[idx_dn].detail = { [no_bayar]: {
+                                    'no_bayar': no_bayar,
+                                    'jml_bayar': _dn,
+                                    'id_dn': dn[idx_dn].id
+                                }
+                            };
                         } else {
-                            cn[idx_cn].sisa_saldo -= tagihan;
-
-                            pakai -= tagihan;
-                            bayar += tagihan;
-                            txt_bayar = tagihan;
-                            // pakai += tagihan;
-                            tagihan = 0;
-
-                            // cn[idx_cn].pakai = pakai;
-                            // cn[idx_cn].pakai = pakai;
-
-                            idx_cn_old = idx_cn;
+                            dn[idx_dn].detail[no_bayar] = {
+                                'no_bayar': no_bayar,
+                                'jml_bayar': _dn,
+                                'id_dn': dn[idx_dn].id
+                            };
                         }
+
+                        _dn = 0;
                     } else {
-                        stts_cn = 0;
-                        // bayar = parseFloat(tot_bayar);
-                        // tagihan -= bayar;
+                        _dn -= dn[idx_dn].sisa_saldo;
+                        
+                        if ( typeof dn[idx_dn].detail == 'undefined' ) {
+                            dn[idx_dn].detail = { [no_bayar]: {
+                                    'no_bayar': no_bayar,
+                                    'jml_bayar': dn[idx_dn].sisa_saldo,
+                                    'id_dn': dn[idx_dn].id
+                                }
+                            };
+                        } else {
+                            dn[idx_dn].detail[no_bayar] = {
+                                'no_bayar': no_bayar,
+                                'jml_bayar': dn[idx_dn].sisa_saldo,
+                                'id_dn': dn[idx_dn].id
+                            };
+                        }
+                        
+                        dn[idx_dn].sisa_saldo -= dn[idx_dn].sisa_saldo;
 
-                        // console.log('3. TAGIHAN : '+ tagihan);
-
-                        break;
-                    }
-                }
-            } 
-            // else {
-            //     bayar = parseFloat(($('.total_cn').length > 0) ? $('.total_cn').attr('data-val') : 0);
-            //     tagihan -= bayar;
-            // }
-
-            // if ( total_potongan > 0 ) {
-            //     while ( tagihan > 0 && total_potongan > 0 ) {
-            //         if ( total_potongan <= tagihan ) {
-            //             txt_bayar = parseFloat(bayar) + parseFloat(total_potongan);
-
-            //             tagihan -= total_potongan;
-            //             bayar += parseFloat(total_potongan);
-            //             total_potongan = 0;
-
-            //             idx_cn++;                        
-            //         } else {
-            //             txt_bayar = parseFloat(bayar) + parseFloat(tagihan);
-
-            //             total_potongan -= tagihan;
-            //             bayar += parseFloat(tagihan);
-            //             tagihan = 0;
-            //         }
-            //     }
-            // }
-
-            if ( total_jml_transfer > 0 ) {
-                while ( tagihan > 0 && total_jml_transfer > 0 ) {
-                    if ( total_jml_transfer <= tagihan ) {
-                        tagihan -= total_jml_transfer;
-                        bayar += parseFloat(total_jml_transfer);
-                        total_jml_transfer = 0;
-
-                        txt_bayar = bayar;
-
-                        idx_cn++;                        
-                    } else {
-                        total_jml_transfer -= tagihan;
-                        bayar += parseFloat(tagihan);
-                        tagihan = 0;
-
-                        txt_bayar = bayar;
+                        idx_dn++;
                     }
                 }
             }
 
-            $(tr).find('td.bayar').attr('data-val', txt_bayar);
-            $(tr).find('td.bayar').text(numeral.formatDec(txt_bayar));
+            var _cn = 0;
+            var _transfer = 0;
+            var tot_bayar = 0;
+
+            while ( tagihan > 0 ) {
+                if ( !empty(cn[idx_cn]) && cn[idx_cn].sisa_saldo > 0 ) {
+                    if ( cn[idx_cn].sisa_saldo >= tagihan ) {
+                        cn[idx_cn].sisa_saldo -= tagihan;
+
+                        if ( typeof cn[idx_cn].detail == 'undefined' ) {
+                            cn[idx_cn].detail = { [no_bayar]: {
+                                    'no_bayar': no_bayar,
+                                    'jml_bayar': tagihan,
+                                    'id_cn': cn[idx_cn].id
+                                }
+                            };
+                        } else {
+                            cn[idx_cn].detail[no_bayar] = {
+                                'no_bayar': no_bayar,
+                                'jml_bayar': tagihan,
+                                'id_cn': cn[idx_cn].id
+                            };
+                        }
+
+                        tot_bayar += tagihan;
+                        _cn += tagihan;
+
+                        tagihan = 0;
+                    } else {
+                        tagihan -= cn[idx_cn].sisa_saldo;
+                        
+                        if ( typeof cn[idx_cn].detail == 'undefined' ) {
+                            cn[idx_cn].detail = { [no_bayar]: {
+                                    'no_bayar': no_bayar,
+                                    'jml_bayar': cn[idx_cn].sisa_saldo,
+                                    'id_cn': cn[idx_cn].id
+                                }
+                            };
+                        } else {
+                            cn[idx_cn].detail[no_bayar] = {
+                                'no_bayar': no_bayar,
+                                'jml_bayar': cn[idx_cn].sisa_saldo,
+                                'id_cn': cn[idx_cn].id
+                            };
+                        }
+                        
+                        tot_bayar += cn[idx_cn].sisa_saldo;
+                        _cn += cn[idx_cn].sisa_saldo;
+                        
+                        cn[idx_cn].sisa_saldo -= cn[idx_cn].sisa_saldo;
+
+                        stts_cn = 0;
+
+                        idx_cn++;
+                    }
+                } else {
+                    stts_cn = 0;
+
+                    break;
+                }
+            }
+
+            while ( tagihan > 0 && stts_cn == 0 ) {
+                if ( tagihan > 0 ) {
+                    if ( total_jml_transfer > 0 ) {
+                        if ( total_jml_transfer >= tagihan ) {
+                            total_jml_transfer -= tagihan;
+
+                            tot_bayar += tagihan;
+                            _transfer += tagihan;
+
+                            tagihan = 0;
+                        } else {
+                            tagihan -= total_jml_transfer;
+
+                            tot_bayar += total_jml_transfer;
+                            _transfer += total_jml_transfer;
+
+                            total_jml_transfer = 0;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            $(tr).find('td.cn').attr('data-val', _cn);
+            $(tr).find('td.cn').text(numeral.formatDec(_cn));
+
+            $(tr).find('td.transfer').attr('data-val', _transfer);
+            $(tr).find('td.transfer').text(numeral.formatDec(_transfer));
+
+            $(tr).find('td.bayar').attr('data-val', tot_bayar);
+            $(tr).find('td.bayar').text(numeral.formatDec(tot_bayar));
         });
-
-        // if ( total_jml_transfer > 0 ) {
-        //     var nilai = parseFloat($('table.tbl_tagihan tbody tr:last').find('td.bayar').attr('data-val'));
-
-        //     nilai += total_jml_transfer;
-
-        //     $('table.tbl_tagihan tbody tr:last').find('td.bayar').attr('data-val', nilai);
-        //     $('table.tbl_tagihan tbody tr:last').find('td.bayar').text(numeral.formatDec(nilai));
-        // }
 
         var kurang_bayar = (parseFloat(total) + parseFloat(total_dn)) - tot_bayar;
 
@@ -972,7 +1114,10 @@ var rp = {
                 'transaksi': $(tr).find('.transaksi').attr('data-val'),
                 'no_bayar': $(tr).find('.no_bayar').attr('data-val'),
                 'tagihan': parseFloat($(tr).find('.tagihan').attr('data-val')),
-                'bayar': parseFloat($(tr).find('td.bayar').attr('data-val'))
+                'bayar': parseFloat($(tr).find('td.bayar').attr('data-val')),
+                'cn': parseFloat($(tr).find('td.cn').attr('data-val')),
+                'dn': parseFloat($(tr).find('td.dn').attr('data-val')),
+                'transfer': parseFloat($(tr).find('td.transfer').attr('data-val'))
             };
 
             return _detail;
@@ -1015,7 +1160,8 @@ var rp = {
                 hideLoading();
                 if ( data.status == 1 ) {
                     bootbox.alert(data.message, function() {
-                        cn = null;
+                        cn = [];
+                        dn = [];
                         potongan = null;
 
                         var btn = '<button type="button" data-href="transaksi" data-id="'+data.content.id+'"></button>';
@@ -1103,29 +1249,40 @@ var rp = {
 
     exec_edit: function(elm, ket = null) {
         var modal_body = $('.modal-body');
-        var div = $('div#transaksi');
 
         var detail = $.map( $(modal_body).find('tbody tr'), function(tr) {
             var _detail = {
                 'transaksi': $(tr).find('.transaksi').attr('data-val'),
                 'no_bayar': $(tr).find('.no_bayar').attr('data-val'),
-                'tagihan': $(tr).find('.tagihan').attr('data-val'),
-                'bayar': numeral.unformat($(tr).find('input.bayar').val())
+                'tagihan': parseFloat($(tr).find('.tagihan').attr('data-val')),
+                'bayar': parseFloat($(tr).find('td.bayar').attr('data-val')),
+                'cn': parseFloat($(tr).find('td.cn').attr('data-val')),
+                'dn': parseFloat($(tr).find('td.dn').attr('data-val')),
+                'transfer': parseFloat($(tr).find('td.transfer').attr('data-val'))
             };
 
             return _detail;
         });
 
         var data = {
-            'id': $(elm).data('id'),
+            'id': $(elm).attr('data-id'),
             'tagihan': $(modal_body).find('.total').attr('data-val'),
+            'total_dn': ($(modal_body).find('.total_dn').length > 0) ? $(modal_body).find('.total_dn').attr('data-val') : 0,
+            'total_cn': ($(modal_body).find('.total_cn').length > 0) ? $(modal_body).find('.total_cn').attr('data-val') : 0,
+            'total_potongan': ($(modal_body).find('.total_potongan').length > 0) ? $(modal_body).find('.total_potongan').attr('data-val') : 0,
+            'uang_muka': numeral.unformat($(modal_body).find('.uang_muka').val()),
+            'jml_transfer': numeral.unformat($(modal_body).find('.jml_transfer').val()),
             'bayar': $(modal_body).find('.total_bayar').attr('data-val'),
             'tgl_bayar': dateSQL($(modal_body).find('#tgl_bayar').data('DateTimePicker').date()),
             'perusahaan': $(modal_body).find('.perusahaan').attr('data-val'),
             'supplier': $(modal_body).find('.supplier').attr('data-val'),
             'peternak': $(modal_body).find('.peternak').attr('data-val'),
+            'ekspedisi': $(modal_body).find('.ekspedisi').attr('data-val'),
             'no_rek': $(modal_body).find('.rekening').val(),
             'no_bukti': $(modal_body).find('.no_bukti').val(),
+            'dn': !empty(dn) ? dn : null,
+            'cn': !empty(cn) ? cn : null,
+            'potongan': !empty(potongan) ? potongan : null,
             'keterangan': ket,
             'detail': detail
         };
@@ -1145,7 +1302,8 @@ var rp = {
                 hideLoading();
                 if ( data.status == 1 ) {
                     bootbox.alert(data.message, function() {
-                        cn = null;
+                        cn = [];
+                        dn = [];
                         potongan = null;
 
                         var btn = '<button type="button" data-href="transaksi" data-id="'+data.content.id+'"></button>';

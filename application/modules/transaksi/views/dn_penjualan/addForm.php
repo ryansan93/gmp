@@ -1,4 +1,4 @@
-<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+<!-- <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 	<div class="col-xs-4 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-12 no-padding"><label class="label-control">Tipe DN</label></div>
 		<div class="col-xs-12 no-padding">
@@ -11,15 +11,22 @@
 		</div>
 	</div>
 </div>
-<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div> -->
 <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 	<div class="col-xs-2 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-12 no-padding"><label class="label-control">Jenis DN</label></div>
 		<div class="col-xs-12 no-padding">
-			<select class="form-control jenis_dn" data-required="1">
+			<!-- <select class="form-control jenis_dn" data-required="1">
 				<?php foreach ($jenis_dn as $key => $value) { ?>
 					<option value="<?php echo $key; ?>"><?php echo $value; ?></option>
 				<?php } ?>
+			</select> -->
+
+			<select class="form-control jurnal_trans" data-required="1">
+				<option value="">-- Pilih Transaksi Jurnal --</option>
+				<?php foreach ($jurnal_trans as $key => $value): ?>
+					<option value="<?php echo $value['kode']; ?>"><?php echo $value['nama']; ?></option>
+				<?php endforeach ?>
 			</select>
 		</div>
 	</div>
@@ -127,7 +134,7 @@
 						</div>
 					</td>
 				</tr>
-				<tr class="detail">
+				<!-- <tr class="detail">
 					<td colspan="5" style="background-color: #dedede;">
 						<table class="table table-bordered" style="margin-bottom: 0px;">
 							<thead>
@@ -160,7 +167,7 @@
 							</tbody>
 						</table>
 					</td>
-				</tr>
+				</tr> -->
 			</tbody>
 		</table>
 	</small>

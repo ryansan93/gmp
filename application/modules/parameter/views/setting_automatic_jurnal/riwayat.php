@@ -48,6 +48,7 @@
 					<tr>
 						<th class="col-xs-1">Tgl. Berlaku</th>
 						<th class="col-xs-3">Fitur</th>
+						<th class="col-xs-3">Nama Tabel</th>
 						<!-- <th class="col-xs-2">Keterangan</th>
 						<th class="col-xs-1">No. COA</th>
 						<th class="col-xs-2">Asal</th>
@@ -57,7 +58,7 @@
 				</thead>
 				<tbody>
 					<tr>
-						<td colspan="2">Data tidak ditemukan.</td>
+						<td colspan="3">Data tidak ditemukan.</td>
 					</tr>
 				</tbody>
 			</table>

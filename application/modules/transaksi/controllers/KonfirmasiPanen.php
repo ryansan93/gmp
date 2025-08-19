@@ -48,6 +48,8 @@ class KonfirmasiPanen extends Public_Controller {
         $akses = hakAkses($this->url);
         $params = $this->input->get('params');
 
+        $id = (isset($params['id']) && !empty($params['id'])) ? trim($params['id']) : null;
+
         $data = null;
 
         $m_rs = new \Model\Storage\RdimSubmit_model();
@@ -55,15 +57,15 @@ class KonfirmasiPanen extends Public_Controller {
 
         $populasi = 0;
 
-        $edit = 1;
+        $edit = 0;
         if ( !empty($d_rs) ) {
             $data = $d_rs->toArray();
             $populasi = $data['populasi'];
 
             $m_drpah = new \Model\Storage\DetRpah_model();
-            $d_drpah = $m_drpah->where('id_konfir', $data['data_konfir']['id'])->first();
+            $d_drpah = $m_drpah->where('id_konfir', $id)->first();
             if ( $d_drpah ) {
-                $edit = 0;
+                $edit = 1;
             }
         }
 
@@ -89,9 +91,7 @@ class KonfirmasiPanen extends Public_Controller {
         $content['edit'] = $edit;
         $content['populasi'] = $populasi;
 
-        $id = trim($params['id']);
-
-        if ( $edit == 0 ) {
+        if ( empty($edit) || $edit == 0 ) {
             $html = $this->load->view('transaksi/konfirmasi_panen/add_form', $content);
         } else {
             $html = $this->load->view('transaksi/konfirmasi_panen/detail_form', $content);

@@ -18,7 +18,7 @@
 				<tbody>
 					<?php if ( !empty($data) ): ?>
 						<?php foreach ($data as $k_data => $v_data): ?>
-							<tr>
+							<tr class="data">
 								<td><?php echo $v_data['nomor']; ?></td>
 								<td><?php echo tglIndonesia($v_data['tanggal'], '-', ' '); ?></td>
 								<td><?php echo $v_data['keterangan']; ?></td>

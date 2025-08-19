@@ -121,7 +121,10 @@
 				<th class="col-xs-1">No. Bayar / No. Invoice</th>
 				<th class="col-xs-1">Unit</th>
 				<th class="col-xs-2">Tagihan</th>
-				<th class="col-xs-2">Bayar</th>
+				<th class="col-xs-1">DN</th>
+				<th class="col-xs-1">CN</th>
+				<th class="col-xs-2">Transfer</th>
+				<th class="col-xs-2">Tot Bayar</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -131,6 +134,9 @@
 					<td><?php echo $v_det['no_bayar']; ?></td>
 					<td><?php echo (isset($v_det['kode_unit']) && !empty($v_det['kode_unit'])) ? $v_det['kode_unit'] : '-'; ?></td>
 					<td class="text-right"><?php echo angkaDecimal($v_det['tagihan']); ?></td>
+					<td class="text-right"><?php echo angkaDecimal($v_det['dn']); ?></td>
+					<td class="text-right"><?php echo angkaDecimal($v_det['cn']); ?></td>
+					<td class="text-right"><?php echo angkaDecimal($v_det['transfer']); ?></td>
 					<td class="text-right"><?php echo angkaDecimal($v_det['bayar']); ?></td>
 				</tr>
 			<?php endforeach ?>
@@ -246,10 +252,12 @@
 	</table>
 </small>
 <div class="col-xs-12 no-padding" style="margin-top: 5px;">
-	<!-- <button type="button" class="btn btn-primary pull-right" onclick="rp.changeTabActive(this)" data-id="<?php echo $data['id']; ?>" data-href="transaksi" data-edit="edit"><i class="fa fa-edit"></i> Edit</button> -->
+	<?php if ( $akses['a_edit'] == 1 ): ?>
+		<button type="button" class="btn btn-primary pull-right" onclick="rp.changeTabActive(this)" data-id="<?php echo $data['id']; ?>" data-href="transaksi" data-edit="edit" style="margin-left: 5px;"><i class="fa fa-edit"></i> Edit</button>
+	<?php endif ?>
 	<?php if ( $akses['a_delete'] == 1 ): ?>
-		<?php if ( $data['delete'] == 1 ): ?>
-			<button type="button" class="btn btn-danger pull-right" onclick="rp.delete(this)" data-id="<?php echo $data['id']; ?>" style="margin-right: 0px;"><i class="fa fa-trash"></i> Hapus</button>
-		<?php endif ?>
+		<?php // if ( $data['delete'] == 1 ): ?>
+		<button type="button" class="btn btn-danger pull-right" onclick="rp.delete(this)" data-id="<?php echo $data['id']; ?>" style="margin-right: 5px;"><i class="fa fa-trash"></i> Hapus</button>
+		<?php // endif ?>
 	<?php endif ?>
 </div>

@@ -167,184 +167,113 @@ class SisaTagihanBakulPerTanggal extends Public_Controller {
 
         $sql_pelanggan = null;
         if ( !in_array('all', $pelanggan) ) {
-            $sql_pelanggan = "plg.nomor in ('".implode("', '", $pelanggan)."')";
+            $sql_pelanggan = "and plg.nomor in ('".implode("', '", $pelanggan)."')";
         }
 
         $sql_unit = null;
         if ( !in_array('all', $unit) ) {
-            $sql_unit = "w.kode in ('".implode("', '", $unit)."')";
+            $sql_unit = "and w.kode in ('".implode("', '", $unit)."')";
         }
 
         $sql_perusahaan = null;
         if ( !in_array('all', $perusahaan) ) {
-            $sql_perusahaan = "prs.kode in ('".implode("', '", $perusahaan)."')";
+            $sql_perusahaan = "and prs.kode in ('".implode("', '", $perusahaan)."')";
         }
 
-        $sql = '';
-        if ( !empty($sql_pelanggan) || !empty($sql_unit) || !empty($sql_perusahaan) ) {
-            if ( !empty($sql_pelanggan) ) {
-                if ( !empty($sql) ) {
-                    $sql .= ' and '.$sql_pelanggan;
-                } else {
-                    $sql .= 'where '.$sql_pelanggan;
-                }
-            }
+        // $sql = '';
+        // if ( !empty($sql_pelanggan) || !empty($sql_unit) || !empty($sql_perusahaan) ) {
+        //     if ( !empty($sql_pelanggan) ) {
+        //         if ( !empty($sql) ) {
+        //             $sql .= ' and '.$sql_pelanggan;
+        //         } else {
+        //             $sql .= 'where '.$sql_pelanggan;
+        //         }
+        //     }
 
-            if ( !empty($sql_unit) ) {
-                if ( !empty($sql) ) {
-                    $sql .= ' and '.$sql_unit;
-                } else {
-                    $sql .= 'where '.$sql_unit;
-                }
-            }
+        //     if ( !empty($sql_unit) ) {
+        //         if ( !empty($sql) ) {
+        //             $sql .= ' and '.$sql_unit;
+        //         } else {
+        //             $sql .= 'where '.$sql_unit;
+        //         }
+        //     }
 
-            if ( !empty($sql_perusahaan) ) {
-                if ( !empty($sql) ) {
-                    $sql .= ' and '.$sql_perusahaan;
-                } else {
-                    $sql .= 'where '.$sql_perusahaan;
-                }
-            }
-        }
+        //     if ( !empty($sql_perusahaan) ) {
+        //         if ( !empty($sql) ) {
+        //             $sql .= ' and '.$sql_perusahaan;
+        //         } else {
+        //             $sql .= 'where '.$sql_perusahaan;
+        //         }
+        //     }
+        // }
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select
-                data.*,
-                rdim.nama as nama_mitra,
+            select 
+                drsi.*,
                 plg.nama as nama_pelanggan,
+                rdims.nama as nama_mitra,
                 prs.perusahaan as nama_perusahaan,
-                ts.tgl_tutup as tgl_tutup_siklus
-            from 
-            (
-                /* SUDAH ADA PEMBAYARAN */
-                select 
-                    rs.tgl_panen, 
-                    rs.noreg,
-                    drs.*,
-                    (drs.tonase * drs.harga) as total,
-                    bayar.jumlah_bayar as bayar,
-                    ((drs.tonase * drs.harga) - bayar.jumlah_bayar) as sisa
-                from det_pembayaran_pelanggan dpp1
-                right join
-                    (
-                        select max(dpp.id) as id, dpp.id_do from det_pembayaran_pelanggan dpp
-                        left join
-                            pembayaran_pelanggan pp
-                            on
-                                dpp.id_header = pp.id
-                        where
-                            pp.tgl_bayar <= '".$tanggal."'
-                        group by
-                            dpp.id_do
-                    ) dpp2
-                    on
-                        dpp1.id = dpp2.id
-                left join
-                    (
-                        select sum(dpp.jumlah_bayar) as jumlah_bayar, dpp.id_do from det_pembayaran_pelanggan dpp
-                        left join
-                            pembayaran_pelanggan pp
-                            on
-                                dpp.id_header = pp.id
-                        where
-                            pp.tgl_bayar <= '".$tanggal."'
-                        group by
-                            dpp.id_do
-                    ) bayar
-                    on
-                        bayar.id_do = dpp1.id_do
-                left join
-                    det_real_sj drs 
-                    on
-                        drs.id = dpp1.id_do 
-                left join
-                    real_sj rs 
-                    on
-                        drs.id_header = rs.id
-                where
-                    (rs.tgl_panen >= '2024-01-01' and rs.tgl_panen <= '".$tanggal."') and
-                    dpp1.status = 'BELUM' and
-                    drs.id is not null and
-                    drs.tonase > 0 and 
-                    drs.harga > 0
-                /* END - SUDAH ADA PEMBAYARAN */
-
-                union all
-
-                /* BELUM ADA PEMBAYARAN */
-                select 
-                    rs.tgl_panen, 
-                    rs.noreg,
-                    drs.*,
-                    (drs.tonase * drs.harga) as total,
-                    0 as bayar,
-                    (drs.tonase * drs.harga) as sisa
-                from det_real_sj drs
-                left join
-                    (
-                        select rs1.* from real_sj rs1
-                        right join
-                            (select max(rs.id) as id, rs.noreg, rs.tgl_panen from real_sj rs group by rs.noreg, rs.tgl_panen) rs2
-                            on
-                                rs1.id = rs2.id
-                    ) rs
-                    on
-                        drs.id_header = rs.id
-                left join
-                    (
-                        select dpp1.* from det_pembayaran_pelanggan dpp1
-                        right join
-                            (
-                                select * from (
-                                    select max(dpp.id) as id, dpp.id_do, pp.tgl_bayar from det_pembayaran_pelanggan dpp
-                                    left join
-                                        pembayaran_pelanggan pp
-                                        on
-                                            dpp.id_header = pp.id
-                                    group by
-                                        dpp.id_do,
-                                        pp.tgl_bayar
-                                ) data
-                                where
-                                    data.tgl_bayar <= '".$tanggal."'
-                            ) dpp2
-                            on
-                                dpp1.id = dpp2.id
-                    ) dpp
-                    on
-                        drs.id = dpp.id_do
-                where
-                    (rs.tgl_panen >= '2024-01-01' and rs.tgl_panen <= '".$tanggal."') and
-                    drs.tonase > 0 and 
-                    drs.harga > 0 and
-                    dpp.id is null
-                /* END - BELUM ADA PEMBAYARAN */
-            ) data
+                rdims.tgl_tutup as tgl_tutup_siklus,
+                rs.tgl_panen as tgl_invoice,
+                isnull(dpp.cn, 0) as cn,
+                isnull(dpp.dn, 0) as dn,
+                isnull(dpp.penyesuaian, 0) as penyesuaian,
+                isnull(dpp.bayar, 0) as bayar,
+                ((drsi.total+isnull(dpp.dn, 0))-(isnull(dpp.cn, 0)+isnull(dpp.penyesuaian, 0)+isnull(dpp.bayar, 0))) as sisa_tagihan
+            from det_real_sj_inv drsi
+            left join
+                det_real_sj drs
+                on
+                    drsi.no_sj = drs.no_sj
+            left join
+                real_sj rs
+                on
+                    drs.id_header = rs.id
             left join
                 (
-                    select rs.noreg, m.jenis, m.nama, m.perusahaan from rdim_submit rs
-                    right join
-                        (
-                            select m1.* from mitra_mapping m1
-                            right join
-                                (select max(id) as id, nim from mitra_mapping group by nim) m2
-                                on
-                                    m1.id = m2.id
-                        ) mm
+                    select 
+                        dpp.no_inv,
+                        sum(dpp.cn) as cn, 
+                        sum(dpp.dn) as dn,
+                        sum(dpp.penyesuaian) as penyesuaian,
+                        sum(dpp.tagihan - (dpp.penyesuaian+dpp.sisa_tagihan)) as bayar
+                    from det_pembayaran_pelanggan dpp
+                    left join
+                        pembayaran_pelanggan pp
                         on
-                            rs.nim = mm.nim
-                    right join
-                        mitra m
-                        on
-                            mm.mitra = m.id
-                ) rdim
+                            dpp.id_header = pp.id
+                    where
+                        pp.tgl_bayar <= '".$tanggal."'
+                    group by 
+                        dpp.no_inv
+                ) dpp
                 on
-                    rdim.noreg = data.noreg
+                    dpp.no_inv = drsi.no_inv
             left join
-                tutup_siklus ts
-                on
-                    data.noreg = ts.noreg
+            	(
+            		select rs.noreg, m.nama, m.nomor, m.perusahaan, ts.tgl_tutup from rdim_submit rs
+            		left join
+            			(
+            				select mm1.* from mitra_mapping mm1
+            				right join
+            					(select max(id) as id, nim from mitra_mapping group by nim) mm2
+            					on
+            						mm1.id = mm2.id
+            			) mm
+            			on
+            				rs.nim = mm.nim
+            		left join
+            			mitra m 
+            			on
+            				m.id = mm.mitra
+                    left join
+                        tutup_siklus ts
+                        on
+                            ts.noreg = rs.noreg
+            	) rdims
+            	on
+            		rdims.noreg = rs.noreg
             left join
                 (
                     select p1.* from pelanggan p1
@@ -354,7 +283,7 @@ class SisaTagihanBakulPerTanggal extends Public_Controller {
                             p1.id = p2.id
                 ) plg
                 on
-                    plg.nomor = data.no_pelanggan
+                    plg.nomor = drs.no_pelanggan
             left join
                 (
                     select prs1.* from perusahaan prs1
@@ -364,7 +293,7 @@ class SisaTagihanBakulPerTanggal extends Public_Controller {
                             prs1.id = prs2.id
                 ) prs
                 on
-                    rdim.perusahaan = prs.kode
+                    rdims.perusahaan = prs.kode
             left join
                 (
                     select
@@ -379,11 +308,12 @@ class SisaTagihanBakulPerTanggal extends Public_Controller {
                         w1.jenis = 'UN'
                 ) w
                 on
-                    w.kode = SUBSTRING(data.no_do, 4, 3)
-            ".$sql."
-            order by
-                data.tgl_panen,
-                data.no_do
+                    w.kode = SUBSTRING(drs.no_do, 4, 3)
+            where
+                rs.tgl_panen <= '".$tanggal."'
+                ".$sql_pelanggan."
+                ".$sql_unit."
+                ".$sql_perusahaan."
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

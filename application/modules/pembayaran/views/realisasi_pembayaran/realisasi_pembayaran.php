@@ -13,6 +13,7 @@
 				<div class="col-xs-12 no-padding">
 					<div class="col-xs-4 no-padding"><h4><b>Debit Note</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total_dn" data-val="<?php echo $data['total_dn']; ?>"><h4><b><?php echo angkaDecimal($data['total_dn']); ?></b></h4></div>
+					<span class="d_dn hide"><?php echo $d_dn; ?></span>
 				</div>
 				<div class="col-xs-12 no-padding">
 					<div class="col-xs-4 no-padding">&nbsp;</div>
@@ -23,6 +24,7 @@
 				<div class="col-xs-12 no-padding">
 					<div class="col-xs-4 no-padding"><h4><b>Credit Note</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total_cn" data-val="<?php echo $data['total_cn']; ?>"><h4><b><?php echo angkaDecimal($data['total_cn']); ?></b></h4></div>
+					<span class="d_cn hide"><?php echo $d_cn; ?></span>
 				</div>
 				<!-- <?php if ( $data['jenis_pembayaran'] == 'supplier' ): ?>
 				<?php endif ?> -->
@@ -161,14 +163,14 @@
 						<div class="col-xs-4 no-padding">Debit Note</div>
 						<div class="col-xs-1 no-padding text-center">:</div>
 						<div class="col-xs-7 no-padding">
-							<button type="button" class="btn btn-default" onclick="rp.modalPilihDN(this)">Pilih DN yang akan di gunakan</button>
+							<button type="button" class="btn btn-default" onclick="rp.modalPilihDN(this)" data-id="<?php echo $data['id'] ?>">Pilih DN yang akan di gunakan</button>
 						</div>
 					</div>
 					<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 						<div class="col-xs-4 no-padding">Credit Note</div>
 						<div class="col-xs-1 no-padding text-center">:</div>
 						<div class="col-xs-7 no-padding">
-							<button type="button" class="btn btn-default" onclick="rp.modalPilihCN(this)">Pilih CN yang akan di gunakan</button>
+							<button type="button" class="btn btn-default" onclick="rp.modalPilihCN(this)" data-id="<?php echo $data['id'] ?>">Pilih CN yang akan di gunakan</button>
 						</div>
 					</div>
 				<?php endif ?>
@@ -225,10 +227,13 @@
 						<table class="table table-bordered tbl_tagihan" style="margin-bottom: 0px;">
 							<thead>
 								<tr>
-									<th class="col-xs-2 text-center">Transaksi</th>
-									<th class="col-xs-2 text-center">No. Bayar</th>
-									<th class="col-xs-4 text-center">Tagihan</th>
-									<th class="col-xs-4 text-center">Bayar</th>
+									<th class="col-xs-1 text-center">Transaksi</th>
+									<th class="col-xs-1 text-center">No. Bayar</th>
+									<th class="col-xs-2 text-center">Tagihan</th>
+									<th class="col-xs-2 text-center">DN</th>
+									<th class="col-xs-2 text-center">CN</th>
+									<th class="col-xs-2 text-center">Transfer</th>
+									<th class="col-xs-2 text-center">Bayar</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -237,6 +242,9 @@
 										<td class="text-center transaksi" data-val="<?php echo $v_det['transaksi']; ?>"><?php echo $v_det['transaksi']; ?></td>
 										<td class="text-center no_bayar" data-val="<?php echo $v_det['no_bayar']; ?>"><?php echo $v_det['no_bayar']; ?></td>
 										<td class="text-right tagihan" data-val="<?php echo $v_det['tagihan']; ?>"><?php echo angkaDecimal($v_det['tagihan']); ?></td>
+										<td class="text-right dn" data-val="<?php echo $v_det['dn']; ?>"><?php echo angkaDecimal($v_det['dn']); ?></td>
+										<td class="text-right cn" data-val="<?php echo $v_det['cn']; ?>"><?php echo angkaDecimal($v_det['cn']); ?></td>
+										<td class="text-right transfer" data-val="<?php echo $v_det['transfer']; ?>"><?php echo angkaDecimal($v_det['transfer']); ?></td>
 										<td class="text-right bayar" data-val="<?php echo $v_det['bayar']; ?>">
 											<?php echo angkaDecimal($v_det['bayar']); ?>
 											<!-- <input type="text" class="bayar form-control text-right" data-tipe="decimal" placeholder="Nilai" data-required="1" onblur="rp.hit_jml_bayar(this)" value="<?php echo angkaDecimal($v_det['bayar']); ?>"> -->

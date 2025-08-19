@@ -1269,7 +1269,7 @@ class KonfirmasiPembayaranOaPakan extends Public_Controller
         $m_ekspedisi = new \Model\Storage\Ekspedisi_model();
         $d_ekspedisi = $m_ekspedisi->where('nomor', $ekspedisi_id)->with(['potongan_pph'])->orderBy('id', 'desc')->first();
 
-        $potongan_pph = $d_ekspedisi->potongan_pph->persen / 100;
+        $potongan_pph = (isset($d_ekspedisi->potongan_pph->persen) && !empty($d_ekspedisi->potongan_pph->persen) ) ? $d_ekspedisi->potongan_pph->persen / 100 : 0;
 
         $bank_ekspedisi = null;
         $m_bank_ekspedisi = new \Model\Storage\BankEkspedisi_model();

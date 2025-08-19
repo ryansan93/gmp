@@ -378,6 +378,7 @@ var rsm = {
     	if ( err > 0 ) {
     		bootbox.alert('Harap lengkapi data terlebih dahulu.');
     	} else {
+			$('.btn_save').disabled = true;
     		bootbox.confirm('Apakah anda yakin ingin menyimpan data realisai SJ ?', function(result) {
     			if ( result ) {
     				// var formData = new FormData();
@@ -445,6 +446,8 @@ var rsm = {
 			            data: formData,
 			            beforeSend: function(){ showLoading() },
 			            success: function(data){
+							$('.btn_save').disabled = false;
+							
 			                hideLoading();
 			                if ( data.status == 1 ) {
 			                	bootbox.alert( data.message, function() {
@@ -456,7 +459,9 @@ var rsm = {
 			                }
 			            }
 			        });
-    			}
+    			} else {
+					$('.btn_save').disabled = false;
+				}
     		});
     	}
     }, // end - save

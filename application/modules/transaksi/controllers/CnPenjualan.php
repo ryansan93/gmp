@@ -111,7 +111,7 @@ class CnPenjualan extends Public_Controller {
         if ( stristr('pr', $jenis_cn) !== false ) {
             $sql_inv = "";
             if ( !empty($search) && !empty($type) ) {
-                $sql_inv = "where UPPER(REPLACE(CONVERT(varchar, pp.tanggal, 103), '-', '/')+' | '+pp.no_sj) like '%".$search."%'";
+                $sql_inv = "and UPPER(REPLACE(CONVERT(varchar, pp.tanggal, 103), '-', '/')+' | '+pp.no_sj) like '%".$search."%'";
             }
 
             $m_conf = new \Model\Storage\Conf();
@@ -137,7 +137,7 @@ class CnPenjualan extends Public_Controller {
         if ( stristr('lb', $jenis_cn) !== false ) {
             $sql_inv = "";
             if ( !empty($search) && !empty($type) ) {
-                $sql_inv = "where UPPER(REPLACE(CONVERT(varchar, drs.tgl_sj, 103), '-', '/')+' | '+drs.no_sj) like '%".$search."%'";
+                $sql_inv = "and UPPER(REPLACE(CONVERT(varchar, drs.tgl_sj, 103), '-', '/')+' | '+drs.no_sj) like '%".$search."%'";
             }
 
             $m_conf = new \Model\Storage\Conf();
@@ -231,7 +231,7 @@ class CnPenjualan extends Public_Controller {
 
         $sql_jt = "";
         if ( !empty($search) && !empty($type) ) {
-            $sql_jt = "where UPPER(djt.kode+' | '+djt.nama) like '%".$search."%'";
+            $sql_jt = "and UPPER(djt.kode+' | '+djt.nama) like '%".$search."%'";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -280,7 +280,7 @@ class CnPenjualan extends Public_Controller {
 
         $sql_brg = "";
         if ( !empty($search) && !empty($type) ) {
-            $sql_brg = "where UPPER(b1.kode+' | '+b1.nama) like '%".$search."%'";
+            $sql_brg = "and UPPER(b1.kode+' | '+b1.nama) like '%".$search."%'";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -316,7 +316,9 @@ class CnPenjualan extends Public_Controller {
             select
                 c.*,
                 plg.nama as nama_pelanggan,
-                m.nama as nama_mitra
+                m.nama as nama_mitra,
+                jt.kode as kode_jurnal_trans,
+                jt.nama as nama_jurnal_trans
             from cn c
             left join
                 (
@@ -338,6 +340,16 @@ class CnPenjualan extends Public_Controller {
                 ) m
                 on
                     m.nomor = c.mitra
+            left join
+                (
+                    select jt1.* from jurnal_trans jt1
+                    right join
+                        (select max(id) as id, kode from jurnal_trans group by kode) jt2
+                        on
+                            jt1.id = jt2.id
+                ) jt
+                on
+                    jt.kode = c.jurnal_trans_kode
             where
                 c.id = ".$id."
             order by
@@ -397,45 +409,45 @@ class CnPenjualan extends Public_Controller {
                 foreach ($d_cnd as $k_cnd => $v_cnd) {
                     $data['detail'][ $k_cnd ] = $v_cnd;
     
-                    $m_conf = new \Model\Storage\Conf();
-                    $sql = "
-                        select
-                            cdjt.*,
-                            djt.kode as kode_det_jurnal_trans,
-                            djt.nama as nama_det_jurnal_trans,
-                            djt.sumber as asal,
-                            djt.sumber_coa as coa_asal,
-                            djt.tujuan as tujuan,
-                            djt.tujuan_coa as coa_tujuan,
-                            jt.kode as kode_jurnal_trans,
-                            jt.nama as nama_jurnal_trans
-                        from cn_det_jurnal_trans cdjt
-                        left join
-                            (
-                                select djt1.* from det_jurnal_trans djt1
-                                right join
-                                    (select max(id) as id, kode from det_jurnal_trans group by kode) djt2
-                                    on
-                                        djt1.id = djt2.id
-                            ) djt
-                            on
-                                cdjt.det_jurnal_trans_kode = djt.kode
-                        left join
-                            jurnal_trans jt
-                            on
-                                jt.id = djt.id_header
-                        where
-                            cdjt.id_header = ".$v_cnd['id']."
-                    ";
-                    $d_cndjt = $m_conf->hydrateRaw( $sql );
+                    // $m_conf = new \Model\Storage\Conf();
+                    // $sql = "
+                    //     select
+                    //         cdjt.*,
+                    //         djt.kode as kode_det_jurnal_trans,
+                    //         djt.nama as nama_det_jurnal_trans,
+                    //         djt.sumber as asal,
+                    //         djt.sumber_coa as coa_asal,
+                    //         djt.tujuan as tujuan,
+                    //         djt.tujuan_coa as coa_tujuan,
+                    //         jt.kode as kode_jurnal_trans,
+                    //         jt.nama as nama_jurnal_trans
+                    //     from cn_det_jurnal_trans cdjt
+                    //     left join
+                    //         (
+                    //             select djt1.* from det_jurnal_trans djt1
+                    //             right join
+                    //                 (select max(id) as id, kode from det_jurnal_trans group by kode) djt2
+                    //                 on
+                    //                     djt1.id = djt2.id
+                    //         ) djt
+                    //         on
+                    //             cdjt.det_jurnal_trans_kode = djt.kode
+                    //     left join
+                    //         jurnal_trans jt
+                    //         on
+                    //             jt.id = djt.id_header
+                    //     where
+                    //         cdjt.id_header = ".$v_cnd['id']."
+                    // ";
+                    // $d_cndjt = $m_conf->hydrateRaw( $sql );
     
-                    if ( $d_cndjt->count() > 0 ) {
-                        $d_cndjt = $d_cndjt->toArray();
+                    // if ( $d_cndjt->count() > 0 ) {
+                    //     $d_cndjt = $d_cndjt->toArray();
     
-                        $data['kode_jurnal_trans'] = $d_cndjt[0]['kode_jurnal_trans'];
-                        $data['nama_jurnal_trans'] = $d_cndjt[0]['nama_jurnal_trans'];
-                        $data['detail'][ $k_cnd ]['det_jurnal_trans'] = $d_cndjt;                    
-                    }
+                    //     $data['kode_jurnal_trans'] = $d_cndjt[0]['kode_jurnal_trans'];
+                    //     $data['nama_jurnal_trans'] = $d_cndjt[0]['nama_jurnal_trans'];
+                    //     $data['detail'][ $k_cnd ]['det_jurnal_trans'] = $d_cndjt;                    
+                    // }
                 }
             }
         }
@@ -577,16 +589,23 @@ class CnPenjualan extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            $m_jt = new \Model\Storage\JurnalTrans_model();
+            $d_jt = $m_jt->where('kode', $params['jurnal_trans'])->orderBy('id', 'desc')->first();
+
+            $kode_voucher = $d_jt->kode_voucher;
+
             $m_cn = new \Model\Storage\Cn_model();
-            $nomor = $m_cn->getNextNomor('CN/'.$params['jenis_cn']);
+            // $nomor = $m_cn->getNextNomor('CN/'.$params['jenis_cn']);
+            $nomor = $m_cn->getNextNomor($kode_voucher);
 
             $m_cn->nomor = $nomor;
-            $m_cn->jenis_cn = $params['jenis_cn'];
+            // $m_cn->jenis_cn = $params['jenis_cn'];
             $m_cn->tanggal = $params['tgl_cn'];
             $m_cn->pelanggan = $params['pelanggan'];
             $m_cn->mitra = (isset($params['mitra']) && !empty($params['mitra'])) ? $params['mitra'] : null;
             $m_cn->ket_cn = $params['ket_cn'];
             $m_cn->tot_cn = $params['tot_cn'];
+            $m_cn->jurnal_trans_kode = $params['jurnal_trans'];
             $m_cn->save();
 
             foreach ($params['detail'] as $k_det => $v_det) {
@@ -599,12 +618,12 @@ class CnPenjualan extends Public_Controller {
                 $m_cnd->nominal = $v_det['nominal'];
                 $m_cnd->save();
 
-                foreach ($v_det['det_jurnal_trans'] as $k_djt => $v_djt) {
-                    $m_cdjt = new \Model\Storage\CnDetJurnalTrans_model();
-                    $m_cdjt->id_header = $m_cnd->id;
-                    $m_cdjt->det_jurnal_trans_kode = $v_djt;
-                    $m_cdjt->save();
-                }
+                // foreach ($v_det['det_jurnal_trans'] as $k_djt => $v_djt) {
+                //     $m_cdjt = new \Model\Storage\CnDetJurnalTrans_model();
+                //     $m_cdjt->id_header = $m_cnd->id;
+                //     $m_cdjt->det_jurnal_trans_kode = $v_djt;
+                //     $m_cdjt->save();
+                // }
             }
 
             $id = $m_cn->id;
@@ -648,14 +667,32 @@ class CnPenjualan extends Public_Controller {
             }
 
             $m_cn = new \Model\Storage\Cn_model();
+            $d_cn = $m_cn->where('id', $id)->first();
+
+            $m_jt = new \Model\Storage\JurnalTrans_model();
+            $d_jt_old = $m_jt->where('kode', $d_cn->jurnal_trans_kode)->orderBy('id', 'desc')->first();
+            $d_jt_new = $m_jt->where('kode', $params['jurnal_trans'])->orderBy('id', 'desc')->first();
+
+            $nomor = $d_cn->nomor;
+            if ( $d_jt_old->kode <> $d_jt_new->kode ) {
+                $kode_voucher = $d_jt_new->kode_voucher;
+    
+                $m_cn = new \Model\Storage\Cn_model();
+                // $nomor = $m_cn->getNextNomor('CN/'.$params['jenis_cn']);
+                $nomor = $m_cn->getNextNomor($kode_voucher);
+            }
+
+            $m_cn = new \Model\Storage\Cn_model();
             $m_cn->where('id', $id)->update(
                 array(
-                    'jenis_cn' => $params['jenis_cn'],
+                    'nomor' => $nomor,
+                    // 'jenis_cn' => $params['jenis_cn'],
                     'tanggal' => $params['tgl_cn'],
                     'pelanggan' => $params['pelanggan'],
                     'mitra' => (isset($params['mitra']) && !empty($params['mitra'])) ? $params['mitra'] : null,
                     'ket_cn' => $params['ket_cn'],
-                    'tot_cn' => $params['tot_cn']
+                    'tot_cn' => $params['tot_cn'],
+                    'jurnal_trans_kode' => $params['jurnal_trans']
                 )
             );
 
@@ -669,12 +706,12 @@ class CnPenjualan extends Public_Controller {
                 $m_cnd->nominal = $v_det['nominal'];
                 $m_cnd->save();
 
-                foreach ($v_det['det_jurnal_trans'] as $k_djt => $v_djt) {
-                    $m_cdjt = new \Model\Storage\CnDetJurnalTrans_model();
-                    $m_cdjt->id_header = $m_cnd->id;
-                    $m_cdjt->det_jurnal_trans_kode = $v_djt;
-                    $m_cdjt->save();
-                }
+                // foreach ($v_det['det_jurnal_trans'] as $k_djt => $v_djt) {
+                //     $m_cdjt = new \Model\Storage\CnDetJurnalTrans_model();
+                //     $m_cdjt->id_header = $m_cnd->id;
+                //     $m_cdjt->det_jurnal_trans_kode = $v_djt;
+                //     $m_cdjt->save();
+                // }
             }
 
             $d_cn = $m_cn->where('id', $id)->first();

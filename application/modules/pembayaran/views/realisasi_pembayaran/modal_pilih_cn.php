@@ -1,7 +1,7 @@
 <div class="modal-header no-padding">
 	<span class="modal-title"><b>PILIH CN</b></span>
 </div>
-<div class="modal-body" style="padding-bottom: 0px;">
+<div class="modal-body modal_cn" style="padding-bottom: 0px;">
 	<div class="row detailed">
 		<div class="col-xs-12 detailed no-padding">
 			<table class="table table-bordered" style="margin-bottom: 0px;">
@@ -18,11 +18,11 @@
 				<tbody>
 					<?php if ( !empty($data) ): ?>
 						<?php foreach ($data as $k_data => $v_data): ?>
-							<tr>
+							<tr class="data">
 								<td><?php echo $v_data['nomor']; ?></td>
 								<td><?php echo tglIndonesia($v_data['tanggal'], '-', ' '); ?></td>
 								<td><?php echo $v_data['keterangan']; ?></td>
-								<td class="text-right saldo"><?php echo angkaDecimal($v_data['saldo']); ?></td>
+								<td class="text-right saldo" data-val="<?php echo $v_data['saldo']; ?>"><?php echo angkaDecimal($v_data['saldo']); ?></td>
 								<td class="text-right">
 									<input type="text" class="form-control uppercase text-right pakai" placeholder="Pakai" data-tipe="decimal" data-required="1" onblur="rp.cekPakaiCN(this)">
 								</td>

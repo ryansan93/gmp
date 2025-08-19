@@ -216,6 +216,37 @@ class RealisasiSJ extends Public_Controller
             }
 
             $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    drs.no_sj,
+                    REPLACE(drs.no_sj, 'SJ', 'INV') as no_inv,
+                    sum(drs.tonase) as tonase,
+                    sum(drs.ekor) as ekor,
+                    (sum(drs.tonase) / sum(drs.ekor)) as bb,
+                    sum(drs.tonase * drs.harga) as total
+                from det_real_sj drs
+                where
+                    drs.id_header = ".$id_real_sj."
+                group by
+                    drs.no_sj
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_drsi = $d_conf->toArray();
+
+                foreach ($d_drsi as $k_drsi => $v_drsi) {
+                    $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                    $m_drsi->no_sj = $v_drsi['no_sj'];
+                    $m_drsi->no_inv = $v_drsi['no_inv'];
+                    $m_drsi->tonase = $v_drsi['tonase'];
+                    $m_drsi->ekor = $v_drsi['ekor'];
+                    $m_drsi->bb = $v_drsi['bb'];
+                    $m_drsi->total = $v_drsi['total'];
+                    $m_drsi->save();
+                }
+            }
+
+            $m_conf = new \Model\Storage\Conf();
             $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", NULL, 1";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -270,6 +301,9 @@ class RealisasiSJ extends Public_Controller
                         //     $id = $m_det_real_sj->getNextIdentity();
                         // }
 
+                        $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                        $m_drsi->where('no_sj', $val['no_sj'])->delete();
+
                         $m_det_real_sj->id = $id;
                         $m_det_real_sj->id_header = $id_real_sj;
                         $m_det_real_sj->id_det_rpah = $val['id_det_rpah'];
@@ -285,6 +319,37 @@ class RealisasiSJ extends Public_Controller
                         $m_det_real_sj->no_nota = $v_real['no_nota'];
                         $m_det_real_sj->save();
                     }
+                }
+            }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    drs.no_sj,
+                    REPLACE(drs.no_sj, 'SJ', 'INV') as no_inv,
+                    sum(drs.tonase) as tonase,
+                    sum(drs.ekor) as ekor,
+                    (sum(drs.tonase) / sum(drs.ekor)) as bb,
+                    sum(drs.tonase * drs.harga) as total
+                from det_real_sj drs
+                where
+                    drs.id_header = ".$id_real_sj."
+                group by
+                    drs.no_sj
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_drsi = $d_conf->toArray();
+
+                foreach ($d_drsi as $k_drsi => $v_drsi) {
+                    $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                    $m_drsi->no_sj = $v_drsi['no_sj'];
+                    $m_drsi->no_inv = $v_drsi['no_inv'];
+                    $m_drsi->tonase = $v_drsi['tonase'];
+                    $m_drsi->ekor = $v_drsi['ekor'];
+                    $m_drsi->bb = $v_drsi['bb'];
+                    $m_drsi->total = $v_drsi['total'];
+                    $m_drsi->save();
                 }
             }
 
@@ -315,10 +380,18 @@ class RealisasiSJ extends Public_Controller
             $m_real_sj = new \Model\Storage\RealSJ_model();
             $d_real_sj = $m_real_sj->where('id', $id)->with('det_real_sj')->first();
 
+            if ( $d_real_sj ) {
+                foreach ($d_real_sj['det_real_sj'] as $k_drs => $v_drs) {
+                    $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                    $m_drsi->where('no_sj', $v_drs['no_sj'])->delete();
+
+                    $m_drs = new \Model\Storage\DetRealSJ_model();
+                    $m_drs->where('id', $v_drs['id'])->delete();
+                }
+            }
+
             $m_real_sj = new \Model\Storage\RealSJ_model();
             $m_real_sj->where('id', $id)->delete();
-            $m_det_real_sj = new \Model\Storage\DetRealSJ_model();
-            $m_det_real_sj->where('id_header', $id)->delete();
             
             $m_conf = new \Model\Storage\Conf();
             $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id.", ".$id.", 3";

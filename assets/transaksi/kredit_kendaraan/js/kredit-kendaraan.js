@@ -532,6 +532,7 @@ var kk = {
 						'tenor': $(dcontent).find('.tenor').val(),
 						'tgl_jatuh_tempo': dateSQL($(dcontent).find('#tgl_jatuh_tempo').data('DateTimePicker').date()),
 						'tgl_bayar_angsuran1': dateSQL($(dcontent).find('#tgl_bayar_angsuran1').data('DateTimePicker').date()),
+						'tanda_jadi': numeral.unformat($(dcontent).find('.tanda_jadi').val()),
 						'detail': detail
 					};
 
@@ -606,18 +607,23 @@ var kk = {
 					var data = {
 						'kode': $(elm).attr('data-kode'),
 						'tanggal': dateSQL($(dcontent).find('#tanggal').data('DateTimePicker').date()),
-						'perusahaan': $(dcontent).find('.perusahaan').select2().val(),
+						'kendaraan': $(dcontent).find('.kendaraan').select2().val(),
+						// 'perusahaan': $(dcontent).find('.perusahaan').select2().val(),
+						'perusahaan': $(dcontent).find('.perusahaan').attr('data-val'),
 						'merk_jenis': $(dcontent).find('.merk_jenis').val(),
 						'warna': $(dcontent).find('.warna').val(),
 						'tahun': $(dcontent).find('.tahun').val(),
-						'unit': $(dcontent).find('.unit').select2().val(),
-						'peruntukan': $(dcontent).find('.karyawan').select2().val(),
+						// 'unit': $(dcontent).find('.unit').select2().val(),
+						'unit': $(dcontent).find('.unit').attr('data-val'),
+						// 'peruntukan': $(dcontent).find('.karyawan').select2().val(),
+						'peruntukan': $(dcontent).find('.karyawan').attr('data-val'),
 						'harga': numeral.unformat($(dcontent).find('.harga').val()),
 						'dp': numeral.unformat($(dcontent).find('.dp').val()),
 						'angsuran': numeral.unformat($(dcontent).find('.angsuran').val()),
 						'tenor': $(dcontent).find('.tenor').val(),
 						'tgl_jatuh_tempo': dateSQL($(dcontent).find('#tgl_jatuh_tempo').data('DateTimePicker').date()),
 						'tgl_bayar_angsuran1': dateSQL($(dcontent).find('#tgl_bayar_angsuran1').data('DateTimePicker').date()),
+						'tanda_jadi': numeral.unformat($(dcontent).find('.tanda_jadi').val()),
 						'detail': detail
 					};
 

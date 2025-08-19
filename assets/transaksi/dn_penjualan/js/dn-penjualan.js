@@ -17,7 +17,7 @@ var dn = {
                         type: 'item_search',
                         pelanggan: $('div#action').find('select.pelanggan').select2().val(),
                         mitra: $('div#action').find('select.mitra').select2().val(),
-						jenis_dn: $('div#action').find('select.jenis_dn').select2().val()
+						jenis_dn: $('div#action').find('select.jurnal_trans').select2().val()
                     }
     
                     // Query parameters will be ?search=[term]&type=user_search
@@ -61,7 +61,7 @@ var dn = {
                     var query = {
                         search: params.term,
                         type: 'item_search',
-                        jenis_dn: $('div#action').find('select.jenis_dn').select2().val()
+                        jenis_dn: $('div#action').find('select.jurnal_trans').select2().val()
                     }
     
                     // Query parameters will be ?search=[term]&type=user_search
@@ -184,7 +184,7 @@ var dn = {
             }
         });
 
-		$('.jenis_dn').select2();
+		// $('.jenis_dn').select2();
 		$('.jurnal_trans').select2();
 		$('.pelanggan').select2();
 		$('.mitra').select2();
@@ -197,13 +197,13 @@ var dn = {
 		$(document).ready(function () {
             dn.setSelect2NoSj( $('.no_sj') );
             dn.setSelect2Barang( $('.barang') );
-            dn.setSelect2DetJurnalTrans( $('.det_jurnal_trans') );
+            // dn.setSelect2DetJurnalTrans( $('.det_jurnal_trans') );
         });
     }, // end - settingUp
 
 	addRow: function (elm) {
         var tr_head = $(elm).closest('tr.head');
-        var tr_detail = $(tr_head).next('tr.detail');
+        // var tr_detail = $(tr_head).next('tr.detail');
 
         var tbody = $(tr_head).closest('tbody');
 
@@ -214,32 +214,32 @@ var dn = {
                                    .removeAttr('tabindex');
         $(tr_head).find('select.no_sj option, select.barang option').removeAttr('data-select2-id');
 
-		$(tr_detail).find('select.det_jurnal_trans').select2('destroy')
-                                   .removeAttr('data-live-search')
-                                   .removeAttr('data-select2-id')
-                                   .removeAttr('aria-hidden')
-                                   .removeAttr('tabindex');
-        $(tr_detail).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
+		// $(tr_detail).find('select.det_jurnal_trans').select2('destroy')
+        //                            .removeAttr('data-live-search')
+        //                            .removeAttr('data-select2-id')
+        //                            .removeAttr('aria-hidden')
+        //                            .removeAttr('tabindex');
+        // $(tr_detail).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
 
         var tr_head_clone = $(tr_head).clone();
-        var tr_detail_clone = $(tr_detail).clone();
+        // var tr_detail_clone = $(tr_detail).clone();
 
         $(tr_head_clone).find('input, textarea, select').val('');
-        $(tr_detail_clone).find('select').val('');
-        $(tr_detail_clone).find('table tbody tr:not(:first)').remove();
-        $(tr_detail_clone).find('table tbody tr:first td.asal').text('');
-        $(tr_detail_clone).find('table tbody tr:first td.tujuan').text('');
+        // $(tr_detail_clone).find('select').val('');
+        // $(tr_detail_clone).find('table tbody tr:not(:first)').remove();
+        // $(tr_detail_clone).find('table tbody tr:first td.asal').text('');
+        // $(tr_detail_clone).find('table tbody tr:first td.tujuan').text('');
 
         $(tr_head_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
             $(this).priceFormat(Config[$(this).data('tipe')]);
         });
 
         $(tbody).append( $(tr_head_clone) );
-        $(tbody).append( $(tr_detail_clone) );
+        // $(tbody).append( $(tr_detail_clone) );
 
         dn.setSelect2NoSj( $(tbody).find('select.no_sj') );
         dn.setSelect2Barang( $(tbody).find('select.barang') );
-        dn.setSelect2DetJurnalTrans( $(tbody).find('.det_jurnal_trans') );
+        // dn.setSelect2DetJurnalTrans( $(tbody).find('.det_jurnal_trans') );
     }, // end - addRow
 
     removeRow: function (elm) {
@@ -256,40 +256,40 @@ var dn = {
         dn.hitTot();
     }, // end - addRow
 
-	addRowDet: function (elm) {
-        var tr = $(elm).closest('tr');
-        var tbody = $(tr).closest('tbody');
+	// addRowDet: function (elm) {
+    //     var tr = $(elm).closest('tr');
+    //     var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.det_jurnal_trans').select2('destroy')
-                                   .removeAttr('data-live-search')
-                                   .removeAttr('data-select2-id')
-                                   .removeAttr('aria-hidden')
-                                   .removeAttr('tabindex');
-        $(tr).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
+    //     $(tr).find('select.det_jurnal_trans').select2('destroy')
+    //                                .removeAttr('data-live-search')
+    //                                .removeAttr('data-select2-id')
+    //                                .removeAttr('aria-hidden')
+    //                                .removeAttr('tabindex');
+    //     $(tr).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
 
-        var tr_clone = $(tr).clone();
+    //     var tr_clone = $(tr).clone();
 
-        $(tr_clone).find('select').val('');
-		$(tr_clone).find('td.asal').text('');
-        $(tr_clone).find('td.tujuan').text('');
+    //     $(tr_clone).find('select').val('');
+	// 	$(tr_clone).find('td.asal').text('');
+    //     $(tr_clone).find('td.tujuan').text('');
 
-        $(tr_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
-            $(this).priceFormat(Config[$(this).data('tipe')]);
-        });
+    //     $(tr_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+    //         $(this).priceFormat(Config[$(this).data('tipe')]);
+    //     });
 
-        $(tbody).append( $(tr_clone) );
+    //     $(tbody).append( $(tr_clone) );
 
-        dn.setSelect2DetJurnalTrans( $(tbody).find('.det_jurnal_trans') );
-    }, // end - addRow
+    //     dn.setSelect2DetJurnalTrans( $(tbody).find('.det_jurnal_trans') );
+    // }, // end - addRow
 
-    removeRowDet: function (elm) {
-        var tr = $(elm).closest('tr');
-        var tbody = $(tr).closest('tbody');
+    // removeRowDet: function (elm) {
+    //     var tr = $(elm).closest('tr');
+    //     var tbody = $(tr).closest('tbody');
 
-        if ( $(tbody).find('tr').length > 1 ) {
-            $(tr).remove();
-        }
-    }, // end - addRow
+    //     if ( $(tbody).find('tr').length > 1 ) {
+    //         $(tr).remove();
+    //     }
+    // }, // end - addRow
 
 	hitTot: function() {
 		var tot_dn = 0;
@@ -395,14 +395,14 @@ var dn = {
 			bootbox.confirm('Apakah anda yakin ingin menyimpan data ?', function (result) {
 				if ( result ) {
 					var detail = $.map( $(div).find('table tbody tr.head'), function(tr_head) {
-						var tr_detail = $(tr_head).next('tr.detail');
+						// var tr_detail = $(tr_head).next('tr.detail');
 
-						var det_jurnal_trans = $.map( $(tr_detail).find('table tbody tr'), function(tr) {
-							var _det_jurnal_trans = $(tr).find('.det_jurnal_trans').select2().val();
-							if ( !empty(_det_jurnal_trans) ) {
-								return _det_jurnal_trans;
-							}
-						});
+						// var det_jurnal_trans = $.map( $(tr_detail).find('table tbody tr'), function(tr) {
+						// 	var _det_jurnal_trans = $(tr).find('.det_jurnal_trans').select2().val();
+						// 	if ( !empty(_det_jurnal_trans) ) {
+						// 		return _det_jurnal_trans;
+						// 	}
+						// });
 
 						var _detail = {
 							'no_sj': $(tr_head).find('.no_sj').select2().val(),
@@ -410,14 +410,15 @@ var dn = {
 							'jumlah': numeral.unformat( $(tr_head).find('.jumlah').val() ),
 							'ket': $(tr_head).find('.ket').val(),
 							'nominal': numeral.unformat( $(tr_head).find('.nominal').val() ),
-							'det_jurnal_trans': det_jurnal_trans
+							// 'det_jurnal_trans': det_jurnal_trans
 						};
 
 						return _detail;
 					});
 
 					var params = {
-						'jenis_dn': $(div).find('.jenis_dn').select2('val'),
+                        'jurnal_trans': $(div).find('.jurnal_trans').select2('val'),
+						// 'jenis_dn': $(div).find('.jenis_dn').select2('val'),
 						'tgl_dn': dateSQL( $(div).find('#Tanggal').data('DateTimePicker').date() ),
 						'pelanggan': $(div).find('.pelanggan').select2('val'),
 						'mitra': $(div).find('.mitra').select2('val'),
@@ -468,14 +469,14 @@ var dn = {
 			bootbox.confirm('Apakah anda yakin ingin meng-ubah data ?', function (result) {
 				if ( result ) {
 					var detail = $.map( $(div).find('table tbody tr.head'), function(tr_head) {
-						var tr_detail = $(tr_head).next('tr.detail');
+						// var tr_detail = $(tr_head).next('tr.detail');
 
-						var det_jurnal_trans = $.map( $(tr_detail).find('table tbody tr'), function(tr) {
-							var _det_jurnal_trans = $(tr).find('.det_jurnal_trans').select2().val();
-							if ( !empty(_det_jurnal_trans) ) {
-								return _det_jurnal_trans;
-							}
-						});
+						// var det_jurnal_trans = $.map( $(tr_detail).find('table tbody tr'), function(tr) {
+						// 	var _det_jurnal_trans = $(tr).find('.det_jurnal_trans').select2().val();
+						// 	if ( !empty(_det_jurnal_trans) ) {
+						// 		return _det_jurnal_trans;
+						// 	}
+						// });
 
 						var _detail = {
 							'no_sj': $(tr_head).find('.no_sj').select2().val(),
@@ -483,7 +484,7 @@ var dn = {
 							'jumlah': numeral.unformat( $(tr_head).find('.jumlah').val() ),
 							'ket': $(tr_head).find('.ket').val(),
 							'nominal': numeral.unformat( $(tr_head).find('.nominal').val() ),
-							'det_jurnal_trans': det_jurnal_trans
+							// 'det_jurnal_trans': det_jurnal_trans
 						};
 
 						return _detail;
@@ -491,7 +492,8 @@ var dn = {
 
 					var params = {
 						'id': $(elm).attr('data-id'),
-						'jenis_dn': $(div).find('.jenis_dn').select2('val'),
+                        'jurnal_trans': $(div).find('.jurnal_trans').select2('val'),
+						// 'jenis_dn': $(div).find('.jenis_dn').select2('val'),
 						'tgl_dn': dateSQL( $(div).find('#Tanggal').data('DateTimePicker').date() ),
 						'pelanggan': $(div).find('.pelanggan').select2('val'),
 						'mitra': $(div).find('.mitra').select2('val'),

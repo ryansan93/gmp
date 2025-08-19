@@ -81,6 +81,7 @@
 		<div class="col-xs-12 no-padding"><label class="control-label text-left">CN</label></div>
 		<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 			<input type="text" class="form-control text-right tot_cn" placeholder="CN" value="<?php echo angkaDecimal($data['tot_cn']) ?>" readonly />
+			<span class="d_cn hide"><?php echo (isset($data['cn']) && !empty($data['cn'])) ? json_encode($data['cn']) : null; ?></span>
 		</div>
 		<div class="col-xs-4 no-padding" style="padding-left: 5px;">
 			<button type="button" class="btn btn-default" onclick="pp.modalPilihCN(this)">Pilih CN yang akan di gunakan</button>
@@ -92,6 +93,7 @@
 		<div class="col-xs-12 no-padding"><label class="control-label text-left">DN</label></div>
 		<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 			<input type="text" class="form-control text-right tot_dn" placeholder="DN" value="<?php echo angkaDecimal($data['tot_dn']) ?>" readonly />
+			<span class="d_dn hide"><?php echo (isset($data['dn']) && !empty($data['dn'])) ? json_encode($data['dn']) : null ?></span>
 		</div>
 		<div class="col-xs-4 no-padding" style="padding-left: 5px;">
 			<button type="button" class="btn btn-default" onclick="pp.modalPilihDN(this)">Pilih DN yang akan di gunakan</button>

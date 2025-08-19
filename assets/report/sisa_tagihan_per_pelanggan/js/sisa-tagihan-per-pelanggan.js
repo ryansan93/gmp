@@ -103,19 +103,7 @@ var stpp = {
                 success : function(data){
                     $('table').find('tbody').html(data.list);
 
-                    var tot_tonase = 0;
-                    var tot_tagihan = 0
-                    var tot_sisa_tagihan= 0;
-
-                    $.map( $('table').find('tbody tr'), function(tr) {
-                        tot_tonase += numeral.unformat( $(tr).find('td.tonase').text() );
-                        tot_tagihan += numeral.unformat( $(tr).find('td.tagihan').text() );
-                        tot_sisa_tagihan += numeral.unformat( $(tr).find('td.sisa_tagihan').text() );
-                    });
-
-                    $('table').find('td.total_tonase b').text( numeral.formatDec(tot_tonase) );
-                    $('table').find('td.total_tagihan b').text( numeral.formatDec(tot_tagihan) );
-                    $('table').find('td.total_sisa_tagiahn b').text( numeral.formatDec(tot_sisa_tagihan) );
+                    stpp.hitSubTotal();
 
                     hideLoading();
 
@@ -125,6 +113,40 @@ var stpp = {
             });
         }
 	}, // end - get_lists
+
+    hitSubTotal: function () {
+        $.map( $('table').find('tbody tr.sub_total'), function(tr_subtotal) {
+            var no_pelanggan = $(tr_subtotal).attr('data-nopelanggan');
+            
+            $.map( $(tr_subtotal).find('td.sub_total'), function(td_subtotal) {
+                var target = $(td_subtotal).attr('data-target');
+                var sub_total = 0;
+
+                $.map( $('table').find('tbody tr.detail[data-nopelanggan="'+no_pelanggan+'"]'), function(tr_detail) {
+                    var nilai = numeral.unformat($(tr_detail).find('td.'+target).text());
+                    sub_total += nilai;
+                });
+
+                $(td_subtotal).find('b').text( numeral.formatDec(sub_total) );
+            });
+        });
+
+        stpp.hitGrandTotal();
+    }, // end - hitSubTotal
+
+    hitGrandTotal: function () {
+        $.map( $('table').find('thead tr.grandTotal'), function(tr_gtotal) {
+            var target = $(tr_gtotal).attr('data-target');
+            var g_total = 0;
+            
+            $.map( $(table).find('td.sub_total[target="'+target+'"]'), function(td_subtotal) {
+                var nilai = numeral.unformat($(td_subtotal).text());
+                g_total += nilai;
+            });
+
+            $(tr_gtotal).find('b').text( numeral.formatDec(g_total) );
+        });
+    }, // end - hitGrandTotal
 
     cekExportExcel: function (elm) {
         var form = $(elm).closest('form');

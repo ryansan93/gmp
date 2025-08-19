@@ -10,10 +10,15 @@ class InsertJurnal extends Public_Controller {
     parent::__construct ();
   }
 
-  public function exec($url, $id, $id_old = null, $action) {
+  public function exec($url, $id, $id_old = null, $action, $table = null) {
     try {
         $id_saj = null;
         $query = null;
+
+        $sql_table = null;
+        if ( !empty($table) ) {
+            $sql_table = "and saj.tbl_name = '".$table."'";
+        }
 
         $m_saj = new \Model\Storage\Conf();
         $sql = "
@@ -28,11 +33,11 @@ class InsertJurnal extends Public_Controller {
                     saj.det_fitur_id = df.id_detfitur
             where
                 df.path_detfitur = '".substr($url, 1)."'
+                ".$sql_table."
         ";
         $d_saj = $m_saj->hydrateRaw( $sql );
         if ( $d_saj->count() > 0 ) {
             $d_saj = $d_saj->toArray()[0];
-
 
             $id_saj = $d_saj['id'];
             $query = $d_saj['_query'];
@@ -68,8 +73,8 @@ class InsertJurnal extends Public_Controller {
                         
                         SET @id_header = cast( SCOPE_IDENTITY() as int )
                         
-                        insert into det_jurnal (id_header, tanggal, det_jurnal_trans_id, jurnal_trans_sumber_tujuan_id, supplier, perusahaan, keterangan, nominal, saldo, asal, coa_asal, tujuan, coa_tujuan, unit, tbl_name, tbl_id, noreg, kode_trans, kode_jurnal, no_bukti)
-                        select @id_header as id_header, tgl_trans, det_jurnal_trans_id, jurnal_trans_id, supplier, perusahaan, keterangan, nominal, saldo, asal, coa_asal, tujuan, coa_tujuan, unit, tbl_name, tbl_id, noreg, kode_trans, kode_jurnal, no_bukti from mapping_jurnal_trans where tbl_name = @tbl_name
+                        insert into det_jurnal (id_header, tanggal, det_jurnal_trans_id, jurnal_trans_sumber_tujuan_id, supplier, perusahaan, keterangan, nominal, saldo, asal, coa_asal, tujuan, coa_tujuan, unit, tbl_name, tbl_id, noreg, kode_trans, kode_jurnal, no_bukti, gudang)
+                        select @id_header as id_header, tgl_trans, det_jurnal_trans_id, jurnal_trans_id, supplier, perusahaan, keterangan, nominal, saldo, asal, coa_asal, tujuan, coa_tujuan, unit, tbl_name, tbl_id, noreg, kode_trans, kode_jurnal, no_bukti, gudang from mapping_jurnal_trans where tbl_name = @tbl_name
                     END
                     ELSE 
                     BEGIN 		
@@ -93,8 +98,8 @@ class InsertJurnal extends Public_Controller {
                             
                             SET @id_header = cast( SCOPE_IDENTITY() as int )
                             
-                            insert into det_jurnal (id_header, tanggal, det_jurnal_trans_id, jurnal_trans_sumber_tujuan_id, supplier, perusahaan, keterangan, nominal, saldo, asal, coa_asal, tujuan, coa_tujuan, unit, tbl_name, tbl_id, noreg, kode_trans, kode_jurnal, no_bukti)
-                            select @id_header as id_header, tgl_trans, det_jurnal_trans_id, jurnal_trans_id, supplier, perusahaan, keterangan, nominal, saldo, asal, coa_asal, tujuan, coa_tujuan, unit, tbl_name, tbl_id, noreg, kode_trans, kode_jurnal, no_bukti from mapping_jurnal_trans where tbl_name = @tbl_name
+                            insert into det_jurnal (id_header, tanggal, det_jurnal_trans_id, jurnal_trans_sumber_tujuan_id, supplier, perusahaan, keterangan, nominal, saldo, asal, coa_asal, tujuan, coa_tujuan, unit, tbl_name, tbl_id, noreg, kode_trans, kode_jurnal, no_bukti, gudang)
+                            select @id_header as id_header, tgl_trans, det_jurnal_trans_id, jurnal_trans_id, supplier, perusahaan, keterangan, nominal, saldo, asal, coa_asal, tujuan, coa_tujuan, unit, tbl_name, tbl_id, noreg, kode_trans, kode_jurnal, no_bukti, gudang from mapping_jurnal_trans where tbl_name = @tbl_name
                         END
                     END
 

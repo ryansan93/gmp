@@ -434,11 +434,8 @@ class KreditKendaraan extends Public_Controller {
             $m_kk->tgl_bayar = $params['tgl_bayar_angsuran1'];
             $m_kk->lampiran = $path_name;
             $m_kk->kendaraan_id = $params['kendaraan'];
+            $m_kk->tanda_jadi = $params['tanda_jadi'];
             $m_kk->save();
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan', '".$kode."', null, 1";
-            $d_conf = $m_conf->hydrateRaw( $sql );
 
             foreach ($params['detail'] as $k_det => $v_det) {
                 $path_name = null;
@@ -464,9 +461,14 @@ class KreditKendaraan extends Public_Controller {
                 $m_kkd->save();
 
                 if ( isset($v_det['tgl_bayar']) && !empty($v_det['tgl_bayar']) ) {
-                    $m_conf = new \Model\Storage\Conf();
-                    $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan_det', '".$kode.$v_det['angsuran_ke']."', null, 1";
-                    $d_conf = $m_conf->hydrateRaw( $sql );
+                    // $m_conf = new \Model\Storage\Conf();
+                    // $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan_det', '".$kode.$v_det['angsuran_ke']."', null, 1";
+                    // $d_conf = $m_conf->hydrateRaw( $sql );
+
+                    $id = $kode.'-'.$v_det['angsuran_ke'];
+                    $id_old = null;
+                    $status_jurnal = 1;
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan_det');
                 }
             }
 
@@ -480,8 +482,22 @@ class KreditKendaraan extends Public_Controller {
                             'lunas' => 1
                         )
                     );
+
+                    $id = $kode.'-'.$d_kkd->angsuran_ke;
+                    $id_old = null;
+                    $status_jurnal = 1;
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan_det');
                 }
             }
+
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan', '".$kode."', null, 1";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $id = $kode;
+            $id_old = null;
+            $status_jurnal = 1;
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan');
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_kk, $deskripsi_log );
@@ -503,7 +519,7 @@ class KreditKendaraan extends Public_Controller {
         $mappingFiles = !empty($files) ? $this->mappingFiles($files) : null;
 
         try {
-            cetak_r( $params, 1 );
+            // cetak_r( $params, 1 );
 
             $path_name = null;
             if ( !empty($mappingFiles) ) {
@@ -537,6 +553,7 @@ class KreditKendaraan extends Public_Controller {
                     'tgl_bayar' => $params['tgl_bayar_angsuran1'],
                     'lunas' => 0,
                     'kendaraan_id' => $params['kendaraan'],
+                    'tanda_jadi' => $params['tanda_jadi']
                 )
             );
             if ( !empty($path_name) ) {
@@ -547,10 +564,9 @@ class KreditKendaraan extends Public_Controller {
                 );
             }
 
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan', '".$kode."', '".$kode."', 2";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan', '".$kode."', '".$kode."', 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $m_kkd = new \Model\Storage\KreditKendaraanDet_model();
             $m_kkd->where('kredit_kendaraan_kode', $kode)->delete();
@@ -594,9 +610,10 @@ class KreditKendaraan extends Public_Controller {
                                 );
                             }
     
-                            $m_conf = new \Model\Storage\Conf();
-                            $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan_det', '".$kode.$v_det['angsuran_ke']."', '".$kode.$v_det['angsuran_ke']."', 2";
-                            $d_conf = $m_conf->hydrateRaw( $sql );
+                            $id = $kode.'-'.$v_det['angsuran_ke'];
+                            $id_old = $id;
+                            $status_jurnal = 2;
+                            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan_det');
                         } else {
                             $m_kkd->where('kredit_kendaraan_kode', $kode)->where('angsuran_ke', $v_det['angsuran_ke'])->update(
                                 array(
@@ -604,6 +621,11 @@ class KreditKendaraan extends Public_Controller {
                                     'lampiran' => null
                                 )
                             );
+
+                            $id = $kode.'-'.$v_det['angsuran_ke'];
+                            $id_old = $id;
+                            $status_jurnal = 3;
+                            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan_det');
                         }
                     } else {
                         $path_name = null;
@@ -629,9 +651,10 @@ class KreditKendaraan extends Public_Controller {
                         $m_kkd->save();
 
                         if ( isset($v_det['tgl_bayar']) && !empty($v_det['tgl_bayar']) ) {
-                            $m_conf = new \Model\Storage\Conf();
-                            $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan_det', '".$kode.$v_det['angsuran_ke']."', null, 2";
-                            $d_conf = $m_conf->hydrateRaw( $sql );
+                            $id = $kode.'-'.$v_det['angsuran_ke'];
+                            $id_old = $id;
+                            $status_jurnal = 2;
+                            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan_det');
                         }
                     }
                 }
@@ -647,10 +670,20 @@ class KreditKendaraan extends Public_Controller {
                             'lunas' => 1
                         )
                     );
+
+                    $id = $kode.'-'.$params['tenor'];
+                    $id_old = $id;
+                    $status_jurnal = 2;
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan_det');
                 }
             }
 
             $d_kk = $m_kk->where('kode', $kode)->first();
+
+            $id = $kode;
+            $id_old = $id;
+            $status_jurnal = 2;
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan');
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $m_kk, $deskripsi_log );
@@ -682,18 +715,28 @@ class KreditKendaraan extends Public_Controller {
                 $d_kkd = $d_kkd->toArray();
 
                 foreach ($d_kkd as $key => $value) {
-                    $m_conf = new \Model\Storage\Conf();
-                    $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan_det', '".$kode.$value['angsuran_ke']."', '".$kode.$value['angsuran_ke']."', 3";
-                    $d_conf = $m_conf->hydrateRaw( $sql );
+                    // $m_conf = new \Model\Storage\Conf();
+                    // $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan_det', '".$kode.$value['angsuran_ke']."', '".$kode.$value['angsuran_ke']."', 3";
+                    // $d_conf = $m_conf->hydrateRaw( $sql );
+
+                    $id = $kode.'-'.$value['angsuran_ke'];
+                    $id_old = $id;
+                    $status_jurnal = 3;
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan_det');
                 }
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan', '".$kode."', '".$kode."', 3";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan', '".$kode."', '".$kode."', 3";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $m_kkd->where('kredit_kendaraan_kode', $kode)->delete();
             $m_kk->where('kode', $kode)->delete();
+
+            $id = $kode;
+            $id_old = $id;
+            $status_jurnal = 3;
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
             $deskripsi_log = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_kk, $deskripsi_log );
@@ -748,9 +791,14 @@ class KreditKendaraan extends Public_Controller {
                 }
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan_det', '".$params['kredit_kendaraan_kode'].$params['angsuran_ke']."', '".$params['kredit_kendaraan_kode'].$params['angsuran_ke']."', 2";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "insert_jurnal null, null, null, null, 'kredit_kendaraan_det', '".$params['kredit_kendaraan_kode'].$params['angsuran_ke']."', '".$params['kredit_kendaraan_kode'].$params['angsuran_ke']."', 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $id = $params['kredit_kendaraan_kode'].'-'.$params['angsuran_ke'];
+            $id_old = $id;
+            $status_jurnal = 2;
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal, 'kredit_kendaraan_det');
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di simpan.';

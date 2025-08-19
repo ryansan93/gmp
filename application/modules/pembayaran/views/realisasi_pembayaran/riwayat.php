@@ -69,7 +69,8 @@
 				<th class="col-xs-1">No. Bayar</th>
 				<th class="col-xs-1">Transaksi</th>
 				<th class="col-xs-2">Perusahaan</th>
-				<th class="col-xs-3">Nama Penerima</th>
+				<th class="col-xs-2">Nama Penerima</th>
+				<th class="col-xs-1">DN</th>
 				<th class="col-xs-1">CN</th>
 				<th class="col-xs-1">Transfer</th>
 				<th class="col-xs-1">Uang Muka</th>
@@ -78,7 +79,7 @@
 		</thead>
 		<tbody>
 			<tr>
-				<td colspan="9">Data tidak ditemukan.</td>
+				<td colspan="10">Data tidak ditemukan.</td>
 			</tr>
 		</tbody>
 	</table>

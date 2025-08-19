@@ -39,6 +39,12 @@
 			</select>
 		</div>
 	</div>
+	<div class="col-xs-5 no-padding" style="padding-left: 5px;">
+		<div class="col-xs-4 no-padding"><label class="control-label">Harga</label></div>
+		<div class="col-xs-6 no-padding">
+			<input type="text" class="form-control text-right uppercase harga" data-required="1" placeholder="Harga" data-tipe="decimal" value="<?php echo angkaDecimal($data['harga']); ?>">
+		</div>
+	</div>
 </div>
 <div class="col-xs-12 no-padding" style="padding-bottom: 10px;">
 	<div class="col-xs-7 no-padding" style="padding-right: 15px;">
@@ -62,9 +68,9 @@
 		</div>
 	</div>
 	<div class="col-xs-5 no-padding" style="padding-left: 5px;">
-		<div class="col-xs-4 no-padding"><label class="control-label">Harga</label></div>
+		<div class="col-xs-4 no-padding"><label class="control-label">Tanda Jadi</label></div>
 		<div class="col-xs-6 no-padding">
-			<input type="text" class="form-control text-right uppercase harga" data-required="1" placeholder="Harga" data-tipe="decimal" value="<?php echo angkaDecimal($data['harga']); ?>">
+			<input type="text" class="form-control text-right uppercase tanda_jadi" data-required="1" placeholder="Tanda Jadi" data-tipe="decimal" value="<?php echo angkaDecimal($data['tanda_jadi']); ?>">
 		</div>
 	</div>
 </div>

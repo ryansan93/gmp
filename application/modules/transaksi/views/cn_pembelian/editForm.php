@@ -1,4 +1,4 @@
-<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+<!-- <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 	<div class="col-xs-4 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-12 no-padding"><label class="label-control">Tipe CN</label></div>
 		<div class="col-xs-12 no-padding">
@@ -17,12 +17,12 @@
 		</div>
 	</div>
 </div>
-<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div> -->
 <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 	<div class="col-xs-2 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-12 no-padding"><label class="label-control">Jenis CN</label></div>
 		<div class="col-xs-12 no-padding">
-			<select class="form-control jenis_cn" data-required="1" disabled>
+			<!-- <select class="form-control jenis_cn" data-required="1" disabled>
 				<?php foreach ($jenis_cn as $key => $value) { ?>
 					<?php
 						$selected = null;
@@ -32,6 +32,19 @@
 					?>
 					<option value="<?php echo $key; ?>" <?php echo $selected; ?> ><?php echo $value; ?></option>
 				<?php } ?>
+			</select> -->
+
+			<select class="form-control jurnal_trans" data-required="1">
+				<option value="">-- Pilih Transaksi Jurnal --</option>
+				<?php foreach ($jurnal_trans as $key => $value): ?>
+                    <?php
+                        $selected = null;
+                        if ( $value['kode'] == $data['kode_jurnal_trans'] ) {
+                            $selected = 'selected';
+                        }    
+                    ?>
+					<option value="<?php echo $value['kode']; ?>" data-kodevoucher="<?php echo $value['kode_voucher']; ?>" <?php echo $selected; ?> ><?php echo $value['nama']; ?></option>
+				<?php endforeach ?>
 			</select>
 		</div>
 	</div>
@@ -151,7 +164,7 @@
 							</div>
 						</td>
 					</tr>
-					<tr class="detail">
+					<!-- <tr class="detail">
 						<td colspan="5" style="background-color: #dedede;">
 							<table class="table table-bordered" style="margin-bottom: 0px;">
 								<thead>
@@ -187,7 +200,7 @@
 								</tbody>
 							</table>
 						</td>
-					</tr>
+					</tr> -->
 				<?php } ?>
 			</tbody>
 		</table>

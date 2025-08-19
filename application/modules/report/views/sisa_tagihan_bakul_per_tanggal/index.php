@@ -30,7 +30,7 @@
                 <div class="col-xs-12 no-padding">
                     <label class="control-label">TANGGAL</label>
                 </div>
-                <div class="col-xs-12 no-padding" style="padding-right: 10px;">
+                <div class="col-xs-12 no-padding">
                     <div class="input-group date datetimepicker" name="tanggal" id="Tanggal">
                         <input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" />
                         <span class="input-group-addon">
@@ -49,8 +49,10 @@
                     <table class="table table-bordered" style="margin-bottom: 0px;">
                         <thead>
                             <tr>
-                                <td colspan="7"><b>TOTAL</b></td>
+                                <td colspan="5"><b>TOTAL</b></td>
                                 <td class="text-right hit_total" data-target="total"><b>0</b></td>
+                                <td class="text-right hit_total" data-target="dn"><b>0</b></td>
+                                <td class="text-right hit_total" data-target="cn"><b>0</b></td>
                                 <td class="text-right hit_total" data-target="bayar"><b>0</b></td>
                                 <td class="text-right hit_total" data-target="sisa"><b>0</b></td>
                             </tr>
@@ -58,11 +60,12 @@
                                 <th class="col-xs-1">Perusahaan</th>
                                 <th class="col-xs-2">Bakul</th>
                                 <th class="col-xs-2">Plasma</th>
-                                <th class="col-xs-1">Tgl Tutup Siklus</th>
+                                <!-- <th class="col-xs-1">Tgl Tutup Siklus</th> -->
                                 <th class="col-xs-1">Tanggal</th>
-                                <th class="col-xs-1">No. DO</th>
-                                <th class="col-xs-1">No. Nota</th>
+                                <th class="col-xs-1">No. Invoice</th>
                                 <th class="col-xs-1">Total</th>
+                                <th class="col-xs-1">DN</th>
+                                <th class="col-xs-1">CN</th>
                                 <th class="col-xs-1">Bayar</th>
                                 <th class="col-xs-1">Sisa</th>
                             </tr>

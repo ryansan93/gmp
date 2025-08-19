@@ -650,7 +650,7 @@ class ReturVoadip extends Public_Controller
                 'tanggal' => $params['tgl_retur'],
                 'delete' => 0,
                 'message' => 'Data berhasil di simpan',
-                'status_jurnal' => 2
+                'status_jurnal' => 1
             );
             // $this->result['content'] = array('id' => $id_rv);
         } catch (Exception $e) {
@@ -798,8 +798,16 @@ class ReturVoadip extends Public_Controller
             $sql = "EXEC hitung_stok_siklus 'voadip', 'retur_voadip', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
             $d_conf = $conf->hydrateRaw($sql);
 
+            $id_old = null;
+            if ( $status_jurnal <> 1 ) {
+                $id_old = $id;
+            }
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
+
             $this->result['status'] = 1;
             $this->result['message'] = $message;
+            $this->result['content'] = array('id' => $id);
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }

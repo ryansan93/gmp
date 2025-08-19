@@ -4,13 +4,14 @@
             <td><?php echo strtoupper($value['nama_perusahaan']); ?></td>
             <td><?php echo strtoupper($value['nama_pelanggan']); ?></td>
             <td><?php echo strtoupper($value['nama_mitra']); ?></td>
-            <td><?php echo strtoupper(tglIndonesia($value['tgl_tutup_siklus'], '-', ' ')); ?></td>
-            <td><?php echo strtoupper(tglIndonesia($value['tgl_panen'], '-', ' ')); ?></td>
-            <td><?php echo $value['no_do']; ?></td>
-            <td><?php echo !empty($value['no_nota']) ? $value['no_nota'] : ''; ?></td>
+            <!-- <td><?php echo strtoupper(tglIndonesia($value['tgl_tutup_siklus'], '-', ' ')); ?></td> -->
+            <td><?php echo strtoupper(tglIndonesia($value['tgl_invoice'], '-', ' ')); ?></td>
+            <td><?php echo !empty($value['no_invoice']) ? $value['no_invoice'] : ''; ?></td>
             <td class="text-right" target="total"><?php echo angkaDecimal($value['total']); ?></td>
+            <td class="text-right" target="dn"><?php echo angkaDecimal($value['dn']); ?></td>
+            <td class="text-right" target="cn"><?php echo angkaDecimal($value['cn']); ?></td>
             <td class="text-right" target="bayar"><?php echo angkaDecimal($value['bayar']); ?></td>
-            <td class="text-right" target="sisa"><?php echo angkaDecimal($value['sisa']); ?></td>
+            <td class="text-right" target="sisa"><?php echo angkaDecimal($value['sisa_tagihan']); ?></td>
         </tr>
     <?php } ?>
     <tr>

@@ -475,7 +475,7 @@ class PenerimaanDocMobile extends Public_Controller {
 
         try {
             $m_order_doc = new \Model\Storage\OrderDoc_model();
-            $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->first();
+            $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
 
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $now = $m_terima_doc->getDate();
@@ -538,6 +538,10 @@ class PenerimaanDocMobile extends Public_Controller {
                 }
             }
 
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$params['tiba']."', 1, null, null";
+            $d_conf = $conf->hydrateRaw($sql);
+
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", NULL, 1";
             // $m_conf->hydrateRaw( $sql );
@@ -545,7 +549,6 @@ class PenerimaanDocMobile extends Public_Controller {
 
             $deskripsi_log_terima_doc = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log_terima_doc);
-
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data Terima DOC berhasil disimpan.';
@@ -564,7 +567,7 @@ class PenerimaanDocMobile extends Public_Controller {
 
         try {
             $m_order_doc = new \Model\Storage\OrderDoc_model();
-            $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->first();
+            $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
 
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $now = $m_terima_doc->getDate();
@@ -630,11 +633,14 @@ class PenerimaanDocMobile extends Public_Controller {
                 }
             }
 
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$params['tiba']."', 2, null, null";
+            $d_conf = $conf->hydrateRaw($sql);
+
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", ".$id.", 2";
             // // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
             // $m_conf->hydrateRaw( $sql );
-
             $d_terima_doc = $m_terima_doc->where('id', $id)->first();
 
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
@@ -657,22 +663,25 @@ class PenerimaanDocMobile extends Public_Controller {
 
         try {
             $m_order_doc = new \Model\Storage\OrderDoc_model();
-            $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->first();
+            $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
 
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order'])->first();
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".$d_terima_doc->datang."', 3, '".$d_order_doc->noreg."', null";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$d_terima_doc->id.", ".$d_terima_doc->id.", 3";
+            // $m_conf->hydrateRaw( $sql );
+            Modules::run( 'base/InsertJurnal/exec', $this->url, null, $d_terima_doc->id, 3);
 
             $m_terima_doc->where('id', $d_terima_doc->id)->delete();
             $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
             $m_terima_doc_ket->where('id_header', $d_terima_doc->id)->delete();
 
-            // $m_conf = new \Model\Storage\Conf();
-            // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$d_terima_doc->id.", ".$d_terima_doc->id.", 3";
-            // $m_conf->hydrateRaw( $sql );
-
-            Modules::run( 'base/InsertJurnal/exec', $this->url, null, $d_terima_doc->id, 3);
-
-            $deskripsi_log = 'hapus data penerimaan doc noreg '.$d_order_doc->noreg.' oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            $deskripsi_log = 'Hapus data penerimaan doc noreg '.$d_order_doc->noreg.' oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_terima_doc, $deskripsi_log);
 
             $this->result['status'] = 1;

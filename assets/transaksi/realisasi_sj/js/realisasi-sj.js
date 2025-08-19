@@ -210,6 +210,7 @@ var real_sj = {
 		if ( err > 0 ) {
 			bootbox.alert( 'Harap lengkapi data terlebih dahulu.' );
 		} else {
+			$('.btn_save').disabled = true;
 			bootbox.confirm( 'Apakah anda yakin ingin menyimpan data Realisasi SJ ?', function(result) {
 				if ( result ) {
 					let id_unit = $('select.unit').val();
@@ -272,6 +273,8 @@ var real_sj = {
 
 					// console.log( data );
 					real_sj.execute_save( data );
+				} else {
+					$('.btn_save').disabled = false;
 				}
 			});
 		}
@@ -287,6 +290,8 @@ var real_sj = {
             dataType : 'JSON',
             beforeSend : function(){ },
             success : function(data){
+				$('.btn_save').disabled = false;
+				
             	if ( data.status == 1 ) {
             		bootbox.alert( data.message, function() {
             			let select = $('select.mitra');

@@ -166,7 +166,7 @@
 <?php if ( $akses['a_submit'] == 1 ): ?>
 	<div class="form-group">
 		<div class="col-md-12">
-			<button type="button" class="btn btn-primary" onclick="real_sj.save()"><i class="fa fa-save"></i> Simpan</button>
+			<button type="button" class="btn btn-primary btn_save" onclick="real_sj.save()"><i class="fa fa-save"></i> Simpan</button>
 		</div>
 	</div>
 <?php endif ?>

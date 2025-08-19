@@ -60,13 +60,13 @@
                             </div>
                         </div>
                         <div class="form-group align-items-center d-flex">
-                            <span class="col-sm-2 text-right">Penanggung Jawab</span>
+                            <span class="col-sm-2 text-right">Nama Plasma</span>
                             <div class="col-sm-5">
                                 <input type="text" class="form-control" name="nama_mitra" placeholder="nama mitra" value="<?php echo $mitra['nama'] ?>" required="1" readonly="">
                             </div>
                         </div>
                         <div class="form-group align-items-center d-flex">
-                            <span class="col-sm-2 text-right">Pemilik</span>
+                            <span class="col-sm-2 text-right">Nama Group</span>
                             <div class="col-sm-5">
                                 <input type="text" class="form-control" name="pemilik" placeholder="pemilik" value="<?php echo $mitra->d_pemilik->nomor.' - '.$mitra['d_pemilik']['nama']; ?>" required="1" readonly="">
                             </div>

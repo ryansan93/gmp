@@ -200,7 +200,8 @@ class SettingAutomaticJurnal extends Public_Controller
 				saj.id,
 				saj.tgl_berlaku,
 				df.nama_detfitur as nama,
-				mf.nama_fitur
+				mf.nama_fitur,
+				saj.tbl_name
 			from setting_automatic_jurnal saj 
 			left join
 				detail_fitur df

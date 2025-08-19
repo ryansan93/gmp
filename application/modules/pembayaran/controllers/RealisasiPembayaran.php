@@ -105,6 +105,7 @@ class RealisasiPembayaran extends Public_Controller
                 data.jml_transfer,
                 data.uang_muka,
                 data.cn,
+                data.dn,
                 data.jenis_transaksi,
                 sum(data.jumlah) as jumlah
             from
@@ -126,6 +127,7 @@ class RealisasiPembayaran extends Public_Controller
                     rp.jml_transfer,
                     rp.uang_muka,
                     rp.cn,
+                    rp.dn,
                     rpd.transaksi as jenis_transaksi,
                     rpd.bayar as jumlah
                 from realisasi_pembayaran_det rpd
@@ -197,6 +199,7 @@ class RealisasiPembayaran extends Public_Controller
                 data.jml_transfer,
                 data.uang_muka,
                 data.cn,
+                data.dn,
                 data.jenis_transaksi
             order by
                 data.tgl_bayar desc,
@@ -208,57 +211,6 @@ class RealisasiPembayaran extends Public_Controller
         if ( $d_conf->count() > 0 ) {
             $data = $d_conf->toArray();
         }
-
-        // foreach ($params['perusahaan'] as $k => $val) {
-        //     $d_perusahaan = null;
-        //     if ( $val != 'all' ) {
-        //         $d_perusahaan = $m_perusahaan->select('kode')->where('kode', $val)->groupBy('kode')->get();
-        //     } else {
-        //         $d_perusahaan = $m_perusahaan->select('kode')->groupBy('kode')->get();
-        //     }
-
-        //     if ( !empty($d_perusahaan) ) {
-        //         $d_perusahaan = $d_perusahaan->toArray();
-
-        //         foreach ($d_perusahaan as $k_perusahaan => $v_perusahaan) {
-        //             $kode_perusahaan[] = $v_perusahaan['kode'];
-        //         }
-        //     }
-        // }
-
-        // $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-        // $d_rp = $m_rp->whereBetween('tgl_bayar', [$start_date, $end_date])
-        //              ->whereIn('perusahaan', $kode_perusahaan)->orderBy('tgl_bayar', 'desc')->with(['d_perusahaan', 'd_supplier', 'd_ekspedisi', 'd_mitra', 'detail'])->get();
-
-        // $data = null;
-        // if ( $d_rp->count() > 0 ) {
-        //     $d_rp = $d_rp->toArray();
-
-        //     foreach ($d_rp as $k_rp => $v_rp) {
-        //         $jumlah = 0;
-        //         foreach ($v_rp['detail'] as $k_det => $v_det) {
-        //             $jumlah += $v_det['bayar'];
-        //         }
-
-        //         $data[ $k_rp ] = array(
-        //             'id' => $v_rp['id'],
-        //             'tgl_bayar' => $v_rp['tgl_bayar'],
-        //             'nomor' => $v_rp['nomor'],
-        //             'd_perusahaan' => $v_rp['d_perusahaan'],
-        //             'supplier' => $v_rp['supplier'],
-        //             'd_supplier' => $v_rp['d_supplier'],
-        //             'ekspedisi' => $v_rp['ekspedisi'],
-        //             'd_ekspedisi' => $v_rp['d_ekspedisi'],
-        //             'peternak' => $v_rp['peternak'],
-        //             'd_peternak' => $v_rp['d_mitra'],
-        //             'lampiran' => $v_rp['lampiran'],
-        //             'no_bukti' => $v_rp['no_bukti'],
-        //             'jumlah' => $jumlah,
-        //             'jml_transfer' => $v_rp['jml_transfer'],
-        //             'cn' => $v_rp['cn'],
-        //         );
-        //     }
-        // }
 
         $content['data'] = $data;
         $html = $this->load->view('pembayaran/realisasi_pembayaran/list_riwayat', $content, true);
@@ -572,6 +524,8 @@ class RealisasiPembayaran extends Public_Controller
     {
         $params = $this->input->post('params');
 
+        $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
+
         $data = array();
         if ( $params['jenis_pembayaran'] == 'plasma' ) {
             // PETERNAK
@@ -603,7 +557,18 @@ class RealisasiPembayaran extends Public_Controller
 
                 foreach ($d_kpp as $k_kpp => $v_kpp) {
                     $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-                    $bayar = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                    $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpp['nomor'])->first();
+                    if ( !empty($id) ) {
+                        $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                        $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('dn');
+                        $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('cn');
+                        $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                    } else {
+                        $bayar = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                        $dn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('dn');
+                        $cn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('cn');
+                        $transfer = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                    }
 
                     $data[] = array(
                         'tgl_bayar' => $v_kpp['tgl_bayar'],
@@ -613,26 +578,29 @@ class RealisasiPembayaran extends Public_Controller
                         'periode' => $v_kpp['periode'],
                         'nama_penerima' => $v_kpp['nama_mitra'],
                         'tagihan' => $v_kpp['total'],
-                        'bayar' => $bayar,
-                        'jumlah' => ($v_kpp['total'] > $bayar) ? $v_kpp['total'] - $bayar : 0
+                        'dn' => $dn,
+                        'cn' => $cn,
+                        'transfer' => $transfer,
+                        'jumlah' => ($v_kpp['total'] > $bayar) ? $v_kpp['total'] - $bayar : 0,
+                        'checked' => ($d_rpd) ? true : false
                     );
                 }
             }
         } else if ( $params['jenis_pembayaran'] == 'supplier' ) {
             if ( $params['jenis_transaksi'][0] == 'all' ) {
-                $doc = $this->get_rencana_pembayaran_doc( $params );
+                $doc = $this->get_rencana_pembayaran_doc( $params, $id );
                 if ( count($doc) > 0 ) {
                     foreach ($doc as $k => $v) {
                         $data[] = $v;
                     }
                 }   
-                $pakan = $this->get_rencana_pembayaran_pakan( $params );
+                $pakan = $this->get_rencana_pembayaran_pakan( $params, $id );
                 if ( count($pakan) > 0 ) {
                     foreach ($pakan as $k => $v) {
                         $data[] = $v;
                     }
                 }
-                $voadip = $this->get_rencana_pembayaran_voadip( $params );
+                $voadip = $this->get_rencana_pembayaran_voadip( $params, $id );
                 if ( count($voadip) > 0 ) {
                     foreach ($voadip as $k => $v) {
                         $data[] = $v;
@@ -642,7 +610,7 @@ class RealisasiPembayaran extends Public_Controller
                 foreach ($params['jenis_transaksi'] as $k_jt => $v_jt) {
                     if ( $v_jt == 'doc' ) {
                         // DOC
-                        $doc = $this->get_rencana_pembayaran_doc( $params );
+                        $doc = $this->get_rencana_pembayaran_doc( $params, $id );
                         if ( count($doc) > 0 ) {
                             foreach ($doc as $k => $v) {
                                 $data[] = $v;
@@ -651,7 +619,7 @@ class RealisasiPembayaran extends Public_Controller
                     }
                     if ( $v_jt == 'pakan' ) {
                         // PAKAN
-                        $pakan = $this->get_rencana_pembayaran_pakan( $params );
+                        $pakan = $this->get_rencana_pembayaran_pakan( $params, $id );
                         if ( count($pakan) > 0 ) {
                             foreach ($pakan as $k => $v) {
                                 $data[] = $v;
@@ -660,7 +628,7 @@ class RealisasiPembayaran extends Public_Controller
                     }
                     if ( $v_jt == 'voadip' ) {
                         // VOADIP
-                        $voadip = $this->get_rencana_pembayaran_voadip( $params );
+                        $voadip = $this->get_rencana_pembayaran_voadip( $params, $id );
                         if ( count($voadip) > 0 ) {
                             foreach ($voadip as $k => $v) {
                                 $data[] = $v;
@@ -670,7 +638,7 @@ class RealisasiPembayaran extends Public_Controller
                 }
             }
         } else if ( $params['jenis_pembayaran'] == 'ekspedisi' ) {
-            $data = $this->get_rencana_pembayaran_ekspedisi( $params );
+            $data = $this->get_rencana_pembayaran_ekspedisi( $params, $id );
         }
         
         $content['data'] = $data;
@@ -681,7 +649,7 @@ class RealisasiPembayaran extends Public_Controller
         display_json( $this->result );
     }
 
-    public function get_rencana_pembayaran_doc($params)
+    public function get_rencana_pembayaran_doc($params, $id)
     {
         $data = array();
 
@@ -723,20 +691,23 @@ class RealisasiPembayaran extends Public_Controller
         ";
         $d_kpd = $m_conf->hydrateRaw( $sql );
 
-        // $m_kpd = new \Model\Storage\KonfirmasiPembayaranDoc_model();
-        // $d_kpd = $m_kpd->whereBetween('tgl_bayar', [$params['start_date'], $params['end_date']])
-        //                ->where('supplier', $params['supplier'])
-        //                ->where('perusahaan', $params['perusahaan'])->get();
-
         if ( $d_kpd->count() > 0 ) {
             $d_kpd = $d_kpd->toArray();
 
             foreach ($d_kpd as $k_kpd => $v_kpd) {
-                // $m_supplier = new \Model\Storage\Supplier_model();
-                // $d_supplier = $m_supplier->where('tipe', 'supplier')->where('nomor', $params['supplier'])->orderBy('version', 'desc')->first();
-
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-                $bayar = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('bayar');
+                $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpd['nomor'])->first();
+                if ( !empty($id) ) {
+                    $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('bayar');
+                    $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('dn');
+                    $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('cn');
+                    $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('transfer');
+                } else {
+                    $bayar = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('bayar');
+                    $dn = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('dn');
+                    $cn = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('cn');
+                    $transfer = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('transfer');
+                }
 
                 $data[] = array(
                     'tgl_bayar' => $v_kpd['tgl_bayar'],
@@ -745,9 +716,13 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpd['periode'],
                     'nama_penerima' => $v_kpd['nama_supplier'],
                     'tagihan' => $v_kpd['total'],
+                    'dn' => $dn,
+                    'cn' => $cn,
+                    'transfer' => $transfer,
                     'bayar' => $bayar,
                     'jumlah' => ($v_kpd['total'] > $bayar) ? $v_kpd['total'] - $bayar : 0,
-                    'kode_unit' => $v_kpd['kode_unit']
+                    'kode_unit' => $v_kpd['kode_unit'],
+                    'checked' => ($d_rpd) ? true : false
                 );
             }
         }
@@ -755,7 +730,7 @@ class RealisasiPembayaran extends Public_Controller
         return $data;
     }
 
-    public function get_rencana_pembayaran_pakan($params)
+    public function get_rencana_pembayaran_pakan($params, $id)
     {
         $data = array();
 
@@ -801,20 +776,23 @@ class RealisasiPembayaran extends Public_Controller
         ";
         $d_kpp = $m_conf->hydrateRaw( $sql );
 
-        // $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
-        // $d_kpp = $m_kpp->whereBetween('tgl_bayar', [$params['start_date'], $params['end_date']])
-        //                ->where('supplier', $params['supplier'])
-        //                ->where('perusahaan', $params['perusahaan'])->get();
-
         if ( $d_kpp->count() > 0 ) {
             $d_kpp = $d_kpp->toArray();
 
             foreach ($d_kpp as $k_kpp => $v_kpp) {
-                // $m_supplier = new \Model\Storage\Supplier_model();
-                // $d_supplier = $m_supplier->where('tipe', 'supplier')->where('nomor', $params['supplier'])->orderBy('version', 'desc')->first();
-
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-                $bayar = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpp['nomor'])->first();
+                if ( !empty($id) ) {
+                    $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                    $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('dn');
+                    $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('cn');
+                    $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                } else {
+                    $bayar = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                    $dn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('dn');
+                    $cn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('cn');
+                    $transfer = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                }
 
                 $data[] = array(
                     'tgl_bayar' => $v_kpp['tgl_bayar'],
@@ -824,9 +802,13 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpp['periode'],
                     'nama_penerima' => $v_kpp['nama_supplier'],
                     'tagihan' => $v_kpp['total'],
+                    'dn' => $dn,
+                    'cn' => $cn,
+                    'transfer' => $transfer,
                     'bayar' => $bayar,
                     'jumlah' => ($v_kpp['total'] > $bayar) ? $v_kpp['total'] - $bayar : 0,
-                    'kode_unit' => $v_kpp['kode_unit']
+                    'kode_unit' => $v_kpp['kode_unit'],
+                    'checked' => ($d_rpd) ? true : false
                 );
             }
         }
@@ -834,7 +816,7 @@ class RealisasiPembayaran extends Public_Controller
         return $data;
     }
 
-    public function get_rencana_pembayaran_voadip($params)
+    public function get_rencana_pembayaran_voadip($params, $id)
     {
         $data = array();
 
@@ -882,20 +864,23 @@ class RealisasiPembayaran extends Public_Controller
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
-        // $m_kpv = new \Model\Storage\KonfirmasiPembayaranVoadip_model();
-        // $d_kpv = $m_kpv->whereBetween('tgl_bayar', [$params['start_date'], $params['end_date']])
-        //                ->where('supplier', $params['supplier'])
-        //                ->where('perusahaan', $params['perusahaan'])->get();
-
         if ( $d_conf->count() > 0 ) {
             $d_kpv = $d_conf->toArray();
 
             foreach ($d_kpv as $k_kpv => $v_kpv) {
-                // $m_supplier = new \Model\Storage\Supplier_model();
-                // $d_supplier = $m_supplier->where('tipe', 'supplier')->where('nomor', $params['supplier'])->orderBy('version', 'desc')->first();
-
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-                $bayar = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('bayar');
+                $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpv['nomor'])->first();
+                if ( !empty($id) ) {
+                    $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('bayar');
+                    $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('dn');
+                    $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('cn');
+                    $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('transfer');
+                } else {
+                    $bayar = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('bayar');
+                    $dn = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('dn');
+                    $cn = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('cn');
+                    $transfer = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('transfer');
+                }
 
                 $data[] = array(
                     'tgl_bayar' => $v_kpv['tgl_bayar'],
@@ -905,8 +890,12 @@ class RealisasiPembayaran extends Public_Controller
                     'nama_penerima' => $v_kpv['nama_supplier'],
                     'tagihan' => $v_kpv['total'],
                     'bayar' => $bayar,
+                    'cn' => $cn,
+                    'dn' => $bayar,
+                    'transfer' => $transfer,
                     'kode_unit' => $v_kpv['kode_unit'],
-                    'jumlah' => ($v_kpv['total'] > $bayar) ? $v_kpv['total'] - $bayar : 0
+                    'jumlah' => ($v_kpv['total'] > $bayar) ? $v_kpv['total'] - $bayar : 0,
+                    'checked' => ($d_rpd) ? true : false
                 );
             }
         }
@@ -914,7 +903,7 @@ class RealisasiPembayaran extends Public_Controller
         return $data;
     }
 
-    public function get_rencana_pembayaran_ekspedisi($params)
+    public function get_rencana_pembayaran_ekspedisi($params, $id)
     {
         $data = array();
 
@@ -953,7 +942,18 @@ class RealisasiPembayaran extends Public_Controller
                 }
 
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-                $bayar = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('bayar');
+                $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpoap['nomor'])->first();
+                if ( !empty($id) ) {
+                    $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('bayar');
+                    $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('dn');
+                    $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('cn');
+                    $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('transfer');
+                } else {
+                    $bayar = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('bayar');
+                    $dn = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('dn');
+                    $cn = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('cn');
+                    $transfer = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('transfer');
+                }
 
                 $data[] = array(
                     'tgl_bayar' => $v_kpoap['tgl_bayar'],
@@ -962,8 +962,12 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpoap['periode'],
                     'nama_penerima' => $d_ekspedisi[0]['nama'],
                     'tagihan' => $v_kpoap['total'],
+                    'dn' => $dn,
+                    'cn' => $cn,
+                    'transfer' => $transfer,
                     'bayar' => $bayar,
-                    'jumlah' => ($v_kpoap['total'] > $bayar) ? $v_kpoap['total'] - $bayar : 0
+                    'jumlah' => ($v_kpoap['total'] > $bayar) ? $v_kpoap['total'] - $bayar : 0,
+                    'checked' => ($d_rpd) ? true : false
                 );
             }
         }
@@ -1068,7 +1072,6 @@ class RealisasiPembayaran extends Public_Controller
                     djt.sumber_coa,
                     djt.nama
             ";
-            // cetak_r( $sql, 1 );
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             $d_potongan = null;
@@ -1087,10 +1090,7 @@ class RealisasiPembayaran extends Public_Controller
             $start_date = prev_date(date('Y-m-d')).' 00:00:00';
             $end_date = date('Y-m-d').' 23:59:59';
 
-            // $delete = 0;
-            // if ( empty($log) or (!empty($log) && $log['waktu'] >= $start_date && $log['waktu'] <= $end_date) ) {
             $delete = 1;
-            // }
 
             $jenis_pembayaran = null;
             if ( !empty($d_rp['supplier']) ) {
@@ -1137,6 +1137,9 @@ class RealisasiPembayaran extends Public_Controller
                         'transaksi' => $v_det['transaksi'],
                         'no_bayar' => !empty($invoice) ? $invoice: $v_det['no_bayar'],
                         'tagihan' => $v_det['tagihan'],
+                        'dn' => $v_det['dn'],
+                        'cn' => $v_det['cn'],
+                        'transfer' => $v_det['transfer'],
                         'bayar' => $v_det['bayar'],
                         'kode_unit' => $kode_unit
                     );
@@ -1146,6 +1149,9 @@ class RealisasiPembayaran extends Public_Controller
                         'transaksi' => $v_det['transaksi'],
                         'no_bayar' => $v_det['no_bayar'],
                         'tagihan' => $v_det['tagihan'],
+                        'dn' => $v_det['dn'],
+                        'cn' => $v_det['cn'],
+                        'transfer' => $v_det['transfer'],
                         'bayar' => $v_det['bayar'],
                         'kode_unit' => $kode_unit
                     );
@@ -1185,114 +1191,157 @@ class RealisasiPembayaran extends Public_Controller
 
     public function edit_form($id, $perusahaan)
     {
-        $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-        $d_rp = $m_rp->where('id', $id)->with(['d_perusahaan', 'd_supplier', 'detail'])->first();
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                rpd.id_header as id,
+                rp.supplier,
+                rp.peternak,
+                rp.ekspedisi,
+                rp.perusahaan,
+                case
+                    when rpd.transaksi like 'plasma' then
+                        'peternak'
+                    else
+                        LOWER(rpd.transaksi)
+                end as jenis_transaksi,
+                case
+                    when rpd.transaksi like 'pakan' or rpd.transaksi like 'doc' or rpd.transaksi like 'voadip' then
+                        'supplier'
+                    when rpd.transaksi like 'plasma' then
+                        'plasma'
+                    else
+                        'ekspedisi'
+                end as jenis_pembayaran,
+                min(kp.tgl_bayar) as start_date, 
+                max(kp.tgl_bayar) as end_date 
+            from realisasi_pembayaran_det rpd
+            left join
+                realisasi_pembayaran rp 
+                on
+                    rpd.id_header = rp.id
+            left join
+                (
+                    select nomor, tgl_bayar from konfirmasi_pembayaran_doc kpd 
+                    
+                    union all
+                    
+                    select nomor, tgl_bayar from konfirmasi_pembayaran_pakan kpp 
+                    
+                    union all
+                    
+                    select nomor, tgl_bayar from konfirmasi_pembayaran_voadip kpv
+                    
+                    union all
+                    
+                    select nomor, tgl_bayar from konfirmasi_pembayaran_peternak kpp
+                    
+                    union all
+                    
+                    select nomor, tgl_bayar from konfirmasi_pembayaran_oa_pakan kpop
+                ) kp
+                on
+                    kp.nomor = rpd.no_bayar
+            where
+                rpd.id_header = ".$id."
+            group by
+                rpd.id_header,
+                rp.supplier,
+                rp.peternak,
+                rp.ekspedisi,
+                rp.perusahaan,
+                rpd.transaksi
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
-        if ( $d_rp ) {
-            $d_rp = $d_rp->toArray();
+        $kode_unit = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray()[0];
 
-            $jumlah = 0;
-            $jenis_pembayaran = null;
-            $jenis_transaksi = null;
-            $start_date = null;
-            $end_date = null;
-            $nama_penerima = null;
-            $detail = null;
-            foreach ($d_rp['detail'] as $k_det => $v_det) {
-                $kode_unit = $this->getKodeUnit($v_det['transaksi'], $v_det['no_bayar']);
+            if ( $data['jenis_transaksi'] == 'peternak' ) {
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select w.kode as kode_unit from konfirmasi_pembayaran_peternak_det2 kppd2
+                    left join
+                        (
+                            select mm.nim, k.kandang, k.unit from
+                            (
+                                select mm1.* from mitra_mapping mm1
+                                right join
+                                    (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                    on
+                                        mm1.id = mm2.id
+                            ) mm
+                            left join
+                                kandang k
+                                on
+                                    k.mitra_mapping = mm.id
+                            group by
+                                mm.nim, k.kandang, k.unit
+                        ) kdg
+                        on
+                            select SUBSTRING(kppd2.noreg, 1, 7) = kdg.nim and
+                            kppd2.kandang = kdg.kandang
+                    left join
+                        wilayah w
+                        on
+                            w.id = kdg.unit
+                    left join
+                        konfirmasi_pembayaran_peternak_det kppd
+                        on
+                            kppd2.id_header = kppd.id
+                    left join
+                        konfirmasi_pembayaran_peternak kpp
+                        on
+                            kppd.id_header = kpp.id
+                    left join
+                        realisasi_pembayaran_det rpd
+                        on
+                            kpp.nomor = rpd.no_bayar
+                    where
+                        rpd.id_header = ".$id."
+                    group by
+                        w.kode as kode_unit
+                ";
+                $d_unit = $m_conf->hydrateRaw( $sql );
 
-                $d_konfirmasi = null;
-                $nama_penerima = null;
-                if ( stristr($v_det['transaksi'], 'doc') !== false ) {
-                    $m_kpd = new \Model\Storage\KonfirmasiPembayaranDoc_model();
-                    $d_konfirmasi = $m_kpd->where('nomor', $v_det['no_bayar'])->first();
+                if ( $d_unit->count() > 0 ) {
+                    $d_unit = $d_unit->toArray();
 
-                    $m_supplier = new \Model\Storage\Supplier_model();
-                    $d_supplier = $m_supplier->where('tipe', 'supplier')->where('nomor', $d_konfirmasi->supplier)->orderBy('version', 'desc')->first();
-
-                    $nama_penerima = $d_supplier->nama;
-                }
-                if ( stristr($v_det['transaksi'], 'pakan') !== false ) {
-                    $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
-                    $d_konfirmasi = $m_kpp->where('nomor', $v_det['no_bayar'])->first();
-
-                    $m_supplier = new \Model\Storage\Supplier_model();
-                    $d_supplier = $m_supplier->where('tipe', 'supplier')->where('nomor', $d_konfirmasi->supplier)->orderBy('version', 'desc')->first();
-
-                    $nama_penerima = $d_supplier->nama;
-                }
-                if ( stristr($v_det['transaksi'], 'voadip') !== false ) {
-                    $m_kpv = new \Model\Storage\KonfirmasiPembayaranVoadip_model();
-                    $d_konfirmasi = $m_kpv->where('nomor', $v_det['no_bayar'])->first();
-
-                    $m_supplier = new \Model\Storage\Supplier_model();
-                    $d_supplier = $m_supplier->where('tipe', 'supplier')->where('nomor', $d_konfirmasi->supplier)->orderBy('version', 'desc')->first();
-
-                    $nama_penerima = $d_supplier->nama;
-                }
-                if ( stristr($v_det['transaksi'], 'peternak') !== false ) {
-                    $m_kpp = new \Model\Storage\KonfirmasiPembayaranPeternak_model();
-                    $d_konfirmasi = $m_kpp->where('nomor', $v_det['no_bayar'])->first();
-
-                    $m_mitra = new \Model\Storage\Mitra_model();
-                    $d_mitra = $m_mitra->where('nomor', $d_konfirmasi->mitra)->orderBy('version', 'desc')->first();
-
-                    $nama_penerima = $d_mitra->nama;
-                }
-
-                if ( !empty($d_konfirmasi) ) {
-                    if ( empty($start_date) ) {
-                        $start_date = $d_konfirmasi->tgl_bayar;
-                    } else {
-                        if ( $start_date > $d_konfirmasi->tgl_bayar ) {
-                            $start_date = $d_konfirmasi->tgl_bayar;
-                        }
-                    }
-                    if ( empty($end_date) ) {
-                        $end_date = $d_konfirmasi->tgl_bayar;
-                    } else {
-                        if ( $end_date < $d_konfirmasi->tgl_bayar ) {
-                            $end_date = $d_konfirmasi->tgl_bayar;
-                        }
+                    foreach ($d_unit as $k_unit => $v_unit) {
+                        $kode_unit[] = $v_unit['kode_unit'];
                     }
                 }
-
-                $jumlah += $v_det['bayar'];
-                $jenis_transaksi[] = $v_det['transaksi'];
-
-                $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-                $bayar = $m_rpd->where('no_bayar', $v_det['no_bayar'])->where('id_header', '<>', $id)->sum('bayar');
-
-                $detail[] = array(
-                    'tgl_rcn_bayar' => $d_konfirmasi->tgl_bayar,
-                    'transaksi' => (stristr($v_det['transaksi'], 'peternak') !== false) ? 'PLASMA' : $v_det['transaksi'],
-                    'no_bayar' => $v_det['no_bayar'],
-                    'no_invoice' => $d_konfirmasi->invoice,
-                    'periode' => $d_konfirmasi->periode,
-                    'nama_penerima' => $nama_penerima,
-                    'tagihan' => $v_det['tagihan'],
-                    'bayar' => 0,
-                    'jumlah' => $v_det['tagihan'],
-                    'kode_unit' => $kode_unit
-                );
             }
 
-            $data = array(
-                'id' => $d_rp['id'],
-                'start_date' => $start_date,
-                'end_date' => $end_date,
-                'tgl_bayar' => $d_rp['tgl_bayar'],
-                'no_bayar' => $d_rp['nomor'],
-                'jumlah_bayar' => $jumlah,
-                'jenis_pembayaran' => !empty($d_rp['supplier']) ? 'SUPPLIER' : 'PLASMA',
-                'jenis_transaksi' => $jenis_transaksi,
-                'supplier' => $d_rp['supplier'],
-                'unit' => null,
-                'peternak' => null,
-                'perusahaan' => $d_rp['perusahaan'],
-                'detail' => $detail
-            );
+            if ( $data['jenis_transaksi'] == 'voadip' ) {
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select kpvd.kode_unit from konfirmasi_pembayaran_voadip_det kpvd
+                    left join
+                        konfirmasi_pembayaran_voadip kpv
+                        on
+                            kpvd.id_header = kpv.id
+                    left join
+                        realisasi_pembayaran_det rpd
+                        on
+                            kpv.nomor = rpd.no_bayar
+                    where
+                        rpd.id_header = ".$id."
+                    group by
+                        kpvd.kode_unit
+                ";
+                $d_unit = $m_conf->hydrateRaw( $sql );
+
+                if ( $d_unit->count() > 0 ) {
+                    $d_unit = $d_unit->toArray();
+
+                    foreach ($d_unit as $k_unit => $v_unit) {
+                        $kode_unit[] = $v_unit['kode_unit'];
+                    }
+                }
+            }
         }
 
         $content['unit'] = $this->get_unit();
@@ -1300,6 +1349,7 @@ class RealisasiPembayaran extends Public_Controller
         $content['ekspedisi'] = $this->get_ekspedisi();
         $content['perusahaan'] = $perusahaan;
         $content['data'] = $data;
+        $content['kode_unit'] = $kode_unit;
         $html = $this->load->view('pembayaran/realisasi_pembayaran/edit_form', $content, true);
 
         return $html;
@@ -1372,6 +1422,8 @@ class RealisasiPembayaran extends Public_Controller
     {
         $params = $this->input->get('params');
 
+        $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
+
         $jenis_transaksi = $params['jenis_transaksi'];
         $form_uang_muka = 0;
         if ( in_array('doc', $jenis_transaksi) || in_array('pakan', $jenis_transaksi) ) {
@@ -1380,8 +1432,6 @@ class RealisasiPembayaran extends Public_Controller
 
         $data = null;
 
-        $total_dn = 0;
-        $total_cn = 0;
         $total_potongan = 0;
         $total = 0;
         $total_bayar = 0;
@@ -1390,13 +1440,19 @@ class RealisasiPembayaran extends Public_Controller
             $total += $v_det['tagihan'];
 
             $bayar = 0;
+            $cn = 0;
+            $dn = 0;
+            $transfer = 0;
 
-            if ( isset($params['id']) ) {
+            if ( !empty($id) ) {
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-                $d_rpd = $m_rpd->where('no_bayar', $v_det['no_bayar'])->where('id_header', $params['id'])->first();
+                $d_rpd = $m_rpd->where('no_bayar', $v_det['no_bayar'])->where('id_header', $id)->first();
 
                 if ( !empty($d_rpd) ) {
                     $bayar = $d_rpd->bayar;
+                    $transfer = $d_rpd->transfer;
+                    $cn = $d_rpd->cn;
+                    $dn = $d_rpd->dn;
                     $total_bayar += $d_rpd->bayar;
                 }
             }
@@ -1405,6 +1461,9 @@ class RealisasiPembayaran extends Public_Controller
                 'transaksi' => $v_det['transaksi'],
                 'no_bayar' => $v_det['no_bayar'],
                 'tagihan' => $v_det['tagihan'],
+                'dn' => $dn,
+                'cn' => $cn,
+                'transfer' => $transfer,
                 'bayar' => $bayar
             );
         }
@@ -1419,9 +1478,14 @@ class RealisasiPembayaran extends Public_Controller
         $lampiran = null;
         $jml_transfer = 0;
         $uang_muka = 0;
-        if ( isset($params['id']) ) {
+        $total_dn = 0;
+        $total_cn = 0;
+
+        $d_cn = null;
+        $d_dn = null;
+        if ( !empty($id) ) {
             $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-            $d_rp = $m_rp->where('id', $params['id'])->first();
+            $d_rp = $m_rp->where('id', $id)->first();
 
             $nomor = $d_rp->nomor;
             $tgl_bayar = $d_rp->tgl_bayar;
@@ -1430,6 +1494,20 @@ class RealisasiPembayaran extends Public_Controller
             $lampiran = $d_rp->lampiran;
             $jml_transfer = $d_rp->jml_transfer;
             $uang_muka = $d_rp->uang_muka;
+            $total_dn = $d_rp->dn;
+            $total_cn = $d_rp->cn;
+
+            $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
+            $d_rpcn = $m_rpcn->where('id_header', $id)->get();
+            if ( $d_rpcn->count() > 0 ) {
+                $d_cn = $d_rpcn->toArray();
+            }
+
+            $m_rpdn = new \Model\Storage\RealisasiPembayaranDn_model();
+            $d_rpdn = $m_rpdn->where('id_header', $id)->get();
+            if ( $d_rpdn->count() > 0 ) {
+                $d_dn = $d_rpdn->toArray();
+            }
         }
 
         $d_supplier = null;
@@ -1494,7 +1572,7 @@ class RealisasiPembayaran extends Public_Controller
         }
 
         $data = array(
-            'id' => isset($params['id']) ? $params['id'] : null,
+            'id' => !empty($id) ? $id : null,
             'jenis_pembayaran' => $params['jenis_pembayaran'],
             'uang_muka' => $uang_muka,
             'jml_transfer' => $jml_transfer,
@@ -1523,6 +1601,8 @@ class RealisasiPembayaran extends Public_Controller
         );
 
         $content['data'] = $data;
+        $content['d_cn'] = !empty($d_cn) ? json_encode($d_cn) : null;
+        $content['d_dn'] = !empty($d_dn) ? json_encode($d_dn) : null;
         $html = $this->load->view('pembayaran/realisasi_pembayaran/realisasi_pembayaran', $content, true);
 
         echo $html;
@@ -1534,8 +1614,6 @@ class RealisasiPembayaran extends Public_Controller
         $files = isset($_FILES['files']) ? $_FILES['files'] : [];
 
         try {
-            // cetak_r( $data, 1 );
-
             $jenis_transaksi = null;
 
             $file_name = $path_name = null;
@@ -1590,7 +1668,6 @@ class RealisasiPembayaran extends Public_Controller
                 $m_rp->uang_muka = $data['uang_muka'];
                 $m_rp->save();
 
-                $cn = isset($data['total_cn']) ? $data['total_cn'] : 0;
                 $potongan = $data['total_potongan'];
                 $uang_muka = $data['uang_muka'];
 
@@ -1599,23 +1676,10 @@ class RealisasiPembayaran extends Public_Controller
                     $jenis_transaksi = $v_det['transaksi'];
 
                     $bayar = $v_det['bayar'];
-                    $nominal_cn = 0;
                     $nominal_potongan = 0;
                     $nominal_uang_muka = 0;
 
-                    if ( $cn > 0 || $potongan > 0 || $uang_muka > 0 ) {
-                        if ( $cn > 0 ) {
-                            if ( $bayar <= $cn ) {
-                                $cn -= $bayar;
-                                $nominal_cn = $bayar;
-                                $bayar = 0;
-                            } else {
-                                $bayar -= $cn;
-                                $nominal_cn = $cn;
-                                $cn = 0;
-                            }
-                        }
-
+                    if ( $potongan > 0 || $uang_muka > 0 ) {
                         if ( $potongan > 0 && $bayar > 0 ) {
                             if ( $bayar <= $potongan ) {
                                 $potongan -= $bayar;
@@ -1647,63 +1711,48 @@ class RealisasiPembayaran extends Public_Controller
                     $m_rpd->no_bayar = $v_det['no_bayar'];
                     $m_rpd->tagihan = $v_det['tagihan'];
                     $m_rpd->bayar = $v_det['bayar'];
-                    $m_rpd->cn = $nominal_cn;
+                    $m_rpd->cn = $v_det['cn'];
+                    $m_rpd->dn = $v_det['dn'];
                     $m_rpd->potongan = $nominal_potongan;
-                    $m_rpd->transfer = $bayar;
                     $m_rpd->uang_muka = $nominal_uang_muka;
+                    $m_rpd->transfer = $v_det['transfer'];
                     $m_rpd->save();
-
-                    if ( stristr($v_det['transaksi'], 'doc') !== false ) {
-                        if ( $v_det['tagihan'] == $v_det['bayar'] ) {
-                            $m_kpd = new \Model\Storage\KonfirmasiPembayaranDoc_model();
-                            $m_kpd->where('nomor', $v_det['no_bayar'])->update(
-                                array( 'lunas' => 1 )
-                            );
-                        }
-                    }
-                    if ( stristr($v_det['transaksi'], 'pakan') !== false ) {
-                        if ( $v_det['tagihan'] == $v_det['bayar'] ) {
-                            $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
-                            $m_kpp->where('nomor', $v_det['no_bayar'])->update(
-                                array( 'lunas' => 1 )
-                            );
-                        }
-                    }
-                    if ( stristr($v_det['transaksi'], 'voadip') !== false ) {
-                        if ( $v_det['tagihan'] == $v_det['bayar'] ) {
-                            $m_kpv = new \Model\Storage\KonfirmasiPembayaranVoadip_model();
-                            $m_kpv->where('nomor', $v_det['no_bayar'])->update(
-                                array( 'lunas' => 1 )
-                            );
-                        }
-                    }
-                    if ( stristr($v_det['transaksi'], 'peternak') !== false ) {
-                        if ( $v_det['tagihan'] == $v_det['bayar'] ) {
-                            $m_kpp = new \Model\Storage\KonfirmasiPembayaranPeternak_model();
-                            $m_kpp->where('nomor', $v_det['no_bayar'])->update(
-                                array( 'lunas' => 1 )
-                            );
-                        }
-                    }
                 }
 
                 if ( isset($data['dn']) && !empty($data['dn']) ) {
                     foreach ($data['dn'] as $k_dn => $v_dn) {
                         $m_rpd = new \Model\Storage\RealisasiPembayaranDn_model();
                         $m_rpd->id_header = $id;
-                        // $m_rpd->det_jurnal_id = $v_cn['id'];
                         $m_rpd->saldo = $v_dn['saldo'];
                         $m_rpd->sisa_saldo = $v_dn['sisa_saldo'];
                         $m_rpd->pakai = $v_dn['pakai'];
                         $m_rpd->id_dn = $v_dn['id'];
                         $m_rpd->save();
 
-                        // $m_djurnal = new \Model\Storage\DetJurnal_model();
-                        // $m_djurnal->where('id', $v_dn['id'])->update(
-                        //     array(
-                        //         'saldo' => $v_dn['sisa_saldo']
-                        //     )
-                        // );
+                        foreach ($v_dn['detail'] as $k_det => $v_det) {
+                            $m_conf = new \Model\Storage\Conf();
+                            $sql = "
+                                select * from dn where id = ".$v_det['id_dn']."
+                            ";
+                            $d_dn = $m_conf->hydrateRaw( $sql );
+
+                            $m_conf = new \Model\Storage\Conf();
+                            $sql = "
+                                select * from realisasi_pembayaran_det where no_bayar = '".$k_det."' and id_header = ".$id."
+                            ";
+                            $d_det = $m_conf->hydrateRaw( $sql );
+
+                            if ( $d_dn->count() > 0 && $d_det->count() > 0 ) {
+                                $d_dn = $d_dn->toArray()[0];
+                                $d_det = $d_det->toArray()[0];
+
+                                $m_rpdcd = new \Model\Storage\RealisasiPembayaranDetCnDn_model();
+                                $m_rpdcd->id_header = $d_det['id'];
+                                $m_rpdcd->nomor_cn_dn = $d_dn['nomor'];
+                                $m_rpdcd->nominal = $v_det['jml_bayar'];
+                                $m_rpdcd->save();
+                            }
+                        }
                     }
                 }
 
@@ -1711,19 +1760,36 @@ class RealisasiPembayaran extends Public_Controller
                     foreach ($data['cn'] as $k_cn => $v_cn) {
                         $m_rpc = new \Model\Storage\RealisasiPembayaranCn_model();
                         $m_rpc->id_header = $id;
-                        // $m_rpc->det_jurnal_id = $v_cn['id'];
                         $m_rpc->saldo = $v_cn['saldo'];
                         $m_rpc->sisa_saldo = $v_cn['sisa_saldo'];
                         $m_rpc->pakai = $v_cn['pakai'];
                         $m_rpc->id_cn = $v_cn['id'];
                         $m_rpc->save();
 
-                        // $m_djurnal = new \Model\Storage\DetJurnal_model();
-                        // $m_djurnal->where('id', $v_cn['id'])->update(
-                        //     array(
-                        //         'saldo' => $v_cn['sisa_saldo']
-                        //     )
-                        // );
+                        foreach ($v_cn['detail'] as $k_det => $v_det) {
+                            $m_conf = new \Model\Storage\Conf();
+                            $sql = "
+                                select * from cn where id = ".$v_det['id_cn']."
+                            ";
+                            $d_cn = $m_conf->hydrateRaw( $sql );
+
+                            $m_conf = new \Model\Storage\Conf();
+                            $sql = "
+                                select * from realisasi_pembayaran_det where no_bayar = '".$k_det."' and id_header = ".$id."
+                            ";
+                            $d_det = $m_conf->hydrateRaw( $sql );
+
+                            if ( $d_cn->count() > 0 && $d_det->count() > 0 ) {
+                                $d_cn = $d_cn->toArray()[0];
+                                $d_det = $d_det->toArray()[0];
+
+                                $m_rpdcd = new \Model\Storage\RealisasiPembayaranDetCnDn_model();
+                                $m_rpdcd->id_header = $d_det['id'];
+                                $m_rpdcd->nomor_cn_dn = $d_cn['nomor'];
+                                $m_rpdcd->nominal = $v_det['jml_bayar'];
+                                $m_rpdcd->save();
+                            }
+                        }
                     }
                 }
 
@@ -1769,6 +1835,10 @@ class RealisasiPembayaran extends Public_Controller
         $files = isset($_FILES['files']) ? $_FILES['files'] : [];
 
         try {
+            // cetak_r( $data, 1 );
+            
+            $id = $data['id'];
+
             $jenis_transaksi = null;
 
             $file_name = $path_name = null;
@@ -1787,26 +1857,80 @@ class RealisasiPembayaran extends Public_Controller
                 $path_name = $d_rp->lampiran;
             }
 
-            $m_rp->where('id', $data['id'])->update(
+            $m_rpdn = new \Model\Storage\RealisasiPembayaranDn_model();
+            $m_rpdn->where('id_header', $id)->delete();
+        
+            $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
+            $m_rpcn->where('id_header', $id)->delete();
+
+            $m_rpp = new \Model\Storage\RealisasiPembayaranPotongan_model();
+            $m_rpp->where('id_header', $id)->delete();
+
+            $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
+            $d_rpd = $m_rpd->where('id_header', $id)->get();
+            foreach ($d_rpd as $k_rpd => $v_rpd) {
+                $m_rpdcd = new \Model\Storage\RealisasiPembayaranDetCnDn_model();
+                $m_rpdcd->where('id_header', $v_rpd['id'])->delete();
+
+                $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
+                $m_rpd->where('id', $v_rpd['id'])->delete();
+            }
+
+            $m_rp->where('id', $id)->update(
                 array(
                     'tgl_bayar' => $data['tgl_bayar'],
                     'perusahaan' => $data['perusahaan'],
                     'supplier' => isset($data['supplier']) ? $data['supplier'] : null,
                     'peternak' => isset($data['peternak']) ? $data['peternak'] : null,
-                    'no_rek' => $data['no_rek'],
+                    'no_rek' => isset($data['no_rek']) ? $data['no_rek'] : null,
                     'no_bukti' => $data['no_bukti'],
                     'lampiran' => $path_name,
-                    'keterangan' => isset($data['keterangan']) ? $data['keterangan'] : null
+                    'dn' => isset($data['total_dn']) ? $data['total_dn'] : 0,
+                    'cn' => isset($data['total_cn']) ? $data['total_cn'] : 0,
+                    'jml_transfer' => $data['jml_transfer'],
+                    'jml_bayar' => $data['bayar'],
+                    'keterangan' => isset($data['keterangan']) ? $data['keterangan'] : null,
+                    'ekspedisi' => isset($data['ekspedisi']) ? $data['ekspedisi'] : null,
+                    'potongan' => $data['total_potongan'],
+                    'uang_muka' => $data['uang_muka'],
                 )
             );
 
-            $id = $data['id'];
-
-            $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-            $d_rpd = $m_rpd->where('id_header', $id)->delete();
+            $potongan = $data['total_potongan'];
+            $uang_muka = $data['uang_muka'];
 
             foreach ($data['detail'] as $k_det => $v_det) {
                 $jenis_transaksi = $v_det['transaksi'];
+
+                $bayar = $v_det['bayar'];
+                $nominal_potongan = 0;
+                $nominal_uang_muka = 0;
+
+                if ( $potongan > 0 || $uang_muka > 0 ) {
+                    if ( $potongan > 0 && $bayar > 0 ) {
+                        if ( $bayar <= $potongan ) {
+                            $potongan -= $bayar;
+                            $nominal_potongan = $bayar;
+                            $bayar = 0;
+                        } else {
+                            $bayar -= $potongan;
+                            $nominal_potongan = $potongan;
+                            $potongan = 0;
+                        }
+                    }
+
+                    if ( $uang_muka > 0 && $bayar > 0 ) {
+                        if ( $bayar <= $uang_muka ) {
+                            $uang_muka -= $bayar;
+                            $nominal_uang_muka = $bayar;
+                            $bayar = 0;
+                        } else {
+                            $bayar -= $uang_muka;
+                            $nominal_uang_muka = $uang_muka;
+                            $uang_muka = 0;
+                        }
+                    }
+                }
 
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
                 $m_rpd->id_header = $id;
@@ -1814,47 +1938,97 @@ class RealisasiPembayaran extends Public_Controller
                 $m_rpd->no_bayar = $v_det['no_bayar'];
                 $m_rpd->tagihan = $v_det['tagihan'];
                 $m_rpd->bayar = $v_det['bayar'];
+                $m_rpd->cn = $v_det['cn'];
+                $m_rpd->dn = $v_det['dn'];
+                $m_rpd->potongan = $nominal_potongan;
+                $m_rpd->uang_muka = $nominal_uang_muka;
+                $m_rpd->transfer = $v_det['transfer'];
                 $m_rpd->save();
+            }
 
-                if ( stristr($v_det['transaksi'], 'doc') !== false ) {
-                    $lunas = 0;
-                    if ( $v_det['tagihan'] == $v_det['bayar'] ) {
-                        $lunas = 1;
+            if ( isset($data['dn']) && !empty($data['dn']) ) {
+                foreach ($data['dn'] as $k_dn => $v_dn) {
+                    $m_rpd = new \Model\Storage\RealisasiPembayaranDn_model();
+                    $m_rpd->id_header = $id;
+                    $m_rpd->saldo = $v_dn['saldo'];
+                    $m_rpd->sisa_saldo = $v_dn['sisa_saldo'];
+                    $m_rpd->pakai = $v_dn['pakai'];
+                    $m_rpd->id_dn = $v_dn['id'];
+                    $m_rpd->save();
+
+                    foreach ($v_dn['detail'] as $k_det => $v_det) {
+                        $m_conf = new \Model\Storage\Conf();
+                        $sql = "
+                            select * from dn where id = ".$v_det['id_dn']."
+                        ";
+                        $d_dn = $m_conf->hydrateRaw( $sql );
+
+                        $m_conf = new \Model\Storage\Conf();
+                        $sql = "
+                            select * from realisasi_pembayaran_det where no_bayar = '".$k_det."' and id_header = ".$id."
+                        ";
+                        $d_det = $m_conf->hydrateRaw( $sql );
+
+                        if ( $d_dn->count() > 0 && $d_det->count() > 0 ) {
+                            $d_dn = $d_dn->toArray()[0];
+                            $d_det = $d_det->toArray()[0];
+
+                            $m_rpdcd = new \Model\Storage\RealisasiPembayaranDetCnDn_model();
+                            $m_rpdcd->id_header = $d_det['id'];
+                            $m_rpdcd->nomor_cn_dn = $d_dn['nomor'];
+                            $m_rpdcd->nominal = $v_det['jml_bayar'];
+                            $m_rpdcd->save();
+                        }
                     }
-                    $m_kpd = new \Model\Storage\KonfirmasiPembayaranDoc_model();
-                    $m_kpd->where('nomor', $v_det['no_bayar'])->update(
-                        array( 'lunas' => $lunas )
-                    );
                 }
-                if ( stristr($v_det['transaksi'], 'pakan') !== false ) {
-                    $lunas = 0;
-                    if ( $v_det['tagihan'] == $v_det['bayar'] ) {
-                        $lunas = 1;
+            }
+
+            if ( isset($data['cn']) && !empty($data['cn']) ) {
+                foreach ($data['cn'] as $k_cn => $v_cn) {
+                    $m_rpc = new \Model\Storage\RealisasiPembayaranCn_model();
+                    $m_rpc->id_header = $id;
+                    $m_rpc->saldo = $v_cn['saldo'];
+                    $m_rpc->sisa_saldo = $v_cn['sisa_saldo'];
+                    $m_rpc->pakai = $v_cn['pakai'];
+                    $m_rpc->id_cn = $v_cn['id'];
+                    $m_rpc->save();
+
+                    foreach ($v_cn['detail'] as $k_det => $v_det) {
+                        $m_conf = new \Model\Storage\Conf();
+                        $sql = "
+                            select * from cn where id = ".$v_det['id_cn']."
+                        ";
+                        $d_cn = $m_conf->hydrateRaw( $sql );
+
+                        $m_conf = new \Model\Storage\Conf();
+                        $sql = "
+                            select * from realisasi_pembayaran_det where no_bayar = '".$k_det."' and id_header = ".$id."
+                        ";
+                        $d_det = $m_conf->hydrateRaw( $sql );
+
+                        if ( $d_cn->count() > 0 && $d_det->count() > 0 ) {
+                            $d_cn = $d_cn->toArray()[0];
+                            $d_det = $d_det->toArray()[0];
+
+                            $m_rpdcd = new \Model\Storage\RealisasiPembayaranDetCnDn_model();
+                            $m_rpdcd->id_header = $d_det['id'];
+                            $m_rpdcd->nomor_cn_dn = $d_cn['nomor'];
+                            $m_rpdcd->nominal = $v_det['jml_bayar'];
+                            $m_rpdcd->save();
+                        }
                     }
-                    $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
-                    $m_kpp->where('nomor', $v_det['no_bayar'])->update(
-                        array( 'lunas' => $lunas )
-                    );
                 }
-                if ( stristr($v_det['transaksi'], 'voadip') !== false ) {
-                    $lunas = 0;
-                    if ( $v_det['tagihan'] == $v_det['bayar'] ) {
-                        $lunas = 1;
+            }
+
+            if ( isset($data['potongan']) && !empty($data['potongan']) ) {
+                foreach ($data['potongan'] as $k_potongan => $v_potongan) {
+                    if ( isset($v_potongan['id']) && !empty($v_potongan['id']) ) {
+                        $m_rpp = new \Model\Storage\RealisasiPembayaranPotongan_model();
+                        $m_rpp->id_header = $id;
+                        $m_rpp->det_jurnal_trans_id = $v_potongan['id'];
+                        $m_rpp->nominal = $v_potongan['nominal'];
+                        $m_rpp->save();
                     }
-                    $m_kpv = new \Model\Storage\KonfirmasiPembayaranVoadip_model();
-                    $m_kpv->where('nomor', $v_det['no_bayar'])->update(
-                        array( 'lunas' => $lunas )
-                    );
-                }
-                if ( stristr($v_det['transaksi'], 'peternak') !== false ) {
-                    $lunas = 0;
-                    if ( $v_det['tagihan'] == $v_det['bayar'] ) {
-                        $lunas = 1;
-                    }
-                    $m_kpp = new \Model\Storage\KonfirmasiPembayaranPeternak_model();
-                    $m_kpp->where('nomor', $v_det['no_bayar'])->update(
-                        array( 'lunas' => $lunas )
-                    );
                 }
             }
 
@@ -1891,64 +2065,15 @@ class RealisasiPembayaran extends Public_Controller
             $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
             $d_rpd = $m_rpd->where('id_header', $id)->get()->toArray();
 
-            $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
-            $d_rpcn = $m_rpcn->where('id_header', $id)->get();
-
             foreach ($d_rpd as $k_det => $v_det) {
-                if ( stristr($v_det['transaksi'], 'doc') !== false ) {
-                    $lunas = 0;
-                    $m_kpd = new \Model\Storage\KonfirmasiPembayaranDoc_model();
-                    $m_kpd->where('nomor', $v_det['no_bayar'])->update(
-                        array( 'lunas' => $lunas )
-                    );
-                }
-                if ( stristr($v_det['transaksi'], 'pakan') !== false ) {
-                    $lunas = 0;
-                    $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
-                    $m_kpp->where('nomor', $v_det['no_bayar'])->update(
-                        array( 'lunas' => $lunas )
-                    );
-                }
-                if ( stristr($v_det['transaksi'], 'voadip') !== false ) {
-                    $lunas = 0;
-                    $m_kpv = new \Model\Storage\KonfirmasiPembayaranVoadip_model();
-                    $m_kpv->where('nomor', $v_det['no_bayar'])->update(
-                        array( 'lunas' => $lunas )
-                    );
-                }
-                if ( stristr($v_det['transaksi'], 'peternak') !== false ) {
-                    $lunas = 0;
-                    $m_kpp = new \Model\Storage\KonfirmasiPembayaranPeternak_model();
-                    $m_kpp->where('nomor', $v_det['no_bayar'])->update(
-                        array( 'lunas' => $lunas )
-                    );
-                }
+                $m_rpdcd = new \Model\Storage\RealisasiPembayaranDetCnDn_model();
+                $m_rpdcd->where('id_header', $v_det['id'])->delete();
             }
-
-            // if ( $d_rpcn->count() > 0 ) {
-            //     $d_rpcn = $d_rpcn->toArray();
-
-            //     foreach ($d_rpcn as $k_rpcn => $v_rpcn) {
-            //         $m_dj = new \Model\Storage\DetJurnal_model();
-            //         $d_dj = $m_dj->where('id', $v_rpcn['det_jurnal_id'])->first();
-
-            //         // $saldo = (float) $d_dj->saldo;
-            //         $sisa_saldo = (float) $d_dj->sisa_saldo;
-            //         $saldo_kembali = $v_rpcn['saldo'];
-
-            //         $m_dj->where('id', $v_rpcn['det_jurnal_id'])->update(
-            //             array(
-            //                 'saldo' => ($sisa_saldo + $saldo_kembali)
-            //             )
-            //         );
-            //     }
-            // }
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 3";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
-            $m_rp->where('id', $id)->delete();
             $m_rpd->where('id_header', $id)->delete();
             $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
             $m_rpcn->where('id_header', $id)->delete();
@@ -1956,6 +2081,8 @@ class RealisasiPembayaran extends Public_Controller
             $m_rpdn->where('id_header', $id)->delete();
             $m_rpp = new \Model\Storage\RealisasiPembayaranPotongan_model();
             $m_rpp->where('id_header', $id)->delete();
+            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+            $m_rp->where('id', $id)->delete();
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_rp, $deskripsi_log);
@@ -1973,8 +2100,23 @@ class RealisasiPembayaran extends Public_Controller
     {
         $params = $this->input->get('params');
 
-        $data = null;
+        $supplier = $params['supplier'];
+        $sql_supplier = null;
+        if ( !empty($supplier) ) {
+            $sql_supplier = "and d.supplier = '".$supplier."'";
+        }
+        $mitra = $params['mitra'];
+        $sql_mitra = null;
+        if ( !empty($mitra) ) {
+            $sql_mitra = "and d.mitra = '".$mitra."'";
+        }
+        $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
+        $sql_id = null;
+        if ( !empty($id) ) {
+            $sql_id = "where id_header <> ".$id;
+        }
 
+        $data = null;
         if ( in_array('doc', $params['jenis_transaksi']) ) {
             $m_conf = new \Model\Storage\Conf();
             $sql = "
@@ -1988,10 +2130,10 @@ class RealisasiPembayaran extends Public_Controller
                 left join
                     (
                         select
-                            sum(pakai) as pakai, id_dn
+                            sum(isnull(pakai, 0)) as pakai, id_dn
                         from
                         (
-                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn ".$sql_id." group by id_dn
 
                             union all
 
@@ -2005,6 +2147,8 @@ class RealisasiPembayaran extends Public_Controller
                 where
                     d.nomor like '%DOC%' and
                     (d.tot_dn - isnull(rpd.pakai, 0)) > 0
+                    ".$sql_supplier."
+                    ".$sql_mitra."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -2035,7 +2179,7 @@ class RealisasiPembayaran extends Public_Controller
                             sum(pakai) as pakai, id_dn
                         from
                         (
-                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn ".$sql_id." group by id_dn
 
                             union all
 
@@ -2049,6 +2193,8 @@ class RealisasiPembayaran extends Public_Controller
                 where
                     d.nomor like '%PKN%' and
                     (d.tot_dn - isnull(rpd.pakai, 0)) > 0
+                    ".$sql_supplier."
+                    ".$sql_mitra."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -2079,7 +2225,7 @@ class RealisasiPembayaran extends Public_Controller
                             sum(pakai) as pakai, id_dn
                         from
                         (
-                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn ".$sql_id." group by id_dn
 
                             union all
 
@@ -2093,6 +2239,8 @@ class RealisasiPembayaran extends Public_Controller
                 where
                     d.nomor like '%OVK%' and
                     (d.tot_dn - isnull(rpd.pakai, 0)) > 0
+                    ".$sql_supplier."
+                    ".$sql_mitra."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -2123,7 +2271,7 @@ class RealisasiPembayaran extends Public_Controller
                             sum(pakai) as pakai, id_dn
                         from
                         (
-                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn group by id_dn
+                            select sum(pakai) as pakai, id_dn from realisasi_pembayaran_dn ".$sql_id." group by id_dn
 
                             union all
 
@@ -2137,6 +2285,8 @@ class RealisasiPembayaran extends Public_Controller
                 where
                     d.nomor like '%RHPP%' and
                     (d.tot_dn - isnull(rpd.pakai, 0)) > 0
+                    ".$sql_supplier."
+                    ".$sql_mitra."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -2165,8 +2315,23 @@ class RealisasiPembayaran extends Public_Controller
     {
         $params = $this->input->get('params');
 
-        $data = null;
+        $supplier = $params['supplier'];
+        $sql_supplier = null;
+        if ( !empty($supplier) ) {
+            $sql_supplier = "and c.supplier = '".$supplier."'";
+        }
+        $mitra = $params['mitra'];
+        $sql_mitra = null;
+        if ( !empty($mitra) ) {
+            $sql_mitra = "and c.mitra = '".$mitra."'";
+        }
+        $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
+        $sql_id = null;
+        if ( !empty($id) ) {
+            $sql_id = "where id_header <> ".$id;
+        }
 
+        $data = null;
         if ( in_array('doc', $params['jenis_transaksi']) ) {
             $m_conf = new \Model\Storage\Conf();
             $sql = "
@@ -2183,7 +2348,7 @@ class RealisasiPembayaran extends Public_Controller
                             sum(isnull(pakai, 0)) as pakai, id_cn
                         from
                         (
-                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn ".$sql_id." group by id_cn
 
                             union all
 
@@ -2197,6 +2362,8 @@ class RealisasiPembayaran extends Public_Controller
                 where
                     c.nomor like '%DOC%' and
                     (c.tot_cn - isnull(rpc.pakai, 0)) > 0
+                    ".$sql_supplier."
+                    ".$sql_mitra."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -2227,7 +2394,7 @@ class RealisasiPembayaran extends Public_Controller
                             sum(isnull(pakai, 0)) as pakai, id_cn
                         from
                         (
-                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn ".$sql_id." group by id_cn
 
                             union all
 
@@ -2241,6 +2408,8 @@ class RealisasiPembayaran extends Public_Controller
                 where
                     c.nomor like '%PKN%' and
                     (c.tot_cn - isnull(rpc.pakai, 0)) > 0
+                    ".$sql_supplier."
+                    ".$sql_mitra."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -2271,7 +2440,7 @@ class RealisasiPembayaran extends Public_Controller
                             sum(isnull(pakai, 0)) as pakai, id_cn
                         from
                         (
-                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn ".$sql_id." group by id_cn
 
                             union all
 
@@ -2285,6 +2454,8 @@ class RealisasiPembayaran extends Public_Controller
                 where
                     c.nomor like '%OVK%' and
                     (c.tot_cn - isnull(rpc.pakai, 0)) > 0
+                    ".$sql_supplier."
+                    ".$sql_mitra."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -2315,7 +2486,7 @@ class RealisasiPembayaran extends Public_Controller
                             sum(isnull(pakai, 0)) as pakai, id_cn
                         from
                         (
-                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn group by id_cn
+                            select sum(pakai) as pakai, id_cn from realisasi_pembayaran_cn ".$sql_id." group by id_cn
 
                             union all
 
@@ -2329,6 +2500,8 @@ class RealisasiPembayaran extends Public_Controller
                 where
                     c.nomor like '%RHPP%' and
                     (c.tot_cn - isnull(rpc.pakai, 0)) > 0
+                    ".$sql_supplier."
+                    ".$sql_mitra."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 

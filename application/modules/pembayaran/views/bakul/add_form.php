@@ -121,20 +121,6 @@
 		<div class="col-lg-2 no-padding">
 			<input type="text" class="form-control text-right saldo" data-tipe="decimal" placeholder="Saldo" data-required="1" readonly>
 		</div>
-		<div class="col-lg-1" style="padding: 0px 30px 0px 0px;">&nbsp;</div>
-		<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Uang</label></div>
-		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
-		<div class="col-lg-2 no-padding">
-			<input type="text" class="form-control text-right total" data-tipe="decimal" placeholder="Total" data-required="1" readonly>
-		</div>
-	</div>
-	<div class="col-lg-12"></div>
-	<div class="col-lg-12 no-padding">
-		<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Penyesuaian</label></div>
-		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
-		<div class="col-lg-2 no-padding">
-			<input type="text" class="form-control text-right total_penyesuaian" data-tipe="decimal" placeholder="Jumlah" data-required="1" readonly>
-		</div>
 	</div>
 	<div class="col-lg-12"></div>
 	<div class="col-lg-12 no-padding">
@@ -151,14 +137,59 @@
 		<div class="col-lg-2 no-padding">
 			<input type="text" class="form-control text-right lebih_bayar_non_saldo" placeholder="Nilai" data-tipe="decimal" onblur="bakul.hit_total_uang()" />
 		</div>
+		<div class="col-lg-1" style="padding: 0px 30px 0px 0px;">&nbsp;</div>
+		<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Uang</label></div>
+		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+		<div class="col-lg-2 no-padding">
+			<input type="text" class="form-control text-right total_uang" data-tipe="decimal" placeholder="Total" data-required="1" readonly>
+		</div>
 	</div>
 	<div class="col-lg-12"></div>
 	<div class="col-lg-12 no-padding">
-		<div class="col-lg-2 no-padding"><label class="control-label text-left">Jumlah Tagihan</label></div>
+		<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Penyesuaian</label></div>
 		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 		<div class="col-lg-2 no-padding">
-			<input type="text" class="form-control text-right jml_bayar" data-tipe="decimal" placeholder="Jumlah" data-required="1" readonly>
+			<input type="text" class="form-control text-right total_penyesuaian" data-tipe="decimal" placeholder="Jumlah" data-required="1" readonly>
 		</div>
+	</div>
+	<div class="col-lg-12"></div>
+	<div class="col-lg-12 no-padding" style="margin-bottom: 1px;">
+		<div class="col-lg-2 no-padding"><label class="control-label text-left">CN</label></div>
+		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+		<div class="col-lg-2 no-padding">
+			<input type="text" class="form-control text-right tot_cn" data-tipe="decimal" placeholder="CN" readonly>
+		</div>
+		<div class="col-lg-3" style="padding: 0px 0px 0px 10px;">
+			<button type="button" class="btn btn-default" onclick="bakul.modalPilihCN(this)">Pilih CN</button>
+		</div>
+	</div>
+	<div class="col-lg-12 no-padding" style="margin-bottom: 1px;">
+		<div class="col-lg-2 no-padding"><label class="control-label text-left">DN</label></div>
+		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+		<div class="col-lg-2 no-padding">
+			<input type="text" class="form-control text-right tot_dn" data-tipe="decimal" placeholder="DN" readonly>
+		</div>
+		<div class="col-lg-3" style="padding: 0px 0px 0px 10px;">
+			<button type="button" class="btn btn-default" onclick="bakul.modalPilihDN(this)">Pilih DN</button>
+		</div>
+	</div>
+	<div class="col-lg-12 no-padding" style="margin-bottom: 1px;">
+		<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Nilai</label></div>
+		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+		<div class="col-lg-2 no-padding">
+			<input type="text" class="form-control text-right tot_nilai" data-tipe="decimal" placeholder="Jumlah" data-required="1" readonly>
+		</div>
+		<div class="col-lg-1" style="padding: 0px 30px 0px 0px;">&nbsp;</div>
+		<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Tagihan</label></div>
+		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+		<div class="col-lg-2 no-padding">
+			<input type="text" class="form-control text-right tot_tagihan" data-tipe="decimal" placeholder="Total" data-required="1" readonly>
+		</div>
+	</div>
+	<div class="col-lg-12 no-padding">
+		<div class="col-lg-2 no-padding">&nbsp;</div>
+		<div class="col-lg-1 no-padding" style="max-width: 2%;">&nbsp;</div>
+		<div class="col-lg-2 no-padding">&nbsp;</div>
 		<div class="col-lg-1" style="padding: 0px 30px 0px 0px;">&nbsp;</div>
 		<div class="col-lg-2 no-padding"><label class="control-label text-left">Lebih / Kurang</label></div>
 		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
@@ -172,24 +203,25 @@
 			<table class="table table-bordered tbl_list_do" style="margin-bottom: 0px;">
 				<thead>
 					<tr>
-						<th class="col-lg-1 text-center">Tanggal Panen</th>
+						<th class="text-center" style="width: 6%;">Tgl Invoice</th>
 						<th class="col-lg-1 text-center">Plasma</th>
-						<th class="col-lg-1 text-center">No. DO</th>
-						<th class="col-lg-1 text-center">No. SJ</th>
-						<th class="col-lg-1 text-center">No. Nota</th>
+						<th class="text-center" style="width: 7%;">No. SJ</th>
+						<th class="text-center" style="width: 7%;">No. Invoice</th>
 						<th class="text-center" style="width: 5%;">Ekor</th>
 						<th class="text-center" style="width: 5%;">Kg</th>
-						<th class="text-center" style="width: 7%;">Harga</th>
-						<th class="col-lg-1 text-center">Total</th>
-						<th class="col-lg-1 text-center">Sudah Bayar</th>
+						<th class="col-lg-1 text-center">CN</th>
+						<th class="col-lg-1 text-center">DN</th>
+						<th class="col-lg-1 text-center">Nilai</th>
+						<th class="col-lg-1 text-center">Tot Tagihan</th>
 						<th class="col-lg-1 text-center">Jumlah Bayar</th>
 						<th class="col-lg-1 text-center">Penyesuaian</th>
+						<th class="col-lg-1 text-center">Sisa Tagihan</th>
 						<th class="text-center" style="width: 5%;">Status</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
-						<td colspan="13">Data tidak ditemukan.</td>
+						<td colspan="14">Data tidak ditemukan.</td>
 					</tr>
 				</tbody>
 			</table>

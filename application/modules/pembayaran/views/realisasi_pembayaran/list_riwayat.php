@@ -22,6 +22,7 @@
 					echo strtoupper($ket); 
 				?>
 			</td>
+			<td class="text-right"><?php echo angkaDecimal($v_data['dn']); ?></td>
 			<td class="text-right"><?php echo angkaDecimal($v_data['cn']); ?></td>
 			<td class="text-right"><?php echo angkaDecimal($v_data['jml_transfer']); ?></td>
 			<td class="text-right"><?php echo angkaDecimal($v_data['uang_muka']); ?></td>

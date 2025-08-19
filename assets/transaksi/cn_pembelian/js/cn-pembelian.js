@@ -15,7 +15,7 @@ var cn = {
                     var query = {
                         search: params.term,
                         type: 'item_search',
-						jenis_cn: $('div#action').find('select.jenis_cn').select2().val()
+						jenis_cn: $('div#action').find('select.jurnal_trans').select2().val()
                     }
     
                     // Query parameters will be ?search=[term]&type=user_search
@@ -60,7 +60,7 @@ var cn = {
                         search: params.term,
                         type: 'item_search',
                         supplier: $('div#action').find('select.supplier').select2().val(),
-						jenis_cn: $('div#action').find('select.jenis_cn').select2().val()
+						jenis_cn: $('div#action').find('select.jurnal_trans').select2().val()
                     }
     
                     // Query parameters will be ?search=[term]&type=user_search
@@ -104,7 +104,7 @@ var cn = {
                     var query = {
                         search: params.term,
                         type: 'item_search',
-                        jenis_cn: $('div#action').find('select.jenis_cn').select2().val()
+                        jenis_cn: $('div#action').find('select.jurnal_trans').select2().val()
                     }
     
                     // Query parameters will be ?search=[term]&type=user_search
@@ -227,7 +227,7 @@ var cn = {
             }
         });
 
-		$('.jenis_cn').select2();
+		// $('.jenis_cn').select2();
 		$('.jurnal_trans').select2();
 		$('.supplier').select2();
 		$('div#riwayat').find('.gudang').select2();
@@ -240,13 +240,13 @@ var cn = {
             cn.setSelect2Gudang( $('.gudang') );
             cn.setSelect2NoSj( $('.no_sj') );
             cn.setSelect2Barang( $('.barang') );
-            cn.setSelect2DetJurnalTrans( $('.det_jurnal_trans') );
+            // cn.setSelect2DetJurnalTrans( $('.det_jurnal_trans') );
         });
     }, // end - settingUp
 
 	addRow: function (elm) {
         var tr_head = $(elm).closest('tr.head');
-        var tr_detail = $(tr_head).next('tr.detail');
+        // var tr_detail = $(tr_head).next('tr.detail');
 
         var tbody = $(tr_head).closest('tbody');
 
@@ -257,82 +257,82 @@ var cn = {
                                    .removeAttr('tabindex');
         $(tr_head).find('select.no_sj option, select.barang option').removeAttr('data-select2-id');
 
-		$(tr_detail).find('select.det_jurnal_trans').select2('destroy')
-                                   .removeAttr('data-live-search')
-                                   .removeAttr('data-select2-id')
-                                   .removeAttr('aria-hidden')
-                                   .removeAttr('tabindex');
-        $(tr_detail).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
+		// $(tr_detail).find('select.det_jurnal_trans').select2('destroy')
+        //                            .removeAttr('data-live-search')
+        //                            .removeAttr('data-select2-id')
+        //                            .removeAttr('aria-hidden')
+        //                            .removeAttr('tabindex');
+        // $(tr_detail).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
 
         var tr_head_clone = $(tr_head).clone();
-        var tr_detail_clone = $(tr_detail).clone();
+        // var tr_detail_clone = $(tr_detail).clone();
 
         $(tr_head_clone).find('input, textarea, select').val('');
-        $(tr_detail_clone).find('select').val('');
-        $(tr_detail_clone).find('table tbody tr:not(:first)').remove();
-        $(tr_detail_clone).find('table tbody tr:first td.asal').text('');
-        $(tr_detail_clone).find('table tbody tr:first td.tujuan').text('');
+        // $(tr_detail_clone).find('select').val('');
+        // $(tr_detail_clone).find('table tbody tr:not(:first)').remove();
+        // $(tr_detail_clone).find('table tbody tr:first td.asal').text('');
+        // $(tr_detail_clone).find('table tbody tr:first td.tujuan').text('');
 
         $(tr_head_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
             $(this).priceFormat(Config[$(this).data('tipe')]);
         });
 
         $(tbody).append( $(tr_head_clone) );
-        $(tbody).append( $(tr_detail_clone) );
+        // $(tbody).append( $(tr_detail_clone) );
 
         cn.setSelect2NoSj( $(tbody).find('select.no_sj') );
         cn.setSelect2Barang( $(tbody).find('select.barang') );
-        cn.setSelect2DetJurnalTrans( $(tbody).find('.det_jurnal_trans') );
+        // cn.setSelect2DetJurnalTrans( $(tbody).find('.det_jurnal_trans') );
     }, // end - addRow
 
     removeRow: function (elm) {
         var tr_head = $(elm).closest('tr.head');
-        var tr_detail = $(tr_head).next('tr.detail');
+        // var tr_detail = $(tr_head).next('tr.detail');
 
         var tbody = $(tr_head).closest('tbody');
 
         if ( $(tbody).find('tr.head').length > 1 ) {
             $(tr_head).remove();
-            $(tr_detail).remove();
+            // $(tr_detail).remove();
         }
 
         cn.hitTot();
     }, // end - addRow
 
-	addRowDet: function (elm) {
-        var tr = $(elm).closest('tr');
-        var tbody = $(tr).closest('tbody');
+	// addRowDet: function (elm) {
+    //     var tr = $(elm).closest('tr');
+    //     var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.det_jurnal_trans').select2('destroy')
-                                   .removeAttr('data-live-search')
-                                   .removeAttr('data-select2-id')
-                                   .removeAttr('aria-hidden')
-                                   .removeAttr('tabindex');
-        $(tr).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
+    //     $(tr).find('select.det_jurnal_trans').select2('destroy')
+    //                                .removeAttr('data-live-search')
+    //                                .removeAttr('data-select2-id')
+    //                                .removeAttr('aria-hidden')
+    //                                .removeAttr('tabindex');
+    //     $(tr).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
 
-        var tr_clone = $(tr).clone();
+    //     var tr_clone = $(tr).clone();
 
-        $(tr_clone).find('select').val('');
-		$(tr_clone).find('td.asal').text('');
-        $(tr_clone).find('td.tujuan').text('');
+    //     $(tr_clone).find('select').val('');
+	// 	$(tr_clone).find('td.asal').text('');
+    //     $(tr_clone).find('td.tujuan').text('');
 
-        $(tr_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
-            $(this).priceFormat(Config[$(this).data('tipe')]);
-        });
+    //     $(tr_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+    //         $(this).priceFormat(Config[$(this).data('tipe')]);
+    //     });
 
-        $(tbody).append( $(tr_clone) );
+    //     $(tbody).append( $(tr_clone) );
 
-        cn.setSelect2DetJurnalTrans( $(tbody).find('.det_jurnal_trans') );
-    }, // end - addRow
+    //     cn.setSelect2DetJurnalTrans( $(tbody).find('.det_jurnal_trans') );
+    // }, // end - addRow
 
-    removeRowDet: function (elm) {
-        var tr = $(elm).closest('tr');
-        var tbody = $(tr).closest('tbody');
+    // removeRowDet: function (elm) {
+    //     var tr = $(elm).closest('tr');
+    //     var tbody = $(tr).closest('tbody');
 
-        if ( $(tbody).find('tr').length > 1 ) {
-            $(tr).remove();
-        }
-    }, // end - addRow
+    //     if ( $(tbody).find('tr').length > 1 ) {
+    //         $(tr).remove();
+    //     }
+    // }, // end - addRow
 
 	hitTot: function() {
 		var tot_cn = 0;
@@ -438,14 +438,14 @@ var cn = {
 			bootbox.confirm('Apakah anda yakin ingin menyimpan data ?', function (result) {
 				if ( result ) {
 					var detail = $.map( $(div).find('table tbody tr.head'), function(tr_head) {
-						var tr_detail = $(tr_head).next('tr.detail');
+						// var tr_detail = $(tr_head).next('tr.detail');
 
-						var det_jurnal_trans = $.map( $(tr_detail).find('table tbody tr'), function(tr) {
-							var _det_jurnal_trans = $(tr).find('.det_jurnal_trans').select2().val();
-							if ( !empty(_det_jurnal_trans) ) {
-								return _det_jurnal_trans;
-							}
-						});
+						// var det_jurnal_trans = $.map( $(tr_detail).find('table tbody tr'), function(tr) {
+						// 	var _det_jurnal_trans = $(tr).find('.det_jurnal_trans').select2().val();
+						// 	if ( !empty(_det_jurnal_trans) ) {
+						// 		return _det_jurnal_trans;
+						// 	}
+						// });
 
 						var _detail = {
 							'no_sj': $(tr_head).find('.no_sj').select2().val(),
@@ -453,14 +453,15 @@ var cn = {
 							'jumlah': numeral.unformat( $(tr_head).find('.jumlah').val() ),
 							'ket': $(tr_head).find('.ket').val(),
 							'nominal': numeral.unformat( $(tr_head).find('.nominal').val() ),
-							'det_jurnal_trans': det_jurnal_trans
+							// 'det_jurnal_trans': det_jurnal_trans
 						};
 
 						return _detail;
 					});
 
 					var params = {
-						'jenis_cn': $(div).find('.jenis_cn').select2('val'),
+						'jurnal_trans': $(div).find('.jurnal_trans').select2('val'),
+						// 'jenis_cn': $(div).find('.jenis_cn').select2('val'),
 						'tgl_cn': dateSQL( $(div).find('#Tanggal').data('DateTimePicker').date() ),
 						'supplier': $(div).find('.supplier').select2('val'),
 						'gudang': $(div).find('.gudang').select2('val'),
@@ -511,14 +512,14 @@ var cn = {
 			bootbox.confirm('Apakah anda yakin ingin meng-ubah data ?', function (result) {
 				if ( result ) {
 					var detail = $.map( $(div).find('table tbody tr.head'), function(tr_head) {
-						var tr_detail = $(tr_head).next('tr.detail');
+						// var tr_detail = $(tr_head).next('tr.detail');
 
-						var det_jurnal_trans = $.map( $(tr_detail).find('table tbody tr'), function(tr) {
-							var _det_jurnal_trans = $(tr).find('.det_jurnal_trans').select2().val();
-							if ( !empty(_det_jurnal_trans) ) {
-								return _det_jurnal_trans;
-							}
-						});
+						// var det_jurnal_trans = $.map( $(tr_detail).find('table tbody tr'), function(tr) {
+						// 	var _det_jurnal_trans = $(tr).find('.det_jurnal_trans').select2().val();
+						// 	if ( !empty(_det_jurnal_trans) ) {
+						// 		return _det_jurnal_trans;
+						// 	}
+						// });
 
 						var _detail = {
 							'no_sj': $(tr_head).find('.no_sj').select2().val(),
@@ -526,7 +527,7 @@ var cn = {
 							'jumlah': numeral.unformat( $(tr_head).find('.jumlah').val() ),
 							'ket': $(tr_head).find('.ket').val(),
 							'nominal': numeral.unformat( $(tr_head).find('.nominal').val() ),
-							'det_jurnal_trans': det_jurnal_trans
+							// 'det_jurnal_trans': det_jurnal_trans
 						};
 
 						return _detail;
@@ -534,7 +535,8 @@ var cn = {
 
 					var params = {
 						'id': $(elm).attr('data-id'),
-						'jenis_cn': $(div).find('.jenis_cn').select2('val'),
+						'jurnal_trans': $(div).find('.jurnal_trans').select2('val'),
+						// 'jenis_cn': $(div).find('.jenis_cn').select2('val'),
 						'tgl_cn': dateSQL( $(div).find('#Tanggal').data('DateTimePicker').date() ),
 						'supplier': $(div).find('.supplier').select2('val'),
 						'gudang': $(div).find('.gudang').select2('val'),

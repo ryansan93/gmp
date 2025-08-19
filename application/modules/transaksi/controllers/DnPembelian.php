@@ -129,7 +129,7 @@ class DnPembelian extends Public_Controller {
         if ( stristr('doc', $jenis_dn) !== false ) {
             $sql_inv = "";
             if ( !empty($search) && !empty($type) ) {
-                $sql_inv = "where UPPER(REPLACE(CONVERT(varchar, kpd.tgl_bayar, 103), '-', '/')+' | '+td.no_sj) like '%".$search."%'";
+                $sql_inv = "and UPPER(REPLACE(CONVERT(varchar, kpd.tgl_bayar, 103), '-', '/')+' | '+td.no_sj) like '%".$search."%'";
             }
 
             $m_conf = new \Model\Storage\Conf();
@@ -159,7 +159,7 @@ class DnPembelian extends Public_Controller {
         if ( stristr('pkn', $jenis_dn) !== false ) {
             $sql_inv = "";
             if ( !empty($search) && !empty($type) ) {
-                $sql_inv = "where UPPER(REPLACE(CONVERT(varchar, kppd.tgl_sj, 103), '-', '/')+' | '+kppd.no_sj) like '%".$search."%'";
+                $sql_inv = "and UPPER(REPLACE(CONVERT(varchar, kppd.tgl_sj, 103), '-', '/')+' | '+kppd.no_sj) like '%".$search."%'";
             }
 
             $m_conf = new \Model\Storage\Conf();
@@ -179,7 +179,7 @@ class DnPembelian extends Public_Controller {
         if ( stristr('ovk', $jenis_dn) !== false ) {
             $sql_inv = "";
             if ( !empty($search) && !empty($type) ) {
-                $sql_inv = "where UPPER(REPLACE(CONVERT(varchar, kpv.tgl_bayar, 103), '-', '/')+' | '+kpvd.no_sj) like '%".$search."%'";
+                $sql_inv = "and UPPER(REPLACE(CONVERT(varchar, kpv.tgl_bayar, 103), '-', '/')+' | '+kpvd.no_sj) like '%".$search."%'";
             }
 
             $m_conf = new \Model\Storage\Conf();
@@ -253,7 +253,7 @@ class DnPembelian extends Public_Controller {
 
         $sql_jt = "";
         if ( !empty($search) && !empty($type) ) {
-            $sql_jt = "where UPPER(REPLACE(CONVERT(varchar, kpd.tgl_bayar, 103), '-', '/')+' | '+td.no_sj) like '%".$search."%'";
+            $sql_jt = "and UPPER(REPLACE(CONVERT(varchar, kpd.tgl_bayar, 103), '-', '/')+' | '+td.no_sj) like '%".$search."%'";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -310,7 +310,7 @@ class DnPembelian extends Public_Controller {
 
         $sql_brg = "";
         if ( !empty($search) && !empty($type) ) {
-            $sql_brg = "where UPPER(b1.kode+' | '+b1.nama) like '%".$search."%'";
+            $sql_brg = "and UPPER(b1.kode+' | '+b1.nama) like '%".$search."%'";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -346,7 +346,9 @@ class DnPembelian extends Public_Controller {
             select
                 d.*,
                 supl.nama as nama_supplier,
-                gdg.nama as nama_gudang
+                gdg.nama as nama_gudang,
+                jt.kode as kode_jurnal_trans,
+                jt.nama as nama_jurnal_trans
             from dn d
             left join
                 (
@@ -362,6 +364,16 @@ class DnPembelian extends Public_Controller {
                 gudang gdg
                 on
                     gdg.id = d.gudang
+            left join
+                (
+                    select jt1.* from jurnal_trans jt1
+                    right join
+                        (select max(id) as id, kode from jurnal_trans group by kode) jt2
+                        on
+                            jt1.id = jt2.id
+                ) jt
+                on
+                    jt.kode = d.jurnal_trans_kode
             where
                 d.id = ".$id."
             order by
@@ -422,45 +434,45 @@ class DnPembelian extends Public_Controller {
                 foreach ($d_dnd as $k_dnd => $v_dnd) {
                     $data['detail'][ $k_dnd ] = $v_dnd;
     
-                    $m_conf = new \Model\Storage\Conf();
-                    $sql = "
-                        select
-                            ddjt.*,
-                            djt.kode as kode_det_jurnal_trans,
-                            djt.nama as nama_det_jurnal_trans,
-                            djt.sumber as asal,
-                            djt.sumber_coa as coa_asal,
-                            djt.tujuan as tujuan,
-                            djt.tujuan_coa as coa_tujuan,
-                            jt.kode as kode_jurnal_trans,
-                            jt.nama as nama_jurnal_trans
-                        from dn_det_jurnal_trans ddjt
-                        left join
-                            (
-                                select djt1.* from det_jurnal_trans djt1
-                                right join
-                                    (select max(id) as id, kode from det_jurnal_trans group by kode) djt2
-                                    on
-                                        djt1.id = djt2.id
-                            ) djt
-                            on
-                                ddjt.det_jurnal_trans_kode = djt.kode
-                        left join
-                            jurnal_trans jt
-                            on
-                                jt.id = djt.id_header
-                        where
-                            ddjt.id_header = ".$v_dnd['id']."
-                    ";
-                    $d_dndjt = $m_conf->hydrateRaw( $sql );
+                    // $m_conf = new \Model\Storage\Conf();
+                    // $sql = "
+                    //     select
+                    //         ddjt.*,
+                    //         djt.kode as kode_det_jurnal_trans,
+                    //         djt.nama as nama_det_jurnal_trans,
+                    //         djt.sumber as asal,
+                    //         djt.sumber_coa as coa_asal,
+                    //         djt.tujuan as tujuan,
+                    //         djt.tujuan_coa as coa_tujuan,
+                    //         jt.kode as kode_jurnal_trans,
+                    //         jt.nama as nama_jurnal_trans
+                    //     from dn_det_jurnal_trans ddjt
+                    //     left join
+                    //         (
+                    //             select djt1.* from det_jurnal_trans djt1
+                    //             right join
+                    //                 (select max(id) as id, kode from det_jurnal_trans group by kode) djt2
+                    //                 on
+                    //                     djt1.id = djt2.id
+                    //         ) djt
+                    //         on
+                    //             ddjt.det_jurnal_trans_kode = djt.kode
+                    //     left join
+                    //         jurnal_trans jt
+                    //         on
+                    //             jt.id = djt.id_header
+                    //     where
+                    //         ddjt.id_header = ".$v_dnd['id']."
+                    // ";
+                    // $d_dndjt = $m_conf->hydrateRaw( $sql );
     
-                    if ( $d_dndjt->count() > 0 ) {
-                        $d_dndjt = $d_dndjt->toArray();
+                    // if ( $d_dndjt->count() > 0 ) {
+                    //     $d_dndjt = $d_dndjt->toArray();
     
-                        $data['kode_jurnal_trans'] = $d_dndjt[0]['kode_jurnal_trans'];
-                        $data['nama_jurnal_trans'] = $d_dndjt[0]['nama_jurnal_trans'];
-                        $data['detail'][ $k_dnd ]['det_jurnal_trans'] = $d_dndjt;                    
-                    }
+                    //     $data['kode_jurnal_trans'] = $d_dndjt[0]['kode_jurnal_trans'];
+                    //     $data['nama_jurnal_trans'] = $d_dndjt[0]['nama_jurnal_trans'];
+                    //     $data['detail'][ $k_dnd ]['det_jurnal_trans'] = $d_dndjt;                    
+                    // }
                 }
             }
         }
@@ -585,16 +597,23 @@ class DnPembelian extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            $m_jt = new \Model\Storage\JurnalTrans_model();
+            $d_jt = $m_jt->where('kode', $params['jurnal_trans'])->orderBy('id', 'desc')->first();
+
+            $kode_voucher = $d_jt->kode_voucher;
+
             $m_dn = new \Model\Storage\Dn_model();
-            $nomor = $m_dn->getNextNomor('DN/'.$params['jenis_dn']);
+            // $nomor = $m_dn->getNextNomor('DN/'.$params['jenis_dn']);
+            $nomor = $m_dn->getNextNomor($kode_voucher);
 
             $m_dn->nomor = $nomor;
-            $m_dn->jenis_dn = $params['jenis_dn'];
+            // $m_dn->jenis_dn = $params['jenis_dn'];
             $m_dn->tanggal = $params['tgl_dn'];
             $m_dn->supplier = $params['supplier'];
             $m_dn->gudang = (isset($params['gudang']) && !empty($params['gudang'])) ? $params['gudang'] : null;
             $m_dn->ket_dn = $params['ket_dn'];
             $m_dn->tot_dn = $params['tot_dn'];
+            $m_dn->jurnal_trans_kode = $params['jurnal_trans'];
             $m_dn->save();
 
             foreach ($params['detail'] as $k_det => $v_det) {
@@ -607,12 +626,12 @@ class DnPembelian extends Public_Controller {
                 $m_dnd->nominal = $v_det['nominal'];
                 $m_dnd->save();
 
-                foreach ($v_det['det_jurnal_trans'] as $k_djt => $v_djt) {
-                    $m_cdjt = new \Model\Storage\DnDetJurnalTrans_model();
-                    $m_cdjt->id_header = $m_dnd->id;
-                    $m_cdjt->det_jurnal_trans_kode = $v_djt;
-                    $m_cdjt->save();
-                }
+                // foreach ($v_det['det_jurnal_trans'] as $k_djt => $v_djt) {
+                //     $m_cdjt = new \Model\Storage\DnDetJurnalTrans_model();
+                //     $m_cdjt->id_header = $m_dnd->id;
+                //     $m_cdjt->det_jurnal_trans_kode = $v_djt;
+                //     $m_cdjt->save();
+                // }
             }
 
             $id = $m_dn->id;
@@ -656,14 +675,32 @@ class DnPembelian extends Public_Controller {
             }
 
             $m_dn = new \Model\Storage\Dn_model();
+            $d_dn = $m_dn->where('id', $id)->first();
+
+            $m_jt = new \Model\Storage\JurnalTrans_model();
+            $d_jt_old = $m_jt->where('kode', $d_dn->jurnal_trans_kode)->orderBy('id', 'desc')->first();
+            $d_jt_new = $m_jt->where('kode', $params['jurnal_trans'])->orderBy('id', 'desc')->first();
+
+            $nomor = $d_dn->nomor;
+            if ( $d_jt_old->kode <> $d_jt_new->kode ) {
+                $kode_voucher = $d_jt_new->kode_voucher;
+    
+                $m_dn = new \Model\Storage\Dn_model();
+                // $nomor = $m_dn->getNextNomor('CN/'.$params['jenis_dn']);
+                $nomor = $m_dn->getNextNomor($kode_voucher);
+            }
+
+            $m_dn = new \Model\Storage\Dn_model();
             $m_dn->where('id', $id)->update(
                 array(
-                    'jenis_dn' => $params['jenis_dn'],
+                    'nomor' => $nomor,
+                    // 'jenis_dn' => $params['jenis_dn'],
                     'tanggal' => $params['tgl_dn'],
                     'supplier' => $params['supplier'],
                     'gudang' => (isset($params['gudang']) && !empty($params['gudang'])) ? $params['gudang'] : null,
                     'ket_dn' => $params['ket_dn'],
-                    'tot_dn' => $params['tot_dn']
+                    'tot_dn' => $params['tot_dn'],
+                    'jurnal_trans_kode' => $params['jurnal_trans']
                 )
             );
 
@@ -677,12 +714,12 @@ class DnPembelian extends Public_Controller {
                 $m_dnd->nominal = $v_det['nominal'];
                 $m_dnd->save();
 
-                foreach ($v_det['det_jurnal_trans'] as $k_djt => $v_djt) {
-                    $m_cdjt = new \Model\Storage\DnDetJurnalTrans_model();
-                    $m_cdjt->id_header = $m_dnd->id;
-                    $m_cdjt->det_jurnal_trans_kode = $v_djt;
-                    $m_cdjt->save();
-                }
+                // foreach ($v_det['det_jurnal_trans'] as $k_djt => $v_djt) {
+                //     $m_cdjt = new \Model\Storage\DnDetJurnalTrans_model();
+                //     $m_cdjt->id_header = $m_dnd->id;
+                //     $m_cdjt->det_jurnal_trans_kode = $v_djt;
+                //     $m_cdjt->save();
+                // }
             }
 
             $d_dn = $m_dn->where('id', $id)->first();

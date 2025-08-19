@@ -49,6 +49,18 @@
 	<div class="col-lg-2 no-padding"><label class="control-label text-left">Saldo</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['saldo']); ?></label></div>
+</div>
+<div class="col-lg-12"></div>
+<div class="col-lg-12 no-padding">
+	<div class="col-lg-2 no-padding"><label class="control-label text-left">Nilai Pajak</label></div>
+	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['nil_pajak']); ?></label></div>
+</div>
+<div class="col-lg-12"></div>
+<div class="col-lg-12 no-padding">
+	<div class="col-lg-2 no-padding"><label class="control-label text-left">Lebih Bayar Non Saldo</label></div>
+	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['non_saldo']); ?></label></div>
 	<div class="col-lg-1" style="padding: 0px 30px 0px 0px;">&nbsp;</div>
 	<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Uang</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
@@ -62,21 +74,31 @@
 </div>
 <div class="col-lg-12"></div>
 <div class="col-lg-12 no-padding">
-	<div class="col-lg-2 no-padding"><label class="control-label text-left">Nilai Pajak</label></div>
+	<div class="col-lg-2 no-padding"><label class="control-label text-left">CN</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
-	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['nil_pajak']); ?></label></div>
+	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['total_cn']); ?></label></div>
 </div>
 <div class="col-lg-12"></div>
 <div class="col-lg-12 no-padding">
-	<div class="col-lg-2 no-padding"><label class="control-label text-left">Lebih Bayar Non Saldo</label></div>
+	<div class="col-lg-2 no-padding"><label class="control-label text-left">DN</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
-	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['non_saldo']); ?></label></div>
+	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['total_dn']); ?></label></div>
 </div>
 <div class="col-lg-12"></div>
 <div class="col-lg-12 no-padding">
-	<div class="col-lg-2 no-padding"><label class="control-label text-left">Jumlah Tagihan</label></div>
+	<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Nilai</label></div>
+	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
+	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['total_nilai']); ?></label></div>
+	<div class="col-lg-1" style="padding: 0px 30px 0px 0px;">&nbsp;</div>
+	<div class="col-lg-2 no-padding"><label class="control-label text-left">Total Tagihan</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 	<div class="col-lg-2 no-padding"><label class="control-label"><?php echo angkaDecimal($data['total_bayar']); ?></label></div>
+</div>
+<div class="col-lg-12"></div>
+<div class="col-lg-12 no-padding">
+	<div class="col-lg-2 no-padding">&nbsp;</div>
+	<div class="col-lg-1 no-padding" style="max-width: 2%;">&nbsp;</div>
+	<div class="col-lg-2 no-padding">&nbsp;</div>
 	<div class="col-lg-1" style="padding: 0px 30px 0px 0px;">&nbsp;</div>
 	<div class="col-lg-2 no-padding"><label class="control-label text-left">Lebih / Kurang</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
@@ -88,40 +110,36 @@
 		<table class="table table-bordered tbl_list_do" style="margin-bottom: 0px;">
 			<thead>
 				<tr>
-					<th class="col-lg-1 text-center">Tanggal Panen</th>
+					<th class="text-center" style="width: 6%;">Tgl Invoice</th>
 					<th class="col-lg-1 text-center">Plasma</th>
-					<th class="col-lg-1 text-center">No. DO</th>
-					<th class="col-lg-1 text-center">No. SJ</th>
-					<th class="col-lg-1 text-center">No. Nota</th>
+					<th class="text-center" style="width: 7%;">No. SJ</th>
+					<th class="text-center" style="width: 7%;">No. Invoice</th>
 					<th class="text-center" style="width: 5%;">Ekor</th>
 					<th class="text-center" style="width: 5%;">Kg</th>
-					<th class="text-center" style="width: 7%;">Harga</th>
-					<th class="col-lg-1 text-center">Total</th>
-					<th class="col-lg-1 text-center">Sudah Bayar</th>
+					<th class="col-lg-1 text-center">CN</th>
+					<th class="col-lg-1 text-center">DN</th>
+					<th class="col-lg-1 text-center">Nilai</th>
+					<th class="col-lg-1 text-center">Tot Tagihan</th>
 					<th class="col-lg-1 text-center">Jumlah Bayar</th>
 					<th class="col-lg-1 text-center">Penyesuaian</th>
+					<th class="col-lg-1 text-center">Sisa Tagihan</th>
 					<th class="text-center" style="width: 5%;">Status</th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php foreach ($data['detail'] as $k_det => $v_det): ?>
-					<tr class="data" data-id="<?php echo $v_det['id_do']; ?>">
-						<td class="text-center"><?php echo tglIndonesia($v_det['data_do']['header']['tgl_panen'], '-', ' '); ?></td>
+					<tr class="data">
+						<td class="text-center"><?php echo tglIndonesia($v_det['tgl_panen'], '-', ' '); ?></td>
 						<td class="text-left"><?php echo strtoupper($v_det['nama']).'<br>'.'KDG : '.$v_det['kandang']; ?></td>
-						<td class="text-center"><?php echo $v_det['data_do']['no_do']; ?></td>
-						<td class="text-center"><?php echo $v_det['data_do']['no_sj']; ?></td>
-						<td class="text-center"><?php echo $v_det['data_do']['no_nota']; ?></td>
-						<td class="text-right"><?php echo angkaRibuan($v_det['data_do']['ekor']); ?></td>
-						<td class="text-right"><?php echo angkaDecimal($v_det['data_do']['tonase']); ?></td>
-						<td class="text-right"><?php echo angkaDecimal($v_det['data_do']['harga']); ?></td>
-						<td class="text-right total">
-							<?php
-								$total = $v_det['data_do']['tonase'] * $v_det['data_do']['harga'];
-								echo angkaDecimal($total);
-							?>
-						</td>
-						<td class="text-right"><?php echo angkaDecimal($v_det['sudah_bayar']); ?></td>
-						<td class="text-right jml_bayar" data-sudah="<?php echo $v_det['sudah_bayar']; ?>" data-bayar="<?php echo $v_det['jumlah_bayar']; ?>"><?php echo angkaDecimal($v_det['jumlah_bayar']); ?></td>
+						<td class="text-center"><?php echo $v_det['no_sj']; ?></td>
+						<td class="text-center"><?php echo $v_det['no_inv']; ?></td>
+						<td class="text-right"><?php echo angkaRibuan($v_det['ekor']); ?></td>
+						<td class="text-right"><?php echo angkaDecimal($v_det['tonase']); ?></td>
+						<td class="text-right"><?php echo angkaDecimal($v_det['cn']); ?></td>
+						<td class="text-right"><?php echo angkaDecimal($v_det['dn']); ?></td>
+						<td class="text-right"><?php echo angkaDecimal($v_det['nilai']); ?></td>
+						<td class="text-right"><?php echo angkaDecimal($v_det['tagihan']); ?></td>
+						<td class="text-right"><?php echo angkaDecimal($v_det['jml_bayar']); ?></td>
 						<td class="penyesuaian">
 							<div class="col-lg-12 text-right no-padding">
 								<?php echo angkaRibuan($v_det['penyesuaian']); ?>
@@ -133,13 +151,13 @@
 								<?php echo (!empty($v_det['ket_penyesuaian']) && trim($v_det['ket_penyesuaian']) != "") ? $v_det['ket_penyesuaian'] : '-'; ?>
 							</div>
 						</td>
+						<td class="text-right"><?php echo angkaDecimal($v_det['sisa_tagihan']); ?></td>
 						<td class="text-center status">
 							<?php
 								$ket = '';
-								$total_bayar = ($v_det['jumlah_bayar']+$v_det['sudah_bayar']) + $v_det['penyesuaian'];
-								if ( $total <= $total_bayar ) {
+								if ( stristr($v_det['status'], 'LUNAS') !== false ) {
 									$ket = '<span style="color: blue;"><b>LUNAS</b></span>';
-								} else if ( $total > $v_det['sudah_bayar'] ) {
+								} else {
 									$ket = '<span style="color: red;"><b>BELUM</b></span>';
 								}
 

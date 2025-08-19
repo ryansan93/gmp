@@ -7,7 +7,7 @@
 <div class="col-xs-12 no-padding" style="rgin-bottom: 5px;">
 	<div class="col-xs-12 no-padding"><label class="control-label text-left">Kode Voucher</label></div>
 	<div class="col-xs-2 no-padding">
-		<input type="text" class="form-control text-left uppercase kode_voucher" data-required="1" placeholder="Kode Voucher (MAX:5)" maxlength="5" value="<?php echo $data['kode_voucher']; ?>" />
+		<input type="text" class="form-control text-left uppercase kode_voucher" data-required="1" placeholder="Kode Voucher (MAX:8)" maxlength="8" value="<?php echo $data['kode_voucher']; ?>" />
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

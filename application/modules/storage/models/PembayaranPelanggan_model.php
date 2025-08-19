@@ -5,6 +5,13 @@ use \Model\Storage\Conf as Conf;
 class PembayaranPelanggan_model extends Conf{
 	protected $table = 'pembayaran_pelanggan';
 
+	public function getNextNomor( $kode ){
+		$id = $this->whereRaw("SUBSTRING(nomor,0,(LEN('".$kode."')+1+6)) = '".$kode."'+'/'+SUBSTRING(cast(year(current_timestamp) as char(4)), 3, 2)+'/'+replace(str(month(getdate()),2),' ',0)")
+				   ->selectRaw("'".$kode."'+'/'+SUBSTRING(cast(year(current_timestamp) as char(4)), 3, 2)+'/'+replace(str(month(getdate()),2),' ',0)+'/'+replace(str(substring(coalesce(max(nomor),'0000'),(LEN('".$kode."')+1+7),4)+1,4), ' ', '0') as nextId")
+				   ->first();
+		return $id->nextId;
+	}
+
 	public function getNextNomorAuto( $kode, $tanggal ){
 		$id = $this->whereRaw("SUBSTRING(no_bukti_auto,0,(LEN('".$kode."')+1+8)) = '".$kode."'+'/'+replace(str(month('".$tanggal."'),2),' ',0)+'/'+cast(year('".$tanggal."') as char(4))")
 				   ->selectRaw("'".$kode."'+'/'+replace(str(month('".$tanggal."'),2),' ',0)+'/'+cast(year('".$tanggal."') as varchar(4))+'/'+replace(str(substring(coalesce(max(no_bukti_auto),'0000'),(LEN('".$kode."')+1+9),4)+1,4), ' ', '0') as nextId")

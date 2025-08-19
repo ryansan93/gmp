@@ -1031,10 +1031,12 @@ class ODVP extends Public_Controller {
                     $m_terima_doc->uniformity = $params['uniformity'];
                     $m_terima_doc->save();
 
+                    $conf = new \Model\Storage\Conf();
+                    $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id_terima."', '".$params['datang']."', 1, null, null";
+                    $d_conf = $conf->hydrateRaw($sql);
                     // $m_conf = new \Model\Storage\Conf();
                     // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", NULL, 1";
                     // $d_conf = $m_conf->hydrateRaw( $sql );
-
                     Modules::run( 'base/InsertJurnal/exec', $this->url, $id_terima, null, 1);
 
                     $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -1115,10 +1117,13 @@ class ODVP extends Public_Controller {
                 $m_terima_doc->uniformity = $params['uniformity'];
                 $m_terima_doc->save();
 
+                $conf = new \Model\Storage\Conf();
+                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id_terima."', '".$params['datang']."', 2, null, null";
+                $d_conf = $conf->hydrateRaw($sql);
+                
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
                 // $d_conf = $m_conf->hydrateRaw( $sql );
-
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $id_terima, $id_old, 2);
 
                 $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -1142,13 +1147,20 @@ class ODVP extends Public_Controller {
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $d_terima_doc = $m_terima_doc->where('id', $params)->first();
 
+            $m_order_doc = new \Model\Storage\OrderDoc_model();
+            $d_order_doc = $m_order_doc->where('no_order', $d_terima_doc->no_order)->orderBy('id', 'desc')->first();
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".$d_terima_doc->datang."', 3, '".$d_order_doc->noreg."', null";
+            $d_conf = $conf->hydrateRaw($sql);
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$params.", ".$params.", 3";
             // $d_conf = $m_conf->hydrateRaw( $sql );
-
             Modules::run( 'base/InsertJurnal/exec', $this->url, null, $params, 3);
 
             $m_terima_doc->where('id', $params)->delete();
+            $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
+            $m_terima_doc_ket->where('id_header', $params)->delete();
 
             $deskripsi_log_terima_doc = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_terima_doc, $deskripsi_log_terima_doc);

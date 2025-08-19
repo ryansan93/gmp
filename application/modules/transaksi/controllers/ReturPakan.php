@@ -647,7 +647,8 @@ class ReturPakan extends Public_Controller
                 'id' => $id_rp,
                 'tanggal' => $params['tgl_retur'],
                 'delete' => 0,
-                'message' => 'Data berhasil di update'
+                'message' => 'Data berhasil di update',
+                'status_jurnal' => 1
             );
 
             // $this->result['status'] = 1;
@@ -716,7 +717,8 @@ class ReturPakan extends Public_Controller
                 'id' => $id_rp,
                 'tanggal' => $tgl_trans,
                 'delete' => 0,
-                'message' => 'Data berhasil di update'
+                'message' => 'Data berhasil di update',
+                'status_jurnal' => 2
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -749,7 +751,8 @@ class ReturPakan extends Public_Controller
                 'id' => $id_rp,
                 'tanggal' => $d_rp->tgl_retur,
                 'delete' => 1,
-                'message' => 'Data berhasil di hapus'
+                'message' => 'Data berhasil di hapus',
+                'status_jurnal' => 3
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -766,6 +769,7 @@ class ReturPakan extends Public_Controller
         $tanggal = $params['tanggal'];
         $delete = $params['delete'];
         $message = $params['message'];
+        $status_jurnal = $params['status_jurnal'];
 
         try {
             $noreg1 = null;
@@ -797,8 +801,16 @@ class ReturPakan extends Public_Controller
             $sql = "EXEC hitung_stok_siklus 'pakan', 'retur_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
             $d_conf = $conf->hydrateRaw($sql);
 
+            $id_old = null;
+            if ( $status_jurnal <> 1 ) {
+                $id_old = $id;
+            }
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
+
             $this->result['status'] = 1;
             $this->result['message'] = $message;
+            $this->result['content'] = array('id' => $id);
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }

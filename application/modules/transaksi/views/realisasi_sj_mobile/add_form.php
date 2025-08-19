@@ -131,7 +131,7 @@
 	<div class="col-lg-12 detailed">
 		<form role="form" class="form-horizontal">
 			<div class="col-xs-12 no-padding">
-				<button type="button" class="btn btn-primary pull-right col-xs-12" onclick="rsm.save(this)"><i class="fa fa-save"></i> Simpan</button>
+				<button type="button" class="btn btn-primary btn_save pull-right col-xs-12" onclick="rsm.save(this)"><i class="fa fa-save"></i> Simpan</button>
 			</div>
 		</form>
 	</div>

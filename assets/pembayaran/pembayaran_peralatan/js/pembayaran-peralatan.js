@@ -1,5 +1,5 @@
-var dn = null;
-var cn = null;
+var dn = [];
+var cn = [];
 var formData = null;
 
 var pp = {
@@ -158,8 +158,43 @@ var pp = {
                 	$('div#'+href).find('.supplier').trigger("select2:select");
                 }
 
-				cn = null;
-				dn = null;
+				cn = [];
+				dn = [];
+				if ( !empty(edit) ) {
+					var d_cn = [];
+					var d_dn = [];
+					if ( (empty(cn) || cn.length <= 0) ) {
+						var json_cn = $('div#'+href).find('span.d_cn').text();
+						var d_cn = !empty(json_cn) ? JSON.parse(json_cn) : [];
+					}
+
+					if ( (empty(dn) || dn.length <= 0) ) {
+						var json_dn = $('div#'+href).find('span.d_dn').text();
+						var d_dn = !empty(json_dn) ? JSON.parse(json_dn) : [];
+					}
+
+					if ( !empty(d_cn) && d_cn.length > 0 ) {
+						for (let i = 0; i < d_cn.length; i++) {                                
+							cn[i] = {
+								'id': parseInt(d_cn[i].id_cn),
+								'saldo': parseFloat(d_cn[i].saldo),
+								'sisa_saldo': parseFloat(d_cn[i].sisa_saldo),
+								'pakai': parseFloat(d_cn[i].pakai)
+							};
+						}
+					}
+
+					if ( !empty(d_dn) && d_dn.length > 0 ) {
+						for (let i = 0; i < d_dn.length; i++) {                                
+							dn[i] = {
+								'id': parseInt(d_dn[i].id_dn),
+								'saldo': parseFloat(d_dn[i].saldo),
+								'sisa_saldo': parseFloat(d_dn[i].sisa_saldo),
+								'pakai': parseFloat(d_dn[i].pakai)
+							};
+						}
+					}
+				}
 
                 hideLoading();
             }
@@ -197,6 +232,19 @@ var pp = {
                 $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
                     $(this).priceFormat(Config[$(this).data('tipe')]);
                 });
+
+				if ( !empty(dn) && dn.length > 0 ) {
+                    $.map( $(modal_body).find('table tbody tr.data'), function(tr) {
+                        var id_dn = $(tr).find('input[type="checkbox"]').attr('data-id');
+
+                        for (var i = 0; i < dn.length; i++) {
+                            if ( id_dn == dn[i].id ) {
+                                $(tr).find('input[type="checkbox"]').prop('checked', true);
+                                $(tr).find('input.pakai').val(numeral.formatDec(dn[i].pakai));
+                            }
+                        }
+                    });
+                }
             });
         },'html');
     }, // end - modalPilihDN
@@ -240,7 +288,7 @@ var pp = {
                 }
             });
         } else {
-            dn = null;
+            dn = [];
         }
 
         $('.tot_dn').val(numeral.formatDec(total_dn));
@@ -281,6 +329,19 @@ var pp = {
                 $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
                     $(this).priceFormat(Config[$(this).data('tipe')]);
                 });
+
+				if ( !empty(cn) && cn.length > 0 ) {
+                    $.map( $(modal_body).find('table tbody tr.data'), function(tr) {
+                        var id_cn = $(tr).find('input[type="checkbox"]').attr('data-id');
+
+                        for (var i = 0; i < cn.length; i++) {
+                            if ( id_cn == cn[i].id ) {
+                                $(tr).find('input[type="checkbox"]').prop('checked', true);
+                                $(tr).find('input.pakai').val(numeral.formatDec(cn[i].pakai));
+                            }
+                        }
+                    });
+                }
             });
         },'html');
     }, // end - modalPilihCN
@@ -324,7 +385,7 @@ var pp = {
                 }
             });
         } else {
-            cn = null;
+            cn = [];
         }
 
         $('.tot_cn').val(numeral.formatDec(total_cn));

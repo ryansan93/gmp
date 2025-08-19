@@ -338,239 +338,243 @@ class SisaTagihanPerPelanggan extends Public_Controller {
             $kode_unit = $params['kode_unit'];
         }
 
-        $data_rsj = array();
-        foreach ($kode_unit as $k_ku => $v_ku) {
-            $sql = "
+        $sql = "
+            select 
+                nama,
+                no_pelanggan,
+                nama_pelanggan,
+                tgl_panen,
+                no_do,
+                no_inv,
+                no_sj,
+                tonase,
+                ekor,
+                bb,
+                harga,
+                total,
+                cn,
+                dn,
+                penyesuaian,
+                bayar,
+                jatuh_tempo,
+                umur_invoice,
+                umur_invoice_by_top,
+                tgl_bayar_terakhir,
+                jumlah_bayar_terakhir,
+                ((data_rs.total+data_rs.dn)-(data_rs.cn+data_rs.penyesuaian+data_rs.bayar)) as sisa_tagihan
+            from (
                 select 
-                    max(id) as id,
-                    no_do,
-                    no_pelanggan,
-                    nama_pelanggan,
-                    tonase,
-                    ekor,
-                    bb,
-                    harga,
-                    tgl_panen,
-                    nama,
-                    no_nota
-                from (
-                    select
-                        drs.id as id, 
-                        drs.no_do as no_do, 
-                        drs.no_pelanggan as no_pelanggan, 
-                        plg.nama as nama_pelanggan, 
-                        drs.tonase as tonase, 
-                        drs.ekor, 
-                        drs.bb, 
-                        drs.harga as harga,
-                        rs.tgl_panen,
-                        mitra.nama,
-                        mitra.perusahaan,
-                        drs.no_nota
-                    from det_real_sj drs
-                    right join
-                        (
-                            select 
-                                max(id) as id, 
-                                id_unit, 
-                                tgl_panen, 
-                                noreg 
-                            from real_sj 
-                            where 
-                                tgl_panen is not null and
-                                tgl_panen <= '".$tgl_max_do."'
-                            group by 
-                                id_unit, 
-                                tgl_panen, 
-                                noreg
-                        ) as rs
-                        on
-                            drs.id_header = rs.id
-                    left join
-                        (
-                            select plg1.* from pelanggan plg1
-                            right join
-                                (select max(id) as id, nomor from pelanggan where tipe = 'pelanggan' group by nomor) plg2
-                                on
-                                    plg1.id = plg2.id
-                        ) plg
-                        on
-                            drs.no_pelanggan = plg.nomor
-                    left join
-                        (select nim, noreg from rdim_submit group by nim, noreg) rdim
-                        on
-                            rs.noreg = rdim.noreg
-                    left join
-                        (select max(mitra) as id_mitra, nim from mitra_mapping group by nim) mm
-                        on
-                            rdim.nim = mm.nim
-                    left join
-                        mitra mitra
-                        on
-                            mm.id_mitra = mitra.id
-                    left join
-                        (
-                            select max(id) as id, no_pelanggan, tgl_mulai_bayar from saldo_pelanggan group by no_pelanggan, tgl_mulai_bayar
-                        ) sp
-                        on
-                            drs.no_pelanggan = sp.no_pelanggan
-                    where
-                        not exists (
-                            select 
-                                dpp.* 
-                            from det_pembayaran_pelanggan dpp 
-                            right join
-                                pembayaran_pelanggan pp
-                                on
-                                    dpp.id_header = pp.id
-                            where 
-                                dpp.id_do = drs.id and 
-                                dpp.status = 'LUNAS' and
-                                pp.tgl_bayar <= '".$tgl_max_do."'
-                        ) and
-                        rs.tgl_panen >= sp.tgl_mulai_bayar and
-                        drs.no_do like '%".$v_ku."%'
-                ) as data_rs
+                    mitra.nama,
+                    drs.no_pelanggan as no_pelanggan, 
+                    plg.nama as nama_pelanggan, 
+                    rs.tgl_panen,
+                    mitra.perusahaan,
+                    drsi.no_inv as no_inv,
+                    drs.no_do,
+                    drs.no_sj,
+                    drsi.tonase as tonase, 
+                    drsi.ekor, 
+                    (drsi.tonase / drsi.ekor) as bb, 
+                    (drsi.total / drsi.tonase) as harga,
+                    drsi.total,
+                    isnull(dpp.cn, 0) as cn,
+                    isnull(dpp.dn, 0) as dn,
+                    isnull(dpp.penyesuaian, 0) as penyesuaian,
+                    isnull(dpp.bayar, 0) as bayar,
+                    isnull(plg.jatuh_tempo, 0) as jatuh_tempo,
+                    (DATEDIFF(day, rs.tgl_panen, '".$tgl_max_do."')) + 1 as umur_invoice,
+                    (DATEDIFF(day, (DATEADD(day, isnull(plg.jatuh_tempo, 0), rs.tgl_panen)), '".$tgl_max_do."')) + 1 as umur_invoice_by_top,
+                    pp.tgl_bayar as tgl_bayar_terakhir,
+                    pp.jml_transfer as jumlah_bayar_terakhir
+                from det_real_sj_inv drsi
+                left join
+                    (select no_pelanggan, no_do, no_sj, id_header from det_real_sj group by no_pelanggan, no_do, no_sj, id_header) drs
+                    on
+                        drsi.no_sj = drs.no_sj
+                left join
+                    real_sj rs
+                    on
+                        drs.id_header = rs.id
+                left join
+                    (
+                        select plg1.* from pelanggan plg1
+                        right join
+                            (select max(id) as id, nomor from pelanggan where tipe = 'pelanggan' group by nomor) plg2
+                            on
+                                plg1.id = plg2.id
+                    ) plg
+                    on
+                        drs.no_pelanggan = plg.nomor
+                left join
+                    (select nim, noreg from rdim_submit group by nim, noreg) rdim
+                    on
+                        rs.noreg = rdim.noreg
+                left join
+                    (select max(mitra) as id_mitra, nim from mitra_mapping group by nim) mm
+                    on
+                        rdim.nim = mm.nim
+                left join
+                    mitra mitra
+                    on
+                        mm.id_mitra = mitra.id
+                left join
+                    (
+                        select max(id) as id, no_pelanggan, tgl_mulai_bayar from saldo_pelanggan group by no_pelanggan, tgl_mulai_bayar
+                    ) sp
+                    on
+                        drs.no_pelanggan = sp.no_pelanggan
+                left join
+                    (
+                        select 
+                            dpp.no_inv,
+                            sum(dpp.cn) as cn, 
+                            sum(dpp.dn) as dn,
+                            sum(dpp.penyesuaian) as penyesuaian,
+                            sum(dpp.tagihan - (dpp.penyesuaian+dpp.sisa_tagihan)) as bayar
+                        from det_pembayaran_pelanggan dpp
+                        left join
+                            pembayaran_pelanggan pp
+                            on
+                                dpp.id_header = pp.id
+                        where
+                            pp.tgl_bayar <= '".$tgl_max_do."'
+                        group by 
+                            dpp.no_inv
+                    ) dpp
+                    on
+                        dpp.no_inv = drsi.no_inv
+                left join
+                    (
+                        select pp1.* from pembayaran_pelanggan pp1
+                        right join
+                            (select max(id) as id, no_pelanggan from pembayaran_pelanggan where tgl_bayar <= '".$tgl_max_do."' group by no_pelanggan) pp2
+                            on
+                                pp1.id = pp2.id
+                    ) pp
+                    on
+                        pp.no_pelanggan = drs.no_pelanggan
                 where
-                    ".$sql_pelanggan."
-                    data_rs.tonase > 0 and
-                    data_rs.harga > 0 and
-                    data_rs.perusahaan in ('".implode("', '", $perusahaan)."')
-                group by
-                    id,
-                    no_do,
-                    no_pelanggan,
-                    nama_pelanggan,
-                    tonase,
-                    ekor,
-                    bb,
-                    harga,
-                    tgl_panen,
-                    nama,
-                    no_nota
-            ";
+                    rs.tgl_panen <= '".$tgl_max_do."' and
+                    (rs.tgl_panen >= sp.tgl_mulai_bayar or sp.tgl_mulai_bayar is null) and
+                    cast(SUBSTRING(drsi.no_inv, 5, 3) as varchar(5)) in ('".implode("', '", $kode_unit)."')
+            ) as data_rs
+            where
+                ".$sql_pelanggan."
+                data_rs.perusahaan in ('".implode("', '", $perusahaan)."') and
+                (data_rs.total+data_rs.dn) > (data_rs.cn+data_rs.penyesuaian+data_rs.bayar) and
+                data_rs.umur_invoice >= ".$minimal_lama_bayar."
+            order by
+                data_rs.nama_pelanggan asc,
+                data_rs.tgl_panen asc,
+                data_rs.no_inv asc
+        ";
+        $m_drs = new \Model\Storage\DetRealSJ_model();
+        $d_drs = $m_drs->hydrateRaw($sql);
 
-            $m_drs = new \Model\Storage\DetRealSJ_model();
-            $d_drs = $m_drs->hydrateRaw($sql);
-
-            if ( $d_drs->count() > 0 ) {
-                $d_drs = $d_drs->toArray();
-
-                foreach ($d_drs as $k_drs => $v_drs) {
-                    $data_rsj[] = $v_drs;
-                }
-            }
-        }
-
+        $data_rsj = null;
         $data = null;
+        if ( $d_drs->count() > 0 ) {
+            $data = $d_drs->toArray();
 
-        $total_tonase = 0;
-        $total_tagihan = 0;
-        $total_sisa_tagihan = 0;
+            // cetak_r( $d_drs, 1 );
+    
+            // $total_tonase = 0;
+            // $total_tagihan = 0;
+            // $total_sisa_tagihan = 0;
+    
+            // foreach ($d_drs as $k_drs => $v_drs) {
+            //     $no_pelanggan = $v_drs['no_pelanggan'];
+            //     $nama_pelanggan = $v_drs['nama_pelanggan'];
 
-        if ( count($data_rsj) > 0 ) {
-            foreach ($data_rsj as $k_drs => $v_drs) {
-                $no_pelanggan = $v_drs['no_pelanggan'];
-                $nama_pelanggan = $v_drs['nama_pelanggan'];
+            //     $no_nota = $v_drs['no_nota'];
+            //     $no_do = $v_drs['no_do'];
+            //     $harga = $v_drs['harga'];
+            //     $tonase = $v_drs['tonase'];
+            //     $jumlah_bayar = 0;
+            //     $m_conf = new \Model\Storage\Conf();
+            //     $sql = "
+            //         select
+            //             dpp.id_do,
+            //             sum(dpp.jumlah_bayar) as jumlah_bayar
+            //         from det_pembayaran_pelanggan dpp
+            //         right join
+            //             pembayaran_pelanggan pp
+            //             on
+            //                 dpp.id_header = pp.id
+            //         where
+            //             pp.tgl_bayar <= '".$tgl_max_do."' and
+            //             dpp.id_do = ".$v_drs['id']."
+            //         group by
+            //             dpp.id_do
+            //     ";
+            //     $d_conf = $m_conf->hydrateRaw( $sql );
+            //     if ( $d_conf->count() > 0 ) {
+            //         $jumlah_bayar = $d_conf->toArray()[0]['jumlah_bayar'];
+            //     }
 
-                // $d_dpp = null;
-                // if (  $d_pp ) {
-                //     $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
-                //     $d_dpp = $m_dpp->where('id_header', $d_pp->id)->where('id_do', $v_drs['id'])->orderBy('id', 'desc')->first();
-                // }
+            //     $selisihTanggal = selisihTanggal($v_drs['tgl_panen'], $tgl_max_do);
 
-                $no_nota = $v_drs['no_nota'];
-                $no_do = $v_drs['no_do'];
-                $harga = $v_drs['harga'];
-                $tonase = $v_drs['tonase'];
-                // $jumlah_bayar = !empty($d_dpp) ? $m_dpp->where('id_do', $v_drs['id'])->sum('jumlah_bayar') : 0;
-                $jumlah_bayar = 0;
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "
-                    select
-                        dpp.id_do,
-                        sum(dpp.jumlah_bayar) as jumlah_bayar
-                    from det_pembayaran_pelanggan dpp
-                    right join
-                        pembayaran_pelanggan pp
-                        on
-                            dpp.id_header = pp.id
-                    where
-                        pp.tgl_bayar <= '".$tgl_max_do."' and
-                        dpp.id_do = ".$v_drs['id']."
-                    group by
-                        dpp.id_do
-                ";
-                $d_conf = $m_conf->hydrateRaw( $sql );
-                if ( $d_conf->count() > 0 ) {
-                    $jumlah_bayar = $d_conf->toArray()[0]['jumlah_bayar'];
-                }
+            //     $key_header = $nama_pelanggan.' | '.$no_pelanggan;
+            //     $key_selisih = $selisihTanggal;
+            //     $key = str_replace('-', '', $v_drs['tgl_panen']).'-'.$v_drs['no_do'].'-'.$v_drs['id'];
 
-                $selisihTanggal = selisihTanggal($v_drs['tgl_panen'], $tgl_max_do);
+            //     $sisa_tagihan = ($tonase * $harga) - $jumlah_bayar;
+            //     if ( $sisa_tagihan > 0 ) {
+            //         if ( !isset($data[$key_header]['do'][ $key_selisih ]['list_do'][$key]) ) {
+            //             $data[$key_header]['do'][ $key_selisih ]['list_do'][$key] = array(
+            //                 'nama' => $v_drs['nama'],
+            //                 'tgl_panen' => $v_drs['tgl_panen'],
+            //                 'no_do' => $no_do,
+            //                 'harga' => $harga,
+            //                 'tonase' => $tonase,
+            //                 'total_tagihan' => $tonase * $harga,
+            //                 'total_bayar' => $jumlah_bayar,
+            //                 'sisa_tagihan' => $sisa_tagihan,
+            //                 'lama_bayar' => $selisihTanggal,
+            //                 'no_nota' => $no_nota
+            //             );
+            //         } else {
+            //             $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['total_tagihan'] += $tonase * $harga;
+            //             $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['total_bayar'] += $jumlah_bayar;
+            //             $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['sisa_tagihan'] = $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['total_tagihan'] - $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['total_bayar'];
+            //             $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['lama_bayar'] = $selisihTanggal;
+            //         }
 
-                $key_header = $nama_pelanggan.' | '.$no_pelanggan;
-                $key_selisih = $selisihTanggal;
-                $key = str_replace('-', '', $v_drs['tgl_panen']).'-'.$v_drs['no_do'].'-'.$v_drs['id'];
+            //         $total_tonase = $tonase;
+            //         $total_tagihan = $tonase * $harga;
+            //         $total_sisa_tagihan = $sisa_tagihan;
 
-                $sisa_tagihan = ($tonase * $harga) - $jumlah_bayar;
-                if ( $sisa_tagihan > 0 ) {
-                    if ( !isset($data[$key_header]['do'][ $key_selisih ]['list_do'][$key]) ) {
-                        $data[$key_header]['do'][ $key_selisih ]['list_do'][$key] = array(
-                            'nama' => $v_drs['nama'],
-                            'tgl_panen' => $v_drs['tgl_panen'],
-                            'no_do' => $no_do,
-                            'harga' => $harga,
-                            'tonase' => $tonase,
-                            'total_tagihan' => $tonase * $harga,
-                            'total_bayar' => $jumlah_bayar,
-                            'sisa_tagihan' => $sisa_tagihan,
-                            'lama_bayar' => $selisihTanggal,
-                            'no_nota' => $no_nota
-                        );
-                    } else {
-                        $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['total_tagihan'] += $tonase * $harga;
-                        $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['total_bayar'] += $jumlah_bayar;
-                        $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['sisa_tagihan'] = $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['total_tagihan'] - $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['total_bayar'];
-                        $data[$key_header]['do'][ $key_selisih ]['list_do'][$key]['lama_bayar'] = $selisihTanggal;
-                    }
+            //         if ( !isset($data[$key_header]['nama']) ) {
+            //             $m_pp = new \Model\Storage\PembayaranPelanggan_model();
+            //             $d_pp = $m_pp->where('no_pelanggan', $no_pelanggan)->where('tgl_bayar', '<=', $tgl_max_do)->orderBy('tgl_bayar', 'desc')->first();
 
-                    $total_tonase = $tonase;
-                    $total_tagihan = $tonase * $harga;
-                    $total_sisa_tagihan = $sisa_tagihan;
+            //             $data[$key_header]['nama'] = $nama_pelanggan;
+            //             $data[$key_header]['total_tonase'] = $total_tonase;
+            //             $data[$key_header]['total_tagihan'] = $total_tagihan;
+            //             $data[$key_header]['total_sisa_tagihan'] = $total_sisa_tagihan;
+            //             $data[$key_header]['total_pembayaran_terakhir'] = !empty($d_pp) ? $d_pp->jml_transfer : 0;
+            //             $data[$key_header]['tgl_pembayaran_terakhir'] = !empty($d_pp) ? strtoupper(tglIndonesia($d_pp->tgl_bayar, '-', ' ')) : '-';
+            //             $data[$key_header]['max_umur_hutang'] = $selisihTanggal;
+            //         } else {
+            //             $data[$key_header]['total_tonase'] += $tonase;
+            //             $data[$key_header]['total_tagihan'] += $total_tagihan;
+            //             $data[$key_header]['total_sisa_tagihan'] += $total_sisa_tagihan;
+            //             $data[$key_header]['max_umur_hutang'] = ($data[$key_header]['max_umur_hutang'] < $selisihTanggal) ? $selisihTanggal : $data[$key_header]['max_umur_hutang'];
+            //         }
 
-                    if ( !isset($data[$key_header]['nama']) ) {
-                        $m_pp = new \Model\Storage\PembayaranPelanggan_model();
-                        $d_pp = $m_pp->where('no_pelanggan', $no_pelanggan)->where('tgl_bayar', '<=', $tgl_max_do)->orderBy('tgl_bayar', 'desc')->first();
+            //         ksort($data[$key_header]['do'][ $key_selisih ]['list_do']);
+            //         krsort($data[$key_header]['do']);
+            //         ksort($data);
+            //     }
+            // }
 
-                        $data[$key_header]['nama'] = $nama_pelanggan;
-                        $data[$key_header]['total_tonase'] = $total_tonase;
-                        $data[$key_header]['total_tagihan'] = $total_tagihan;
-                        $data[$key_header]['total_sisa_tagihan'] = $total_sisa_tagihan;
-                        $data[$key_header]['total_pembayaran_terakhir'] = !empty($d_pp) ? $d_pp->jml_transfer : 0;
-                        $data[$key_header]['tgl_pembayaran_terakhir'] = !empty($d_pp) ? strtoupper(tglIndonesia($d_pp->tgl_bayar, '-', ' ')) : '-';
-                        $data[$key_header]['max_umur_hutang'] = $selisihTanggal;
-                    } else {
-                        $data[$key_header]['total_tonase'] += $tonase;
-                        $data[$key_header]['total_tagihan'] += $total_tagihan;
-                        $data[$key_header]['total_sisa_tagihan'] += $total_sisa_tagihan;
-                        $data[$key_header]['max_umur_hutang'] = ($data[$key_header]['max_umur_hutang'] < $selisihTanggal) ? $selisihTanggal : $data[$key_header]['max_umur_hutang'];
-                    }
-
-                    ksort($data[$key_header]['do'][ $key_selisih ]['list_do']);
-                    krsort($data[$key_header]['do']);
-                    ksort($data);
-                }
-            }
-
-            if ( !empty($data) ) {
-                foreach ($data as $key => $value) {
-                    if ( $value['max_umur_hutang'] < $minimal_lama_bayar ) {
-                        unset($data[ $key ]);
-                    }
-                }
-            }
-
-            // cetak_r( $data, 1 );
+            // if ( !empty($data) ) {
+            //     foreach ($data as $key => $value) {
+            //         if ( $value['max_umur_hutang'] < $minimal_lama_bayar ) {
+            //             unset($data[ $key ]);
+            //         }
+            //     }
+            // }
         }
 
         return $data;

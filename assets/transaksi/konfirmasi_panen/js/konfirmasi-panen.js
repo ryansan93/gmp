@@ -12,13 +12,14 @@ var kp = {
     }, // end - start_up
 
     load_form: function(elm) {
+        $('.modal').modal('hide');
         let tr = $(elm);
 
         showLoading();
 
         let params = {
-            'noreg' : $(tr).find('td.noreg').text().trim(),
-            'id' : $(tr).data('id')
+            'noreg' : $(elm).attr('data-noreg'),
+            'id' : $(elm).attr('data-id')
         }
 
         $.get('transaksi/KonfirmasiPanen/load_form',{

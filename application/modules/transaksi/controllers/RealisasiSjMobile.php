@@ -725,6 +725,42 @@ class RealisasiSjMobile extends Public_Controller {
                 }
 
                 $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select * from
+                    (
+                        select
+                            drs.no_sj,
+                            REPLACE(drs.no_sj, 'SJ', 'INV') as no_inv,
+                            sum(drs.tonase) as tonase,
+                            sum(drs.ekor) as ekor,
+                            (sum(drs.tonase) / sum(drs.ekor)) as bb,
+                            sum(drs.tonase * drs.harga) as total
+                        from det_real_sj drs
+                        where
+                            drs.id_header = ".$id_real_sj."
+                        group by
+                            drs.no_sj
+                    ) data
+                    where
+                        data.total > 0
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+                if ( $d_conf->count() > 0 ) {
+                    $d_drsi = $d_conf->toArray();
+
+                    foreach ($d_drsi as $k_drsi => $v_drsi) {
+                        $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                        $m_drsi->no_sj = $v_drsi['no_sj'];
+                        $m_drsi->no_inv = $v_drsi['no_inv'];
+                        $m_drsi->tonase = $v_drsi['tonase'];
+                        $m_drsi->ekor = $v_drsi['ekor'];
+                        $m_drsi->bb = $v_drsi['bb'];
+                        $m_drsi->total = $v_drsi['total'];
+                        $m_drsi->save();
+                    }
+                }
+
+                $m_conf = new \Model\Storage\Conf();
                 $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", NULL, 1";
                 $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -793,6 +829,9 @@ class RealisasiSjMobile extends Public_Controller {
                         }
                     }
 
+                    $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                    $m_drsi->where('no_sj', $val['no_sj'])->delete();
+
                     $m_det_real_sj = new \Model\Storage\DetRealSJ_model();
                     $id = $m_det_real_sj->getNextIdentity();
                     if ( !empty($val['id_det_real_sj']) ) {
@@ -841,10 +880,46 @@ class RealisasiSjMobile extends Public_Controller {
             }
 
             $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select * from
+                (
+                    select
+                        drs.no_sj,
+                        REPLACE(drs.no_sj, 'SJ', 'INV') as no_inv,
+                        sum(drs.tonase) as tonase,
+                        sum(drs.ekor) as ekor,
+                        (sum(drs.tonase) / sum(drs.ekor)) as bb,
+                        sum(drs.tonase * drs.harga) as total
+                    from det_real_sj drs
+                    where
+                        drs.id_header = ".$id_real_sj."
+                    group by
+                        drs.no_sj
+                ) data
+                where
+                    data.total > 0
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_drsi = $d_conf->toArray();
+
+                foreach ($d_drsi as $k_drsi => $v_drsi) {
+                    $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                    $m_drsi->no_sj = $v_drsi['no_sj'];
+                    $m_drsi->no_inv = $v_drsi['no_inv'];
+                    $m_drsi->tonase = $v_drsi['tonase'];
+                    $m_drsi->ekor = $v_drsi['ekor'];
+                    $m_drsi->bb = $v_drsi['bb'];
+                    $m_drsi->total = $v_drsi['total'];
+                    $m_drsi->save();
+                }
+            }
+
+            $m_conf = new \Model\Storage\Conf();
             $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", ".$id_real_sj.", 2";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
-            $d_real_sj = $m_real_sj->where('id', $id_real_sj)->first();
+            $d_real_sj = $m_real_sj->where('id', $id_real_sj)->with(['det_real_sj'])->first();
 
             if ( !empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus']) ) {
                 $deskripsi_log = 'update harga oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -868,11 +943,20 @@ class RealisasiSjMobile extends Public_Controller {
 
         try {
             $m_real_sj = new \Model\Storage\RealSJ_model();
-            $d_real_sj = $m_real_sj->where('tgl_panen', $params['tgl_panen'])->where('noreg', $params['noreg'])->first();
+            $d_real_sj = $m_real_sj->where('tgl_panen', $params['tgl_panen'])->where('noreg', $params['noreg'])->with(['det_real_sj'])->first();
 
+            if ( $d_real_sj ) {
+                foreach ($d_real_sj['det_real_sj'] as $k_drs => $v_drs) {
+                    $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                    $m_drsi->where('no_sj', $v_drs['no_sj'])->delete();
+
+                    $m_drs = new \Model\Storage\DetRealSJ_model();
+                    $m_drs->where('id', $v_drs['id'])->delete();
+                }
+            }
+
+            $m_real_sj = new \Model\Storage\RealSJ_model();
             $m_real_sj->where('id', $d_real_sj->id)->delete();
-            $m_dreal_sj = new \Model\Storage\DetRealSJ_model();
-            $m_dreal_sj->where('id_header', $d_real_sj->id)->delete();
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$d_real_sj->id.", ".$d_real_sj->id.", 3";

@@ -399,8 +399,11 @@ class PembayaranPeralatan extends Public_Controller
         $params = $this->input->get('params');
 
         $supplier = $params['supplier'];
+        $sql_supplier = null;
+        if ( !empty($supplier) ) {
+            $sql_supplier = "and d.supplier = '".$supplier."'";
+        }
         $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
-
         $sql_id = null;
         if ( !empty($id) ) {
             $sql_id = "where id_header <> '".$id."'";
@@ -438,6 +441,7 @@ class PembayaranPeralatan extends Public_Controller
                 d.supplier = '".$supplier."' and 
                 d.nomor like '%NS%' and
                 (d.tot_dn - isnull(rpd.pakai, 0)) > 0
+                ".$sql_supplier."
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -467,8 +471,11 @@ class PembayaranPeralatan extends Public_Controller
         $params = $this->input->get('params');
 
         $supplier = $params['supplier'];
+        $sql_supplier = null;
+        if ( !empty($supplier) ) {
+            $sql_supplier = "and c.supplier = '".$supplier."'";
+        }
         $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
-
         $sql_id = null;
         if ( !empty($id) ) {
             $sql_id = "where id_header <> '".$id."'";
@@ -504,6 +511,7 @@ class PembayaranPeralatan extends Public_Controller
                 c.supplier = '".$supplier."' and 
                 c.nomor like '%NS%' and
                 (c.tot_cn - isnull(rpc.pakai, 0)) > 0
+                ".$sql_supplier."
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

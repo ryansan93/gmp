@@ -1212,4 +1212,106 @@ class Pelanggan extends Public_Controller {
 
     	cetak_r( $nomor );
     }
+
+	public function injekDariMgb()
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select plg1.* from mgb_erp_live.dbo.pelanggan plg1
+            right join
+                (select max(id) as id, nomor from mgb_erp_live.dbo.pelanggan where tipe <> 'supplier' and jenis <> 'ekspedisi' group by nomor) plg2
+                on
+                    plg1.id = plg2.id
+            where
+                plg1.mstatus = 1
+            order by
+                plg1.nama asc
+        ";
+        $d_plg = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_plg->count() > 0 ) {
+            $d_plg = $d_plg->toArray();
+
+            foreach ($d_plg as $k_plg => $v_plg) {
+                $status = "submit";
+
+				// ekspedisi
+				$m_plg = new \Model\Storage\Pelanggan_model();
+				$plg_id = $m_plg->getNextIdentity();
+
+				$m_plg->id = $plg_id;
+				$m_plg->nomor = $v_plg['nomor'];
+				$m_plg->jenis = $v_plg['jenis'];
+				$m_plg->nama = $v_plg['nama'];
+				$m_plg->cp = $v_plg['cp'];
+				$m_plg->nik = $v_plg['nik'];
+				$m_plg->alamat_kecamatan = $v_plg['alamat_kecamatan'];
+				$m_plg->alamat_kelurahan = $v_plg['alamat_kelurahan'];
+				$m_plg->alamat_rt = $v_plg['alamat_rt'];
+				$m_plg->alamat_rw = $v_plg['alamat_rw'];
+				$m_plg->alamat_jalan = $v_plg['alamat_jalan'];
+				$m_plg->npwp = $v_plg['npwp'];
+				$m_plg->usaha_kecamatan = $v_plg['usaha_kecamatan'];
+				$m_plg->usaha_kelurahan = $v_plg['usaha_kelurahan'];
+				$m_plg->usaha_rt = $v_plg['usaha_rt'];
+				$m_plg->usaha_rw = $v_plg['usaha_rw'];
+				$m_plg->usaha_jalan = $v_plg['usaha_jalan'];
+				$m_plg->status = $v_plg['status'];
+				$m_plg->mstatus = $v_plg['mstatus'];
+				$m_plg->platform = $v_plg['platform'];
+				$m_plg->version = $v_plg['version'];
+				$m_plg->skb = $v_plg['skb'];
+				$m_plg->tgl_habis_skb = $v_plg['tgl_habis_skb'];
+				$m_plg->save();
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select tp.* from mgb_erp_live.dbo.telp_pelanggan tp
+                    where
+                        tp.pelanggan = ".$v_plg['id']."
+                ";
+                $d_telp = $m_conf->hydrateRaw( $sql );
+                if ( $d_telp->count() > 0 ) {
+                    $d_telp = $d_telp->toArray();
+
+                    foreach ($d_telp as $k_telp => $v_telp) {
+                        $m_telp = new \Model\Storage\TelpPelanggan_model();
+						$m_telp->id = $m_telp->getNextIdentity();
+						$m_telp->pelanggan = $plg_id;
+						$m_telp->nomor = $v_telp['nomor'];
+						$m_telp->save();
+                    }
+                }
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select bp.* from mgb_erp_live.dbo.bank_pelanggan bp
+                    where
+                        bp.pelanggan = ".$v_plg['id']."
+                ";
+                $d_bank = $m_conf->hydrateRaw( $sql );
+                if ( $d_bank->count() > 0 ) {
+                    $d_bank = $d_bank->toArray();
+
+                    foreach ($d_bank as $k_bank => $v_bank) {
+                        $m_bank = new \Model\Storage\BankPelanggan_model();
+						$bank_plg_id = $m_bank->getNextIdentity();
+
+						$m_bank->id = $bank_plg_id;
+						$m_bank->pelanggan = $plg_id;
+						$m_bank->bank = $v_bank['bank'];
+						$m_bank->rekening_nomor = $v_bank['rekening_nomor'];
+						$m_bank->rekening_pemilik = $v_bank['rekening_pemilik'];
+						$m_bank->rekening_cabang_bank = $v_bank['rekening_cabang_bank'];
+						$m_bank->save();
+                    }
+                }
+
+                $d_plg = $m_plg->where('id', $plg_id)->with(['telepons', 'banks'])->first();
+
+                $deskripsi_log = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
+				Modules::run( 'base/event/save', $d_plg, $deskripsi_log );
+            }
+        }
+    }
 }

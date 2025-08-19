@@ -1,4 +1,4 @@
-<div class="col-xs-12 no-padding">
+<!-- <div class="col-xs-12 no-padding">
 	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-2 no-padding"><label class="label-control">Tipe DN</label></div>
 		<div class="col-xs-10 no-padding">
@@ -6,12 +6,13 @@
 		</div>
 	</div>
 </div>
-<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div> -->
 <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-2 no-padding"><label class="label-control">Jenis DN</label></div>
 		<div class="col-xs-10 no-padding">
-			<label class="label-control">: <?php echo $jenis_dn[$data['jenis_dn']]; ?></label>
+			<!-- <label class="label-control">: <?php echo $jenis_dn[$data['jenis_dn']]; ?></label> -->
+			<label class="label-control">: <?php echo $data['nama_jurnal_trans']; ?></label>
 		</div>
 	</div>
 	<div class="col-xs-6 no-padding text-right" style="padding-left: 5px;">
@@ -93,7 +94,7 @@
                                 <?php echo angkaDecimal($v_det['nominal']); ?>
                             </td>
                         </tr>
-						<tr class="detail">
+						<!-- <tr class="detail">
 							<td colspan="5" style="background-color: #dedede;">
 								<table class="table table-bordered" style="margin-bottom: 0px;">
 									<thead>
@@ -114,7 +115,7 @@
 									</tbody>
 								</table>
 							</td>
-						</tr>
+						</tr> -->
                     <?php } ?>
                 <?php } else { ?>
                     <tr>

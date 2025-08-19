@@ -412,7 +412,7 @@ var rp = {
             success : function(data){
                 if ( data.status == 1 ) {
                     // rp.hitungStokAwal( data.content.id );
-                    rp.hitungStokByTransaksi(data.content.id, data.content.tanggal, data.content.delete, data.content.message);
+                    rp.hitungStokByTransaksi(data.content);
                 } else {
                     hideLoading();
                     bootbox.alert( data.message );
@@ -556,7 +556,7 @@ var rp = {
             beforeSend : function(){ showLoading(); },
             success : function(data){
                 if ( data.status == 1 ) {
-                    rp.hitungStokByTransaksi(data.content.id, data.content.tanggal, data.content.delete, data.content.message);
+                    rp.hitungStokByTransaksi(data.content);
                     // bootbox.alert( data.message, function() {
                     //     // rp.get_lists();
                     //     rp.load_form();
@@ -584,7 +584,7 @@ var rp = {
                     beforeSend : function(){ showLoading(); },
                     success : function(data){
                         if ( data.status == 1 ) {
-                            rp.hitungStokByTransaksi(data.content.id, data.content.tanggal, data.content.delete, data.content.message);
+                            rp.hitungStokByTransaksi(data.content);
                             // bootbox.alert( data.message, function() {
                             //     rp.get_lists();
                             //     rp.load_form();
@@ -599,13 +599,8 @@ var rp = {
         });
     }, // end - delete
 
-    hitungStokByTransaksi: function(id, tanggal, _delete, message) {
-        var params = {
-            'id': id,
-            'tanggal': tanggal,
-            'delete': _delete,
-            'message': message
-        }
+    hitungStokByTransaksi: function(_params) {
+        var params = _params;
 
         $.ajax({
             url: 'transaksi/ReturPakan/hitungStokByTransaksi',
@@ -620,9 +615,13 @@ var rp = {
             success: function(data) {
                 hideLoading();
                 if ( data.status == 1 ) {
-                    bootbox.alert(message, function() {
+                    bootbox.alert(data.message, function() {
                         rp.get_lists();
-                        rp.load_form();
+                        if ( _params.delete == 1 ) {
+                            rp.load_form();
+                        } else {
+                            rp.load_form(data.content.id);
+                        }
                     });
                 } else {
                     bootbox.alert(data.message);

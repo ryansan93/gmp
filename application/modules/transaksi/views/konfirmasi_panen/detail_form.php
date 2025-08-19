@@ -190,11 +190,14 @@
 						<button type="button" class="btn btn-danger pull-right" style="margin: 0px 5px;" onclick="kp.edit_batal(this)"data-jenis="batal"><i class="fa fa-times"></i> Batal</button>
 					</div>
 					<div class="col-md-12 no-padding action">
+						<?php if ( $akses['a_submit'] == 1 ): ?>
+							<button type="button" class="btn btn-success pull-right" style="margin: 0px 5px;" onclick="kp.load_form(this);" data-noreg="<?php echo $data['data_konfir']['noreg']; ?>"><i class="fa fa-plus"></i> Tambah Baru</button>
+						<?php endif ?>
 						<?php if ( $akses['a_edit'] == 1 ): ?>
 							<button type="button" class="btn btn-primary pull-right" style="margin: 0px 5px;" onclick="kp.edit_batal(this)" data-jenis="edit"><i class="fa fa-edit"></i> Edit</button>
 						<?php endif ?>
 						<?php if ( $akses['a_delete'] == 1 ): ?>
-							<button type="button" class="btn btn-danger pull-right" style="margin: 0px 5px;" onclick="kp.delete(this)"data-id="<?php echo $data['data_konfir']['id']; ?>"><i class="fa fa-trash"></i> Hapus</button>
+							<button type="button" class="btn btn-danger pull-right" style="margin: 0px 5px;" onclick="kp.delete(this)" data-id="<?php echo $data['data_konfir']['id']; ?>"><i class="fa fa-trash"></i> Hapus</button>
 						<?php endif ?>
 					</div>
 				</form>
