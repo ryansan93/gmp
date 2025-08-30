@@ -66,24 +66,24 @@
 									<th class="text-center col-lg-1">Kode Brg</th>
 									<th class="text-center col-lg-1">Nama Brg</th>
 									<th class="text-center col-lg-1">Tanggal</th>
-									<th class="text-center col-lg-1">Tgl Stok</th>
-									<th class="text-center col-lg-1">Transaksi</th>
-									<th class="text-center col-lg-1">Kode Transaksi</th>
+									<th class="text-center col-lg-1">Ambil Stok Tgl</th>
+									<!-- <th class="text-center col-lg-1">Transaksi</th> -->
+									<th class="text-center col-lg-1">Kode Trans</th>
 									<th class="text-center col-lg-1" style="width: 5%;">Jumlah</th>
 									<th class="text-center col-lg-1">Hrg Beli</th>
 									<th class="text-center col-lg-1">Total Beli</th>
-									<th class="text-center col-lg-1">Hrg Jual</th>
-									<th class="text-center col-lg-1">Total Jual</th>
+									<th class="text-center col-lg-1">Debet</th>
+									<th class="text-center col-lg-1">Kredit</th>
 									<th class="text-center col-lg-1" style="width: 5%;">Saldo</th>
 									<th class="text-center col-lg-1">Nilai Saldo</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr>
-									<td colspan="13" style="background-color: #dedede;"><b>Gudang : -</b></td>
+									<td colspan="12" style="background-color: #dedede;"><b>Gudang : -</b></td>
 								</tr>
 								<tr>
-									<td colspan="13">Data tidak ditemukan.</td>
+									<td colspan="12">Data tidak ditemukan.</td>
 								</tr>
 							</tbody>
 						</table>

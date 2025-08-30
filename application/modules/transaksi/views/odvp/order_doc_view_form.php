@@ -27,7 +27,7 @@
 				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-4">Perusahaan</div>
 					<div class="col-lg-6">
-						<span>:</span>
+					<span>:</span>
 						<span>
 							<?php 
 								if ( empty($data_order_doc->data_perusahaan) ) {

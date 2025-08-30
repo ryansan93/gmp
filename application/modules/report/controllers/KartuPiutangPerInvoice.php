@@ -452,6 +452,8 @@ class KartuPiutangPerInvoice extends Public_Controller {
                 ) plg
                 on
                     plg.nomor = data.pelanggan
+            where
+                data.pelanggan = '22A360'
             order by
                 data.pelanggan asc,
                 data.no_inv asc,

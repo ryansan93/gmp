@@ -43,39 +43,11 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-sm-12 no-padding hide" style="margin-bottom: 10px;">
-					<div class="col-sm-12 no-padding">
-						<label>PERUSAHAAN</label>
-					</div>
-					<div class="col-sm-12 no-padding">
-						<select class="col-sm-12 form-control perusahaan">
-							<option value="">Pilih Perusahaan</option>
-							<?php if ( count($perusahaan) > 0 ): ?>
-								<?php foreach ($perusahaan as $k_prs => $v_prs): ?>
-									<?php 
-										$text_perusahaan = '';
-
-										$perusahaan_old = null;
-										foreach ($v_prs['detail'] as $k_det => $v_det) {
-											if ( !empty($perusahaan_old) ) {
-												$text_perusahaan .= ', ';
-											}
-											$text_perusahaan .= $v_det['nama'];
-
-											$perusahaan_old = $v_det['nama'];
-										} 
-									?>
-									<option value="<?php echo $v_prs['kode_gabung_perusahaan']; ?>"><?php echo strtoupper($text_perusahaan); ?></option>
-								<?php endforeach ?>
-							<?php endif ?>
-						</select>
-					</div>
-				</div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<button type="button" class="col-xs-12 btn btn-primary pull-right tampilkan_riwayat" onclick="tb.getData()">PROSES DATA TUTUP BULAN</button>
+					<button type="button" class="col-xs-12 btn btn-primary pull-right tampilkan_riwayat" onclick="tb.tutupBulan()">PROSES TUTUP BULAN</button>
 				</div>
 			</div>
-			<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+			<!-- <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 			<div class="col-xs-12 no-padding data">
 			</div>
 			<div class="col-xs-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 10px;"></div>
@@ -84,7 +56,7 @@
 			</div>
 			<div class="col-xs-12 no-padding hide btn-hapus">
 				<button type="button" class="col-xs-12 btn btn-danger pull-right" onclick="tb.hapusTutupBulan()"><i class="fa fa-check"></i> HAPUS TUTUP BULAN</button>
-			</div>
+			</div> -->
 		</div>
 	</div>
 </div>

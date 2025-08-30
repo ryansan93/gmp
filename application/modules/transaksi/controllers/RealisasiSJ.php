@@ -246,9 +246,11 @@ class RealisasiSJ extends Public_Controller
                 }
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", NULL, 1";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", NULL, 1";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id_real_sj, null, 1);
 
             $d_real_sj = $m_real_sj->where('id', $id_real_sj)->with(['det_real_sj'])->first();
 
@@ -353,9 +355,11 @@ class RealisasiSJ extends Public_Controller
                 }
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", ".$id_real_sj.", 2";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", ".$id_real_sj.", 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id_real_sj, $id_real_sj, 2);
 
             $d_real_sj = $m_real_sj->where('id', $id_real_sj)->with(['det_real_sj'])->first();
 
@@ -393,9 +397,11 @@ class RealisasiSJ extends Public_Controller
             $m_real_sj = new \Model\Storage\RealSJ_model();
             $m_real_sj->where('id', $id)->delete();
             
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id.", ".$id.", 3";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id.", ".$id.", 3";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 3);
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_real_sj, $deskripsi_log);
