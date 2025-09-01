@@ -756,9 +756,9 @@ class Supplier extends Public_Controller {
     {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select p1.* from pelanggan p1
+            select p1.* from mgb_erp_live.dbo.pelanggan p1
 			right join
-				(select max(id) as id, nomor from pelanggan p where tipe = 'supplier' and jenis <> 'ekspedisi' and mstatus = 1 group by nomor) p2
+				(select max(id) as id, nomor from mgb_erp_live.dbo.pelanggan p where tipe = 'supplier' and jenis <> 'ekspedisi' and mstatus = 1 group by nomor) p2
 				on
 					p1.id = p2.id
 			order by
