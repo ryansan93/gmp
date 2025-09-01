@@ -294,10 +294,19 @@ class Pegawai extends Public_Controller
 		echo $html;
 	}
 
-	public function injek() {
+	public function injek($_nik = null) {
+
+		$nik = null;
+		if ( empty($_nik) ) {
+			/* PUSAT JEMBER */
+			$nik = array('K21001', 'K21002', 'K21003', 'K21005', 'K21007', 'K21010', 'K22174', 'K25232');
+		} else {
+			$nik = array($_nik);
+		}
+
 		$m_conf = new \Model\Storage\Conf();
         $sql = "
-            select * from mgb_erp_live.dbo.karyawan where nik in ('K21001', 'K21002', 'K21003', 'K21005', 'K21007', 'K21010', 'K22174', 'K25232') -- PUSAT JEMBER
+            select * from mgb_erp_live.dbo.karyawan where nik in ('".implode("', '", $nik)."')
         ";
         $d_kry = $m_conf->hydrateRaw( $sql );
 
@@ -306,60 +315,120 @@ class Pegawai extends Public_Controller
 
 			foreach ($d_kry as $k_kry => $v_kry) {
 				$m_karyawan = new \Model\Storage\Karyawan_model();
-				$m_karyawan->id = $v_kry['id'];
-				$m_karyawan->level = $v_kry['level'];
-				$m_karyawan->nik = $v_kry['nik'];
-				$m_karyawan->atasan = $v_kry['atasan'];
-				$m_karyawan->nama = $v_kry['nama'];
-				$m_karyawan->kordinator = $v_kry['kordinator'];
-				$m_karyawan->marketing = $v_kry['marketing'];
-				$m_karyawan->jabatan = $v_kry['jabatan'];
-				$m_karyawan->status = 1;
-				$m_karyawan->save();
+				$d_karyawan = $m_karyawan->where('nik', $v_kry['nik'])->first();
 
-				$deskripsi_log_karyawan = 'di-injek oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            	Modules::run( 'base/event/save', $m_karyawan, $deskripsi_log_karyawan );
-
-				$m_conf = new \Model\Storage\Conf();
-				$sql = "
-					select * from mgb_erp_live.dbo.unit_karyawan uk where id_karyawan in (".$v_kry['id'].")
-				";
-				$d_uk = $m_conf->hydrateRaw( $sql );
-
-				if ( $d_uk->count() > 0 ) {
-					$d_uk = $d_uk->toArray();
-
-					foreach ($d_uk as $k_val => $val) {
-						$m_unit_karyawan = new \Model\Storage\UnitKaryawan_model();
-
-						$id_unit_karyawan = $m_unit_karyawan->getNextIdentity();
-
-						$m_unit_karyawan->id = $id_unit_karyawan;
-						$m_unit_karyawan->id_karyawan = $val['id_karyawan'];
-						$m_unit_karyawan->unit = $val['unit'];
-						$m_unit_karyawan->save();
+				if ( !$d_karyawan ) {
+					$m_karyawan = new \Model\Storage\Karyawan_model();
+					$m_karyawan->id = $v_kry['id'];
+					$m_karyawan->level = $v_kry['level'];
+					$m_karyawan->nik = $v_kry['nik'];
+					$m_karyawan->atasan = $v_kry['atasan'];
+					$m_karyawan->nama = $v_kry['nama'];
+					$m_karyawan->kordinator = $v_kry['kordinator'];
+					$m_karyawan->marketing = $v_kry['marketing'];
+					$m_karyawan->jabatan = $v_kry['jabatan'];
+					$m_karyawan->status = 1;
+					$m_karyawan->save();
+	
+					$deskripsi_log_karyawan = 'di-injek oleh ' . $this->userdata['detail_user']['nama_detuser'];
+					Modules::run( 'base/event/save', $m_karyawan, $deskripsi_log_karyawan );
+	
+					$m_conf = new \Model\Storage\Conf();
+					$sql = "
+						select * from mgb_erp_live.dbo.unit_karyawan uk where id_karyawan in (".$v_kry['id'].")
+					";
+					$d_uk = $m_conf->hydrateRaw( $sql );
+	
+					if ( $d_uk->count() > 0 ) {
+						$d_uk = $d_uk->toArray();
+	
+						foreach ($d_uk as $k_uk => $val) {
+							$m_unit_karyawan = new \Model\Storage\UnitKaryawan_model();
+	
+							$id_unit_karyawan = $m_unit_karyawan->getNextIdentity();
+	
+							$m_unit_karyawan->id = $id_unit_karyawan;
+							$m_unit_karyawan->id_karyawan = $val['id_karyawan'];
+							$m_unit_karyawan->unit = $val['unit'];
+							$m_unit_karyawan->save();
+						}
 					}
-				}
-		
-				$m_conf = new \Model\Storage\Conf();
-				$sql = "
-					select * from mgb_erp_live.dbo.wilayah_karyawan wk where id_karyawan in (".$v_kry['id'].")
-				";
-				$d_wk = $m_conf->hydrateRaw( $sql );
-
-				if ( $d_wk->count() > 0 ) {
-					$d_wk = $d_wk->toArray();
-
-					foreach ($d_wk as $k_val => $val) {
-						$m_wilayah_karyawan = new \Model\Storage\WilayahKaryawan_model();
-
-						$id_wilayah_karyawan = $m_wilayah_karyawan->getNextIdentity();
-
-						$m_wilayah_karyawan->id = $id_wilayah_karyawan;
-						$m_wilayah_karyawan->id_karyawan = $val['id_karyawan'];
-						$m_wilayah_karyawan->wilayah = $val['wilayah'];
-						$m_wilayah_karyawan->save();
+			
+					$m_conf = new \Model\Storage\Conf();
+					$sql = "
+						select * from mgb_erp_live.dbo.wilayah_karyawan wk where id_karyawan in (".$v_kry['id'].")
+					";
+					$d_wk = $m_conf->hydrateRaw( $sql );
+	
+					if ( $d_wk->count() > 0 ) {
+						$d_wk = $d_wk->toArray();
+	
+						foreach ($d_wk as $k_wk => $val) {
+							$m_wilayah_karyawan = new \Model\Storage\WilayahKaryawan_model();
+	
+							$id_wilayah_karyawan = $m_wilayah_karyawan->getNextIdentity();
+	
+							$m_wilayah_karyawan->id = $id_wilayah_karyawan;
+							$m_wilayah_karyawan->id_karyawan = $val['id_karyawan'];
+							$m_wilayah_karyawan->wilayah = $val['wilayah'];
+							$m_wilayah_karyawan->save();
+						}
 					}
+
+					/* USER */
+					$m_conf = new \Model\Storage\Conf();
+					$sql = "
+						select du1.* from mgb_erp_live.dbo.detail_user du1 
+						right join
+							(
+								select max(id_detuser) as id_detuser, id_user from mgb_erp_live.dbo.detail_user where UPPER(nama_detuser) = UPPER('".$v_kry['nama']."') group by id_user
+							) du2
+							on
+								du2.id_detuser
+					";
+					$d_du = $m_conf->hydrateRaw( $sql );
+	
+					if ( $d_du->count() > 0 ) {
+						$d_du = $d_du->toArray();
+	
+						foreach ($d_du as $k_du => $v_du) {
+							$m_conf = new \Model\Storage\Conf();
+							$sql = "
+								select * from mgb_erp_live.dbo.ms_user mu where id_user = '".$v_du['id_user']."'
+							";
+							$d_mu = $m_conf->hydrateRaw( $sql );
+
+							if ( $d_mu->count() > 0 ) {
+								$d_mu = $d_mu->toArray();
+			
+								foreach ($d_mu as $k_mu => $v_mu) {
+									$m_usr = new \Model\Storage\User_model();
+									$m_usr->id_user = $v_mu['id_user'];
+									$m_usr->username_user = $v_mu['username_user'];
+									$m_usr->status_user = $v_mu['status_user'];
+									$m_usr->pass_user = $v_mu['pass_user'];
+									$m_usr->save();
+								}
+							}
+
+							$m_dusr = new \Model\Storage\DetUser_model();
+							$m_dusr->id_detuser = $v_du['id_detuser'];
+							$m_dusr->id_user = $v_du['id_user'];
+							$m_dusr->aktif_detuser = $v_du['aktif_detuser'];
+							$m_dusr->jk_detuser = $v_du['jk_detuser'];
+							$m_dusr->email_detuser = $v_du['email_detuser'];
+							$m_dusr->nama_detuser = $v_du['nama_detuser'];
+							$m_dusr->username_detuser = $v_du['username_detuser'];
+							$m_dusr->pass_detuser = $v_du['pass_detuser'];
+							$m_dusr->telp_detuser = $v_du['telp_detuser'];
+							$m_dusr->id_group = $v_du['id_group'];
+							$m_dusr->avatar_detuser = $v_du['avatar_detuser'];
+							$m_dusr->edit_detuser = $v_du['edit_detuser'];
+							$m_dusr->useredit_detuser = $v_du['useredit_detuser'];
+							$m_dusr->save();
+						}
+					}
+					/* END - USER */
 				}
 			}
 		}
