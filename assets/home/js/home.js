@@ -80,7 +80,9 @@ var home = {
             beforeSend: function() { /* showLoading(); */ },
             success: function(data) {
                 /* hideLoading(); */
-            	home.chartPenjualanDanHarga(data.content.tgl_panen, data.content.harga, data.content.tonase, data.content.tgl_panen_real);
+				if ( !empty(data.content) ) {
+					home.chartPenjualanDanHarga(data.content.tgl_panen, data.content.harga, data.content.tonase, data.content.tgl_panen_real);
+				}
             }, error: function(xhr, ajaxOptions, thrownError) { console.log(thrownError); }
         });
 	}, // end - getDataPenjualan

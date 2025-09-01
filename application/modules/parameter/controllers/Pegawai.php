@@ -293,4 +293,75 @@ class Pegawai extends Public_Controller
 
 		echo $html;
 	}
+
+	public function injek() {
+		$m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from mgb_erp_live.dbo.karyawan where nik in ('K21001', 'K21002', 'K21003', 'K21005', 'K21007', 'K21010', 'K22174', 'K25232') -- PUSAT JEMBER
+        ";
+        $d_kry = $m_conf->hydrateRaw( $sql );
+
+		if ( $d_kry->count() > 0 ) {
+			$d_kry = $d_kry->toArray();
+
+			foreach ($d_kry as $k_kry => $v_kry) {
+				$m_karyawan = new \Model\Storage\Karyawan_model();
+				$m_karyawan->id = $v_kry['id'];
+				$m_karyawan->level = $v_kry['level'];
+				$m_karyawan->nik = $v_kry['nik'];
+				$m_karyawan->atasan = $v_kry['atasan'];
+				$m_karyawan->nama = $v_kry['nama'];
+				$m_karyawan->kordinator = $v_kry['kordinator'];
+				$m_karyawan->marketing = $v_kry['marketing'];
+				$m_karyawan->jabatan = $v_kry['jabatan'];
+				$m_karyawan->status = 1;
+				$m_karyawan->save();
+
+				$deskripsi_log_karyawan = 'di-injek oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            	Modules::run( 'base/event/save', $m_karyawan, $deskripsi_log_karyawan );
+
+				$m_conf = new \Model\Storage\Conf();
+				$sql = "
+					select * from mgb_erp_live.dbo.unit_karyawan uk where id_karyawan in (".$v_kry['id'].")
+				";
+				$d_uk = $m_conf->hydrateRaw( $sql );
+
+				if ( $d_uk->count() > 0 ) {
+					$d_uk = $d_uk->toArray();
+
+					foreach ($d_uk as $k_val => $val) {
+						$m_unit_karyawan = new \Model\Storage\UnitKaryawan_model();
+
+						$id_unit_karyawan = $m_unit_karyawan->getNextIdentity();
+
+						$m_unit_karyawan->id = $id_unit_karyawan;
+						$m_unit_karyawan->id_karyawan = $val['id_karyawan'];
+						$m_unit_karyawan->unit = $val['unit'];
+						$m_unit_karyawan->save();
+					}
+				}
+		
+				$m_conf = new \Model\Storage\Conf();
+				$sql = "
+					select * from mgb_erp_live.dbo.wilayah_karyawan wk where id_karyawan in (".$v_kry['id'].")
+				";
+				$d_wk = $m_conf->hydrateRaw( $sql );
+
+				if ( $d_wk->count() > 0 ) {
+					$d_wk = $d_wk->toArray();
+
+					foreach ($d_wk as $k_val => $val) {
+						$m_wilayah_karyawan = new \Model\Storage\WilayahKaryawan_model();
+
+						$id_wilayah_karyawan = $m_wilayah_karyawan->getNextIdentity();
+
+						$m_wilayah_karyawan->id = $id_wilayah_karyawan;
+						$m_wilayah_karyawan->id_karyawan = $val['id_karyawan'];
+						$m_wilayah_karyawan->wilayah = $val['wilayah'];
+						$m_wilayah_karyawan->save();
+					}
+				}
+			}
+		}
+	}
 }

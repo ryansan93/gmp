@@ -176,7 +176,7 @@ class Home extends Public_Controller
 
 			$data['docin']['jml_ekor'] = $d_td[0]['jml_ekor'];
 			$data['docin']['jml_kdg'] = $d_td[0]['jml_kdg'];
-			$data['docin']['rata_harga_doc'] = $d_td[0]['total'] / $d_td[0]['jml_ekor'];
+			$data['docin']['rata_harga_doc'] = ($d_td[0]['total'] <> 0 && $d_td[0]['jml_ekor'] <> 0) ? $d_td[0]['total'] / $d_td[0]['jml_ekor'] : 0;
 			// $data['docin']['rata_harga_pakan'] = 0;
 		}
 
