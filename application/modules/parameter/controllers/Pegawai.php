@@ -384,7 +384,7 @@ class Pegawai extends Public_Controller
 								select max(id_detuser) as id_detuser, id_user from mgb_erp_live.dbo.detail_user where UPPER(nama_detuser) = UPPER('".$v_kry['nama']."') group by id_user
 							) du2
 							on
-								du2.id_detuser
+								du2.id_detuser = du1.id_detuser 
 					";
 					$d_du = $m_conf->hydrateRaw( $sql );
 	
