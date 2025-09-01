@@ -752,66 +752,113 @@ class Supplier extends Public_Controller {
 		return $datas;
 	}
 
-	// public function refreshListPelanggan() {
-	// 	$content['akses'] = $this->getAkses();
-	// 	$content['pelanggans'] = $this->getListSupplier();
-	// 	$html = $this->load->view($this->pathView . 'list_pelanggan_baru', $content, true);
+	public function injekDariMgb()
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select plg1.* from mgb_erp_live.dbo.pelanggan plg1
+            right join
+                (select max(id) as id, nomor from mgb_erp_live.dbo.pelanggan where jenis = 'ekspedisi' group by nomor) plg2
+                on
+                    plg1.id = plg2.id
+            where
+                plg1.mstatus = 1
+            order by
+                plg1.nama asc
+        ";
+        $d_plg = $m_conf->hydrateRaw( $sql );
 
-	// 	echo $html;
-	// }
+        if ( $d_plg->count() > 0 ) {
+            $d_plg = $d_plg->toArray();
 
-	// public function viewDataPelanggan() {
-	// 	$id = $this->input->get('params');
+            foreach ($d_plg as $k_plg => $v_plg) {
+				$m_plg = new \Model\Storage\Pelanggan_model();
+				$d_plg = $m_plg->where('nomor', $v_plg['nomor'])->first();
 
-	// 	// mengambil data pelanggan
-	// 	$m_pelanggan = new \Model\Storage\Pelanggan();
-	// 	$d_pelanggan = $m_pelanggan->where('nomor', $id)->with('telepons')->with('banks')->with('logs')->first();
-		
-	// 	// mengambil lokasi
-	// 	$lokasi = new \Model\Storage\Lokasi();
-	// 	$kec = $lokasi->where('id', $d_pelanggan['alamat_kecamatan'])->first();
-	// 	$kota = $lokasi->where('id', $kec['induk'])->first();
-	// 	$prov = $lokasi->where('id', $kota['induk'])->first();
-	// 	$kec_usaha = $lokasi->where('id', $d_pelanggan['usaha_kecamatan'])->first();
-	// 	$kota_usaha = $lokasi->where('id', $kec_usaha['induk'])->first();
-	// 	$prov_usaha = $lokasi->where('id', $kota_usaha['induk'])->first();
-
-	// 	// simpan data lokasi
-	// 	$detail_lokasi = array(
-	// 		'prov_id' => $prov['id'],
-	// 		'prov' => $prov['nama'],
-	// 		'kota_id' => $kota['id'],
-	// 		'kota' => $kota['nama'],
-	// 		'kec_id' => $kec['id'],
-	// 		'kec' => $kec['nama'],
-	// 		'prov_usaha_id' => $prov_usaha['id'],
-	// 		'prov_usaha' => $prov_usaha['nama'],
-	// 		'kota_usaha_id' => $kota_usaha['id'],
-	// 		'kota_usaha' => $kota_usaha['nama'],
-	// 		'kec_usaha_id' => $kec_usaha['id'],
-	// 		'kec_usaha' => $kec_usaha['nama']
-	// 	);
-
-	// 	// mengambil lampiran pelanggan
-	// 	$lampiran_ktp = $this->getLampiranPelanggan($d_pelanggan['id'], 'pelanggan')->first();
-	// 	$lampiran_npwp = $this->getLampiranPelanggan($d_pelanggan['id'], 'usaha_pelanggan')->first();
-	// 	$lampiran_rekening = $this->getLampiranPelanggan($d_pelanggan['id'], 'rekening_pelanggan');
-	// 	$lampiran_dds = $this->getLampiranPelanggan($d_pelanggan['id'], 'lampiran_pelanggan')->first();
-
-	// 	$content['akses'] = $this->getAkses();
-	// 	$content['data'] = $d_pelanggan;
-	// 	$content['lokasi'] = $detail_lokasi;
-	// 	$content['l_ktp'] = $lampiran_ktp;
-	// 	$content['l_npwp'] = $lampiran_npwp;
-	// 	$content['l_rekening'] = $lampiran_rekening;
-	// 	$content['l_dds'] = $lampiran_dds;
-
-	// 	if ($content['akses']['submit'] || ($content['akses']['approve'] && $content['akses']['reject'])) {
-	// 		echo $this->load->view($this->pathView . 'view_data_pelanggan', $content, true);
-	// 	} else if ($content['akses']['ack']) {
-	// 		echo $this->load->view($this->pathView . 'ack_pelanggan', $content, true);
-	// 	}
-	// }
+				if ( !$d_plg ) {
+					$status = "submit";
+	
+					// ekspedisi
+					$m_plg = new \Model\Storage\Pelanggan_model();
+					$plg_id = $m_plg->getNextIdentity();
+	
+					$m_plg->id = $plg_id;
+					$m_plg->nomor = $v_plg['nomor'];
+					$m_plg->jenis = $v_plg['jenis'];
+					$m_plg->nama = $v_plg['nama'];
+					$m_plg->cp = $v_plg['cp'];
+					$m_plg->nik = $v_plg['nik'];
+					$m_plg->alamat_kecamatan = $v_plg['alamat_kecamatan'];
+					$m_plg->alamat_kelurahan = $v_plg['alamat_kelurahan'];
+					$m_plg->alamat_rt = $v_plg['alamat_rt'];
+					$m_plg->alamat_rw = $v_plg['alamat_rw'];
+					$m_plg->alamat_jalan = $v_plg['alamat_jalan'];
+					$m_plg->npwp = $v_plg['npwp'];
+					$m_plg->usaha_kecamatan = $v_plg['usaha_kecamatan'];
+					$m_plg->usaha_kelurahan = $v_plg['usaha_kelurahan'];
+					$m_plg->usaha_rt = $v_plg['usaha_rt'];
+					$m_plg->usaha_rw = $v_plg['usaha_rw'];
+					$m_plg->usaha_jalan = $v_plg['usaha_jalan'];
+					$m_plg->status = $v_plg['status'];
+					$m_plg->mstatus = $v_plg['mstatus'];
+					$m_plg->platform = $v_plg['platform'];
+					$m_plg->version = $v_plg['version'];
+					$m_plg->skb = $v_plg['skb'];
+					$m_plg->tgl_habis_skb = $v_plg['tgl_habis_skb'];
+					$m_plg->tipe = 'supplier';
+					$m_plg->save();
+	
+					$m_conf = new \Model\Storage\Conf();
+					$sql = "
+						select tp.* from mgb_erp_live.dbo.telp_pelanggan tp
+						where
+							tp.pelanggan = ".$v_plg['id']."
+					";
+					$d_telp = $m_conf->hydrateRaw( $sql );
+					if ( $d_telp->count() > 0 ) {
+						$d_telp = $d_telp->toArray();
+	
+						foreach ($d_telp as $k_telp => $v_telp) {
+							$m_telp = new \Model\Storage\TelpPelanggan_model();
+							$m_telp->id = $m_telp->getNextIdentity();
+							$m_telp->pelanggan = $plg_id;
+							$m_telp->nomor = $v_telp['nomor'];
+							$m_telp->save();
+						}
+					}
+	
+					$m_conf = new \Model\Storage\Conf();
+					$sql = "
+						select bp.* from mgb_erp_live.dbo.bank_pelanggan bp
+						where
+							bp.pelanggan = ".$v_plg['id']."
+					";
+					$d_bank = $m_conf->hydrateRaw( $sql );
+					if ( $d_bank->count() > 0 ) {
+						$d_bank = $d_bank->toArray();
+	
+						foreach ($d_bank as $k_bank => $v_bank) {
+							$m_bank = new \Model\Storage\BankPelanggan_model();
+							$bank_plg_id = $m_bank->getNextIdentity();
+	
+							$m_bank->id = $bank_plg_id;
+							$m_bank->pelanggan = $plg_id;
+							$m_bank->bank = $v_bank['bank'];
+							$m_bank->rekening_nomor = $v_bank['rekening_nomor'];
+							$m_bank->rekening_pemilik = $v_bank['rekening_pemilik'];
+							$m_bank->rekening_cabang_bank = $v_bank['rekening_cabang_bank'];
+							$m_bank->save();
+						}
+					}
+	
+					$d_plg = $m_plg->where('id', $plg_id)->with(['telepons', 'banks'])->first();
+	
+					$deskripsi_log = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
+					Modules::run( 'base/event/save', $d_plg, $deskripsi_log );
+				}
+            }
+        }
+    }
 
 	public function model($status)
     {
