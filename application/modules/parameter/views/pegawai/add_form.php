@@ -46,7 +46,7 @@
 						<span>Atasan</span>
 					</div>
 					<div class="col-lg-4">
-						<select class="form-control atasan" data-required="1" disabled>
+						<select class="form-control atasan" disabled>
 							<option value="">-- Pilih Atasan --</option>
 						</select>
 						<!-- <input type="text" class="form-control jabatan" data-required="1"> -->
@@ -119,11 +119,14 @@
 					<div class="col-lg-3">
 						<select class="form-control level" data-required="1">
 							<option value="">-- Pilih Level --</option>
-							<option value="0">0</option>
+							<!-- <option value="0">0</option> -->
 							<option value="1">1</option>
 							<option value="2">2</option>
 							<option value="3">3</option>
 							<option value="4">4</option>
+							<option value="5">5</option>
+							<option value="6">6</option>
+							<option value="7">7</option>
 						</select>
 						<!-- <input type="text" placeholder="Wilayah" class="form-control wilayah" data-required="1" disabled> -->
 					</div>

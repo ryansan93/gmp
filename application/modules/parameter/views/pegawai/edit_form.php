@@ -42,7 +42,7 @@
 						<span>Atasan</span>
 					</div>
 					<div class="col-lg-4">
-						<select class="form-control atasan" data-required="1" disabled data-atasan="<?php echo $data['atasan']; ?>">
+						<select class="form-control atasan" disabled data-atasan="<?php echo $data['atasan']; ?>">
 							<option value="">-- Pilih Atasan --</option>
 						</select>
 					</div>
