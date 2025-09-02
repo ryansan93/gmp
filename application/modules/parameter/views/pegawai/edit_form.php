@@ -147,9 +147,9 @@
 							<option value="2" <?php echo ($data['level'] == '2') ? 'selected' : ''; ?> >2</option>
 							<option value="3" <?php echo ($data['level'] == '3') ? 'selected' : ''; ?> >3</option>
 							<option value="4" <?php echo ($data['level'] == '4') ? 'selected' : ''; ?> >4</option>
-							<option value="5" <?php echo ($data['level'] == '5') ? 'selected' : ''; ?> >4</option>
-							<option value="6" <?php echo ($data['level'] == '6') ? 'selected' : ''; ?> >4</option>
-							<option value="7" <?php echo ($data['level'] == '7') ? 'selected' : ''; ?> >4</option>
+							<option value="5" <?php echo ($data['level'] == '5') ? 'selected' : ''; ?> >5</option>
+							<option value="6" <?php echo ($data['level'] == '6') ? 'selected' : ''; ?> >6</option>
+							<option value="7" <?php echo ($data['level'] == '7') ? 'selected' : ''; ?> >7</option>
 						</select>
 					</div>
 				</div>
