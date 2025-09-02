@@ -127,7 +127,26 @@ var pegawai = {
 			    $(div).find('select.wilayah').next('span.select2').css('width', '100%');
 			    $(div).find('select.unit').next('span.select2').css('width', '100%');
 
-			} 
+			} else {
+				$(div).find('select.atasan').removeAttr('disabled');
+				$(div).find('select.atasan').attr('data-required', 1);
+
+				$(div).find('input:not(.nama_pegawai)').attr('disabled', 'disabled');
+				$(div).find('input:not(.nama_pegawai)').removeAttr('data-required');
+
+				if ( empty(tipe) ) {
+					$(div).find('select.koordinator option[value=all]').prop('selected', true);
+					$(div).find('select.marketing option[value=all]').prop('selected', true);
+					// Set selected 
+					$(div).find('select.wilayah').val('all');
+				    $(div).find('select.wilayah').select2().trigger('change');
+
+				    $(div).find('select.unit').val('all');
+				    $(div).find('select.unit').select2().trigger('change');
+				}
+				$(div).find('select.wilayah').next('span.select2').css('width', '100%');
+				$(div).find('select.unit').next('span.select2').css('width', '100%');
+			}
 			// else if ( jabatan == 'kepala admin' ) {
 			// 	$(div).find('select.atasan').removeAttr('disabled');
 			// 	$(div).find('select.atasan').attr('data-required', 1);
