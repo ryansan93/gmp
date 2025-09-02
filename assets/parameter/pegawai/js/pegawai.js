@@ -110,7 +110,7 @@ var pegawai = {
 		}
 
 		if ( !empty(jabatan) ) {
-			if ( jabatan == 'coo' ) {
+			if ( jabatan.includes('direktur') ) {
 				$(div).find('select.atasan, input:not(.nama_pegawai)').attr('disabled', 'disabled');
 				$(div).find('select.atasan, input:not(.nama_pegawai)').removeAttr('data-required');
 
@@ -127,83 +127,84 @@ var pegawai = {
 			    $(div).find('select.wilayah').next('span.select2').css('width', '100%');
 			    $(div).find('select.unit').next('span.select2').css('width', '100%');
 
-			} else if ( jabatan == 'kepala admin' ) {
-				$(div).find('select.atasan').removeAttr('disabled');
-				$(div).find('select.atasan').attr('data-required', 1);
+			} 
+			// else if ( jabatan == 'kepala admin' ) {
+			// 	$(div).find('select.atasan').removeAttr('disabled');
+			// 	$(div).find('select.atasan').attr('data-required', 1);
 
-				$(div).find('input:not(.nama_pegawai)').attr('disabled', 'disabled');
-				$(div).find('input:not(.nama_pegawai)').removeAttr('data-required');
+			// 	$(div).find('input:not(.nama_pegawai)').attr('disabled', 'disabled');
+			// 	$(div).find('input:not(.nama_pegawai)').removeAttr('data-required');
 
-				if ( empty(tipe) ) {
-					$(div).find('select.koordinator option[value=all]').prop('selected', true);
-					$(div).find('select.marketing option[value=all]').prop('selected', true);
-					// Set selected 
-					$(div).find('select.wilayah').val('all');
-				    $(div).find('select.wilayah').select2().trigger('change');
+			// 	if ( empty(tipe) ) {
+			// 		$(div).find('select.koordinator option[value=all]').prop('selected', true);
+			// 		$(div).find('select.marketing option[value=all]').prop('selected', true);
+			// 		// Set selected 
+			// 		$(div).find('select.wilayah').val('all');
+			// 	    $(div).find('select.wilayah').select2().trigger('change');
 
-				    $(div).find('select.unit').val('all');
-				    $(div).find('select.unit').select2().trigger('change');
-				}
-				$(div).find('select.wilayah').next('span.select2').css('width', '100%');
-				$(div).find('select.unit').next('span.select2').css('width', '100%');
+			// 	    $(div).find('select.unit').val('all');
+			// 	    $(div).find('select.unit').select2().trigger('change');
+			// 	}
+			// 	$(div).find('select.wilayah').next('span.select2').css('width', '100%');
+			// 	$(div).find('select.unit').next('span.select2').css('width', '100%');
 
-			} else if ( jabatan == 'admin pusat' ) {
-				$(div).find('select.atasan').removeAttr('disabled');
-				$(div).find('select.atasan').attr('data-required', 1);
+			// } else if ( jabatan == 'admin pusat' ) {
+			// 	$(div).find('select.atasan').removeAttr('disabled');
+			// 	$(div).find('select.atasan').attr('data-required', 1);
 
-				$(div).find('input:not(.nama_pegawai)').attr('disabled', 'disabled');
-				$(div).find('input:not(.nama_pegawai)').removeAttr('data-required');
+			// 	$(div).find('input:not(.nama_pegawai)').attr('disabled', 'disabled');
+			// 	$(div).find('input:not(.nama_pegawai)').removeAttr('data-required');
 
-				if ( empty(tipe) ) {
-					$(div).find('select.koordinator option[value=all]').prop('selected', true);
-					$(div).find('select.marketing option[value=all]').prop('selected', true);
-					// Set selected 
-					$(div).find('select.wilayah').val('all');
-				    $(div).find('select.wilayah').select2().trigger('change');
+			// 	if ( empty(tipe) ) {
+			// 		$(div).find('select.koordinator option[value=all]').prop('selected', true);
+			// 		$(div).find('select.marketing option[value=all]').prop('selected', true);
+			// 		// Set selected 
+			// 		$(div).find('select.wilayah').val('all');
+			// 	    $(div).find('select.wilayah').select2().trigger('change');
 
-				    $(div).find('select.unit').val('all');
-				    $(div).find('select.unit').select2().trigger('change');
-				}
-				$(div).find('select.wilayah').next('span.select2').css('width', '100%');
-				$(div).find('select.unit').next('span.select2').css('width', '100%');
+			// 	    $(div).find('select.unit').val('all');
+			// 	    $(div).find('select.unit').select2().trigger('change');
+			// 	}
+			// 	$(div).find('select.wilayah').next('span.select2').css('width', '100%');
+			// 	$(div).find('select.unit').next('span.select2').css('width', '100%');
 
-			} else if ( jabatan == 'penanggung jawab' ) {
-				$(div).find('select.atasan').removeAttr('disabled');
-				$(div).find('select.atasan').attr('data-required', 1);
+			// } else if ( jabatan == 'penanggung jawab' ) {
+			// 	$(div).find('select.atasan').removeAttr('disabled');
+			// 	$(div).find('select.atasan').attr('data-required', 1);
 
-				$(div).find('input:not(.nama_pegawai)').attr('disabled', 'disabled');
-				$(div).find('input:not(.nama_pegawai)').removeAttr('data-required');
+			// 	$(div).find('input:not(.nama_pegawai)').attr('disabled', 'disabled');
+			// 	$(div).find('input:not(.nama_pegawai)').removeAttr('data-required');
 
-				if ( empty(tipe) ) {
-					$(div).find('select.koordinator option[value=4]').prop('selected', true);
-					$(div).find('select.marketing option[value=4]').prop('selected', true);
-					// Set selected 
-					$(div).find('select.wilayah').val(null);
-				    $(div).find('select.wilayah').select2().trigger('change');
+			// 	if ( empty(tipe) ) {
+			// 		$(div).find('select.koordinator option[value=4]').prop('selected', true);
+			// 		$(div).find('select.marketing option[value=4]').prop('selected', true);
+			// 		// Set selected 
+			// 		$(div).find('select.wilayah').val(null);
+			// 	    $(div).find('select.wilayah').select2().trigger('change');
 
-				    $(div).find('select.unit').val(null);
-				    $(div).find('select.unit').select2().trigger('change');
-				}
-				$(div).find('select.wilayah').next('span.select2').css('width', '100%');
-				$(div).find('select.unit').next('span.select2').css('width', '100%');
+			// 	    $(div).find('select.unit').val(null);
+			// 	    $(div).find('select.unit').select2().trigger('change');
+			// 	}
+			// 	$(div).find('select.wilayah').next('span.select2').css('width', '100%');
+			// 	$(div).find('select.unit').next('span.select2').css('width', '100%');
 
-			} else {
-				$(div).find('select, input').removeAttr('disabled');
-				$(div).find('select.atasan').attr('data-required', 1);
+			// } else {
+			// 	$(div).find('select, input').removeAttr('disabled');
+			// 	$(div).find('select.atasan').attr('data-required', 1);
 
-				$(div).find('input[disabled]').removeAttr('data-required');
+			// 	$(div).find('input[disabled]').removeAttr('data-required');
 				
-				if ( empty(tipe) ) {
-					$(div).find('select.koordinator option:first').prop('selected', true);
-					$(div).find('select.marketing option:first').prop('selected', true);
-					// Set selected 
-				    $(div).find('select.wilayah').val(null).trigger('change');
-				    $(div).find('select.unit').val(null).trigger('change');
-				};
+			// 	if ( empty(tipe) ) {
+			// 		$(div).find('select.koordinator option:first').prop('selected', true);
+			// 		$(div).find('select.marketing option:first').prop('selected', true);
+			// 		// Set selected 
+			// 	    $(div).find('select.wilayah').val(null).trigger('change');
+			// 	    $(div).find('select.unit').val(null).trigger('change');
+			// 	};
 
-				$(div).find('select.wilayah').next('span.select2').css('width', '100%');
-				$(div).find('select.unit').next('span.select2').css('width', '100%');
-			}
+			// 	$(div).find('select.wilayah').next('span.select2').css('width', '100%');
+			// 	$(div).find('select.unit').next('span.select2').css('width', '100%');
+			// }
 		} else {
 			$(div).find('input:not(.nama_pegawai)').attr('disabled', 'disabled');
 			$(div).find('input:not(.nama_pegawai)').removeAttr('data-required');
