@@ -41,7 +41,7 @@ class Pegawai extends Public_Controller
 		$data = array();
 
 		$m_karyawan = new \Model\Storage\Karyawan_model();
-		$d_karyawan = $m_karyawan->where('status', 1)->with(['unit', 'dWilayah', 'logs'])->orderBy('level', 'asc')->get();
+		$d_karyawan = $m_karyawan->where('status', 1)->with(['unit', 'dWilayah', 'logs'])->orderBy('level', 'asc')->orderBy('jabatan', 'asc')->get();
 
 		if ( $d_karyawan->count() > 0 ) {
 			$d_karyawan = $d_karyawan->toArray();
