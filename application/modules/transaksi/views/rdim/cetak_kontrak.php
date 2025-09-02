@@ -92,7 +92,7 @@
 			<span>
 				<b>
 					<span><?php echo !empty($data_kontrak['data_perusahaan']) ? $data_kontrak['data_perusahaan']['perusahaan'] : 'KOP Mengikuti DOnya Masing-Masing'; ?></span>
-					<?php if ( !empty($data_kontrak['data_perusahaan']) ): ?>
+					<!-- <?php if ( !empty($data_kontrak['data_perusahaan']) ): ?>
 						<br>
 						<span style="color: red;">
 							<?php 
@@ -112,7 +112,7 @@
 						</span>
 					<?php else: ?>
 						<span style="color: red;">(CV. Mitra Gemuk Bersama:Jbr, Lmj, Pasur, Probo, Mlg), (CV. Mitra Gemilang Bersinar : Jbg, Mjk, Kdr, Tag, Gsk, Lmg, Bjn, Mgtn), (Anton Cindrawan Purnomo : Bwi)</span>
-					<?php endif ?>
+					<?php endif ?> -->
 					<br>
 					<?php
 						$alamat_perusahaan = !empty($data_kontrak['data_perusahaan']) ? $data_kontrak['data_perusahaan']['alamat'] : 'Jl. Gajah Mada XVIII /No. 14, Kaliwates';
@@ -144,7 +144,7 @@
 			<span>Berlaku : <?php echo tglIndonesia($data_kontrak['mulai'], '-', ' ', true); ?></span>
 		</div>
 		<div style="font-size: 12pt; text-align: left; margin-top: 15px;">
-			<span><span style="padding-right: 50px;"> </span>CV. Mitra Gemuk Bersama sebagai <span style="font-style:italic;"><b>Pihak Pertama</b></span> dan menyediakan pengadaan Sapronak kepada <span style="font-style:italic;"><b>Pihak Kedua</b></span> :</span>
+			<span><span style="padding-right: 50px;"> </span><?php echo $data_kontrak['data_perusahaan']['perusahaan']; ?> <span style="font-style:italic;"><b>Pihak Pertama</b></span> dan menyediakan pengadaan Sapronak kepada <span style="font-style:italic;"><b>Pihak Kedua</b></span> :</span>
 		</div>
 		<div style="font-size: 12pt; text-align: left; margin-top: 15px;">
 			<table>
@@ -212,7 +212,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<?php $sapronak = array('doc', 'pakan1', 'pakan2', 'pakan3'); ?>
+					<?php $sapronak = array('doc' => 'doc', 'pakan1' => 'pakan 1 prestarter', 'pakan2' => 'pakan 2 starter', 'pakan3' => 'pakan 3 finisher'); ?>
 					<?php foreach ($sapronak as $k_sapronak => $v_sapronak): ?>
 						<tr>
 							<td><?php echo strtoupper($v_sapronak); ?></td>
@@ -223,7 +223,7 @@
 								foreach ($jml_max_supplier as $k_jml => $v_jml) {
 									if ( isset($data_kontrak['harga_sapronak'][$k_jml]['detail']) !== false ) {
 										foreach ($data_kontrak['harga_sapronak'][$k_jml]['detail'] as $k_hs_det => $v_hs_det) {
-											if ( stristr($v_hs_det['jenis'], $v_sapronak) ) { ?>
+											if ( stristr($v_hs_det['jenis'], $k_sapronak) ) { ?>
 												<td><?php echo strtoupper($v_hs_det['d_barang']['nama']); ?></td>
 												<td align="right"><?php echo ($v_hs_det['hrg_peternak'] != 0) ? angkaRibuan($v_hs_det['hrg_peternak']) : '-'; ?></td>
 											<?php }
@@ -235,8 +235,8 @@
 					<?php endforeach ?>
 				</tbody>
 			</table>
-			<span>*DOC CP kontrak harga tetap semua</span><br>
-			<span>**DOC MB kontrak harga baru</span>
+			<!-- <span>*DOC CP kontrak harga tetap semua</span><br>
+			<span>**DOC MB kontrak harga baru</span> -->
 		</div>
 		<!-- <div style="font-size: 12pt; text-align: left;">
 		</div> -->
@@ -249,12 +249,12 @@
 				<span><b>Kesepakatan Harga Panen :</b></span>
 			</div>
 			<div style="font-size: 12pt; text-align: left;">
-				<table class="table table-bordered border-field sapronak" style="width: 80%;">
+				<table class="table table-bordered border-field sapronak" style="width: 100%;">
 					<thead>
 						<tr>
-							<th class="bordered" style="text-align: center;">Ukuran Berat (Kg)</th>
-							<th class="bordered" style="text-align: center;">Harga Ayam Sehat</th>
-							<th class="bordered" style="text-align: center;">Harga Ayam Sakit & Afkir</th>
+							<th class="bordered" style="text-align: center; width: 20%;">Ukuran Berat (Kg)</th>
+							<th class="bordered" style="text-align: center; width: 20%;">Harga Ayam Sehat</th>
+							<th class="bordered" style="text-align: center; width: 60%;">Harga Ayam Sakit & Afkir</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -277,7 +277,13 @@
 										<td align="center"><?php echo $range ?></td>
 										<td align="right"><?php echo 'Rp. ' . $hrg; ?></td>
 										<?php if ( $index == 0 ): ?>
-											<td rowspan="<?php echo count($data_kontrak['harga_sepakat']) - 1; ?>" align="center">Sesusai Harga Pasar</td>
+											<!-- <td rowspan="<?php echo count($data_kontrak['harga_sepakat']) - 1; ?>" align="center">Sesusai Harga Pasar</td> -->
+											<td rowspan="<?php echo count($data_kontrak['harga_sepakat']) - 1; ?>" align="left" style="vertical-align: top; text-align: left;" >
+												<ul style="padding-left: 0px; margin-left: 20px; margin-top: 0px; font-size: 12pt;">
+													<li>Jika harga pasar ayam afkir dibawah harga kontrak, maka berlaku harga pasar.</li>
+													<li>Jika harga pasar ayam afkir diatas harga kontrak, maka berlaku harga kontrak sesuai ukuran berat dalam tabel (Jika berat ayam kurang dari daftar tabel maka berlaku harga kontrak terendah).</li>
+												</ul>
+											</td>
 										<?php endif ?>
 									</tr>
 									<?php $index++; ?>
@@ -298,7 +304,7 @@
 				<span><b>Kompensasi Peternak :</b></span>
 			</div>
 			<div style="font-size: 12pt; text-align: left;">
-				<span><b><span style="margin-left: 50px;"> </span>1. Bonus FCR </b>(Dihitung dari : Selisih berat badan rata-rata ( Kg/ekor) – FCR Actual)</span>
+				<span><b><span style="margin-left: 25px;"> </span>1. Bonus FCR </b>(Dihitung dari : Selisih berat badan rata-rata ( Kg/ekor) – FCR Actual)</span>
 			</div>
 			<div style="font-size: 12pt; text-align: left;">
 				<table class="table table-bordered border-field sapronak" style="width: 50%;">
@@ -340,10 +346,8 @@
 			</div>
 		</div>
 		<br>
-		<!-- <div style="font-size: 12pt; text-align: left;">
-			</div> -->
 		<div style="font-size: 12pt; text-align: left; page-break-after: auto;">
-			<span><b><span style="margin-left: 50px;"> </span>2. Bonus Kematian </b>(Persentase Kematian Maksimal 5%)</span>
+			<span><b><span style="margin-left: 25px;"> </span>2. Bonus Kematian </b>(Persentase Kematian Maksimal 5%)</span>
 			<table class="table table-bordered border-field sapronak" style="width: 50%;">
 				<thead>
 					<tr>
@@ -382,6 +386,25 @@
 			</table>
 		</div>
 		<br>
+		<div style="font-size: 12pt; text-align: left; page-break-after: auto;">
+			<span><b><span style="margin-left: 25px;"> </span>3. Bonus Insentif Listrik </b>(Rp. 300 Per Ekor)</span>
+			<br><span style="margin-left: 40px;">Dengan Persyaratan :</span>
+			<ul style="margin-left: 20px; margin-top: 0px;">
+				<li>Kandang Closed House</li>
+				<li>Indeks Performa (IP) Minimal 400</li>
+				<li>Tidak boleh ada penambahan apapun ke dalam spronak yang PT sediakan</li>
+			</ul>
+		</div>
+		<br>
+		<div style="font-size: 12pt; text-align: left; page-break-after: auto;">
+			<span><b><span style="margin-left: 25px;"> </span>4. Bonus Insentif LPG </b>(Rp. 200 Per Ekor)</span>
+			<br><span style="margin-left: 40px;">Dengan Persyaratan :</span>
+			<ul>
+				<li>Indeks Performa (IP) Minimal 400</li>
+				<li>Tidak boleh ada penambahan apapun ke dalam spronak yang PT sediakan</li>
+			</ul>
+		</div>
+		<br>
 		<br>
 		<div style="font-size: 12pt; text-align: left;">
 			<span><b><u>CATATAN :<u></b></span>
@@ -391,7 +414,7 @@
 				<li style="page-break-inside: avoid;">Semua penjualan menjadi tanggung jawab <b>Pihak Pertama</b>, sehingga <b>Pihak Kedua</b> tidak berhak menjual ayam saat panen.</li>
 				<li style="page-break-inside: avoid;"><b>Pihak Kedua</b> wajib membantu dalam pemeliharaan ayam dengan kontrol/pengawasan manajemen dari <b>Pihak Pertama</b>.</li>
 				<li style="page-break-inside: avoid;">Jika ayam sakit atau kualitasnya jelek (termasuk ayam afkir) atau hasil panen tidak rasional (<span style="font-style: italic;">bobot x FCR tidak standart</span>), maka <b>Pihak Pertama</b> akan melakukan pemotongan harga kontrak (sesuai dengan harga ayam sakit/afkir di pasar).</li>
-				<li style="page-break-inside: avoid;">Menunjuk pasal 3 di atas, yang dimaksud dengan harga pasar adalah harga pasar yang berlaku di MGB.</li>
+				<li style="page-break-inside: avoid;">Menunjuk pasal 3 di atas, yang dimaksud dengan harga pasar adalah harga pasar yang berlaku di GMP.</li>
 				<li style="page-break-inside: avoid;">Harga kontrak sewaktu-waktu bisa berubah, jika terjadi perubahan harga DOC atau harga pakan tanpa pemberitahuan lebih dahulu.</li>
 				<li style="page-break-inside: avoid;">
 					Apabila terjadi selisih jumlah ayam (ayam hilang) antara yang ada di catatan laporan (recording) dengan kenyataan saat panen, maka <b>Pihak Kedua</b> diwajibkan untuk mengganti selisih jumlah ayam tersebut kepada <b>Pihak Pertama</b> dengan perhitungan:
@@ -414,9 +437,9 @@
 					Dalam hal ini, untuk pengiriman pakan selanjutnya, <b>Pihak Pertama</b> akan mengirimkan tetap sesuai dengan jadwal pengiriman yang telah diatur sebelumnya.
 				</li>
 				<li style="page-break-inside: avoid;"><b>Pihak Kedua</b> diwajibkan mengikuti program pemeliharaan ayam dari <b>Pihak Pertama</b>, apabila akan menambah/mengganti, harus dengan sepengetahuan <b>Pihak Pertama</b>.</li>
-				<li style="page-break-inside: avoid;">Apabila <b>Pihak Kedua</b> menambah pakan sehingga melampaui batas standart FCR MGB, maka <b>Pihak Pertama</b> tidak berkewajiban membayar kelebihan dari standart FCR tersebut.</li>
-				<li style="page-break-inside: avoid;">Berdasarkan Peraturan Menteri Keuangan No. 141/PMK.03/2015, maka mulai masa Januari 2019 akan dilakukan pemotongan sebesar 2% (bagi yang memiliki NPWP) atau 4% (yang tidak memiliki NPWP) atas pembayaran jasa sesuai dengan Pajak Penghasilan Pasal 23, Pajak yang dipotong oleh <b>Pihak Pertama</b> (MGB) tersebut adalah pajak penghasilan yang wajib dipotong oleh <b>Pihak Pertama</b> sebagai pengguna jasa <b>Pihak Kedua</b> (plasma). 
-					Atas pemotongan tersebut <b>Pihak Pertama</b> akan memberikan Bukti Potong PPh Pasal 23. Bagi Peternak yang tidak ingin dilakukan pemotongan, mohon untuk memberikan Surat Keterangan Bebas (SKB) / Surat Keterangan (SK) sebagai dasar <b>Pihak Pertama</b> agar tidak melakukan pemotongan dan juga menyiapkan invoice.
+				<li style="page-break-inside: avoid;">Apabila <b>Pihak Kedua</b> menambah pakan sehingga melampaui batas standart FCR GMP, maka <b>Pihak Pertama</b> tidak berkewajiban membayar kelebihan dari standart FCR tersebut.</li>
+				<li style="page-break-inside: avoid;">Berdasarkan Peraturan Menteri Keuangan No. 141/PMK.03/2015, maka mulai masa Januari 2019 akan dilakukan pemotongan sebesar 2% (bagi yang memiliki NPWP maupun yang hanya memiliki KTP) atas pembayaran jasa sesuai dengan Pajak Penghasilan Pasal 23, Pajak yang dipotong oleh <b>Pihak Pertama</b> (GMP) tersebut adalah pajak penghasilan yang wajib dipotong oleh <b>Pihak Pertama</b> sebagai pengguna jasa <b>Pihak Kedua</b> (plasma). 
+					Atas pemotongan tersebut <b>Pihak Pertama</b> akan memberikan Bukti Potong PPh Pasal 23. Bagi Peternak yang memiliki Surat Keterangan Bebas (SKB) / Surat Keterangan (SK) sebagai dasar <b>Pihak Pertama</b> akan dilakukan pemotongan sebesar 0,5%.
 				</li>
 				<li style="page-break-inside: avoid;">
 					Keuntungan hasil panen dari perjanjian kemitraan ini akan dibayarkan <b>Pihak Pertama</b> kepada <b>Pihak Kedua </b>:
@@ -427,7 +450,7 @@
 					</div>
 					<br>
 				</li>
-				<li style="page-break-inside: avoid;">Apabila <b>Pihak Kedua</b> mengalami kerugian (akibat pasal 6 dan pasal 7) yang mengakibatkan timbulnya hutang pada <b>Pihak Pertama</b> maka <b>Pihak Kedua</b> berkewajiban membayar hutangnya.</li>
+				<li style="page-break-inside: avoid;">Apabila <b>Pihak Kedua</b> mengalami kerugian (akibat pasal 6 dan pasal 8) yang mengakibatkan timbulnya hutang pada <b>Pihak Pertama</b> maka <b>Pihak Kedua</b> berkewajiban membayar hutangnya.</li>
 			</ol> 
 		</div>
 		<div style="font-size: 12pt; text-align: left; page-break-inside: avoid;">
@@ -447,7 +470,7 @@
 						<td style="text-align: center;">Mengetahui dan menyetujui,</td>
 					</tr>
 					<tr>
-						<td style="text-align: center;">Pihak Pertama a/n MGB</td>
+						<td style="text-align: center;">Pihak Pertama a/n GMP</td>
 						<td style="text-align: center;">Pihak Kedua</td>
 					</tr>
 					<tr>
@@ -460,7 +483,7 @@
 						</td>
 						<td style="text-align: center;">
 							<div style="border: 1px solid black; width: 30%; margin-left: 35%;">
-								<span style="font-style: italic;">Materai<br>6.000</span>
+								<span style="font-style: italic;">Materai<br>10.000</span>
 							</div>
 						</td>
 					</tr>
