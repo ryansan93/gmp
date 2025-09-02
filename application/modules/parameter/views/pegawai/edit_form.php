@@ -142,11 +142,14 @@
 					<div class="col-lg-3">
 						<select class="form-control level" data-required="1">
 							<option value="">-- Pilih Level --</option>
-							<option value="0" <?php echo ($data['level'] == '0') ? 'selected' : ''; ?> >0</option>
+							<!-- <option value="0" <?php echo ($data['level'] == '0') ? 'selected' : ''; ?> >0</option> -->
 							<option value="1" <?php echo ($data['level'] == '1') ? 'selected' : ''; ?> >1</option>
 							<option value="2" <?php echo ($data['level'] == '2') ? 'selected' : ''; ?> >2</option>
 							<option value="3" <?php echo ($data['level'] == '3') ? 'selected' : ''; ?> >3</option>
 							<option value="4" <?php echo ($data['level'] == '4') ? 'selected' : ''; ?> >4</option>
+							<option value="5" <?php echo ($data['level'] == '5') ? 'selected' : ''; ?> >4</option>
+							<option value="6" <?php echo ($data['level'] == '6') ? 'selected' : ''; ?> >4</option>
+							<option value="7" <?php echo ($data['level'] == '7') ? 'selected' : ''; ?> >4</option>
 						</select>
 					</div>
 				</div>
