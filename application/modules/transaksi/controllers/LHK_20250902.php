@@ -141,7 +141,7 @@ class LHK extends Public_Controller
     public function detail_form($id)
     {
         $m_lhk = new \Model\Storage\Lhk_model();
-        $d_lhk = $m_lhk->where('id', $id)->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi', 'lhk_peralatan', 'foto_sisa_pakan', 'foto_ekor_mati'])->orderBy('id', 'desc')->first()->toArray();
+        $d_lhk = $m_lhk->where('id', $id)->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi', 'foto_sisa_pakan', 'foto_ekor_mati'])->orderBy('id', 'desc')->first()->toArray();
 
         $m_rs = new \Model\Storage\RdimSubmit_model();
         $d_rs = $m_rs->where('noreg', $d_lhk['noreg'])->with(['mitra'])->first()->toArray();
@@ -167,7 +167,6 @@ class LHK extends Public_Controller
             'lhk_sekat' => $d_lhk['lhk_sekat'],
             'lhk_nekropsi' => $d_lhk['lhk_nekropsi'],
             'lhk_solusi' => $d_lhk['lhk_solusi'],
-            'lhk_peralatan' => $d_lhk['lhk_peralatan'],
             'keterangan' => $d_lhk['keterangan'],
             'tanggal' => $d_lhk['tanggal'],
             'lat' => !empty($d_lhk['lat_long']) ? trim(explode(',', $d_lhk['lat_long'])[0]) : null,
@@ -187,7 +186,7 @@ class LHK extends Public_Controller
     public function edit_form($id, $mitra)
     {
         $m_lhk = new \Model\Storage\Lhk_model();
-        $d_lhk = $m_lhk->where('id', $id)->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi', 'lhk_peralatan', 'foto_sisa_pakan', 'foto_ekor_mati'])->orderBy('id', 'desc')->first()->toArray();
+        $d_lhk = $m_lhk->where('id', $id)->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi', 'foto_sisa_pakan', 'foto_ekor_mati'])->orderBy('id', 'desc')->first()->toArray();
 
         $m_rs = new \Model\Storage\RdimSubmit_model();
         $d_rs = $m_rs->where('noreg', $d_lhk['noreg'])->with(['mitra'])->first()->toArray();
@@ -209,7 +208,6 @@ class LHK extends Public_Controller
             'lhk_sekat' => $d_lhk['lhk_sekat'],
             'lhk_nekropsi' => $d_lhk['lhk_nekropsi'],
             'lhk_solusi' => $d_lhk['lhk_solusi'],
-            'lhk_peralatan' => $d_lhk['lhk_peralatan'],
             'keterangan' => $d_lhk['keterangan'],
             'tanggal' => $d_lhk['tanggal'],
             'lat' => !empty($d_lhk['lat_long']) ? trim(explode(',', $d_lhk['lat_long'])[0]) : null,
@@ -837,8 +835,6 @@ class LHK extends Public_Controller
         $params = $this->input->post('params');
 
         try {
-            // cetak_r( $params, 1 );
-
             $m_conf = new \Model\Storage\Conf();
             $now = $m_conf->getDate();
 
@@ -1048,42 +1044,6 @@ class LHK extends Public_Controller
                 }
             }
 
-            if ( count($params['data_peralatan']) > 0 ) {
-                $d_dp = $params['data_peralatan'];
-
-                $m_lp = new \Model\Storage\LhkPeralatan_model();
-                $m_lp->id_header = $id_lhk;
-                $m_lp->umur = $d_dp['umur'];
-                $m_lp->waktu = $d_dp['waktu'];
-                $m_lp->flok_lantai = $d_dp['flok_lantai'];
-                $m_lp->tipe_controller = $d_dp['tipe_controller'];
-                $m_lp->kelembapan1 = $d_dp['kelembapan1'];
-                $m_lp->kelembapan2 = $d_dp['kelembapan2'];
-                $m_lp->suhu_current1 = $d_dp['suhu_current1'];
-                $m_lp->suhu_current2 = $d_dp['suhu_current2'];
-                $m_lp->suhu_experience1 = $d_dp['suhu_experience1'];
-                $m_lp->suhu_experience2 = $d_dp['suhu_experience2'];
-                $m_lp->air_speed_depan_inlet1 = $d_dp['air_speed_depan_inlet1'];
-                $m_lp->air_speed_depan_inlet2 = $d_dp['air_speed_depan_inlet2'];
-                $m_lp->kerataan_air_speed1 = $d_dp['kerataan_air_speed1'];
-                $m_lp->kerataan_air_speed2 = $d_dp['kerataan_air_speed2'];
-                $m_lp->ukuran_kipas1 = $d_dp['ukuran_kipas1'];
-                $m_lp->ukuran_kipas2 = $d_dp['ukuran_kipas2'];
-                $m_lp->jumlah_kipas1 = $d_dp['jumlah_kipas1'];
-                $m_lp->jumlah_kipas2 = $d_dp['jumlah_kipas2'];
-                $m_lp->jumlah_kipas_on1 = $d_dp['jumlah_kipas_on1'];
-                $m_lp->jumlah_kipas_on2 = $d_dp['jumlah_kipas_on2'];
-                $m_lp->jumlah_kipas_off1 = $d_dp['jumlah_kipas_off1'];
-                $m_lp->jumlah_kipas_off2 = $d_dp['jumlah_kipas_off2'];
-                $m_lp->waktu_kipas_on1 = $d_dp['waktu_kipas_on1'];
-                $m_lp->waktu_kipas_on2 = $d_dp['waktu_kipas_on2'];
-                $m_lp->waktu_kipas_off1 = $d_dp['waktu_kipas_off1'];
-                $m_lp->waktu_kipas_off2 = $d_dp['waktu_kipas_off2'];
-                $m_lp->cooling_pad_status1 = $d_dp['cooling_pad_status1'];
-                $m_lp->cooling_pad_status2 = $d_dp['cooling_pad_status2'];
-                $m_lp->save();
-            }
-
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
             $conf = new \Model\Storage\Conf();
@@ -1121,8 +1081,6 @@ class LHK extends Public_Controller
         $params = $this->input->post('params');
 
         try {
-            // cetak_r( $params, 1 );
-
             $m_conf = new \Model\Storage\Conf();
             $now = $m_conf->getDate();
 
@@ -1356,44 +1314,6 @@ class LHK extends Public_Controller
                 }
             }
 
-            if ( count($params['data_peralatan']) > 0 ) {
-                $d_dp = $params['data_peralatan'];
-
-                $m_lp = new \Model\Storage\LhkPeralatan_model();
-                $m_lp->where('id_header', $id_lhk)->update(
-                    array(
-                        'umur' => $d_dp['umur'],
-                        'waktu' => $d_dp['waktu'],
-                        'flok_lantai' => $d_dp['flok_lantai'],
-                        'tipe_controller' => $d_dp['tipe_controller'],
-                        'kelembapan1' => $d_dp['kelembapan1'],
-                        'kelembapan2' => $d_dp['kelembapan2'],
-                        'suhu_current1' => $d_dp['suhu_current1'],
-                        'suhu_current2' => $d_dp['suhu_current2'],
-                        'suhu_experience1' => $d_dp['suhu_experience1'],
-                        'suhu_experience2' => $d_dp['suhu_experience2'],
-                        'air_speed_depan_inlet1' => $d_dp['air_speed_depan_inlet1'],
-                        'air_speed_depan_inlet2' => $d_dp['air_speed_depan_inlet2'],
-                        'kerataan_air_speed1' => $d_dp['kerataan_air_speed1'],
-                        'kerataan_air_speed2' => $d_dp['kerataan_air_speed2'],
-                        'ukuran_kipas1' => $d_dp['ukuran_kipas1'],
-                        'ukuran_kipas2' => $d_dp['ukuran_kipas2'],
-                        'jumlah_kipas1' => $d_dp['jumlah_kipas1'],
-                        'jumlah_kipas2' => $d_dp['jumlah_kipas2'],
-                        'jumlah_kipas_on1' => $d_dp['jumlah_kipas_on1'],
-                        'jumlah_kipas_on2' => $d_dp['jumlah_kipas_on2'],
-                        'jumlah_kipas_off1' => $d_dp['jumlah_kipas_off1'],
-                        'jumlah_kipas_off2' => $d_dp['jumlah_kipas_off2'],
-                        'waktu_kipas_on1' => $d_dp['waktu_kipas_on1'],
-                        'waktu_kipas_on2' => $d_dp['waktu_kipas_on2'],
-                        'waktu_kipas_off1' => $d_dp['waktu_kipas_off1'],
-                        'waktu_kipas_off2' => $d_dp['waktu_kipas_off2'],
-                        'cooling_pad_status1' => $d_dp['cooling_pad_status1'],
-                        'cooling_pad_status2' => $d_dp['cooling_pad_status2']
-                    )
-                );
-            }
-
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
             $conf = new \Model\Storage\Conf();
@@ -1485,10 +1405,8 @@ class LHK extends Public_Controller
     
                     $m_ln->where('id', $value['id'])->delete();
                 }
-            }
 
-            $m_lp = new \Model\Storage\LhkPeralatan_model();
-            $m_lp->where('id_header', $id_lhk)->delete();
+            }
 
             $m_lhk->where('id', $id)->delete();
 
@@ -1530,64 +1448,6 @@ class LHK extends Public_Controller
             $list_id = $params['list_id'];
 
             foreach ($list_id as $key => $value) {
-                /* CEK KESESUAIAN PERALATAN */
-                $m_lhk = new \Model\Storage\Lhk_model();
-                $_d_lhk = $m_lhk->where('id', $value)->with(['lhk_peralatan'])->first();
-
-                $status_peralatan = 2;
-                if ( $_d_lhk ) {
-                    $_d_lhk = $_d_lhk->toArray();
-
-                    if ( !empty($_d_lhk['lhk_peralatan']) ) {
-                        $d_lp = $_d_lhk['lhk_peralatan'];
-
-                        $m_sb = new \Model\Storage\StandarBudidaya_model();
-                        $d_sb = $m_sb->where('mulai', '<=', $_d_lhk['tanggal'])->orderBy('mulai', 'DESC')->orderBy('nomor', 'DESC')->first();
-
-                        if ( $d_sb ) {
-                            $m_dsb = new \Model\Storage\DetStandarBudidaya_model();
-                            $d_dsb = $m_dsb->where('id_budidaya', $d_sb->id)->where('umur', $_d_lhk['umur'])->first();
-
-                            if ( $d_dsb ) {
-                                $d_dsb = $d_dsb->toArray();
-
-                                if ( $d_lp['suhu_experience1'] <> $d_dsb['suhu_experience'] ) {
-                                    $status_peralatan = 1;
-                                }
-
-                                if ( $d_lp['suhu_experience2'] <> $d_dsb['suhu_experience'] ) {
-                                    $status_peralatan = 1;
-                                }
-
-                                if ( $d_lp['air_speed_depan_inlet1'] < $d_dsb['min_air_speed'] || $d_lp['air_speed_depan_inlet1'] > $d_dsb['max_air_speed'] ) {
-                                    $status_peralatan = 1;
-                                }
-
-                                if ( $d_lp['air_speed_depan_inlet2'] < $d_dsb['min_air_speed'] || $d_lp['air_speed_depan_inlet2'] > $d_dsb['max_air_speed'] ) {
-                                    $status_peralatan = 1;
-                                }
-
-                                if ( $d_lp['kerataan_air_speed1'] < $d_dsb['min_air_speed'] || $d_lp['kerataan_air_speed1'] > $d_dsb['max_air_speed'] ) {
-                                    $status_peralatan = 1;
-                                }
-
-                                if ( $d_lp['kerataan_air_speed2'] < $d_dsb['min_air_speed'] || $d_lp['kerataan_air_speed2'] > $d_dsb['max_air_speed'] ) {
-                                    $status_peralatan = 1;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                $m_lhk = new \Model\Storage\Lhk_model();
-                $m_lhk->where('id', $value)->update(
-                    array(
-                        'status_peralatan' => 2,
-                        'kesesuaian_peralatan' => ($status_peralatan == 2) ? 1 : 0
-                    )
-                );
-                /* END - CEK KESESUAIAN PERALATAN */
-
                 $m_lhk = new \Model\Storage\Lhk_model();
                 $m_lhk->where('id', $value)->update(
                     array(
@@ -1600,33 +1460,6 @@ class LHK extends Public_Controller
                 $deskripsi_log = 'di-ack oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/update', $d_lhk, $deskripsi_log);
             }
-
-            $this->result['status'] = 1;
-            $this->result['message'] = 'Data berhasil di ack.';
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
-    }
-
-    public function ackPeralatan() {
-        $params = $this->input->post('params');
-
-        try {
-            $id = $params['id'];
-
-            $m_lhk = new \Model\Storage\Lhk_model();
-            $m_lhk->where('id', $id)->update(
-                array(
-                    'status_peralatan' => getStatus('ack')
-                )
-            );
-
-            $d_lhk = $m_lhk->where('id', $id)->first();
-
-            $deskripsi_log = 'ack peralatan oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_lhk, $deskripsi_log);
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di ack.';
