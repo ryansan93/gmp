@@ -1497,7 +1497,7 @@ class Rdim extends Public_Controller
         $content['data_kontrak'] = $d_sk->toArray();
         $res_view_html = $this->load->view('transaksi/rdim/cetak_kontrak', $content, true);
 
-        $this->pdfgenerator->generate($res_view_html, "KONTRAK (".$d_sk['nomor'].")", 'a4', 'portrait');
+        $this->pdfgenerator->generate($res_view_html, 'KONTRAK_('.$d_sk['nomor'].')', 'a4', 'portrait');
     }
 
     public function rdimMappingCetak($data = null, $periode = null)
