@@ -131,7 +131,7 @@
 							$kota_perusahaan = ', Jember';
 						}
 					?>
-					<span><?php echo $alamat_perusahaan . $kota_perusahaan; ?></span>
+					<span style="font-size: 14pt;"><?php echo $alamat_perusahaan . $kota_perusahaan; ?></span>
 				</b>
 			</span>
 		</div>

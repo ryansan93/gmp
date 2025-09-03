@@ -1272,7 +1272,8 @@ class PengirimanPakan extends Public_Controller {
                 dkp.item,
                 dkp.jumlah,
                 (dkp.jumlah / 50) as zak,
-                brg.nama as nama_barang
+                brg.nama as nama_barang,
+                dkp.kondisi as keterangan
             from det_kirim_pakan dkp 
             left join
                 kirim_pakan kp
