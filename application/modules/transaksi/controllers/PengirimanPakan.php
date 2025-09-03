@@ -476,6 +476,7 @@ class PengirimanPakan extends Public_Controller {
                     op.tgl_trans,
                     op.rcn_kirim,
                     op.supplier,
+                    op.no_po,
                     supl.nomor,
                     supl.nama,
                     opd.perusahaan,
@@ -1255,6 +1256,102 @@ class PengirimanPakan extends Public_Controller {
         }
 
         return $data;
+    }
+
+    public function cetak_nota_kiriman($id) {
+        $this->load->library('PDFGenerator');
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                kp.no_sj,
+                kp.tgl_trans as tanggal,
+                kp.no_polisi,
+                kp.sopir,
+                mtr.*,
+                dkp.item,
+                dkp.jumlah,
+                (dkp.jumlah / 50) as zak,
+                brg.nama as nama_barang
+            from det_kirim_pakan dkp 
+            left join
+                kirim_pakan kp
+                on
+                    dkp.id_header = kp.id
+            left join
+                (
+                    select brg1.* from barang brg1
+                    right join
+                        (select max(id) as id, kode from barang where tipe = 'pakan' group by kode) brg2
+                        on
+                            brg1.id = brg2.id
+                ) brg
+                on
+                    dkp.item = brg.kode
+            left join
+                (
+                    select
+                        rs.noreg,
+                        rs.nim,
+                        m.nama,
+                        k.alamat_jalan,
+                        k.alamat_rt,
+                        k.alamat_rw,
+                        k.alamat_kelurahan,
+                        l_kec.nama as alamat_kecamatan,
+                        l_kab_kota.nama as alamat_kab_kota,
+                        l_prov.nama as alamat_prov
+                    from rdim_submit rs
+                    left join
+                        (
+                            select mm1.* from mitra_mapping mm1
+                            right join
+                                (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                on
+                                    mm1.id = mm2.id
+                        ) mm
+                        on
+                            rs.nim = mm.nim
+                    left join
+                        mitra m 
+                        on
+                            mm.mitra = m.id
+                    left join
+                        kandang k 
+                        on
+                            k.mitra_mapping = mm.id and
+                            k.kandang = cast(SUBSTRING(rs.noreg, 10, 2) as int)
+                    left join
+                        lokasi l_kec 
+                        on
+                            l_kec.id = k.alamat_kecamatan
+                    left join
+                        lokasi l_kab_kota
+                        on
+                            l_kab_kota.id = l_kec.induk
+                    left join
+                        lokasi l_prov
+                        on
+                            l_prov.id = l_kab_kota.induk
+                ) mtr
+                on
+                    kp.tujuan = mtr.noreg
+            where
+                kp.id = ".$id."
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $no_sj = null;
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+            $no_sj = $data[0]['no_sj'];
+        }
+
+        $content['data'] = $data;
+        $res_view_html = $this->load->view('transaksi/pengiriman_pakan/cetak_nota_kiriman', $content, true);
+
+        $this->pdfgenerator->generate($res_view_html, "pengiriman_pakan_".$no_sj, 'a5', 'portrait');
     }
 
     public function tes($no_spm='')

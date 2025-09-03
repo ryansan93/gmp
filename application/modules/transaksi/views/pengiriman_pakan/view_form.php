@@ -185,15 +185,20 @@
 <div class="form-group d-flex align-items-center">
 	<div class="col-lg-12"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 </div>
-<?php if ( !$terima ): ?>
-	<div class="form-group d-flex align-items-center">
-		<div class="col-lg-12">
-			<button type="button" class="btn btn-primary cursor-p pull-right" title="ADD" style="margin-left: 5px;" data-id="<?php echo $data['id']; ?>" onclick="pp.changeTabActive(this)" data-href="pengiriman" data-resubmit="edit"> 
-				<i class="fa fa-edit" aria-hidden="true"></i> Edit
-			</button>
+<div class="form-group d-flex align-items-center">
+	<div class="col-lg-12">
+		<button type="button" class="btn btn-default cursor-p pull-right" title="ADD" style="margin-left: 5px;" data-id="<?php echo $data['id']; ?>" onclick="window.open('transaksi/PengirimanPakan/cetak_nota_kiriman/<?php echo $data['id']; ?>')"> 
+			<i class="fa fa-print" aria-hidden="true"></i> Cetak
+		</button>
+		<?php if ( !$terima ): ?>
+			<div class="pull-right" style="border-right: 1px solid black;">
+				<button type="button" class="btn btn-primary cursor-p pull-right" title="ADD" style="margin-right: 5px;" data-id="<?php echo $data['id']; ?>" onclick="pp.changeTabActive(this)" data-href="pengiriman" data-resubmit="edit"> 
+					<i class="fa fa-edit" aria-hidden="true"></i> Edit
+				</button>
+			</div>
 			<button type="button" class="btn btn-danger cursor-p pull-right" title="ADD" style="margin-right: 5px;" data-id="<?php echo $data['id']; ?>" onclick="pp.delete(this)"> 
 				<i class="fa fa-trash" aria-hidden="true"></i> Hapus
 			</button>
-		</div>
+		<?php endif ?>
 	</div>
-<?php endif ?>
+</div>

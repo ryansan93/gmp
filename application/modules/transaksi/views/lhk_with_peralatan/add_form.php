@@ -153,7 +153,8 @@
 	<div class="col-xs-12">
 		<div class="col-xs-12 no-padding">
 			<button type="button" class="btn btn-default pull-left" style="margin-right: 5px;" data-toggle="modal" data-target="#myNekropsi"><i class="fa fa-list-alt" aria-hidden="true"></i> Check List Nekropsi</button>
-			<button type="button" class="btn btn-default pull-left" data-toggle="modal" data-target="#mySolusi"><i class="fa fa-list-alt" aria-hidden="true"></i> Solusi</button>
+			<button type="button" class="btn btn-default pull-left" style="margin-right: 5px;" data-toggle="modal" data-target="#mySolusi"><i class="fa fa-list-alt" aria-hidden="true"></i> Solusi</button>
+			<button type="button" class="btn btn-default pull-left" data-toggle="modal" data-target="#myPeralatan" disabled><i class="fa fa-list-alt" aria-hidden="true"></i> Peralatan</button>
 		</div>
 	</div>
 
@@ -269,6 +270,148 @@
 					        				<td colspan="2">Data tidak ditemukan.</td>
 					        			</tr>
 				        			<?php endif ?>
+				        		</tbody>
+				        	</table>
+				        </small>
+		        	</div>
+		        </div>
+		    </div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Peralatan -->
+<div id="myPeralatan" class="modal fade my-style" role="dialog">
+	<div class="modal-dialog">
+	    <!-- Modal content-->
+	    <div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">Check List Peralatan</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<div class="modal-body">
+		        <div class="panel-body no-padding">
+		        	<div class="col-xs-12 no-padding">
+			        	<small>
+				        	<table class="table table-bordered tbl_peralatan" style="margin-bottom: 0px;">
+				        		<thead>
+				        			<tr>
+				        				<th class="col-xs-6">Keterangan</th>
+				        				<th class="col-xs-3">Controller</th>
+				        				<th class="col-xs-3">Kessler</th>
+				        			</tr>
+				        		</thead>
+				        		<tbody>
+				        			<tr>
+										<td>Umur</td>
+										<td class="umur text-center" colspan="2"></td>
+									</tr>
+									<tr>
+										<td>Waktu Cek</td>
+										<td class="waktu text-center" colspan="2"></td>
+									</tr>
+									<tr>
+										<td>Flok / Lantai</td>
+										<td colspan="2">
+											<input type="text" class="form-control flok_lantai" data-required="1" placeholder="Flok 1 Lantai 1 (MAX:25)" maxlength="25">
+										</td>
+									</tr>
+									<tr>
+										<td>Tipe Controller</td>
+										<td colspan="2">
+											<input type="text" class="form-control tipe_controller" data-required="1" placeholder="Temptron 304D (MAX:50)" maxlength="50">
+										</td>
+									</tr>
+									<tr>
+										<td>Kelembapan (%)</td>
+										<td><input type="text" class="form-control text-right kelembapan1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right kelembapan2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+									</tr>
+									<tr>
+										<td>Suhu Current &#8451;</td>
+										<td><input type="text" class="form-control text-right suhu_current1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right suhu_current2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+									</tr>
+									<tr>
+										<td>Suhu Experience &#8451;</td>
+										<td><input type="text" class="form-control text-right suhu_experience1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right suhu_experience2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+									</tr>
+									<tr>
+										<td>Air Speed Depan Inlet</td>
+										<td><input type="text" class="form-control text-right air_speed_depan_inlet1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right air_speed_depan_inlet2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+									</tr>
+									<tr>
+										<td>Kerataan Air Speed</td>
+										<td><input type="text" class="form-control text-right kerataan_air_speed1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right kerataan_air_speed2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+									</tr>
+									<tr>
+										<td>Ukuran Kipas</td>
+										<td><input type="text" class="form-control text-right ukuran_kipas1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right ukuran_kipas2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+									</tr>
+									<tr>
+										<td>Jumlah Kipas Total</td>
+										<td><input type="text" class="form-control text-right jumlah_kipas1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+									</tr>
+									<tr>
+										<td>Jumlah Kipas On</td>
+										<td><input type="text" class="form-control text-right jumlah_kipas_on1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas_on2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+									</tr>
+									<tr>
+										<td>Jumlah Kipas Off</td>
+										<td><input type="text" class="form-control text-right jumlah_kipas_off1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas_off2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+									</tr>
+									<tr>
+										<td>Waktu Kipas On (menit)</td>
+										<td><input type="text" class="form-control text-right waktu_kipas_on1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right waktu_kipas_on2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+									</tr>
+									<tr>
+										<td>Waktu Kipas Off (menit)</td>
+										<td><input type="text" class="form-control text-right waktu_kipas_off1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right waktu_kipas_off2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+									</tr>
+									<tr class="cooling_pad_status">
+										<td>Cooling Pad Status</td>
+										<td class="data">
+											<div class="form-group">
+												<div class="radio" style="padding-top: 0px; margin-top: 0px; margin-bottom: 0px;">
+													<label>
+														<input type="radio" id="cooling_pad_status_on1" name="cooling_pad_status1" value="1" style="margin-left: 0px; margin-right: 0px; margin-top: 2px;"> 
+														<label class="label-control">ON</label>
+													</label>
+												</div>
+												<div class="radio" style="padding-top: 0px; margin-top: 0px; margin-bottom: 0px;">
+													<label>
+														<input type="radio" id="cooling_pad_status_off1" name="cooling_pad_status1" value="0" style="margin-left: 0px; margin-right: 0px; margin-top: 2px;"> 
+														<label class="label-control">OFF</label>
+													</label>
+												</div>
+											</div>
+										</td>
+										<td class="data">
+											<div class="form-group">
+												<div class="radio" style="padding-top: 0px; margin-top: 0px; margin-bottom: 0px;">
+													<label>
+														<input type="radio" id="cooling_pad_status_on2" name="cooling_pad_status2" value="1" style="margin-left: 0px; margin-right: 0px; margin-top: 2px;"> 
+														<label class="label-control">ON</label>
+													</label>
+												</div>
+												<div class="radio" style="padding-top: 0px; margin-top: 0px; margin-bottom: 0px;">
+													<label>
+														<input type="radio" id="cooling_pad_status_off2" name="cooling_pad_status2" value="0" style="margin-left: 0px; margin-right: 0px; margin-top: 2px;"> 
+														<label class="label-control">OFF</label>
+													</label>
+												</div>
+											</div>
+										</td>
+									</tr>
 				        		</tbody>
 				        	</table>
 				        </small>

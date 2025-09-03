@@ -181,7 +181,3 @@ div#myNekropsi label {
 .contain-img .btn:hover {
 	opacity: 1;
 }
-
-button[disabled], button:disabled {
-	background-color: #e9ecef!important;
-}

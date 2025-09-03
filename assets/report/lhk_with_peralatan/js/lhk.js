@@ -248,6 +248,37 @@ var lhk = {
 		},'html');
 	}, // end - sekat
 
+	peralatan: function(elm) {
+    	var id = $(elm).data('id');
+
+		$.get('report/LHK/peralatan',{
+				'id': id
+			},function(data){
+			var _options = {
+				className : 'veryWidth',
+				message : data,
+				size : 'large',
+			};
+			bootbox.dialog(_options).bind('shown.bs.modal', function(){
+				var modal_body = $(this).find('.modal-body');
+				var modal_content = $(modal_body).closest('.modal-content');
+				var modal_dialog = $(modal_content).closest('.modal-dialog');
+
+				$(modal_dialog).css({'width': '30%'})
+
+				var table = $(modal_body).find('table');
+				var tbody = $(table).find('tbody');
+				if ( $(tbody).find('.modal-body tr').length <= 1 ) {
+			        $(this).find('tr #btn-remove').addClass('hide');
+			    };
+
+			    $(this).find('button.close').click(function() {
+			    	$('div.modal.show').css({'overflow': 'auto'});
+			    });
+			});
+		},'html');
+	}, // end - peralatan
+
 	showHideRow: function(elm) {
 		var tr_header = $(elm);
 		var tr_detail = $(elm).next('tr.detail');
@@ -313,6 +344,38 @@ var lhk = {
 			})
 		}
 	}, // end - ack
+
+	ackPeralatan: function(elm) {
+		bootbox.confirm('Apakah anda yakin ingin melakukan ack data peralatan yang belum sesuai ?', function(result) {
+			if ( result ) {
+				var params = {
+					'id': $(elm).attr('data-id')
+				};
+
+				$.ajax({
+					url : 'transaksi/LHK/ackPeralatan',
+					data : {
+						'params' : params
+					},
+					dataType : 'JSON',
+					type : 'POST',
+					beforeSend : function(){
+						showLoading();
+					},
+					success : function(data){		
+						hideLoading();
+						if ( data.status == 1 ) {
+							bootbox.alert( data.message, function() {
+								location.reload();
+							});
+						} else {
+							bootbox.alert( data.message );
+						}
+					}
+				});
+			}
+		});
+	}, // end - ackPeralatan
 };
 
 lhk.start_up();

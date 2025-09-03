@@ -142,7 +142,3 @@ table.tbl_lhk > thead > tr > th, table.tbl_lhk > tbody > tr > td {
 tr.header:hover {
 	background-color: #ededed;
 }
-
-.red {
-	color: red!important;
-}

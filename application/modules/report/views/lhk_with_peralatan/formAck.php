@@ -128,6 +128,12 @@
                                                                 <button type="button" class="col-xs-12 btn btn-default" style="padding: 0px; font-size: 8pt;" title="DATA SOLUSI" onclick="lhk.solusi(this)" data-id="<?php echo $value['id']; ?>"><i class="fa fa-list"></i></button>
                                                             </div>
                                                         </div>
+                                                        <div class="col-xs-12" style="padding-left: 10px; padding-bottom: 5px; padding-right: 0px;">
+                                                            <div class="col-xs-10 no-padding"><u><b>PERALATAN</b></u></div>
+                                                            <div class="col-xs-2 no-padding">
+                                                                <button type="button" class="col-xs-12 btn btn-default" style="padding: 0px; font-size: 8pt;" title="DATA PERALATAN" onclick="lhk.peralatan(this)" data-id="<?php echo $value['id']; ?>"><i class="fa fa-list"></i></button>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>

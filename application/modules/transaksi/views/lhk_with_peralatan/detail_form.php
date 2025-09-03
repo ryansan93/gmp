@@ -162,7 +162,8 @@
 	<div class="col-xs-12">
 		<div class="col-xs-12 no-padding">
 			<button type="button" class="btn btn-default pull-left" style="margin-right: 5px;" data-toggle="modal" data-target="#myNekropsi"><i class="fa fa-list-alt" aria-hidden="true"></i> Check List Nekropsi</button>
-			<button type="button" class="btn btn-default pull-left" data-toggle="modal" data-target="#mySolusi"><i class="fa fa-list-alt" aria-hidden="true"></i> Solusi</button>
+			<button type="button" class="btn btn-default pull-left" style="margin-right: 5px;" data-toggle="modal" data-target="#mySolusi"><i class="fa fa-list-alt" aria-hidden="true"></i> Solusi</button>
+			<button type="button" class="btn btn-default pull-left" data-toggle="modal" data-target="#myPeralatan"><i class="fa fa-list-alt" aria-hidden="true"></i> Peralatan</button>
 		</div>
 	</div>
 
@@ -190,7 +191,7 @@
 	    <!-- Modal content-->
 	    <div class="modal-content">
 			<div class="modal-header">
-				<h4 class="modal-title">Check List Nekropsi</h4>
+				<h4 class="modal-title">List Nekropsi</h4>
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
@@ -278,7 +279,7 @@
 	    <!-- Modal content-->
 	    <div class="modal-content">
 			<div class="modal-header">
-				<h4 class="modal-title">Pilihan Solusi</h4>
+				<h4 class="modal-title">List Solusi</h4>
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
@@ -297,6 +298,132 @@
 					        				<td><?php echo $v_ls['d_solusi']['keterangan']; ?></td>
 					        			</tr>
 				        			<?php endforeach ?>
+				        		</tbody>
+				        	</table>
+				        </small>
+		        	</div>
+		        </div>
+		    </div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Peralatan -->
+<div id="myPeralatan" class="modal fade my-style" role="dialog">
+	<div class="modal-dialog">
+	    <!-- Modal content-->
+	    <div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">List Peralatan</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<div class="modal-body">
+		        <div class="panel-body no-padding">
+		        	<div class="col-xs-12 no-padding">
+			        	<small>
+				        	<table class="table table-bordered tbl_peralatan" style="margin-bottom: 0px;">
+				        		<thead>
+				        			<tr>
+				        				<th class="col-xs-6">Keterangan</th>
+				        				<th class="col-xs-3">Controller</th>
+				        				<th class="col-xs-3">Kessler</th>
+				        			</tr>
+				        		</thead>
+				        		<tbody>
+									<?php $d_lp = (isset($data['lhk_peralatan']) && !empty($data['lhk_peralatan'])) ? $data['lhk_peralatan'] : null; ?>
+				        			<tr>
+										<td>Umur</td>
+										<td class="umur text-center" colspan="2"><?php echo !empty($d_lp) ? $d_lp['umur'] : $d_lhk['umur']; ?></td>
+									</tr>
+									<tr>
+										<td>Waktu Cek</td>
+										<td class="waktu text-center" colspan="2">
+											<?php
+												$ket = '-';
+												if ( !empty($d_lp) ) {
+													$date = substr((string) $d_lp['waktu'], 0, 10);
+													$day = explode('-', $date)[2];
+													$month = explode('-', $date)[1];
+													$year = explode('-', $date)[0];
+													$time = substr((string) $d_lp['waktu'], 11, 5);
+
+													$hari = tglKeHari( $date );
+
+													$ket = $hari.', '.$day.'/'.$month.'/'.$year.' '.$time;
+												}
+
+												echo strtoupper($ket);
+											?>
+										</td>
+									</tr>
+									<tr>
+										<td>Flok / Lantai</td>
+										<td class="text-center" colspan="2"><?php echo !empty($d_lp) ? $d_lp['flok_lantai'] : '-'; ?></td>
+									</tr>
+									<tr>
+										<td>Tipe Controller</td>
+										<td class="text-center" colspan="2"><?php echo !empty($d_lp) ? $d_lp['tipe_controller'] : '-'; ?></td>
+									</tr>
+									<tr>
+										<td>Kelembapan (%)</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['kelembapan1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['kelembapan2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Suhu Current &#8451;</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['suhu_current1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['suhu_current2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Suhu Experience &#8451;</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['suhu_experience1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['suhu_experience2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Air Speed Depan Inlet</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['air_speed_depan_inlet1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['air_speed_depan_inlet2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Kerataan Air Speed</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['kerataan_air_speed1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['kerataan_air_speed2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Ukuran Kipas</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['ukuran_kipas1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaDecimal($d_lp['ukuran_kipas2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Jumlah Kipas Total</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['jumlah_kipas1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['jumlah_kipas2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Jumlah Kipas On</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['jumlah_kipas_on1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['jumlah_kipas_on2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Jumlah Kipas Off</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['jumlah_kipas_off1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['jumlah_kipas_off2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Waktu Kipas On (menit)</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['waktu_kipas_on1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['waktu_kipas_on2']) : 0; ?></td>
+									</tr>
+									<tr>
+										<td>Waktu Kipas Off (menit)</td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['waktu_kipas_off1']) : 0; ?></td>
+										<td class="text-right"><?php echo !empty($d_lp) ? angkaRibuan($d_lp['waktu_kipas_off2']) : 0; ?></td>
+									</tr>
+									<tr class="cooling_pad_status">
+										<td>Cooling Pad Status</td>
+										<td class="text-center"><?php echo !empty($d_lp) ? ( ($d_lp['cooling_pad_status1'] == 1) ? 'ON' : 'OFF' ) : 0; ?></td>
+										<td class="text-center"><?php echo !empty($d_lp) ? ( ($d_lp['cooling_pad_status2'] == 1) ? 'ON' : 'OFF' ) : 0; ?></td>
+									</tr>
 				        		</tbody>
 				        	</table>
 				        </small>
