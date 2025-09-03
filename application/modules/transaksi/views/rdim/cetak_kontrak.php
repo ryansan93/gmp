@@ -132,6 +132,12 @@
 						}
 					?>
 					<span style="font-size: 14pt;"><?php echo $alamat_perusahaan . $kota_perusahaan; ?></span>
+					<br>
+					<?php
+						$provinsi = $data_kontrak['data_perusahaan']['d_kota']['d_provinsi_with_negara']['nama'];
+						$negara = $data_kontrak['data_perusahaan']['d_kota']['d_provinsi_with_negara']['d_negara']['nama'];
+					?>
+					<span style="font-size: 14pt;"><?php echo $provinsi .' - ' . strtoupper($negara); ?></span>
 				</b>
 			</span>
 		</div>
@@ -395,16 +401,14 @@
 				<li>Tidak boleh ada penambahan apapun ke dalam spronak yang PT sediakan</li>
 			</ul>
 		</div>
-		<br>
 		<div style="font-size: 12pt; text-align: left; page-break-after: auto;">
 			<span><b><span style="margin-left: 25px;"> </span>4. Bonus Insentif LPG </b>(Rp. 200 Per Ekor)</span>
 			<br><span style="margin-left: 40px;">Dengan Persyaratan :</span>
-			<ul>
+			<ul style="margin-left: 20px; margin-top: 0px;">
 				<li>Indeks Performa (IP) Minimal 400</li>
 				<li>Tidak boleh ada penambahan apapun ke dalam spronak yang PT sediakan</li>
 			</ul>
 		</div>
-		<br>
 		<br>
 		<div style="font-size: 12pt; text-align: left;">
 			<span><b><u>CATATAN :<u></b></span>
@@ -461,7 +465,8 @@
 			</div> -->
 		<div style="font-size: 12pt; text-align: center; page-break-inside: auto;">
 			<div style="font-size: 12pt; text-align: right; page-break-inside: avoid;">
-				<span style="text-align: right; margin-right: 40px;">Jember, <?php echo tglIndonesia(date('Y-m-d'), '-', ' ', true); ?></span>
+				<?php // echo $data['unit']; ?>
+				<span style="text-align: right; margin-right: 40px;"><?php echo $data['unit']; ?>, <?php echo tglIndonesia(date('Y-m-d'), '-', ' ', true); ?></span>
 			</div>
 			<table style="width: 100%;">
 				<tbody>

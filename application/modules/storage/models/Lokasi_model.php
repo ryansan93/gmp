@@ -22,4 +22,9 @@ class Lokasi_model extends Conf{
     return $this->hasOne('\Model\Storage\Lokasi_model', 'id', 'induk')->with('dProvinsi');
   }
 
+  public function dProvinsiWithNegara()
+  {
+    // return $this->hasOne('\Model\Storage\Lokasi_model', 'id', 'induk');
+    return $this->hasOne('\Model\Storage\Lokasi_model', 'id', 'induk')->with('dNegara');
+  }
 }

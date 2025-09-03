@@ -19,7 +19,7 @@ class Perusahaan_model extends Conf {
 
 	public function d_kota()
 	{
-		return $this->hasOne('\Model\Storage\Lokasi_model', 'id', 'kota');
+		return $this->hasOne('\Model\Storage\Lokasi_model', 'id', 'kota')->with('dProvinsiWithNegara');
 	}
 
 	public function logs()

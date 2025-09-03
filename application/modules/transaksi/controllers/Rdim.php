@@ -1456,7 +1456,7 @@ class Rdim extends Public_Controller
         $this->load->library('PDFGenerator');
 
         $m_rs = new \Model\Storage\RdimSubmit_model();
-        $d_rs = $m_rs->where('id', $id)->where('status', 1)->with(['dMitraMapping'])->first()->toArray();
+        $d_rs = $m_rs->where('id', $id)->where('status', 1)->with(['dMitraMapping', 'dKandang'])->first()->toArray();
 
         $m_pm = new \Model\Storage\PerwakilanMaping_model();
         $d_pm = $m_pm->where('id', $d_rs['format_pb'])->first()->toArray();
@@ -1521,6 +1521,7 @@ class Rdim extends Public_Controller
             $_data['alamat'] = $alamat;
             $_data['alamat_kdg'] = $alamat;
             $_data['populasi'] = $v_data['populasi'];
+            $_data['unit'] = str_replace('Kota ', '', str_replace('Kab ', '', $v_data['d_kandang']['d_unit']['nama']));
         }
 
         return $_data;
