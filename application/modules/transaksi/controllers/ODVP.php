@@ -530,6 +530,8 @@ class ODVP extends Public_Controller {
                 (select max(id) as id from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p2
                 on
                     p.id = p2.id
+            where
+                p.mstatus = 1
         ";
 
         $d_supplier = $m_supplier->hydrateRaw( $sql );

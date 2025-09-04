@@ -164,7 +164,11 @@ class KartuStok extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select * from
+            select
+                data.*,
+                gdg.nama as nama_gudang,
+                brg.nama as nama_barang
+            from
             (
                 /* SALDO AWAL */
                 select
@@ -251,32 +255,6 @@ class KartuStok extends Public_Controller {
                             on
                                 ds1.id = ds2.id
                     ) ds
-            --        left join
-            --            (
-            --                select
-            --                    ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, sum(dst.jumlah) as jumlah 
-            --                from det_stok_trans dst
-            --                left join
-            --                    det_stok ds
-            --                    on
-            --                        dst.id_header = ds.id
-            --                left join
-            --                    stok s
-            --                    on
-            --                        ds.id_header = s.id
-            --                where
-            --                    s.periode between '".$_start_date."' and '".$_end_date."' and
-            --                    ".$sql_jenis."
-            --                group by 
-            --                    ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans
-            --            ) dst
-            --            on
-            --                ds.tgl_trans = dst.tgl_trans and
-            --                ds.kode_gudang = dst.kode_gudang and
-            --                ds.kode_barang = dst.kode_barang and
-            --                ds.kode_trans = dst.kode_trans and
-            --                ds.jenis_barang = dst.jenis_barang and
-            --                ds.jenis_trans = dst.jenis_trans
                     left join
                         stok s
                         on
@@ -285,7 +263,6 @@ class KartuStok extends Public_Controller {
                         s.periode between '".$_start_date."' and '".$_end_date."' and
                         ds.tgl_trans between '".$_start_date."' and '".$_end_date."' and
                         ds.kode_gudang = '".$_kode_gudang."'
-            --            and ds.kode_trans = 'OPK/JBR/25/07002'
                     group by
                         ds.tgl_trans,
                         ds.kode_gudang,
@@ -346,6 +323,24 @@ class KartuStok extends Public_Controller {
                 ) klwr
                 /* END - KELUAR */
             ) data
+            left join
+                (
+                    select * from gudang
+                ) gdg
+                on
+                    data.kode_gudang = gdg.id
+            left join
+                (
+                    select brg1.* from barang brg1
+                    right join
+                        (
+                            select max(id) as id, kode from barang group by kode
+                        ) brg2
+                        on
+                            brg1.id = brg2.id
+                ) brg
+                on
+                    data.kode_barang = brg.kode
             order by
                 data.kode_gudang asc,
                 data.kode_barang asc,

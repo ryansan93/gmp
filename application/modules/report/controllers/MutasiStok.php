@@ -2994,6 +2994,8 @@ class MutasiStok extends Public_Controller {
             $data = $this->get_data_pakan($start_date, $end_date, $kode_gudang, $kode_brg, $jenis);
         }
 
+        cetak_r( $data, 1 );
+
         $content['data'] = $data;
         $html = $this->load->view('report/mutasi_stok/list', $content, TRUE);
 
