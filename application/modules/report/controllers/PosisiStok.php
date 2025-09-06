@@ -32,7 +32,8 @@ class PosisiStok extends Public_Controller {
             $data = $this->includes;
 
             $content['akses'] = $akses;
-            $content['data'] = null;
+            $content['gudang'] = $this->getGudang();
+            $content['barang'] = $this->getBarang();
             $content['title_menu'] = 'Laporan Posisi Stok';
 
             // Load Indexx
@@ -43,410 +44,422 @@ class PosisiStok extends Public_Controller {
         }
     }
 
-    public function get_gudang_dan_barang()
-    {
-        $params = $this->input->post('params');
+    public function getGudang() {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                gdg1.* 
+            from gudang gdg1
+            order by
+                gdg1.jenis asc,
+                gdg1.nama asc
+        ";
+        $d_gdg = $m_conf->hydrateRaw( $sql );
 
-        $m_gdg = new \Model\Storage\Gudang_model();
-        $d_gdg = $m_gdg->where('jenis', 'like', '%'.$params.'%')->orderBy('nama', 'asc')->get();
-        $data_gdg = null;
+        $data = null;
         if ( $d_gdg->count() > 0 ) {
-            $data_gdg = $d_gdg->toArray();
-        }
-
-        $m_barang = new \Model\Storage\Barang_model();
-        $d_barang = $m_barang->select('kode')->distinct('kode')->where('tipe', $params)->get();
-        $_data_brg = null;
-        if ( $d_barang->count() > 0 ) {
-            $d_barang = $d_barang->toArray();
-            foreach ($d_barang as $k_brg => $v_brg) {
-                $m_barang = new \Model\Storage\Barang_model();
-                $_d_barang = $m_barang->where('kode', $v_brg)->where('tipe', $params)->orderBy('version', 'desc')->first();
-                if ( !empty($_d_barang) ) {
-                    $key = $_d_barang->nama.' | '.$_d_barang->kode;
-                    $_data_brg[$key] = $_d_barang->toArray();
-                }
-            }
-        }
-
-        $data_brg = null;
-        if ( !empty($_data_brg) ) {
-            ksort($_data_brg);
-            foreach ($_data_brg as $k_brg => $v_brg) {
-                $data_brg[] = $v_brg;
-            }
-        }
-
-        $data = array(
-            'gudang' => $data_gdg,
-            'barang' => $data_brg
-        );
-
-        $this->result['list_data'] = $data;
-
-        display_json( $this->result );
-    }
-
-    public function get_data_voadip($tanggal, $kode_gudang, $kode_brg, $jenis)
-    {
-        $data = null;
-
-        $m_stok = new \Model\Storage\Stok_model();
-        $d_stok = $m_stok->where('periode', $tanggal)->orderBy('periode', 'asc')->get();
-
-        $data = null;
-        if ( $d_stok->count() > 0 ) {
-            $data = $d_stok->toArray();
-        }
-
-        $mappingDataReport = $this->mappingDataReport( $data, $kode_brg, $kode_gudang, $jenis );
-
-        return $mappingDataReport;
-    }
-
-    public function get_data_pakan($tanggal, $kode_gudang, $kode_brg, $jenis)
-    {
-        $data = null;
-
-        $m_stok = new \Model\Storage\Stok_model();
-        $d_stok = $m_stok->where('periode', $tanggal)->orderBy('periode', 'asc')->get();
-
-        $data = null;
-        if ( $d_stok->count() > 0 ) {
-            $data = $d_stok->toArray();
-        }
-
-        $mappingDataReport = $this->mappingDataReport( $data, $kode_brg, $kode_gudang, $jenis );
-
-        return $mappingDataReport;
-    }
-
-    public function mappingDataReport($_data, $_kode_brg, $_kode_gudang, $_jenis)
-    {
-        $kode_brg = array();
-        if ( !empty( $_kode_brg ) ) {
-            if ( stristr($_kode_brg, 'all') !== FALSE ) {
-                $m_brg = new \Model\Storage\Barang_model();
-                $d_brg = $m_brg->where('tipe', 'like', '%'.$_jenis.'%')->orderBy('nama', 'asc')->get()->toArray();
-
-                foreach ($d_brg as $k_brg => $v_brg) {
-                    $key = $v_brg['nama'].' | '.$v_brg['kode'];
-                    $kode_brg[ $key ] = trim($v_brg['kode']);
-                }
-            } else {
-                $m_brg = new \Model\Storage\Barang_model();
-                $d_brg = $m_brg->where('kode', $_kode_brg)->where('tipe', 'like', '%'.$_jenis.'%')->orderBy('id', 'asc')->first()->toArray();
-
-                if ( $d_brg ) {
-                    $key = $d_brg['nama'].' | '.$d_brg['kode'];
-                    $kode_brg[ $key ] = trim($d_brg['kode']);
-                }
-            }
-
-            ksort( $kode_brg );
-        }
-
-        $kode_gdg = array();
-        if ( !empty( $_kode_gudang ) ) {
-            if ( stristr($_kode_gudang, 'all') !== FALSE ) {
-                $m_gdg = new \Model\Storage\Gudang_model();
-                $d_gdg = $m_gdg->where('jenis', 'like', '%'.$_jenis.'%')->orderBy('nama', 'asc')->get()->toArray();
-
-                foreach ($d_gdg as $k_gdg => $v_gdg) {
-                    $key = $v_gdg['nama'].' | '.$v_gdg['id'];
-                    $kode_gdg[ $key ] = trim($v_gdg['id']);
-                }
-            } else {
-                $m_gdg = new \Model\Storage\Gudang_model();
-                $d_gdg = $m_gdg->where('id', $_kode_gudang)->where('jenis', 'like', '%'.$_jenis.'%')->orderBy('id', 'asc')->first()->toArray();
-
-                if ( $d_gdg ) {
-                    $key = $d_gdg['nama'].' | '.$d_gdg['id'];
-                    $kode_gdg[ $key ] = trim($d_gdg['id']);
-                }
-            }
-
-            ksort( $kode_gdg );
-        }
-
-        $data = null;
-        if ( !empty($_data) ) {
-            // cetak_r( $_data );
-            foreach ($_data as $k_data => $v_data) {
-                $gdg = implode(',', $kode_gdg);
-
-                if ( $_jenis == 'obat') {
-                    $_jenis = 'voadip';
-                }
-
-                $m_ds = new \Model\Storage\DetStok_model();
-                $sql = "
-                    select 
-                        ds.id_header as id_header,
-                        ds.kode_barang as kode_barang,
-                        ds.kode_gudang as kode_gudang,
-                        b.nama as nama_barang,
-                        b.desimal_harga as decimal,
-                        g.nama as nama_gudang,
-                        ds.hrg_beli as harga_beli,
-                        ds.hrg_jual as harga_jual,
-                        ds.tgl_trans as tgl_trans,
-                        ds.kode_trans as kode_trans,
-                        cast(sum(ds.jml_stok) as float) as jumlah,
-                        -- (cast(sum(ds.jml_stok) as float) + cast(case when sum(dst.jumlah) is null then 0 else sum(dst.jumlah) end as float)) as jumlah,
-                        kirim.nama_jenis_trans as jenis_trans,
-                        dari.nama as dari
-                    from det_stok ds
-                    left join 
-                        (select id_header, kode_barang, sum(jumlah) as jumlah from det_stok_trans group by id_header, kode_barang) dst
-                        on
-                            ds.id = dst.id_header
-                    left join
-                        (select b2.* from barang b2 
-                        right join  
-                            (select max(b.id) as id, b.kode from barang b group by b.kode) b3
-                            on
-                                b2.id = b3.id) b
-                        on
-                            ds.kode_barang = b.kode
-                    left join
-                        gudang g
-                        on
-                            ds.kode_gudang = g.id
-                    left join
-                        (
-                            select * from (
-                                select 
-                                    case
-                                        when k.jenis_kirim = 'opkg' then
-                                            case
-                                                when k.jenis_tujuan <> 'peternak' then
-                                                    k.asal
-                                                else
-                                                    rs.nim
-                                            end
-                                        else
-                                            case
-                                                when k.jenis_tujuan <> 'peternak' then
-                                                    case
-                                                        when k.jenis_tujuan = 'gudang' then
-                                                            k.asal
-                                                        else
-                                                            k.tujuan
-                                                    end
-                                                else
-                                                    rs.nim
-                                            end
-                                    end as tujuan,
-                                    k.no_order,
-                                    case
-                                        when k.jenis_kirim = 'opkg' then
-                                            case
-                                                when k.jenis_tujuan <> 'peternak' then
-                                                    case
-                                                        when k.jenis_tujuan = 'gudang' then
-                                                            'ORDER'
-                                                        else
-                                                            'RETUR'
-                                                    end
-                                                else
-                                                    'ORDER'
-                                            end
-                                        else
-                                            'ORDER'
-                                    end as jenis_trans,
-                                    case
-                                        when k.jenis_kirim = 'opkg' then
-                                            case
-                                                when k.jenis_tujuan <> 'peternak' then
-                                                    'PINDAH'
-                                                else
-                                                    'ORDER'
-                                            end
-                                        else
-                                            'ORDER'
-                                    end as nama_jenis_trans
-                                from kirim_".$_jenis." k
-                                left join
-                                    rdim_submit rs 
-                                    on
-                                        k.tujuan = rs.noreg
-                                left join
-                                    gudang g 
-                                    on
-                                        k.tujuan = g.id 
-                                        
-                                UNION ALL
-                                
-                                select 
-                                    case
-                                        when r.asal <> 'peternak' then
-                                            r.id_asal
-                                        else
-                                            rs.nim          
-                                    end as tujuan,
-                                    r.no_order,
-                                    'RETUR' as jenis_trans,
-                                    'RETUR' as nama_jenis_trans
-                                from retur_".$_jenis." r
-                                left join
-                                    rdim_submit rs 
-                                    on
-                                        r.id_asal = rs.noreg
-                                left join
-                                    gudang g 
-                                    on
-                                        r.id_asal = g.id
-                            ) as data
-                            group by
-                                data.tujuan,
-                                data.no_order,
-                                data.jenis_trans,
-                                data.nama_jenis_trans
-                        ) as kirim
-                        on
-                            kirim.no_order = ds.kode_trans and
-                            kirim.jenis_trans = ds.jenis_trans
-                    left join
-                        (
-                            select * from (
-                                select cast(mm.nim as varchar(15)) as id, m.nama as nama from mitra m
-                                right join
-                                    (
-                                        select max(id) as id, nomor from mitra 
-                                        group by
-                                            nomor
-                                    ) as group_mitra
-                                    on
-                                        m.id = group_mitra.id
-                                right join
-                                    mitra_mapping mm 
-                                    on
-                                        m.nomor = mm.nomor
-                                group by
-                                    m.nama, mm.nim
-                                    
-                                UNION ALL
-                                    
-                                select cast(g.id as varchar(15)) as id, g.nama as nama from gudang g 
-                                    
-                                UNION ALL
-                                
-                                select cast(p.nomor as varchar(15)) as id, max(p.nama) as nama from pelanggan p
-                                left join
-                                    (
-                                        select max(id) as id, nomor from pelanggan
-                                        group by
-                                            nomor
-                                    ) as group_pelanggan
-                                    on
-                                        p.id = group_pelanggan.id
-                                where
-                                    p.tipe = 'supplier' and
-                                    p.jenis <> 'ekspedisi'
-                                group by
-                                    p.nomor
-                            ) as supplier
-                        ) as dari
-                        on
-                            dari.id = kirim.tujuan
-                    where
-                        ds.id_header = ".$v_data['id']." and
-                        ds.kode_gudang in (".$gdg.") and
-                        ds.jml_stok is not null and
-                        (ds.tgl_trans >= g.tgl_stok_opaname or g.tgl_stok_opaname is null)
-                    group by
-                        ds.id_header,
-                        ds.kode_barang,
-                        ds.kode_gudang,
-                        b.nama,
-                        b.desimal_harga,
-                        g.nama,
-                        ds.hrg_beli,
-                        ds.hrg_jual,
-                        ds.tgl_trans,
-                        ds.kode_trans,
-                        ds.jenis_trans,
-                        kirim.nama_jenis_trans,
-                        dari.nama,
-                        g.tgl_stok_opaname
-                    order by
-                        ds.tgl_trans asc,
-                        ds.jenis_trans desc
-                ";
-
-                $d_ds = $m_ds->hydrateRaw( $sql );
-
-                if ( $d_ds->count() > 0 ) {
-                    $d_ds = $d_ds->toArray();
-
-                    foreach ($d_ds as $k_ds => $v_ds) {
-                        if ( in_array(trim($v_ds['kode_barang']), $kode_brg) ) {
-                            if ( $v_ds['jumlah'] > 0 ) {
-                                $key_gudang = $v_ds['nama_gudang'].' | '.$v_ds['kode_gudang'];
-
-                                $data[ $key_gudang ]['kode'] = $v_ds['kode_gudang'];
-                                $data[ $key_gudang ]['nama'] = $v_ds['nama_gudang'];
-
-                                $key_brg = $v_ds['nama_barang'].' | '.$v_ds['kode_barang'];
-
-                                $data[ $key_gudang ]['detail'][ $key_brg ]['kode'] = $v_ds['kode_barang'];
-                                $data[ $key_gudang ]['detail'][ $key_brg ]['nama'] = $v_ds['nama_barang'];
-
-                                $key_masuk = str_replace('-', '', $v_ds['tgl_trans']).'-'.$v_ds['kode_trans'].'-'.$v_ds['harga_beli'].'-'.$v_ds['harga_jual'];
-
-                                if ( !isset($data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]) ) {
-                                    
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['kode'] = $v_ds['kode_trans'];
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['dari'] = $v_ds['dari'];
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['tgl_trans'] = $v_ds['tgl_trans'];
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['masuk'] = $v_ds['jumlah'];
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['keluar'] = 0;
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['stok_akhir'] = $v_ds['jumlah'];
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['harga_beli'] = $v_ds['harga_beli'];
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['nilai_beli'] = ($v_ds['jumlah'] * $v_ds['harga_beli']);
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['harga_jual'] = $v_ds['harga_jual'];
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['decimal'] = $v_ds['decimal'];
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['nilai_jual'] = ($v_ds['jumlah'] * $v_ds['harga_jual']);
-                                    $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk'][ $key_masuk ]['jenis_trans'] = $v_ds['jenis_trans'];
-                                } 
-
-                                ksort( $data[ $key_gudang ]['detail'][ $key_brg ]['detail'][ $v_ds['tgl_trans'] ]['masuk']);
-
-                                ksort( $data );
-                                ksort( $data[ $key_gudang ]['detail'] );
-                                ksort( $data[ $key_gudang ]['detail'][ $key_brg ]['detail'] );
-                            }
-                        }
-                    }
-                }
-            }
+            $data = $d_gdg->toArray();
         }
 
         return $data;
     }
 
-    public function get_data()
-    {
-        $params = $this->input->post('params');
-
-        $tanggal = $params['tanggal'];
-        $jenis = $params['jenis'];
-        $kode_gudang = $params['kode_gudang'];
-        $kode_brg = $params['kode_brg'];
+    public function getBarang() {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                brg1.* 
+            from barang brg1
+            right join
+                (select max(id) as id, kode from barang group by kode) brg2
+                on
+                    brg1.id = brg2.id
+            where
+                brg1.tipe in ('pakan', 'obat')
+            order by
+                brg1.tipe asc,
+                brg1.nama asc
+        ";
+        $d_brg = $m_conf->hydrateRaw( $sql );
 
         $data = null;
-        if ( $jenis == 'obat' ) {
-            $data = $this->get_data_voadip($tanggal, $kode_gudang, $kode_brg, $jenis);
-        } else {
-            $data = $this->get_data_pakan($tanggal, $kode_gudang, $kode_brg, $jenis);
+        if ( $d_brg->count() > 0 ) {
+            $data = $d_brg->toArray();
         }
+
+        return $data;
+    }
+
+    public function mappingDataReport($_kode_brg, $_kode_gudang, $_jenis, $_date)
+    {
+        $sql_jenis = null;
+        $sql_jenis_trans_masuk = null;
+        $sql_jenis_trans_keluar = null;
+        $jenis = null;
+        if ( !empty($_jenis) ) {
+            $jenis = $_jenis;
+            if ( stristr($jenis, 'obat') !== false ) {
+                $jenis = 'voadip';
+
+                $sql_jenis_trans_masuk = "
+                    select kv.tgl_kirim as tanggal, kv.no_order as kode_trans, kv.no_order, 'ORDER' as jenis_trans from kirim_voadip kv where kv.tgl_kirim <= '".$_date."'
+
+                    union all
+
+                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_voadip rv where rv.tgl_retur <= '".$_date."'
+
+                    union all
+
+                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_voadip av where av.tanggal <= '".$_date."'
+                ";
+
+                $sql_jenis_trans_keluar = "
+                    select kv.tgl_kirim as tanggal, kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv where kv.tgl_kirim <= '".$_date."'
+
+                    union all
+
+                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_voadip rv where rv.tgl_retur <= '".$_date."'
+
+                    union all
+
+                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_voadip av where av.tanggal <= '".$_date."'
+                ";
+            } else {
+                $sql_jenis_trans_masuk = "
+                    select kp.tgl_kirim as tanggal, kp.no_order as kode_trans, kp.no_order, 'ORDER' as jenis_trans from kirim_pakan kp where kp.tgl_kirim <= '".$_date."'
+
+                    union all
+
+                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_pakan rp where rp.tgl_retur <= '".$_date."'
+
+                    union all
+
+                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_pakan ap where ap.tanggal <= '".$_date."'
+                ";
+
+                $sql_jenis_trans_keluar = "
+                    select kp.tgl_kirim as tanggal, kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp where kp.tgl_kirim <= '".$_date."'
+
+                    union all
+
+                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp where rp.tgl_retur <= '".$_date."'
+
+                    union all
+
+                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_pakan ap where ap.tanggal <= '".$_date."'
+                ";
+            }
+
+            $sql_jenis = "and ds.jenis_barang = '".$jenis."'";
+        }
+
+        $data = null;
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                -- data.*,
+                data.tanggal,
+                data.kode_gudang,
+                data.kode_barang,
+                data.jenis_barang,
+                data.hrg_beli,
+                data.kode_trans,
+                data.jenis_trans,
+                sum(data.jml_saldo_awal) as jml_saldo_awal,
+                sum(data.saldo_awal) as saldo_awal,
+                sum(data.jml_debet) as jml_debet,
+                sum(data.debet) as debet,
+                sum(data.jml_kredit) as jml_kredit,
+                sum(data.kredit) as kredit,
+                (isnull(sum(data.jml_saldo_awal), 0) + isnull(sum(data.jml_debet), 0)) - isnull(sum(data.jml_kredit), 0) as jml_saldo_akhir,
+                (isnull(sum(data.saldo_awal), 0) + isnull(sum(data.debet), 0)) - isnull(sum(data.kredit), 0) as saldo_akhir,
+                gdg.nama as nama_gudang,
+                brg.nama as nama_barang
+            from
+            (
+                /* SALDO AWAL */
+                select
+                    sa.tanggal as tanggal,
+                    sa.kode_gudang,
+                    sa.kode_barang,
+                    sa.jenis_barang,
+                    sa.hrg_beli,
+                    sum(sa.jumlah) as jml_saldo_awal,
+                    sum(sa.jumlah * sa.hrg_beli) as saldo_awal,
+                    0 as jml_debet,
+                    0 as debet,
+                    0 as jml_kredit,
+                    0 as kredit,
+                    sa.kode_trans,
+                    -- 'Saldo Awal' as kode_trans,
+                    jt.jenis_trans as jenis_trans
+                    -- 1 as urut
+                from
+                (
+                    select
+                        ds.tgl_trans as tanggal,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.hrg_beli,
+                        ds.kode_trans,
+                        sum(isnull(ds.jml_stok, 0) + isnull(dst.jumlah, 0)) as jumlah
+                    from det_stok ds
+                    left join
+                        (select id_header, sum(jumlah) as jumlah from det_stok_trans group by id_header) dst
+                        on
+                            ds.id = dst.id_header
+                    left join
+                        stok s
+                        on
+                            ds.id_header = s.id
+                    where
+                        s.periode = '".$_date."' and
+                        ds.tgl_trans < '".$_date."' and
+                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        ds.tgl_trans,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.hrg_beli,
+                        ds.kode_trans
+                ) sa
+                left join
+                    (
+                        ".$sql_jenis_trans_masuk."
+                    ) jt
+                    on
+                        sa.kode_trans = jt.no_order and
+                        sa.tanggal = jt.tanggal
+                group by
+                    sa.tanggal,
+                    sa.kode_gudang,
+                    sa.kode_barang,
+                    sa.jenis_barang,
+                    sa.hrg_beli,
+                    sa.kode_trans,
+                    jt.jenis_trans
+                /* END - SALDO AWAL */
+
+                union all
+
+                /* MASUK */
+                select
+                    msk.tanggal,
+                    msk.kode_gudang,
+                    msk.kode_barang,
+                    msk.jenis_barang,
+                    msk.hrg_beli,
+                    0 as jml_saldo_awal,
+                    0 as saldo_awal,
+                    sum(msk.jumlah) as jml_debet,
+                    sum((msk.jumlah * msk.hrg_beli)) as debet,
+                    0 as jml_kredit,
+                    0 as kredit,
+                    msk.kode_trans as kode_trans,
+                    -- msk.jenis_trans as jenis_trans,
+                    jt.jenis_trans
+                    -- 2 as urut
+                from
+                (
+                    select
+                        ds.tgl_trans as tanggal,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli,
+                        sum(isnull(ds.jumlah, 0)) as jumlah
+            --            sum(isnull(ds.jumlah, 0) + isnull(dst.jumlah, 0)) as jumlah
+                    from
+                    (
+                        select ds1.* from det_stok ds1
+                        right join
+                            (
+                                select min(ds.id) as id, ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli from det_stok ds
+                                left join
+                                    stok s
+                                    on
+                                        ds.id_header = s.id
+                                where
+                                    s.periode = '".$_date."' and
+                                    ds.tgl_trans >= '".$_date."'
+                                    -- ".$sql_jenis."
+                                group by
+                                    ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli
+                            ) ds2
+                            on
+                                ds1.id = ds2.id
+                    ) ds
+                    left join
+                        stok s
+                        on
+                            ds.id_header = s.id
+                    where
+                        s.periode = '".$_date."' and
+                        ds.tgl_trans = '".$_date."' and
+                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        ds.tgl_trans,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli
+                ) msk
+                left join
+                    (
+                        ".$sql_jenis_trans_masuk."
+                    ) jt
+                    on
+                        msk.kode_trans = jt.no_order and
+                        msk.tanggal = jt.tanggal
+                group by
+                    msk.tanggal,
+                    msk.kode_gudang,
+                    msk.kode_barang,
+                    msk.jenis_barang,
+                    msk.hrg_beli,
+                    msk.kode_trans,
+                    jt.jenis_trans
+                /* END - MASUK */
+
+                union all
+
+                /* KELUAR */
+                select
+                    klwr.tanggal,
+                    klwr.kode_gudang,
+                    klwr.kode_barang,
+                    klwr.jenis_barang,
+                    klwr.hrg_beli,
+                    0 as jml_saldo_awal,
+                    0 as saldo_awal,
+                    0 as jml_debet,
+                    0 as debet,
+                    sum(klwr.jumlah) as jml_kredit,
+                    sum(klwr.jumlah * klwr.hrg_beli) as kredit,
+                    klwr.kode_trans as kode_trans,
+                    -- klwr.jenis_trans as jenis_trans,
+                    jt.jenis_trans
+                    -- 3 as urut
+                from
+                (
+                    select
+                        ds.tgl_trans as tanggal,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli,
+                        sum(isnull(dst.jumlah, 0)) as jumlah
+                    from det_stok_trans dst
+                    left join
+                        det_stok ds
+                        on
+                            ds.id = dst.id_header
+                    left join
+                        stok s
+                        on
+                            ds.id_header = s.id
+                    where
+                        s.periode = '".$_date."' and
+                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (dst.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        ds.tgl_trans,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli
+                ) klwr
+                left join
+                    (
+                        ".$sql_jenis_trans_masuk."
+                    ) jt
+                    on
+                        klwr.kode_trans = jt.no_order and
+                        klwr.tanggal = jt.tanggal
+                group by
+                    klwr.tanggal,
+                    klwr.kode_gudang,
+                    klwr.kode_barang,
+                    klwr.jenis_barang,
+                    klwr.hrg_beli,
+                    klwr.kode_trans,
+                    jt.jenis_trans
+                /* END - KELUAR */
+            ) data
+            left join
+                (
+                    select * from gudang
+                ) gdg
+                on
+                    data.kode_gudang = gdg.id
+            left join
+                (
+                    select brg1.* from barang brg1
+                    right join
+                        (
+                            select max(id) as id, kode from barang group by kode
+                        ) brg2
+                        on
+                            brg1.id = brg2.id
+                ) brg
+                on
+                    data.kode_barang = brg.kode
+            where
+                data.jenis_barang like '%".$jenis."%'
+            group by
+                data.tanggal,
+                data.kode_gudang,
+                data.kode_barang,
+                data.jenis_barang,
+                data.hrg_beli,
+                data.kode_trans,
+                data.jenis_trans,
+                gdg.nama,
+                brg.nama
+            order by
+                data.kode_gudang asc,
+                brg.nama asc
+                -- ,
+                -- data.tanggal asc,
+                -- data.urut asc
+        ";
+        // cetak_r( $sql, 1 );
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        return $data;
+    }
+
+    public function getData()
+    {
+        $params = $this->input->get('params');
+
+        $date = $params['tanggal'];
+        $kode_gudang = $params['gudang'];
+        $kode_barang = $params['barang'];
+        $jenis = $params['jenis'];
+
+        $data = $this->mappingDataReport($kode_barang, $kode_gudang, $jenis, $date);
 
         $content['data'] = $data;
         $html = $this->load->view('report/posisi_stok/list', $content, TRUE);
 
-        $this->result['html'] = $html;
-
-        display_json( $this->result );
+        echo $html;
     }
 }

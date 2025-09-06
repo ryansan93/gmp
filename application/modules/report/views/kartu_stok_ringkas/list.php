@@ -43,14 +43,23 @@
                 </td>
             </tr>
             <tr>
-                <td class="col-xs-1 text-center" style="vertical-align: middle;"><b>Kode Barang</b></td>
-                <td class="col-xs-2 text-center" style="vertical-align: middle;"><b>Nama Barang</b></td>
-                <td class="col-xs-1 text-center" style="vertical-align: middle;"><b>Tanggal</b></td>
-                <td class="col-xs-2 text-center" style="vertical-align: middle;"><b>Jenis Transaksi</b></td>
-                <td class="col-xs-2 text-center" style="vertical-align: middle;"><b>Kode Transaksi</b></td>
-                <td class="col-xs-1 text-center" style="vertical-align: middle;"><b>Harga</b></td>
-                <td class="col-xs-1 text-center" style="vertical-align: middle;"><b>Jumlah</b></td>
-                <td class="col-xs-2 text-center" style="vertical-align: middle;"><b>Total</b></td>
+                <td class="col-xs-1 text-center" rowspan="2" style="vertical-align: middle;"><b>Kode Barang</b></td>
+                <td class="col-xs-2 text-center" rowspan="2" style="vertical-align: middle;"><b>Nama Barang</b></td>
+                <td class="col-xs-1 text-center" rowspan="2" style="vertical-align: middle;"><b>Harga</b></td>
+                <td class="text-center" colspan="2"><b>Saldo Awal</b></td>
+                <td class="text-center" colspan="2"><b>Debet</b></td>
+                <td class="text-center" colspan="2"><b>Kredit</b></td>
+                <td class="text-center" colspan="2"><b>Saldo Akhir</b></td>
+            </tr>
+            <tr>
+                <td class="col-xs-1 text-center"><b>Jumlah</b></td>
+                <td class="col-xs-1 text-center"><b>Nilai</b></td>
+                <td class="col-xs-1 text-center"><b>Jumlah</b></td>
+                <td class="col-xs-1 text-center"><b>Nilai</b></td>
+                <td class="col-xs-1 text-center"><b>Jumlah</b></td>
+                <td class="col-xs-1 text-center"><b>Nilai</b></td>
+                <td class="col-xs-1 text-center"><b>Jumlah</b></td>
+                <td class="col-xs-1 text-center"><b>Nilai</b></td>
             </tr>
             <?php 
                 $idx_gudang = 0;
@@ -99,16 +108,25 @@
         <tr>
             <td><?php echo strtoupper($value['kode_barang']); ?></td>
             <td><?php echo strtoupper($value['nama_barang']); ?></td>
-            <td><?php echo strtoupper(tglIndonesia($value['tanggal'], '-', ' ')); ?></td>
-            <td><?php echo strtoupper($value['jenis_trans']); ?></td>
-            <td><?php echo strtoupper($value['kode_trans']); ?></td>
             <td class="text-right"><?php echo angkaDecimal($value['hrg_beli']); ?></td>
+            <td class="text-right"><?php echo ($jml_saldo_awal >= 0) ? angkaDecimal($jml_saldo_awal) : '('.angkaDecimal(abs($jml_saldo_awal)).')'; ?></td>
+            <td class="text-right"><?php echo ($saldo_awal >= 0) ? angkaDecimal($saldo_awal) : '('.angkaDecimal(abs($saldo_awal)).')'; ?></td>
+            <td class="text-right"><?php echo angkaDecimal($jml_debet); ?></td>
+            <td class="text-right"><?php echo angkaDecimal($debet); ?></td>
+            <td class="text-right"><?php echo angkaDecimal($jml_kredit); ?></td>
+            <td class="text-right"><?php echo angkaDecimal($kredit); ?></td>
             <td class="text-right"><?php echo ($jml_saldo_akhir >= 0) ? angkaDecimal($jml_saldo_akhir) : '('.angkaDecimal(abs($jml_saldo_akhir)).')'; ?></td>
             <td class="text-right"><?php echo ($saldo_akhir >= 0) ? angkaDecimal($saldo_akhir) : '('.angkaDecimal(abs($saldo_akhir)).')'; ?></td>
         </tr>
         <?php if ( !empty($kode_gudang) && $kode_gudang <> $data[$key+1]['kode_gudang'] ) { ?>
             <tr class="biru">
-                <td colspan="6"><b>Total Per Gudang</b></td>
+                <td colspan="3"><b>Total Per Gudang</b></td>
+                <td class="text-right"><b><?php echo ($tot_jml_saldo_awal_gdg >= 0) ? angkaDecimal($tot_jml_saldo_awal_gdg) : '('.angkaDecimal(abs($tot_jml_saldo_awal_gdg)).')'; ?></b></td>
+                <td class="text-right"><b><?php echo ($tot_saldo_awal_gdg >= 0) ? angkaDecimal($tot_saldo_awal_gdg) : '('.angkaDecimal(abs($tot_saldo_awal_gdg)).')'; ?></b></td>
+                <td class="text-right"><b><?php echo angkaDecimal($tot_jml_debet_gdg); ?></b></td>
+                <td class="text-right"><b><?php echo angkaDecimal($tot_debet_gdg); ?></b></td>
+                <td class="text-right"><b><?php echo angkaDecimal($tot_jml_kredit_gdg); ?></b></td>
+                <td class="text-right"><b><?php echo angkaDecimal($tot_kredit_gdg); ?></b></td>
                 <td class="text-right"><b><?php echo ($tot_jml_saldo_akhir_gdg >= 0) ? angkaDecimal($tot_jml_saldo_akhir_gdg) : '('.angkaDecimal(abs($tot_jml_saldo_akhir_gdg)).')'; ?></b></td>
                 <td class="text-right"><b><?php echo ($tot_saldo_akhir_gdg >= 0) ? angkaDecimal($tot_saldo_akhir_gdg) : '('.angkaDecimal(abs($tot_saldo_akhir_gdg)).')'; ?></b></td>
             </tr>
@@ -118,7 +136,13 @@
         <?php } ?>
     <?php } ?>
     <tr class="kuning">
-        <td colspan="6"><b>Total Keseluruhan</b></td>
+        <td colspan="3"><b>Total Keseluruhan</b></td>
+        <td class="text-right"><b><?php echo ($gt_jml_saldo_awal >= 0) ? angkaDecimal($gt_jml_saldo_awal) : '('.angkaDecimal(abs($gt_jml_saldo_awal)).')'; ?></b></td>
+        <td class="text-right"><b><?php echo ($gt_saldo_awal >= 0) ? angkaDecimal($gt_saldo_awal) : '('.angkaDecimal(abs($gt_saldo_awal)).')'; ?></b></td>
+        <td class="text-right"><b><?php echo angkaDecimal($gt_jml_debet); ?></b></td>
+        <td class="text-right"><b><?php echo angkaDecimal($gt_debet); ?></b></td>
+        <td class="text-right"><b><?php echo angkaDecimal($gt_jml_kredit); ?></b></td>
+        <td class="text-right"><b><?php echo angkaDecimal($gt_kredit); ?></b></td>
         <td class="text-right"><b><?php echo ($gt_jml_saldo_akhir >= 0) ? angkaDecimal($gt_jml_saldo_akhir) : '('.angkaDecimal(abs($gt_jml_saldo_akhir)).')'; ?></b></td>
         <td class="text-right"><b><?php echo ($gt_saldo_akhir >= 0) ? angkaDecimal($gt_saldo_akhir) : '('.angkaDecimal(abs($gt_saldo_akhir)).')'; ?></b></td>
     </tr>

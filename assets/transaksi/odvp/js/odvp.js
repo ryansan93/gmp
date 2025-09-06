@@ -469,7 +469,7 @@ var odvp = {
         let newRow = row.clone();
         // newRow.find('[name=tanggal]').val('');
 
-        newRow.find('input, select').val('');
+        newRow.find('input, select:not(.perusahaan)').val('');
         row.find('.btn-ctrl').hide();
         row.after(newRow);
         

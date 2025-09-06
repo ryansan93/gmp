@@ -5,26 +5,34 @@ var stok = {
 
     settingUp: function() {
         $('select.bulan').select2();
+        $('select.jenis').select2().on("select2:select", function (e) {
+            stok.getGudangAndBarang();
+        });;
+        $('select.gudang').select2()
         $('select.barang').select2();
-        $('select.gudang').select2().on("select2:select", function (e) {
-            stok.getBarang();
-        });
 
         $('#Tahun').datetimepicker({
             locale: 'id',
             format: 'Y'
         });
 
-        stok.getBarang();
+        stok.getGudangAndBarang();
     }, // end - stok
 
-    getBarang: function() {
-        var jenis_gudang = $('select.gudang').find('option:selected').attr('data-jenis');
+    getGudangAndBarang: function() {
+        var jenis = $('select.jenis').find('option:selected').val();
 
+        $('select.gudang').find('option').removeAttr('disabled');
         $('select.barang').find('option').removeAttr('disabled');
-        $('select.barang').find('option:not([data-jenis="'+jenis_gudang+'"])').attr('disabled', 'disabled');
-        $('select.barang').find('option[value="all"]').removeAttr('disabled');
+        if ( jenis != 'all' ) {
+            $('select.gudang').find('option:not([data-jenis="'+jenis+'"])').attr('disabled', 'disabled');
+            $('select.gudang').find('option[value="all"]').removeAttr('disabled');
 
+            $('select.barang').find('option:not([data-jenis="'+jenis+'"])').attr('disabled', 'disabled');
+            $('select.barang').find('option[value="all"]').removeAttr('disabled');
+        }
+
+        $('select.gudang').select2();
         $('select.barang').select2();
     }, // end - getData
 
@@ -47,12 +55,12 @@ var stok = {
 				'bulan': $('.bulan').select2().val(),
 				'gudang': $('.gudang').select2().val(),
 				'barang': $('.barang').select2().val(),
-				'jenis': $('select.gudang').find('option:selected').attr('data-jenis'),
+				'jenis': $('.jenis').select2().val(),
 				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
 			};
 
 			$.ajax({
-                url : 'report/KartuStok/getData',
+                url : 'report/KartuStokRingkas/getData',
                 data : {
                     'params' : params
                 },

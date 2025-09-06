@@ -39,9 +39,19 @@
 			</div>
         </div>
 		<div class="col-xs-12 no-padding contain bulanan" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Jenis</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control jenis" data-required="1">
+					<option value="PAKAN">PAKAN</option>
+					<option value="OBAT">OVK</option>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding contain bulanan" style="margin-bottom: 10px;">
 			<div class="col-xs-12 no-padding"><label class="control-label">Gudang</label></div>
 			<div class="col-xs-12 no-padding">
 				<select class="form-control gudang" data-required="1">
+					<option value="all" data-jenis="all">ALL</option>
 					<?php if ( !empty($gudang) && count($gudang) > 0 ) { ?>
 						<?php foreach ($gudang as $k_gudang => $v_gudang) { ?>
 							<option value="<?php echo $v_gudang['id']; ?>" data-jenis="<?php echo strtoupper($v_gudang['jenis']); ?>"><?php echo strtoupper($v_gudang['jenis'].' | '.$v_gudang['nama']); ?></option>
