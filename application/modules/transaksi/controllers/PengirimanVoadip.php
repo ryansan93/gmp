@@ -524,7 +524,14 @@ class PengirimanVoadip extends Public_Controller {
                 supl.nama as supl_nama,
                 ovd.perusahaan as kode_prs,
                 prs.perusahaan as nama_prs
-            from order_voadip ov
+            from
+                (
+                    select ov1.* from order_voadip ov1
+                    right join
+                        (select max(id) as id, no_order from order_voadip group by no_order) ov2
+                        on
+                            ov1.id = ov2.id
+                ) ov
             left join
                 (select id_order, perusahaan from order_voadip_detail group by id_order, perusahaan) ovd
                 on
