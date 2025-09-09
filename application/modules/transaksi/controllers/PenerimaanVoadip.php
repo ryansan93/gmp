@@ -932,26 +932,28 @@ class PenerimaanVoadip extends Public_Controller {
 
     public function tes()
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select kv.no_order, tv.* from terima_voadip tv 
-            left join
-                kirim_voadip kv 
-                on
-                    tv.id_kirim_voadip = kv.id
-            where
-                kv.jenis_kirim = 'opks' and
-                tv.tgl_terima >= '2024-02-01' and
-                not EXISTS (select * from konfirmasi_pembayaran_voadip_det where no_sj = kv.no_sj)
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select kv.no_order, tv.* from terima_voadip tv 
+        //     left join
+        //         kirim_voadip kv 
+        //         on
+        //             tv.id_kirim_voadip = kv.id
+        //     where
+        //         kv.jenis_kirim = 'opks' and
+        //         tv.tgl_terima >= '2024-02-01' and
+        //         not EXISTS (select * from konfirmasi_pembayaran_voadip_det where no_sj = kv.no_sj)
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $key => $value) {
-                $this->insertKonfirmasi($value['id']);
-            }
-        }
+        //     foreach ($d_conf as $key => $value) {
+        //         $this->insertKonfirmasi($value['id']);
+        //     }
+        // }
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 1, 1, 2);
     }
 }

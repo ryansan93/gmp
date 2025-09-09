@@ -1638,6 +1638,16 @@ class LHK extends Public_Controller
     }
 
     public function tes() {
-        echo is_dir('uploads\LHK\NEKROPSI\273286_42');
+        // echo is_dir('uploads\LHK\NEKROPSI\273286_42');
+
+        $conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '2', '2025-09-04', 2, null, null";
+        $d_conf = $conf->hydrateRaw($sql);
+
+        $conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '2', '2025-09-04', 2, null, null";
+        $d_conf = $conf->hydrateRaw($sql);
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 2, 2, 2);
     }
 }
