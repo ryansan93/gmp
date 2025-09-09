@@ -40,6 +40,8 @@ class KartuHutangPerInvoice extends Public_Controller {
             $data = $this->includes;
 
             $content['akses'] = $akses;
+            $content['supplier'] = $this->getSupplier();
+            $content['jenis'] = $this->getJenis();
             $content['title_menu'] = 'Laporan Kartu Hutang Per Invoice';
 
             // Load Indexx
@@ -50,11 +52,62 @@ class KartuHutangPerInvoice extends Public_Controller {
         }
     }
 
+    public function getJenis() {
+        $arr = array('ekspedisi', 'plasma', 'supplier');
+
+        return $arr;
+    }
+
+    public function getSupplier() {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from 
+            (
+                select p1.nomor, p1.nama, 'supplier' as tipe from pelanggan p1
+                right join
+                    (select max(id) as id, nomor from pelanggan p where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p2
+                    on
+                        p1.id = p2.id
+
+                union all
+                        
+                select e1.nomor, e1.nama, 'ekspedisi' as tipe from ekspedisi e1
+                right join
+                    (select max(id) as id, nomor from ekspedisi e group by nomor) e2
+                    on
+                        e1.id = e2.id
+
+                union all
+
+                select m1.nomor, m1.nama, 'plasma' as tipe from mitra m1
+                right join
+                    (select max(id) as id, nomor from mitra group by nomor) m2
+                    on
+                        m1.id = m2.id
+                where
+                    m1.mstatus = 1
+            ) supl
+            order by
+                supl.tipe asc,
+                supl.nama asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        return $data;
+    }
+
     public function getData() {
         $params = $this->input->get('params');
 
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
+        $jenis = $params['jenis'];
+        $supplier = $params['supplier'];
 
         if ( $bulan != 'all' ) {
             $i = $bulan;
@@ -74,6 +127,23 @@ class KartuHutangPerInvoice extends Public_Controller {
             $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
             $_end_date = $tahun.'-'.$angka_bulan.'-01';
             $end_date = date("Y-m-t", strtotime($_end_date));
+        }
+
+        $where = null;
+        if ( $jenis != 'all' ) {
+            if ( empty( $where ) ) {
+                $where = "where supl.tipe = '".$jenis."'";
+            } else {
+                $where .= "and supl.tipe = '".$jenis."'";
+            }
+        }
+
+        if ( $supplier != 'all' ) {
+            if ( empty( $where ) ) {
+                $where = "where supl.nomor = '".$supplier."'";
+            } else {
+                $where .= "and supl.nomor = '".$supplier."'";
+            }
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -906,6 +976,7 @@ class KartuHutangPerInvoice extends Public_Controller {
                 ) supl
                 on
                     supl.nomor = data.supplier
+            ".$where."
             order by
                 data.supplier asc,
                 data.no_inv asc,

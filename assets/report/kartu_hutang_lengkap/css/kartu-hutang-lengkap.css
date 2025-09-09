@@ -66,3 +66,7 @@ tr.abu td {
 tr.kuning td {
 	background-color: #fffae0;
 }
+
+.select2-container--default .select2-results__option[aria-disabled=true] {
+    display: none;
+}

@@ -38,6 +38,32 @@
 				</div>
 			</div>
         </div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Jenis</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control jenis" data-required="1">
+					<option value="all">ALL</option>
+					<?php if ( !empty($jenis) ) { ?>
+						<?php foreach ($jenis as $k_jns => $v_jns) { ?>
+							<option value="<?php echo $v_jns; ?>"><?php echo strtoupper( $v_jns ); ?></option>
+						<?php } ?>
+					<?php } ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Supplier</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control supplier" data-required="1">
+					<option value="all">ALL</option>
+					<?php if ( !empty($supplier) ) { ?>
+						<?php foreach ($supplier as $k_supl => $v_supl) { ?>
+							<option value="<?php echo $v_supl['nomor']; ?>" data-jenis="<?php echo $v_supl['tipe']; ?>"><?php echo strtoupper( $v_supl['tipe'].' | '.$v_supl['nama'] ); ?></option>
+						<?php } ?>
+					<?php } ?>
+				</select>
+			</div>
+		</div>
 		<div class="col-xs-12 no-padding">
 			<div class="col-xs-12 no-padding">
 				<button type="button" class="col-xs-12 btn btn-primary" onclick="khl.getData()"><i class="fa fa-search"></i> Tampilkan</button>

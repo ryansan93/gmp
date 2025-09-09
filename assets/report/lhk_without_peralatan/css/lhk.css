@@ -115,73 +115,30 @@ table.tbl_pakan tbody tr td table.tbl_list_pakan tbody tr td {
 	padding-bottom: 8px;
 }
 
-table.tbl_nekropsi tbody tr td {
-	padding: 5px;
-}
-
-div#myNekropsi div.attachment, div#myNekropsi div.preview_file_attachment, div#myNekropsi div.upload {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis; 
-	margin-top: 0px;
-}
-
-div#myNekropsi div.attachment i, div#myNekropsi div.preview_file_attachment i, div#myNekropsi div.upload i {
-	border: 1px solid #ccc;
-    padding: 3px;
-    border-radius: 3px;
-    font-size: 12px;
-}
-
-div#myNekropsi div.attachment.disable i, div#myNekropsi div.preview_file_attachment.disable i, div#myNekropsi div.upload.disable i {
-	background-color: #ddd;
-}
-
-div#myNekropsi label {
-	margin-bottom: 0px;
-}
-
 #page-content-wrapper {
 	min-width: 100%;
 }
 
-.contain-img {
-	position: relative;
-	width: 100%;
-	max-width: 100%;
-	padding-bottom: 10px;
-	margin-right: 0px;
-    margin-left: 0px;
+a.nekropsi:not([href]):not([tabindex]), a.solusi:not([href]):not([tabindex]) {
+	color: #337ab7;
 }
-  
-.contain-img img {
-	width: 100%;
-	height: auto;
-}
-  
-.contain-img .contain-btn {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	-ms-transform: translate(-50%, -50%);
-	color: white;
-	/* padding: 12px 24px; */
-	border: none;
-	cursor: pointer;
-	border-radius: 5px;
-	text-align: center;
+a.nekropsi:not([href]):not([tabindex]):hover, a.solusi:not([href]):not([tabindex]):hover {
+	color: #337ab7;
+	text-decoration: underline;
 }
 
-.contain-img .btn {
-	opacity: 0.5;
-	font-size: 32px;
+table.tbl_lhk {
+	overflow-x: scroll;
 }
 
-.contain-img .btn:hover {
-	opacity: 1;
+table.tbl_lhk > tbody > tr > td {
+	vertical-align: top;
 }
 
-button[disabled], button:disabled {
-	background-color: #e9ecef!important;
+table.tbl_lhk > thead > tr > th, table.tbl_lhk > tbody > tr > td {
+	padding: 3px;
+}
+
+tr.header:hover {
+	background-color: #ededed;
 }

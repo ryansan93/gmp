@@ -508,79 +508,6 @@ class LHK extends Public_Controller {
         echo $html;
     }
 
-    public function peralatan()
-    {
-        $id = $this->input->get('id');
-
-        $m_lhk = new \Model\Storage\Lhk_model();
-        $d_lhk = $m_lhk->where('id', $id)->first();
-
-        $data = null;
-        if ( $d_lhk ) {
-            $m_lp = new \Model\Storage\LhkPeralatan_model();
-            $d_lp = $m_lp->where('id_header', $id)->first();
-    
-            if ( $d_lp ) {
-                $d_lp = $d_lp->toArray();
-    
-                $m_sb = new \Model\Storage\StandarBudidaya_model();
-                $d_sb = $m_sb->where('mulai', '<=', $d_lhk['tanggal'])->orderBy('mulai', 'DESC')->orderBy('nomor', 'DESC')->first();
-    
-                if ( $d_sb ) {
-                    $m_dsb = new \Model\Storage\DetStandarBudidaya_model();
-                    $d_dsb = $m_dsb->where('id_budidaya', $d_sb->id)->where('umur', $d_lhk['umur'])->first();
-    
-                    if ( $d_dsb ) {
-                        $d_dsb = $d_dsb->toArray();
-    
-                        $stts_suhu_experience1 = 1;
-                        $stts_suhu_experience2 = 1;
-                        $stts_air_speed_depan_inlet1 = 1;
-                        $stts_air_speed_depan_inlet2 = 1;
-                        $stts_kerataan_air_speed1 = 1;
-                        $stts_kerataan_air_speed2 = 1;
-                        if ( $d_lp['suhu_experience1'] <> $d_dsb['suhu_experience'] ) {
-                            $stts_suhu_experience1 = 0;
-                        }
-    
-                        if ( $d_lp['suhu_experience2'] <> $d_dsb['suhu_experience'] ) {
-                            $stts_suhu_experience2 = 0;
-                        }
-    
-                        if ( $d_lp['air_speed_depan_inlet1'] < $d_dsb['min_air_speed'] || $d_lp['air_speed_depan_inlet1'] > $d_dsb['max_air_speed'] ) {
-                            $stts_air_speed_depan_inlet1 = 0;
-                        }
-    
-                        if ( $d_lp['air_speed_depan_inlet2'] < $d_dsb['min_air_speed'] || $d_lp['air_speed_depan_inlet2'] > $d_dsb['max_air_speed'] ) {
-                            $stts_air_speed_depan_inlet2 = 0;
-                        }
-    
-                        if ( $d_lp['kerataan_air_speed1'] < $d_dsb['min_air_speed'] || $d_lp['kerataan_air_speed1'] > $d_dsb['max_air_speed'] ) {
-                            $stts_kerataan_air_speed1 = 0;
-                        }
-    
-                        if ( $d_lp['kerataan_air_speed2'] < $d_dsb['min_air_speed'] || $d_lp['kerataan_air_speed2'] > $d_dsb['max_air_speed'] ) {
-                            $stts_kerataan_air_speed2 = 0;
-                        }
-                    }
-                }
-    
-                $data = $d_lp;
-                $data['stts_suhu_experience1'] = $stts_suhu_experience1;
-                $data['stts_suhu_experience2'] = $stts_suhu_experience2;
-                $data['stts_air_speed_depan_inlet1'] = $stts_air_speed_depan_inlet1;
-                $data['stts_air_speed_depan_inlet2'] = $stts_air_speed_depan_inlet2;
-                $data['stts_kerataan_air_speed1'] = $stts_kerataan_air_speed1;
-                $data['stts_kerataan_air_speed2'] = $stts_kerataan_air_speed2;
-            }
-        }
-
-        $content['data'] = $data;
-        $html = $this->load->view($this->pathView . 'peralatan', $content, TRUE);
-
-        echo $html;
-    }
-
     public function msort($array, $key, $sort_flags = SORT_REGULAR) {
         if (is_array($array) && count($array) > 0) {
             if (!empty($key)) {
@@ -648,52 +575,6 @@ class LHK extends Public_Controller {
 
             $data['title_menu'] = 'ACK Laporan Harian Kandang';
             $data['view'] = $this->load->view($this->pathView . 'formAck', $content, TRUE);
-
-            $this->load->view($this->template, $data);
-        } else {
-            showErrorAkses();
-        }
-    }
-
-    public function formAckPeralatan($params)
-    {
-        $params = json_decode(exDecrypt($params), true);
-            
-        $nik = $params['nik'];
-        $status = $params['status'];
-        $url_akses = $params['url_akses'];
-
-        $akses = hakAkses($url_akses);
-        if ( $akses['a_ack'] == 1 ) {
-            $this->load->library('Mobile_Detect');
-            $detect = new Mobile_Detect();
-
-            $this->add_external_js(
-                array(
-                    'assets/report/lhk/js/lhk.js'
-                )
-            );
-            $this->add_external_css(
-                array(
-                    'assets/report/lhk/css/lhk.css'
-                )
-            );
-            $data = $this->includes;
-
-            $isMobile = false;
-            if ( $detect->isMobile() ) {
-                $isMobile = true;
-            }
-            
-            $m_lhk = new \Model\Storage\Lhk_model();
-            $data_lhk = $m_lhk->getDataAckPeralatan($nik, $status);
-
-            $content['akses'] = $akses;
-            $content['isMobile'] = $isMobile;
-            $content['data'] = $data_lhk;
-
-            $data['title_menu'] = 'ACK MANAJEMEN PERALATAN BELUM SESUAI';
-            $data['view'] = $this->load->view($this->pathView . 'formAckPeralatan', $content, TRUE);
 
             $this->load->view($this->template, $data);
         } else {
