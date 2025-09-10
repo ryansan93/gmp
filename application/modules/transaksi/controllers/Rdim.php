@@ -1517,11 +1517,21 @@ class Rdim extends Public_Controller
 
             $alamat = $jalan.$rt.$rw.$kelurahan.$kecamatan.$kab_kota.$provinsi;
 
+            $provinsi_kdg = !empty($v_data['d_kandang']['d_kecamatan']['d_kota']['d_provinsi']['nama']) ? ', '.$v_data['d_kandang']['d_kecamatan']['d_kota']['d_provinsi']['nama'] : '';
+            $kab_kota_kdg = !empty($v_data['d_kandang']['d_kecamatan']['d_kota']['nama']) ? ', '.$v_data['d_kandang']['d_kecamatan']['d_kota']['nama'] : '';
+            $kecamatan_kdg = !empty($v_data['d_kandang']['d_kecamatan']['nama']) ? ', Kec.'.$v_data['d_kandang']['d_kecamatan']['nama'] : '';
+            $kelurahan_kdg = !empty($v_data['d_kandang']['alamat_kelurahan']) ? ', Kel.'.$v_data['d_kandang']['alamat_kelurahan'] : '';
+            $rt_kdg = !empty($v_data['d_kandang']['alamat_rt']) ? ' RT.'.$v_data['d_kandang']['alamat_rt'] : '';
+            $rw_kdg = !empty($v_data['d_kandang']['alamat_rw']) ? '/RW.'.$v_data['d_kandang']['alamat_rw'] : '';
+            $jalan_kdg = !empty($v_data['d_kandang']['alamat_jalan']) ? $v_data['d_kandang']['alamat_jalan'] : '';
+
+            $alamat_kdg = $jalan_kdg.$rt_kdg.$rw_kdg.$kelurahan_kdg.$kecamatan_kdg.$kab_kota_kdg.$provinsi_kdg;
+
             $_data['periode'] = $periode;
             $_data['nama'] = $v_data['d_mitra_mapping']['d_mitra']['nama'];
             $_data['ktp'] = $v_data['d_mitra_mapping']['d_mitra']['ktp'];
             $_data['alamat'] = $alamat;
-            $_data['alamat_kdg'] = $alamat;
+            $_data['alamat_kdg'] = $alamat_kdg;
             $_data['populasi'] = $v_data['populasi'];
             $_data['unit'] = str_replace('Kota ', '', str_replace('Kab ', '', $v_data['d_kandang']['d_unit']['nama']));
         }
