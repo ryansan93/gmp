@@ -1527,12 +1527,27 @@ class Rdim extends Public_Controller
 
             $alamat_kdg = $jalan_kdg.$rt_kdg.$rw_kdg.$kelurahan_kdg.$kecamatan_kdg.$kab_kota_kdg.$provinsi_kdg;
 
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select sum(k.ekor_kapasitas) as populasi from kandang k
+                where
+                    k.mitra_mapping = ".$v_data['d_kandang']['mitra_mapping']." and
+                    k.grup = ".$v_data['d_kandang']['grup']."
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $populasi = null;
+            if ( $d_conf->count() > 0 ) {
+                $populasi = $d_conf->toArray()[0]['populasi'];
+            }
+
             $_data['periode'] = $periode;
             $_data['nama'] = $v_data['d_mitra_mapping']['d_mitra']['nama'];
             $_data['ktp'] = $v_data['d_mitra_mapping']['d_mitra']['ktp'];
             $_data['alamat'] = $alamat;
             $_data['alamat_kdg'] = $alamat_kdg;
-            $_data['populasi'] = $v_data['populasi'];
+            // $_data['populasi'] = $v_data['populasi'];
+            $_data['populasi'] = !empty($populasi) ? $populasi : 0;
             $_data['unit'] = str_replace('Kota ', '', str_replace('Kab ', '', $v_data['d_kandang']['d_unit']['nama']));
         }
 
