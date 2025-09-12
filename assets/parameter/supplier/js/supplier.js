@@ -364,8 +364,8 @@ var supl = {
 						'rw' :  $(div_supplier).find('input[name=rw_supl]').val().trim(),
 					};
 					var npwp = $(div_supplier).find('input[name=npwp_supl]').mask();
-					var skb = $(div_supplier).find('input[name=skb_supl]').val().trim();
-					var tgl_habis_skb = !empty($(div_supplier).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_supplier).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
+					// var skb = $(div_supplier).find('input[name=skb_supl]').val().trim();
+					// var tgl_habis_skb = !empty($(div_supplier).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_supplier).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
 						'kecamatan' : $(div_supplier).find('select[name=kecamatan_usaha_supl]').val(),
 						'kelurahan' : $(div_supplier).find('input[name=kelurahan_usaha_supl]').val(),
@@ -380,8 +380,8 @@ var supl = {
 						'nama' : nama_supplier,
 						'cp' : contact_person,
 						'npwp' : npwp,
-						'skb' : skb,
-						'tgl_habis_skb' : tgl_habis_skb,
+						// 'skb' : skb,
+						// 'tgl_habis_skb' : tgl_habis_skb,
 						'telepons' : telepons,
 						'alamat_supplier' : alamat_supplier,
 						'alamat_usaha' : alamat_usaha,
@@ -477,8 +477,8 @@ var supl = {
 						'rw' :  $(div_supplier).find('input[name=rw_supl]').val().trim(),
 					};
 					var npwp = $(div_supplier).find('input[name=npwp_supl]').mask();
-					var skb = $(div_supplier).find('input[name=skb_supl]').val().trim();
-					var tgl_habis_skb = !empty($(div_supplier).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_supplier).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
+					// var skb = $(div_supplier).find('input[name=skb_supl]').val().trim();
+					// var tgl_habis_skb = !empty($(div_supplier).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_supplier).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
 						'kecamatan' : $(div_supplier).find('select[name=kecamatan_usaha_supl]').val(),
 						'kelurahan' : $(div_supplier).find('input[name=kelurahan_usaha_supl]').val(),
@@ -498,8 +498,8 @@ var supl = {
 						'nama' : nama_supplier,
 						'cp' : contact_person,
 						'npwp' : npwp,
-						'skb' : skb,
-						'tgl_habis_skb' : tgl_habis_skb,
+						// 'skb' : skb,
+						// 'tgl_habis_skb' : tgl_habis_skb,
 						'telepons' : telepons,
 						'alamat_supplier' : alamat_supplier,
 						'alamat_usaha' : alamat_usaha,

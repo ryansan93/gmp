@@ -313,8 +313,8 @@ class Supplier extends Public_Controller {
 			$m_supplier->nik = $params['ktp'];
 			$m_supplier->cp = $params['cp'];
 			$m_supplier->npwp = $params['npwp'];
-			$m_supplier->skb = $params['skb'];
-			$m_supplier->tgl_habis_skb = $params['tgl_habis_skb'];
+			$m_supplier->skb = !empty($params['skb']) ? $params['skb'] : null;
+			$m_supplier->tgl_habis_skb = !empty($params['tgl_habis_skb']) ? $params['tgl_habis_skb'] : null;
 			$m_supplier->alamat_kecamatan = $params['alamat_supplier']['kecamatan'];
 			$m_supplier->alamat_kelurahan = $params['alamat_supplier']['kelurahan'];
 			$m_supplier->alamat_rt = $params['alamat_supplier']['rt'] ?: null;
@@ -400,8 +400,8 @@ class Supplier extends Public_Controller {
 			$m_supplier->nik = $params['ktp'];
 			$m_supplier->cp = $params['cp'];
 			$m_supplier->npwp = $params['npwp'];
-			$m_supplier->skb = $params['skb'];
-			$m_supplier->tgl_habis_skb = $params['tgl_habis_skb'];
+			$m_supplier->skb = !empty($params['skb']) ? $params['skb'] : null;
+			$m_supplier->tgl_habis_skb = !empty($params['tgl_habis_skb']) ? $params['tgl_habis_skb'] : null;
 			$m_supplier->alamat_kecamatan = $params['alamat_supplier']['kecamatan'];
 			$m_supplier->alamat_kelurahan = $params['alamat_supplier']['kelurahan'];
 			$m_supplier->alamat_rt = $params['alamat_supplier']['rt'] ?: null;
