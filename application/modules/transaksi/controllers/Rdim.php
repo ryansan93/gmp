@@ -1527,8 +1527,8 @@ class Rdim extends Public_Controller
 
             $alamat_kdg = $jalan_kdg.$rt_kdg.$rw_kdg.$kelurahan_kdg.$kecamatan_kdg.$kab_kota_kdg.$provinsi_kdg;
 
-            $start_date = prev_date( $v_data['tgl_docin'], 7 );
-            $end_date = next_date( $v_data['tgl_docin'], -7 );
+            $start_date = prev_date( $v_data['tgl_docin'], 7 ).' 00:00:00.001';
+            $end_date = next_date( $v_data['tgl_docin'], 7 ).' 23:59:59';
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "
