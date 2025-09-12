@@ -859,6 +859,75 @@ class Rdim extends Public_Controller
 
     private function rdimMapping($d_rdim)
     {
+        $kode_unit = array();
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                w.kode
+            from wilayah w
+            where
+                w.kode is not null
+            group by
+                w.kode
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                $kode_unit[] = $value['kode'];
+            }
+        }
+
+        $m_duser = new \Model\Storage\DetUser_model();
+        $d_duser = $m_duser->where('id_user', $this->userid)->first();
+
+        $m_karyawan = new \Model\Storage\Karyawan_model();
+        $d_karyawan = $m_karyawan->where('nama', 'like', strtolower(trim($d_duser->nama_detuser)).'%')->orderBy('id', 'desc')->first();
+
+        if ( $d_karyawan ) {
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    uk.unit
+                from unit_karyawan uk
+                where 
+                    uk.id_karyawan = '".$d_karyawan->id."' and
+                    uk.unit like '%all%'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_conf->count() == 0 ) {
+                $kode_unit = array();
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        w.kode
+                    from unit_karyawan uk
+                    left join
+                        wilayah w
+                        on
+                            uk.unit = w.id
+                    where 
+                        uk.id_karyawan = '".$d_karyawan->id."'
+                    group by
+                        w.kode
+                ";
+                $d_uk = $m_conf->hydrateRaw( $sql );
+
+                if ( $d_uk->count() > 0 ) {
+                    $d_uk = $d_uk->toArray();
+
+                    foreach ($d_uk as $k_uk => $v_uk) {
+                        $kode_unit[] = $v_uk['kode'];
+                    }
+                }
+            }
+        }
+
         // NOTE: header -> rdim
         $rdim = array(
             'id' => $d_rdim->id,
@@ -946,7 +1015,8 @@ class Rdim extends Public_Controller
                         kdg.kandang,
                         kdg.ekor_kapasitas,
                         kec.nama as nama_kecamatan,
-                        kab_kota.nama as nama_kab_kota
+                        kab_kota.nama as nama_kab_kota,
+                        w.kode as kode_unit
                     from kandang kdg
                     left join
                         (
@@ -975,7 +1045,8 @@ class Rdim extends Public_Controller
                         kdg.kandang,
                         kdg.ekor_kapasitas,
                         kec.nama,
-                        kab_kota.nama
+                        kab_kota.nama,
+                        w.kode
                 ) kdg
                 on
                     rs.kandang = kdg.id
@@ -1039,7 +1110,8 @@ class Rdim extends Public_Controller
                 on
                     rs.format_pb = sk.id_pm
             where
-                rs.id_rdim = ".$d_rdim->id."
+                rs.id_rdim = ".$d_rdim->id." and
+                kdg.kode_unit in ('".implode("', '", $kode_unit)."')
             group by
                 rs.id,
                 rs.tgl_docin,
