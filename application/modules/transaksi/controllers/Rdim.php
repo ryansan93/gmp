@@ -1511,7 +1511,7 @@ class Rdim extends Public_Controller
             $kab_kota = !empty($v_data['d_mitra_mapping']['d_mitra']['d_kecamatan']['d_kota']['nama']) ? ', '.$v_data['d_mitra_mapping']['d_mitra']['d_kecamatan']['d_kota']['nama'] : '';
             $kecamatan = !empty($v_data['d_mitra_mapping']['d_mitra']['d_kecamatan']['nama']) ? ', Kec.'.$v_data['d_mitra_mapping']['d_mitra']['d_kecamatan']['nama'] : '';
             $kelurahan = !empty($v_data['d_mitra_mapping']['d_mitra']['alamat_kelurahan']) ? ', Kel.'.$v_data['d_mitra_mapping']['d_mitra']['alamat_kelurahan'] : '';
-            $rt = !empty($v_data['d_mitra_mapping']['d_mitra']['alamat_rt']) ? ', RT.'.$v_data['d_mitra_mapping']['d_mitra']['alamat_rt'] : '';
+            $rt = !empty($v_data['d_mitra_mapping']['d_mitra']['alamat_rt']) ? ' RT.'.$v_data['d_mitra_mapping']['d_mitra']['alamat_rt'] : '';
             $rw = !empty($v_data['d_mitra_mapping']['d_mitra']['alamat_rw']) ? '/RW.'.$v_data['d_mitra_mapping']['d_mitra']['alamat_rw'] : '';
             $jalan = !empty($v_data['d_mitra_mapping']['d_mitra']['alamat_jalan']) ? $v_data['d_mitra_mapping']['d_mitra']['alamat_jalan'] : '';
 
@@ -1527,11 +1527,26 @@ class Rdim extends Public_Controller
 
             $alamat_kdg = $jalan_kdg.$rt_kdg.$rw_kdg.$kelurahan_kdg.$kecamatan_kdg.$kab_kota_kdg.$provinsi_kdg;
 
+            $start_date = prev_date( $v_data['tgl_docin'], 7 );
+            $end_date = next_date( $v_data['tgl_docin'], -7 );
+
             $m_conf = new \Model\Storage\Conf();
             $sql = "
+                /*
                 select sum(k.ekor_kapasitas) as populasi from kandang k
                 where
                     k.mitra_mapping = ".$v_data['d_kandang']['mitra_mapping']." and
+                    k.grup = ".$v_data['d_kandang']['grup']."
+                */
+
+                select sum(k.ekor_kapasitas) as populasi from rdim_submit rs
+                left join
+                    kandang k
+                    on
+                        rs.kandang = k.id
+                where
+                    rs.nim = '".$v_data['d_mitra_mapping']['nim']."' and
+                    rs.tgl_docin between '".$start_date."' and '".$end_date."' and
                     k.grup = ".$v_data['d_kandang']['grup']."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
