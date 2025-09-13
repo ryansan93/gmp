@@ -289,6 +289,8 @@ var pdm = {
         let err = 0;
         let div = $(elm).closest('div#transaksi');
 
+		$(elm).attr('disabled', 'disabled');
+
         $.map( $(div).find('[data-required=1]'), function(ipt) {
             if ( empty($(ipt).val()) ) {
                 $(ipt).parent().addClass('has-error');

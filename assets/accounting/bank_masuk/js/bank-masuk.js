@@ -2,15 +2,15 @@ var bm = {
 	start_up: function () {
 		bm.setting_up();
 
-        if ( !empty($("#StartDate").find('input').data('tgl')) && empty($("#StartDate").find('input').val()) ) {
-            var tgl = $("#StartDate").find('input').data('tgl');
-            $("#StartDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
-        }
-        if ( !empty($("#EndDate").find('input').data('tgl')) && empty($("#EndDate").find('input').val()) ) {
-            var tgl = $("#EndDate").find('input').data('tgl');
-            $("#EndDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
-        }
-        bm.getLists();
+        // if ( !empty($("#StartDate").find('input').data('tgl')) && empty($("#StartDate").find('input').val()) ) {
+        //     var tgl = $("#StartDate").find('input').data('tgl');
+        //     $("#StartDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
+        // }
+        // if ( !empty($("#EndDate").find('input').data('tgl')) && empty($("#EndDate").find('input').val()) ) {
+        //     var tgl = $("#EndDate").find('input').data('tgl');
+        //     $("#EndDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
+        // }
+        // bm.getLists();
 	}, // end - start_up
 
 	setting_up: function() {
@@ -31,88 +31,104 @@ var bm = {
             }
         });
 
-        $("#TglKm, #TglTempo, #TglCair").datetimepicker({
-            locale: 'id',
-            format: 'DD MMM Y',
-        });
-        $.map( $("#TglKm, #TglTempo, #TglCair"), function(div) {
-            if ( !empty($(div).find('input').data('tgl')) ) {
-                var tgl = $(div).find('input').data('tgl');
-                $(div).data('DateTimePicker').date( moment(new Date((tgl))) );
-            }
-        });
-        App.setTutupBulan( ["#TglKm", "#TglTempo", "#TglCair"] );
+        // $("#TglKm, #TglTempo, #TglCair").datetimepicker({
+        //     locale: 'id',
+        //     format: 'DD MMM Y',
+        // });
+        // $.map( $("#TglKm, #TglTempo, #TglCair"), function(div) {
+        //     if ( !empty($(div).find('input').data('tgl')) ) {
+        //         var tgl = $(div).find('input').data('tgl');
+        //         $(div).data('DateTimePicker').date( moment(new Date((tgl))) );
+        //     }
+        // });
+        // App.setTutupBulan( ["#TglKm", "#TglTempo", "#TglCair"] );
 
         $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal],[data-tipe=decimal3],[data-tipe=decimal4],[data-tipe=number]').each(function(){
-            priceFormat( $(this) );
+            $(this).priceFormat(Config[$(this).data('tipe')]);
         });
 
-        $('select.no_coa_header').select2({matcher: matchStart}).on('select2:select', function (e) {
-            var data = e.params.data.element.dataset;
-            var nama = data.nama;
-
-            $('select.nama_coa_header').val(nama).trigger('change');
-        });
-        $('select.nama_coa_header').select2().on('select2:select', function (e) {
-            var data = e.params.data.element.dataset;
-            var no = data.no;
-
-            $('select.no_coa_header').val(no).trigger('change');
+        $('select.jurnal_trans').select2().on("select2:select", function (e) {
+            bm.getDetJurnalTrans();
         });
 
-        $('select.no_coa').select2({matcher: matchStart}).on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
+        bm.getDetJurnalTrans();
 
-            var data = e.params.data.element.dataset;
-            var nama = data.nama;
+        // $('select.no_coa_header').select2({matcher: matchStart}).on('select2:select', function (e) {
+        //     var data = e.params.data.element.dataset;
+        //     var nama = data.nama;
 
-            $(_tr).find('select.nama_coa').val(nama).trigger('change');
-        });
-        $('select.nama_coa').select2().on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
+        //     $('select.nama_coa_header').val(nama).trigger('change');
+        // });
+        // $('select.nama_coa_header').select2().on('select2:select', function (e) {
+        //     var data = e.params.data.element.dataset;
+        //     var no = data.no;
 
-            var data = e.params.data.element.dataset;
-            var no = data.no;
+        //     $('select.no_coa_header').val(no).trigger('change');
+        // });
 
-            $(_tr).find('select.no_coa').val(no).trigger('change');
-        });
-        $('select.customer').select2().on('select2:select', function (e) {
-            var kode_cust = e.params.data.id;
+        // $('select.no_coa').select2({matcher: matchStart}).on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-            bm.getNoFaktur( kode_cust );
-        });
-        $('select.faktur').select2().on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
+        //     var data = e.params.data.element.dataset;
+        //     var nama = data.nama;
 
-            var no_faktur = e.params.data.id;
+        //     $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        // });
+        // $('select.nama_coa').select2().on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-            var data = e.params.data.element.dataset;
-            var nilai = data.nilai;
+        //     var data = e.params.data.element.dataset;
+        //     var no = data.no;
 
-            $(_tr).find('input.nilai_faktur').val( numeral.format(nilai) );
-            $(_tr).find('input.nilai').val( numeral.format(nilai) );
+        //     $(_tr).find('select.no_coa').val(no).trigger('change');
+        // });
+        // $('select.customer').select2().on('select2:select', function (e) {
+        //     var kode_cust = e.params.data.id;
 
-            var ket = '';
-            if ( !empty(no_faktur) ) {
-                $(_tr).find('select.no_coa').val('1104.02.00').trigger('change');
-                var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
+        //     bm.getNoFaktur( kode_cust );
+        // });
+        // $('select.faktur').select2().on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-                $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //     var no_faktur = e.params.data.id;
 
-                var nama_cust = $('select.customer').find('option:selected').attr('data-nama');
+        //     var data = e.params.data.element.dataset;
+        //     var nilai = data.nilai;
 
-                ket = 'Pelunasan Piutang a.n '+nama_cust+' / '+no_faktur;
-                $(_tr).find('input.keterangan').val(ket);
-            } else {
-                $(_tr).find('select.no_coa').val('').trigger('change');
-                $(_tr).find('select.nama_coa').val('').trigger('change');
+        //     $(_tr).find('input.nilai_faktur').val( numeral.format(nilai) );
+        //     $(_tr).find('input.nilai').val( numeral.format(nilai) );
 
-                $(_tr).find('input.keterangan').val(ket);
-            }
+        //     var ket = '';
+        //     if ( !empty(no_faktur) ) {
+        //         $(_tr).find('select.no_coa').val('1104.02.00').trigger('change');
+        //         var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
 
-            bm.hitGrandTotal( $(this) );
-        });
+        //         $(_tr).find('select.nama_coa').val(nama).trigger('change');
+
+        //         var nama_cust = $('select.customer').find('option:selected').attr('data-nama');
+
+        //         ket = 'Pelunasan Piutang a.n '+nama_cust+' / '+no_faktur;
+        //         $(_tr).find('input.keterangan').val(ket);
+        //     } else {
+        //         $(_tr).find('select.no_coa').val('').trigger('change');
+        //         $(_tr).find('select.nama_coa').val('').trigger('change');
+
+        //         $(_tr).find('input.keterangan').val(ket);
+        //     }
+
+        //     bm.hitGrandTotal( $(this) );
+        // });
     }, // end - setting_up
+
+    getDetJurnalTrans: function() {
+        var jt_id = $('select.jurnal_trans').find('option:selected').attr('data-id');
+
+        $('select.det_jurnal_trans').find('option').removeAttr('disabled');
+        $('select.det_jurnal_trans').find('option:not([data-idjt="'+jt_id+'"])').attr('disabled', 'disabled');
+        $('select.det_jurnal_trans').find('option[value="all"]').removeAttr('disabled');
+
+        $('select.det_jurnal_trans').select2();
+    }, // end - getData
 
     addRow: function (elm) {
         var tr = $(elm).closest('tr');

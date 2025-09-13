@@ -83,25 +83,25 @@ class BankMasuk extends Public_Controller {
         echo $html;
     }
 
-    public function getNoFaktur() {
-        $params = $this->input->get('params');
+    // public function getNoFaktur() {
+    //     $params = $this->input->get('params');
 
-        $kode_cust = $params['kode_cust'];
-        $no_km = (isset($params['no_km']) && !empty($params['no_km'])) ? $params['no_km'] : null;
+    //     $kode_cust = $params['kode_cust'];
+    //     $no_km = (isset($params['no_km']) && !empty($params['no_km'])) ? $params['no_km'] : null;
 
-        $m_fak = new \Model\Storage\Faktur_model();
-        $d_fak = $m_fak->getFakturDebt($kode_cust, $no_km);
+    //     $m_fak = new \Model\Storage\Faktur_model();
+    //     $d_fak = $m_fak->getFakturDebt($kode_cust, $no_km);
 
-        $html = '<option value="">Pilih No. Faktur</option>';
-        if ( !empty($d_fak) && count($d_fak) > 0 ) {
-            foreach ($d_fak as $k_faktur => $v_faktur) {
-                $selected = null;
-                $html .= '<option value="'.$v_faktur['no_faktur'].'" data-nilai="'.$v_faktur['sisa'].'" data-tglfaktur="'.substr($v_faktur['tgl_faktur'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_faktur['tgl_faktur'], 0, 10)).' | '.$v_faktur['no_faktur'].'</option>';
-            }
-        }
+    //     $html = '<option value="">Pilih No. Faktur</option>';
+    //     if ( !empty($d_fak) && count($d_fak) > 0 ) {
+    //         foreach ($d_fak as $k_faktur => $v_faktur) {
+    //             $selected = null;
+    //             $html .= '<option value="'.$v_faktur['no_faktur'].'" data-nilai="'.$v_faktur['sisa'].'" data-tglfaktur="'.substr($v_faktur['tgl_faktur'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_faktur['tgl_faktur'], 0, 10)).' | '.$v_faktur['no_faktur'].'</option>';
+    //         }
+    //     }
 
-        echo $html;
-    }
+    //     echo $html;
+    // }
 
     public function riwayat() {
         $start_date = substr(date('Y-m-d'), 0, 7).'-01';
@@ -117,13 +117,11 @@ class BankMasuk extends Public_Controller {
 
     public function addForm()
     {
-        $m_coa = new \Model\Storage\Coa_model();
-        // $m_cust = new \Model\Storage\Customer_model();
+        $m_jt = new \Model\Storage\JurnalTrans_model();
+        $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
-        // $content['coa_header'] = $m_coa->getCoa( implode("' ,'", array('1102.01', '1104.01')), 'SUBSTRING(c.no_coa, 0, 8)' );
-        // $content['coa'] = $m_coa->getCoa();
-        // $content['customer'] = $m_cust->getCustomer();
-        $content = null;
+        $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
+        $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
 
         return $html;

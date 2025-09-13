@@ -30,4 +30,44 @@ class JurnalTrans_model extends Conf{
     {
       	return $this->hasMany('\Model\Storage\JurnalTransSumberTujuan_model', 'id_header', 'id');
     }
+
+    public function getJurnalTransByUrl($url) {
+        $sql = "
+            select jt.* from
+            (
+                select jt1.* from
+                (
+                    select jt.id, jt.nama, jt.mstatus, jt.unit, jt.kode, jt.kode_voucher, jt.jurnal_manual, jtf.det_fitur_id from jurnal_trans_fitur jtf
+                    left join
+                        jurnal_trans jt
+                        on
+                            jt.id = jtf.id_header
+                    group by
+                        jt.id, jt.nama, jt.mstatus, jt.unit, jt.kode, jt.kode_voucher, jt.jurnal_manual, jtf.det_fitur_id
+                ) jt1
+                right join
+                    (select max(id) as id, kode from jurnal_trans group by kode) jt2
+                    on
+                        jt1.id = jt2.id
+                where
+                	jt1.id is not null
+            ) jt
+            left join
+                detail_fitur df
+                on
+                    jt.det_fitur_id = df.id_detfitur
+            where
+                df.path_detfitur = '".substr($url, 1)."'
+            order by
+                jt.nama asc
+        ";
+        $d_jt = $this->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_jt->count() > 0 ) {
+            $data = $d_jt->toArray();
+        }
+
+        return $data;
+    }
 }

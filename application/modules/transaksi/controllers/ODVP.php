@@ -1079,14 +1079,14 @@ class ODVP extends Public_Controller {
                     $this->result['message'] = 'Upload gagal, hubungi tim IT.';
                 }
             } else {
-                $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-                $d_terima_doc = $m_terima_doc->where('no_terima', $params['no_terima'])->orderBy('id', 'desc')->first();
-
-                $path_name = $d_terima_doc->path;
-                $id_old = $d_terima_doc->id;
-
                 $execute = 1;
             }
+
+            $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+            $d_terima_doc = $m_terima_doc->where('no_terima', $params['no_terima'])->orderBy('id', 'desc')->first();
+
+            $path_name = $d_terima_doc->path;
+            $id_old = $d_terima_doc->id;
 
             if ( $execute == 1 ) {
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
