@@ -170,15 +170,15 @@ class ChartOfAccount extends Public_Controller
             $m_coa->id_unit = $params['unit'];
             $m_coa->coa = $params['coa'];
             $m_coa->nama_coa = $params['nama'];
-            $m_coa->gol1 = $params['gol1'];
-            $m_coa->gol2 = $params['gol2'];
-            $m_coa->gol3 = $params['gol3'];
-            $m_coa->gol4 = $params['gol4'];
-            $m_coa->gol5 = $params['gol5'];
             $m_coa->lap = $params['laporan'];
             $m_coa->coa_pos = $params['posisi'];
             $m_coa->status = 1;
             $m_coa->save();
+            // $m_coa->gol1 = $params['gol1'];
+            // $m_coa->gol2 = $params['gol2'];
+            // $m_coa->gol3 = $params['gol3'];
+            // $m_coa->gol4 = $params['gol4'];
+            // $m_coa->gol5 = $params['gol5'];
 
             $id_coa = $m_coa->id;
 
@@ -212,12 +212,12 @@ class ChartOfAccount extends Public_Controller
                     'coa' => $params['coa'],
                     'lap' => $params['laporan'],
                     'coa_pos' => $params['posisi'],
-                    'gol1' => $params['gol1'],
-                    'gol2' => $params['gol2'],
-                    'gol3' => $params['gol3'],
-                    'gol4' => $params['gol4'],
-                    'gol5' => $params['gol5'],
                     'status' => 1
+                    // 'gol1' => $params['gol1'],
+                    // 'gol2' => $params['gol2'],
+                    // 'gol3' => $params['gol3'],
+                    // 'gol4' => $params['gol4'],
+                    // 'gol5' => $params['gol5'],
                 )
             );
 
@@ -243,12 +243,12 @@ class ChartOfAccount extends Public_Controller
             $id_coa = $params['id'];
 
             $m_coa = new \Model\Storage\Coa_model();
-            $d_coa = $m_coa->where('id', $id_coa)->update(array('status' => 0));
-            
+            $m_coa->where('id', $id_coa)->update(array('status' => 0));
+
             $d_coa = $m_coa->where('id', $id_coa)->first();
 
             $deskripsi_log = 'di-non aktifkan oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/delete', $d_coa, $deskripsi_log, null, $params['coa'] );
+            Modules::run( 'base/event/delete', $d_coa, $deskripsi_log, null, $d_coa['coa'] );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data COA berhasil di non aktifkan.';

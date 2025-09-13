@@ -33,7 +33,8 @@
 							<label class="control-label">No. COA</label>
 						</td>
 						<td class="col-md-9">
-							<input type="text" class="col-sm-4 form-control coa uppercase" placeholder="No. COA (MAX:10)" data-required="1" maxlength="10" onblur="coa.cekNoCoa(this)">
+							<!-- <input type="text" class="col-sm-4 form-control coa uppercase" placeholder="No. COA (MAX:10)" data-required="1" maxlength="10" onblur="coa.cekNoCoa(this)"> -->
+							<input type="text" class="col-sm-4 form-control coa uppercase" placeholder="No. COA (MAX:10)" data-required="1" maxlength="10">
 						</td>
 					</tr>
 					<tr>
@@ -41,10 +42,10 @@
 							<label class="control-label">Nama COA</label>
 						</td>
 						<td class="col-md-9">
-							<input type="text" class="col-xs-12 form-control nama uppercase" placeholder="NAMA COA" data-required="1" disabled>
+							<input type="text" class="col-xs-12 form-control nama uppercase" placeholder="NAMA COA" data-required="1">
 						</td>
 					</tr>
-					<tr>
+					<!-- <tr>
 						<td class="col-md-3">
 							<label class="control-label">Golongan 1</label>
 						</td>
@@ -83,7 +84,7 @@
 						<td class="col-md-9">
 							<input type="text" class="col-xs-12 form-control gol gol5 uppercase" placeholder="(MAX : 100)" maxlength="100" onblur="coa.cekNamaCoa()" disabled>
 						</td>
-					</tr>
+					</tr> -->
 					<tr><td colspan="2"><hr></td></tr>
 					<tr>
 						<td class="col-md-3">

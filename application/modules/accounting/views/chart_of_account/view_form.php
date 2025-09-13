@@ -39,7 +39,7 @@
 							<label class="control-label">: <?php echo strtoupper($data['nama_coa']); ?></label>
 						</td>
 					</tr>
-					<tr>
+					<!-- <tr>
 						<td class="col-md-3">
 							<label class="control-label">Golongan 1</label>
 						</td>
@@ -78,7 +78,7 @@
 						<td class="col-md-9">
 							<label class="control-label">: <?php echo !empty($data['gol5']) ? strtoupper($data['gol5']) : '-'; ?></label>
 						</td>
-					</tr>
+					</tr> -->
 					<tr><td colspan="2"><hr></td></tr>
 					<tr>
 						<td class="col-md-3">

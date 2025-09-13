@@ -54,52 +54,52 @@ class Supplier_model extends Conf {
     	$table_name = $this->table;
 		$column_name_key = $this->primaryKey;
 		$column_name_status = $this->status;
-		$sql = <<<QUERY
-					select
-	count( distinct(nomor) ) jumlah,
-	m.$column_name_status status_data,
-	case
-		when(m.$column_name_status = 'submit') then 'Ack'
-		else 'Finish'
-	end as next_state,
-	lt.nama_detuser aktor
-	from
-	$table_name m
-	join
-		(select
-			log.id
-		, log.tbl_id
-		, d_usr.nama_detuser
-		, log.deskripsi
-		, log.waktu
-		from ( select
-					l.tbl_id
-				, max(l.id) as id
-				from
-				log_tables l
-				where l.tbl_name = '$table_name'
-				group by
-				l.tbl_id
-				) mx
-		join log_tables log
-			on log.id = mx.id
-		join ms_user usr
-			on usr.id_user = log.user_id
-		join detail_user d_usr
-			on d_usr.id_user = usr.id_user and d_usr.nonaktif_detuser is null
-	) lt
-	on lt.tbl_id = m.id and 
-	   m.$column_name_status = 'submit' and
-	   m.tipe = 'supplier'
-	join (
-		select max(z.id) as id from pelanggan z where tipe = 'supplier' group by z.nomor
-	) x
-	on
-		lt.tbl_id = x.id
-	group by
-	m.$column_name_status,
-	lt.nama_detuser
-QUERY;
+		$sql = "
+				select
+					count( distinct(nomor) ) jumlah,
+					m.".$column_name_status." status_data,
+					case
+						when(m.".$column_name_status." = 'submit') then 'Ack'
+						else 'Finish'
+					end as next_state,
+					lt.nama_detuser aktor
+					from ".$table_name." m
+						join
+							(select
+								log.id
+							, log.tbl_id
+							, d_usr.nama_detuser
+							, log.deskripsi
+							, log.waktu
+							from ( select
+										l.tbl_id
+									, max(l.id) as id
+									from
+									log_tables l
+									where l.tbl_name = '".$table_name."'
+									group by
+									l.tbl_id
+									) mx
+							join log_tables log
+								on log.id = mx.id
+							join ms_user usr
+								on usr.id_user = log.user_id
+							join detail_user d_usr
+								on d_usr.id_user = usr.id_user and d_usr.nonaktif_detuser is null
+						) lt
+						on 
+							lt.tbl_id = m.id and 
+							m.".$column_name_status." = 'submit' and
+							m.tipe = 'supplier'
+						join (
+							select max(z.id) as id from pelanggan z where tipe = 'supplier' group by z.nomor
+						) x
+						on
+							lt.tbl_id = x.id
+					group by
+						m.".$column_name_status.",
+						lt.nama_detuser
+				";
 
 		$d_conf = $this->hydrateRaw ( $sql );
 

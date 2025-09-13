@@ -858,15 +858,15 @@ class Supplier extends Public_Controller {
         }
     }
 
-	public function model($status)
-    {
-        if ( is_numeric($status) ) {
-            $status = getStatus($status);
-        }
+	// public function model($status)
+    // {
+    //     if ( is_numeric($status) ) {
+    //         $status = getStatus($status);
+    //     }
 
-        $m_supplier = new \Model\Storage\Supplier_model();
-        $dashboard = $m_supplier->getDashboard($status);
+    //     $m_supplier = new \Model\Storage\Supplier_model();
+    //     $dashboard = $m_supplier->getDashboard($status);
 
-        return $dashboard;
-    }
+    //     return $dashboard;
+    // }
 }

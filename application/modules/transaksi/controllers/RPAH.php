@@ -889,13 +889,13 @@ class RPAH extends Public_Controller {
         display_json( $this->result );
     }
 
-    public function model($status)
-    {
-        $m_rpah = new \Model\Storage\Rpah_model();
-        $dashboard = $m_rpah->getDashboard($status);
+    // public function model($status)
+    // {
+    //     $m_rpah = new \Model\Storage\Rpah_model();
+    //     $dashboard = $m_rpah->getDashboard($status);
 
-        return $dashboard;
-    }
+    //     return $dashboard;
+    // }
 
     public function tes()
     {

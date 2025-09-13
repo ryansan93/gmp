@@ -136,7 +136,7 @@ var coa = {
                     $(this).priceFormat(Config[$(this).data('tipe')]);
                 });
 
-				$(this).find('input.coa').mask("9999.99.99");
+				$(this).find('input.coa').mask("99999.999");
             });
         },'html');
 	}, // end - add_form
@@ -219,11 +219,11 @@ var coa = {
 						'unit': $(modal).find('.unit').val(),
 						'coa': $(modal).find('.coa').val(),
 						'nama': $(modal).find('.nama').val(),
-						'gol1': $(modal).find('.gol1').val(),
-						'gol2': $(modal).find('.gol2').val(),
-						'gol3': $(modal).find('.gol3').val(),
-						'gol4': $(modal).find('.gol4').val(),
-						'gol5': $(modal).find('.gol5').val(),
+						// 'gol1': $(modal).find('.gol1').val(),
+						// 'gol2': $(modal).find('.gol2').val(),
+						// 'gol3': $(modal).find('.gol3').val(),
+						// 'gol4': $(modal).find('.gol4').val(),
+						// 'gol5': $(modal).find('.gol5').val(),
 						'laporan': $(modal).find('.laporan').val(),
 						'posisi': $(modal).find('.posisi').val(),
 					};
@@ -275,11 +275,11 @@ var coa = {
 						'unit': $(modal).find('.unit').val(),
 						'coa': $(modal).find('.coa').val(),
 						'nama': $(modal).find('.nama').val(),
-						'gol1': $(modal).find('.gol1').val(),
-						'gol2': $(modal).find('.gol2').val(),
-						'gol3': $(modal).find('.gol3').val(),
-						'gol4': $(modal).find('.gol4').val(),
-						'gol5': $(modal).find('.gol5').val(),
+						// 'gol1': $(modal).find('.gol1').val(),
+						// 'gol2': $(modal).find('.gol2').val(),
+						// 'gol3': $(modal).find('.gol3').val(),
+						// 'gol4': $(modal).find('.gol4').val(),
+						// 'gol5': $(modal).find('.gol5').val(),
 						'laporan': $(modal).find('.laporan').val(),
 						'posisi': $(modal).find('.posisi').val(),
 					};
