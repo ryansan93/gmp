@@ -281,4 +281,18 @@ var App = {
             },
         });
     }, // end - setTutupBulan
+
+    dateName : function(dateString, type='i'){
+        var i_days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        var e_days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        var d = new Date(dateString);
+        var dayName = null;
+        if ( type=='i' ) {
+            dayName = i_days[d.getDay()];
+        } else {
+            dayName = e_days[d.getDay()];
+        }
+
+        return dayName;
+    }, // end - dateName
 };
