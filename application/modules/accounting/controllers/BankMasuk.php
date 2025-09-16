@@ -174,10 +174,15 @@ class BankMasuk extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            $m_nbbm = new \Model\Storage\NoBbm_model();
             $m_km = new \Model\Storage\Km_model();
-            $now = $m_km->getDate();
 
-            $no_km = $m_km->getKode('BBM');
+            $no_km = $m_nbbm->getKode('BBM');
+
+            $m_nbbm->tbl_name = $m_km->getTable();
+            $m_nbbm->tbl_id = $no_km;
+            $m_nbbm->kode = $no_km;
+            $m_nbbm->save();
 
             $m_km->no_km = $no_km;
             // $m_km->no_coa = $params['no_coa'];
@@ -299,6 +304,9 @@ class BankMasuk extends Public_Controller {
             $m_kmi = new \Model\Storage\KmItem_model();
             $m_kmi->where('no_km', $no_km)->delete();
 
+            $m_nbbm = new \Model\Storage\NoBbm_model();
+            $m_nbbm->where('kode', $no_km)->delete();
+
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_km, $deskripsi_log, null, $no_km );
 
@@ -326,8 +334,6 @@ class BankMasuk extends Public_Controller {
         $content['perusahaan'] = $d_prs->toArray();
         $content['data'] = $d_km;
         $content['detail'] = $d_kmi;
-
-        cetak_r($d_kmi);
 
         $res_view_html = $this->load->view($this->pathView.'exportPdf', $content, true);
 

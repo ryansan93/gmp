@@ -68,9 +68,9 @@ class Km_model extends Conf{
 		$sql = "
 			select 
 				k.*,
-				jt.nama as nama_bank,
+				-- jt.nama as nama_bank,
 				k.customer as nama_cust
-				-- , cust.nama_cust
+				-- cust.nama_cust
 			from km k
 			-- left join
 			-- 	customer cust

@@ -25,17 +25,29 @@ class Kk_model extends Conf{
 		$sql = "
 			select 
 				k.*,
-				c.nama_coa,
-				supl.nama_supl
+				jt.nama as jurnal_trans_nama,
+				k.supplier as nama_supl
+				-- c.nama_coa,
+				-- supl.nama_supl
 			from kk k
-            left join
-				coa c
-				on
-					k.no_coa = c.no_coa
 			left join
-				supplier supl
+				(
+					select jt1.* from jurnal_trans jt1
+					right join
+						(select max(id) as id, kode from jurnal_trans group by kode) jt2
+						on
+							jt1.id = jt2.id
+				) jt
 				on
-					k.kode_supl = supl.kode_supl
+					k.jurnal_trans = jt.kode
+            -- left join
+			-- 	coa c
+			-- 	on
+			-- 		k.no_coa = c.no_coa
+			-- left join
+			-- 	supplier supl
+			-- 	on
+			-- 		k.kode_supl = supl.kode_supl
 			".$sql_id."
 			order by
 				k.tgl_kk desc,
@@ -56,12 +68,24 @@ class Kk_model extends Conf{
 		$sql = "
 			select 
 				k.*,
-				supl.nama_supl
+				jt.nama as nama_bank,
+				k.supplier as nama_supl
+				-- supl.nama_supl
 			from kk k
+			-- left join
+			-- 	supplier supl
+			-- 	on
+			-- 		k.kode_supl = supl.kode_supl
 			left join
-				supplier supl
+				(
+					select jt1.* from jurnal_trans jt1
+					right join
+						(select max(id) as id, kode from jurnal_trans group by kode) jt2
+						on
+							jt1.id = jt2.id
+				) jt
 				on
-					k.kode_supl = supl.kode_supl
+					k.jurnal_trans = jt.kode
 			where
 				k.tgl_kk between '".$start_date."' and '".$end_date."' and
 				k.no_kk like '".$kode."%'

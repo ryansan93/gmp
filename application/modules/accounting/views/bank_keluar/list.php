@@ -6,7 +6,7 @@
 			<td><?php echo strtoupper($v_data['nama_supl']); ?></td>
 			<td><?php echo !empty($v_data['keterangan']) ? strtoupper($v_data['keterangan']) : '-'; ?></td>
 			<td><?php echo strtoupper($v_data['nama_bank']); ?></td>
-			<td class="text-right"><?php echo formatAngka($v_data['nilai']); ?></td>
+			<td class="text-right"><?php echo angkaDecimal($v_data['nilai']); ?></td>
 		</tr>
 	<?php endforeach ?>
 <?php else: ?>

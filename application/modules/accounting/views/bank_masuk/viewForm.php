@@ -29,12 +29,12 @@
 			<label class="control-label">: <?php echo !empty($data['keterangan']) ? $data['keterangan'] : '-'; ?></label>
 		</div>
 	</div>
-	<!-- <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Nama Bank</label></div>
 		<div class="col-xs-4 no-padding">
 			<label class="control-label">: <?php echo !empty($data['nama_bank']) ? $data['nama_bank'] : '-'; ?></label>
 		</div>
-	</div> -->
+	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">No. Giro</label></div>
 		<div class="col-xs-4 no-padding">

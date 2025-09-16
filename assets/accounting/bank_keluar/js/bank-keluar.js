@@ -313,9 +313,9 @@ var bk = {
                 'end_date': dateSQL( $(dcontent).find('#EndDate').data('DateTimePicker').date() )
             };
 
-            if ($.fn.dataTable.isDataTable('.tbl_riwayat')) {
-                $('.tbl_riwayat').DataTable().destroy();
-            }
+            // if ($.fn.dataTable.isDataTable('.tbl_riwayat')) {
+            //     $('.tbl_riwayat').DataTable().destroy();
+            // }
 
             $.ajax({
                 url : 'accounting/BankKeluar/getLists',
@@ -328,9 +328,9 @@ var bk = {
                 success : function(html){
                     App.hideLoaderInContent( $(tbody), html );
 
-                    if ( $('.tbl_riwayat').find('tbody tr.data').length > 0 ) {
-                        $('.tbl_riwayat').DataTable();
-                    }
+                    // if ( $('.tbl_riwayat').find('tbody tr.data').length > 0 ) {
+                    //     $('.tbl_riwayat').DataTable();
+                    // }
                 },
             });
         }
@@ -459,12 +459,11 @@ var bk = {
                     var no_urut = 1;
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
-                            'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
+                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            'no_lpb': $(tr).find('select.lpb').select2().val(),
-							'nilai_lpb': numeral.unformat($(tr).find('input.nilai_lpb').val()),
+                            'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
 						};
 
@@ -475,8 +474,10 @@ var bk = {
 
 					var data = {
 						'tgl_kk': dateSQL( $(dcontent).find('#TglKk').data('DateTimePicker').date() ),
-						'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
-                        'kode_supl': $(dcontent).find('select.supplier').select2().val(),
+						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
+                        'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
+                        // 'kode_supl': $(dcontent).find('select.supplier').select2().val(),
+                        'supplier': $(dcontent).find('input.supplier').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
                         'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
                         'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
@@ -527,12 +528,11 @@ var bk = {
                     var no_urut = 1;
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
-                            'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
+                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            'no_lpb': $(tr).find('select.lpb').select2().val(),
-							'nilai_lpb': numeral.unformat($(tr).find('input.nilai_lpb').val()),
+                            'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
 						};
 
@@ -544,8 +544,10 @@ var bk = {
 					var data = {
 						'no_kk': $(elm).attr('data-kode'),
 						'tgl_kk': dateSQL( $(dcontent).find('#TglKk').data('DateTimePicker').date() ),
-                        'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
-                        'kode_supl': $(dcontent).find('select.supplier').select2().val(),
+						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
+                        'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
+                        // 'kode_supl': $(dcontent).find('select.supplier').select2().val(),
+                        'supplier': $(dcontent).find('input.supplier').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
                         'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
                         'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
