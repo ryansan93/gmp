@@ -423,10 +423,24 @@ class PengirimanVoadip extends Public_Controller {
                 $d_supplier = $m_supplier->where('nomor', $d_kv['asal'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('id', 'desc')->first();
                 $asal = $d_supplier->nama;
 
-                $m_gudang = new \Model\Storage\Gudang_model();
-                $d_gudang = $m_gudang->where('id', $d_kv['tujuan'])->orderBy('id', 'desc')->first();
+                if ( $d_kv['jenis_tujuan'] == 'peternak' ) {
+                    if ( !empty($d_kv['tujuan']) ) {
+                        $m_rs = new \Model\Storage\RdimSubmit_model();
+                        $d_rs_tujuan = $m_rs->where('noreg', $d_kv['tujuan'])->with(['mitra'])->orderBy('id', 'desc')->first();
 
-                $tujuan = $d_gudang->nama;
+                        if ( $d_rs_tujuan ) {
+                            $d_rs_tujuan = $d_rs_tujuan->toArray();
+                            
+                            $tgl_docin_tujuan = $d_rs_tujuan['tgl_docin'];
+                            $tujuan = $d_rs_tujuan['mitra']['d_mitra']['nama'].' ('.$d_kv['tujuan'].')';
+                        }
+                    }
+                } else {
+                    $m_gudang = new \Model\Storage\Gudang_model();
+                    $d_gudang = $m_gudang->where('id', $d_kv['tujuan'])->orderBy('id', 'desc')->first();
+
+                    $tujuan = $d_gudang->nama;
+                }
             }
 
             // $m_ov = new \Model\Storage\OrderVoadip_model();

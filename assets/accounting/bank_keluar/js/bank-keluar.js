@@ -2,15 +2,15 @@ var bk = {
 	start_up: function () {
 		bk.setting_up();
 
-        if ( !empty($("#StartDate").find('input').data('tgl')) && empty($("#StartDate").find('input').val()) ) {
-            var tgl = $("#StartDate").find('input').data('tgl');
-            $("#StartDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
-        }
-        if ( !empty($("#EndDate").find('input').data('tgl')) && empty($("#EndDate").find('input').val()) ) {
-            var tgl = $("#EndDate").find('input').data('tgl');
-            $("#EndDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
-        }
-        bk.getLists();
+        // if ( !empty($("#StartDate").find('input').data('tgl')) && empty($("#StartDate").find('input').val()) ) {
+        //     var tgl = $("#StartDate").find('input').data('tgl');
+        //     $("#StartDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
+        // }
+        // if ( !empty($("#EndDate").find('input').data('tgl')) && empty($("#EndDate").find('input').val()) ) {
+        //     var tgl = $("#EndDate").find('input').data('tgl');
+        //     $("#EndDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
+        // }
+        // bk.getLists();
 	}, // end - start_up
 
 	setting_up: function() {
@@ -41,157 +41,177 @@ var bk = {
                 $(div).data('DateTimePicker').date( moment(new Date((tgl))) );
             }
         });
-        App.setTutupBulan( ["#TglKk", "#TglTempo", "#TglCair"] );
+        // App.setTutupBulan( ["#TglKk", "#TglTempo", "#TglCair"] );
 
         $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal],[data-tipe=decimal3],[data-tipe=decimal4],[data-tipe=number]').each(function(){
-            priceFormat( $(this) );
+            $(this).priceFormat(Config[$(this).data('tipe')]);
         });
 
-        $('select.no_coa_header').select2({matcher: matchStart}).on('select2:select', function (e) {
-            var data = e.params.data.element.dataset;
-            var nama = data.nama;
-
-            $('select.nama_coa_header').val(nama).trigger('change');
-        });
-        $('select.nama_coa_header').select2().on('select2:select', function (e) {
-            var data = e.params.data.element.dataset;
-            var no = data.no;
-
-            $('select.no_coa_header').val(no).trigger('change');
+        $('select.jurnal_trans').select2().on("select2:select", function (e) {
+            bk.getDetJurnalTrans();
         });
 
-        $('select.no_coa').select2({matcher: matchStart}).on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
+        bk.getDetJurnalTrans();
 
-            var data = e.params.data.element.dataset;
-            var nama = data.nama;
+        // $('select.no_coa_header').select2({matcher: matchStart}).on('select2:select', function (e) {
+        //     var data = e.params.data.element.dataset;
+        //     var nama = data.nama;
 
-            $(_tr).find('select.nama_coa').val(nama).trigger('change');
-        });
-        $('select.nama_coa').select2().on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
+        //     $('select.nama_coa_header').val(nama).trigger('change');
+        // });
+        // $('select.nama_coa_header').select2().on('select2:select', function (e) {
+        //     var data = e.params.data.element.dataset;
+        //     var no = data.no;
 
-            var data = e.params.data.element.dataset;
-            var no = data.no;
+        //     $('select.no_coa_header').val(no).trigger('change');
+        // });
 
-            $(_tr).find('select.no_coa').val(no).trigger('change');
-        });
-        $('select.supplier').select2().on('select2:select', function (e) {
-            var kode_supl = e.params.data.id;
+        // $('select.no_coa').select2({matcher: matchStart}).on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-            bk.getNoLpb( kode_supl );
-        });
-        $('select.lpb').select2().on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
+        //     var data = e.params.data.element.dataset;
+        //     var nama = data.nama;
 
-            var no_lpb = e.params.data.id;
+        //     $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        // });
+        // $('select.nama_coa').select2().on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-            var data = e.params.data.element.dataset;
-            var nilai = data.nilai;
+        //     var data = e.params.data.element.dataset;
+        //     var no = data.no;
 
-            $(_tr).find('input.nilai_lpb').val( numeral.format(nilai) );
-            $(_tr).find('input.nilai').val( numeral.format(nilai) );
+        //     $(_tr).find('select.no_coa').val(no).trigger('change');
+        // });
+        // $('select.supplier').select2().on('select2:select', function (e) {
+        //     var kode_supl = e.params.data.id;
 
-            var ket = '';
-            if ( !empty(no_lpb) ) {
-                $(_tr).find('select.no_coa').val('2102.00.00').trigger('change');
-                var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
+        //     bk.getNoLpb( kode_supl );
+        // });
+        // $('select.lpb').select2().on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-                $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //     var no_lpb = e.params.data.id;
 
-                var nama_supl = $('select.supplier').find('option:selected').attr('data-nama');
+        //     var data = e.params.data.element.dataset;
+        //     var nilai = data.nilai;
 
-                ket = 'Pelunasan Hutang a.n '+nama_supl+' / '+no_lpb;
-                $(_tr).find('input.keterangan').val(ket);
-            } else {
-                $(_tr).find('select.no_coa').val('').trigger('change');
-                $(_tr).find('select.nama_coa').val('').trigger('change');
+        //     $(_tr).find('input.nilai_lpb').val( numeral.format(nilai) );
+        //     $(_tr).find('input.nilai').val( numeral.format(nilai) );
 
-                $(_tr).find('input.keterangan').val(ket);
-            }
+        //     var ket = '';
+        //     if ( !empty(no_lpb) ) {
+        //         $(_tr).find('select.no_coa').val('2102.00.00').trigger('change');
+        //         var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
 
-            bk.hitGrandTotal( $(this) );
-        });
+        //         $(_tr).find('select.nama_coa').val(nama).trigger('change');
+
+        //         var nama_supl = $('select.supplier').find('option:selected').attr('data-nama');
+
+        //         ket = 'Pelunasan Hutang a.n '+nama_supl+' / '+no_lpb;
+        //         $(_tr).find('input.keterangan').val(ket);
+        //     } else {
+        //         $(_tr).find('select.no_coa').val('').trigger('change');
+        //         $(_tr).find('select.nama_coa').val('').trigger('change');
+
+        //         $(_tr).find('input.keterangan').val(ket);
+        //     }
+
+        //     bk.hitGrandTotal( $(this) );
+        // });
     }, // end - setting_up
+
+    getDetJurnalTrans: function() {
+        var jt_id = $('select.jurnal_trans').find('option:selected').attr('data-id');
+
+        $.map( $('select.det_jurnal_trans'), function(select) {
+            $(select).find('option').removeAttr('disabled');
+            $(select).find('option:not([data-idjt="'+jt_id+'"])').attr('disabled', 'disabled');
+            $(select).find('option[value="all"]').removeAttr('disabled');
+    
+            $(select).select2();
+        } );
+    }, // end - getData
 
     addRow: function (elm) {
         var tr = $(elm).closest('tr');
         var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.no_coa, select.nama_coa, select.lpb').select2('destroy')
+        $(tr).find('select.det_jurnal_trans').select2('destroy')
                                    .removeAttr('data-live-search')
                                    .removeAttr('data-select2-id')
                                    .removeAttr('aria-hidden')
                                    .removeAttr('tabindex');
-        $(tr).find('select.no_coa option, select.nama_coa option, select.lpb option').removeAttr('data-select2-id');
+        $(tr).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
 
         var tr_clone = $(tr).clone();
 
         $(tr_clone).find('input, select').val('');
 
         $(tr_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
-            priceFormat( $(this) );
+            $(this).priceFormat(Config[$(this).data('tipe')]);
         });
 
         $(tbody).append( $(tr_clone) );
 
-        $.each($(tbody).find('select'), function(a) {
-            if ( $(this).hasClass('no_coa') ) {
-                $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        bk.getDetJurnalTrans();
+
+        // $.each($(tbody).find('select'), function(a) {
+        //     if ( $(this).hasClass('no_coa') ) {
+        //         $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
         
-                    var data = e.params.data.element.dataset;
-                    var nama = data.nama;
+        //             var data = e.params.data.element.dataset;
+        //             var nama = data.nama;
         
-                    $(_tr).find('select.nama_coa').val(nama).trigger('change');
-                });
-            }
+        //             $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //         });
+        //     }
 
-            if ( $(this).hasClass('nama_coa') ) {
-                $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        //     if ( $(this).hasClass('nama_coa') ) {
+        //         $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
 
-                    var data = e.params.data.element.dataset;
-                    var no = data.no;
+        //             var data = e.params.data.element.dataset;
+        //             var no = data.no;
 
-                    $(_tr).find('select.no_coa').val(no).trigger('change');
-                });
-            }
+        //             $(_tr).find('select.no_coa').val(no).trigger('change');
+        //         });
+        //     }
 
-            if ( $(this).hasClass('lpb') ) {
-                $(this).select2().on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        //     if ( $(this).hasClass('lpb') ) {
+        //         $(this).select2().on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
 
-                    var no_lpb = e.params.data.id;
+        //             var no_lpb = e.params.data.id;
 
-                    var data = e.params.data.element.dataset;
-                    var nilai = data.nilai;
+        //             var data = e.params.data.element.dataset;
+        //             var nilai = data.nilai;
 
-                    $(_tr).find('input.nilai_lpb').val( numeral.format(nilai) );
-                    $(_tr).find('input.nilai').val( numeral.format(nilai) );
+        //             $(_tr).find('input.nilai_lpb').val( numeral.format(nilai) );
+        //             $(_tr).find('input.nilai').val( numeral.format(nilai) );
 
-                    var ket = '';
-                    if ( !empty(no_lpb) ) {
-                        $(_tr).find('select.no_coa').val('2102.00.00').trigger('change');
-                        var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
+        //             var ket = '';
+        //             if ( !empty(no_lpb) ) {
+        //                 $(_tr).find('select.no_coa').val('2102.00.00').trigger('change');
+        //                 var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
 
-                        $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //                 $(_tr).find('select.nama_coa').val(nama).trigger('change');
 
-                        var nama_supl = $('select.supplier').find('option:selected').attr('data-nama');
+        //                 var nama_supl = $('select.supplier').find('option:selected').attr('data-nama');
 
-                        ket = 'Pelunasan Hutang a.n '+nama_supl+' / '+no_lpb;
-                        $(_tr).find('input.keterangan').val(ket);
-                    } else {
-                        $(_tr).find('select.no_coa').val('').trigger('change');
-                        $(_tr).find('select.nama_coa').val('').trigger('change');
+        //                 ket = 'Pelunasan Hutang a.n '+nama_supl+' / '+no_lpb;
+        //                 $(_tr).find('input.keterangan').val(ket);
+        //             } else {
+        //                 $(_tr).find('select.no_coa').val('').trigger('change');
+        //                 $(_tr).find('select.nama_coa').val('').trigger('change');
 
-                        $(_tr).find('input.keterangan').val(ket);
-                    }
+        //                 $(_tr).find('input.keterangan').val(ket);
+        //             }
 
-                    bk.hitGrandTotal( $(this) );
-                });
-            }
-        });
+        //             bk.hitGrandTotal( $(this) );
+        //         });
+        //     }
+        // });
     }, // end - addRow
 
     removeRow: function (elm) {

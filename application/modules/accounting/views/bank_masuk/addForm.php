@@ -48,12 +48,12 @@
 			<textarea class="form-control keterangan"></textarea>
 		</div>
 	</div>
-	<!-- <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Nama Bank</label></div>
 		<div class="col-xs-4 no-padding">
 			<input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" data-required="1">
 		</div>
-	</div> -->
+	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">No. Giro</label></div>
 		<div class="col-xs-4 no-padding">

@@ -123,91 +123,95 @@ var bm = {
     getDetJurnalTrans: function() {
         var jt_id = $('select.jurnal_trans').find('option:selected').attr('data-id');
 
-        $('select.det_jurnal_trans').find('option').removeAttr('disabled');
-        $('select.det_jurnal_trans').find('option:not([data-idjt="'+jt_id+'"])').attr('disabled', 'disabled');
-        $('select.det_jurnal_trans').find('option[value="all"]').removeAttr('disabled');
-
-        $('select.det_jurnal_trans').select2();
+        $.map( $('select.det_jurnal_trans'), function(select) {
+            $(select).find('option').removeAttr('disabled');
+            $(select).find('option:not([data-idjt="'+jt_id+'"])').attr('disabled', 'disabled');
+            $(select).find('option[value="all"]').removeAttr('disabled');
+    
+            $(select).select2();
+        } );
     }, // end - getData
 
     addRow: function (elm) {
         var tr = $(elm).closest('tr');
         var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.no_coa, select.nama_coa, select.faktur').select2('destroy')
+        $(tr).find('select.det_jurnal_trans').select2('destroy')
                                    .removeAttr('data-live-search')
                                    .removeAttr('data-select2-id')
                                    .removeAttr('aria-hidden')
                                    .removeAttr('tabindex');
-        $(tr).find('select.no_coa option, select.nama_coa option, select.faktur option').removeAttr('data-select2-id');
+        $(tr).find('select.det_jurnal_trans').removeAttr('data-select2-id');
 
         var tr_clone = $(tr).clone();
 
         $(tr_clone).find('input, select').val('');
 
         $(tr_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
-            priceFormat( $(this) );
+            $(this).priceFormat(Config[$(this).data('tipe')]);
         });
 
         $(tbody).append( $(tr_clone) );
 
-        $.each($(tbody).find('select'), function(a) {
-            if ( $(this).hasClass('no_coa') ) {
-                $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        bm.getDetJurnalTrans();
+
+        // $.each($(tbody).find('select'), function(a) {
+        //     if ( $(this).hasClass('no_coa') ) {
+        //         $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
         
-                    var data = e.params.data.element.dataset;
-                    var nama = data.nama;
+        //             var data = e.params.data.element.dataset;
+        //             var nama = data.nama;
         
-                    $(_tr).find('select.nama_coa').val(nama).trigger('change');
-                });
-            }
+        //             $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //         });
+        //     }
 
-            if ( $(this).hasClass('nama_coa') ) {
-                $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        //     if ( $(this).hasClass('nama_coa') ) {
+        //         $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
 
-                    var data = e.params.data.element.dataset;
-                    var no = data.no;
+        //             var data = e.params.data.element.dataset;
+        //             var no = data.no;
 
-                    $(_tr).find('select.no_coa').val(no).trigger('change');
-                });
-            }
+        //             $(_tr).find('select.no_coa').val(no).trigger('change');
+        //         });
+        //     }
 
-            if ( $(this).hasClass('faktur') ) {
-                $(this).select2().on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        //     if ( $(this).hasClass('faktur') ) {
+        //         $(this).select2().on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
 
-                    var no_faktur = e.params.data.id;
+        //             var no_faktur = e.params.data.id;
 
-                    var data = e.params.data.element.dataset;
-                    var nilai = data.nilai;
+        //             var data = e.params.data.element.dataset;
+        //             var nilai = data.nilai;
 
-                    $(_tr).find('input.nilai_faktur').val( numeral.format(nilai) );
-                    $(_tr).find('input.nilai').val( numeral.format(nilai) );
+        //             $(_tr).find('input.nilai_faktur').val( numeral.format(nilai) );
+        //             $(_tr).find('input.nilai').val( numeral.format(nilai) );
 
-                    var ket = '';
-                    if ( !empty(no_faktur) ) {
-                        $(_tr).find('select.no_coa').val('1104.02.00').trigger('change');
-                        var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
+        //             var ket = '';
+        //             if ( !empty(no_faktur) ) {
+        //                 $(_tr).find('select.no_coa').val('1104.02.00').trigger('change');
+        //                 var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
 
-                        $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //                 $(_tr).find('select.nama_coa').val(nama).trigger('change');
 
-                        var nama_cust = $('select.customer').find('option:selected').attr('data-nama');
+        //                 var nama_cust = $('select.customer').find('option:selected').attr('data-nama');
 
-                        ket = 'Pelunasan Piutang a.n '+nama_cust+' / '+no_faktur;
-                        $(_tr).find('input.keterangan').val(ket);
-                    } else {
-                        $(_tr).find('select.no_coa').val('').trigger('change');
-                        $(_tr).find('select.nama_coa').val('').trigger('change');
+        //                 ket = 'Pelunasan Piutang a.n '+nama_cust+' / '+no_faktur;
+        //                 $(_tr).find('input.keterangan').val(ket);
+        //             } else {
+        //                 $(_tr).find('select.no_coa').val('').trigger('change');
+        //                 $(_tr).find('select.nama_coa').val('').trigger('change');
 
-                        $(_tr).find('input.keterangan').val(ket);
-                    }
+        //                 $(_tr).find('input.keterangan').val(ket);
+        //             }
 
-                    bm.hitGrandTotal( $(this) );
-                });
-            }
-        });
+        //             bm.hitGrandTotal( $(this) );
+        //         });
+        //     }
+        // });
     }, // end - addRow
 
     removeRow: function (elm) {

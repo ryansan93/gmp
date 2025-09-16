@@ -83,25 +83,25 @@ class BankKeluar extends Public_Controller {
         echo $html;
     }
 
-    public function getNoLpb() {
-        $params = $this->input->get('params');
+    // public function getNoLpb() {
+    //     $params = $this->input->get('params');
 
-        $kode_supl = $params['kode_supl'];
-        $no_kk = (isset($params['no_kk']) && !empty($params['no_kk'])) ? $params['no_kk'] : null;
+    //     $kode_supl = $params['kode_supl'];
+    //     $no_kk = (isset($params['no_kk']) && !empty($params['no_kk'])) ? $params['no_kk'] : null;
 
-        $m_bl = new \Model\Storage\Beli_model();
-        $d_bl = $m_bl->getBeliDebt($kode_supl, $no_kk);
+    //     $m_bl = new \Model\Storage\Beli_model();
+    //     $d_bl = $m_bl->getBeliDebt($kode_supl, $no_kk);
 
-        $html = '<option value="">Pilih No. LPB</option>';
-        if ( !empty($d_bl) && count($d_bl) > 0 ) {
-            foreach ($d_bl as $k_lpb => $v_lpb) {
-                $selected = null;
-                $html .= '<option value="'.$v_lpb['no_lpb'].'" data-nilai="'.$v_lpb['sisa'].'" data-tgllpb="'.substr($v_lpb['tgl_lpb'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_lpb['tgl_lpb'], 0, 10)).' | '.$v_lpb['no_lpb'].' | '.$v_lpb['no_inv'].'</option>';
-            }
-        }
+    //     $html = '<option value="">Pilih No. LPB</option>';
+    //     if ( !empty($d_bl) && count($d_bl) > 0 ) {
+    //         foreach ($d_bl as $k_lpb => $v_lpb) {
+    //             $selected = null;
+    //             $html .= '<option value="'.$v_lpb['no_lpb'].'" data-nilai="'.$v_lpb['sisa'].'" data-tgllpb="'.substr($v_lpb['tgl_lpb'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_lpb['tgl_lpb'], 0, 10)).' | '.$v_lpb['no_lpb'].' | '.$v_lpb['no_inv'].'</option>';
+    //         }
+    //     }
 
-        echo $html;
-    }
+    //     echo $html;
+    // }
 
     public function riwayat() {
         $start_date = substr(date('Y-m-d'), 0, 7).'-01';
@@ -117,12 +117,11 @@ class BankKeluar extends Public_Controller {
 
     public function addForm()
     {
-        $m_coa = new \Model\Storage\Coa_model();
-        $m_supl = new \Model\Storage\Supplier_model();
+        $m_jt = new \Model\Storage\JurnalTrans_model();
+        $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
-        $content['coa_header'] = $m_coa->getCoa( implode("' ,'", array('1102')), 'SUBSTRING(c.no_coa, 0, 5)' );
-        $content['coa'] = $m_coa->getCoa();
-        $content['supplier'] = $m_supl->getSupplier();
+        $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
+        $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
 
         return $html;
