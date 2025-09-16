@@ -25,17 +25,29 @@ class Km_model extends Conf{
 		$sql = "
 			select 
 				k.*,
-				c.nama_coa,
-				cust.nama_cust
+				jt.nama as jurnal_trans_nama,
+				k.customer as nama_cust
+				-- c.nama_coa,
+				-- cust.nama_cust
 			from km k
-            left join
-				coa c
-				on
-					k.no_coa = c.no_coa
 			left join
-				customer cust
+				(
+					select jt1.* from jurnal_trans jt1
+					right join
+						(select max(id) as id, kode from jurnal_trans group by kode) jt2
+						on
+							jt1.id = jt2.id
+				) jt
 				on
-					k.kode_cust = cust.kode_cust
+					k.jurnal_trans = jt.kode
+            -- left join
+			-- 	coa c
+			-- 	on
+			-- 		k.no_coa = c.no_coa
+			-- left join
+			-- 	customer cust
+			-- 	on
+			-- 		k.kode_cust = cust.kode_cust
 			".$sql_id."
 			order by
 				k.tgl_km desc,
@@ -56,12 +68,24 @@ class Km_model extends Conf{
 		$sql = "
 			select 
 				k.*,
-				cust.nama_cust
+				jt.nama as nama_bank,
+				k.customer as nama_cust
+				-- , cust.nama_cust
 			from km k
+			-- left join
+			-- 	customer cust
+			-- 	on
+			-- 		k.kode_cust = cust.kode_cust
 			left join
-				customer cust
+				(
+					select jt1.* from jurnal_trans jt1
+					right join
+						(select max(id) as id, kode from jurnal_trans group by kode) jt2
+						on
+							jt1.id = jt2.id
+				) jt
 				on
-					k.kode_cust = cust.kode_cust
+					k.jurnal_trans = jt.kode
 			where
 				k.tgl_km between '".$start_date."' and '".$end_date."' and
                 k.no_km like '".$kode."%'

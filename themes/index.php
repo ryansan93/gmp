@@ -31,7 +31,7 @@
     <div class="bg-light-black" id="sidebar-wrapper" style="width: 17rem;">
       <div class="sidebar-heading">
         <!-- <img src="https://d3ki9tyy5l5ruj.cloudfront.net/obj/3ac85a538c3fc5bb08d0206ede04ae8aa13c20b2/inapp__logo_color_ondark_horizontal.svg" width="80%" height="80%"> -->
-        <img src="assets/images/logo-mgb.jpg" width="20%" height="20%">
+        <!-- <img src="assets/images/logo-mgb.jpg" width="20%" height="20%"> -->
         GMP ERP
       </div>
       <div class="divider-heading" style="padding: 0rem 1rem;">

@@ -75,7 +75,7 @@ class BankMasuk extends Public_Controller {
         $end_date = $params['end_date'];
 
         $m_km = new \Model\Storage\Km_model();
-        $d_km = $m_km->getKmByDate($start_date, $end_date, 'BM');
+        $d_km = $m_km->getKmByDate($start_date, $end_date, 'BBM');
 
         $content['data'] = $d_km;
         $html = $this->load->view($this->pathView . 'list', $content, true);
@@ -150,18 +150,17 @@ class BankMasuk extends Public_Controller {
 
     public function editForm($kode)
     {
-        $m_coa = new \Model\Storage\Coa_model();
-        $m_cust = new \Model\Storage\Customer_model();
+        $m_jt = new \Model\Storage\JurnalTrans_model();
+        $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
         $m_km = new \Model\Storage\Km_model();
         $d_km = $m_km->getKm( $kode )[0];
 
         $m_kmi = new \Model\Storage\KmItem_model();
         $d_kmi = $m_kmi->getKmItem( $kode );
-        
-        $content['coa_header'] = $m_coa->getCoa( implode("' ,'", array('1102.01', '1104.01')), 'SUBSTRING(c.no_coa, 0, 8)' );
-        $content['coa'] = $m_coa->getCoa();
-        $content['customer'] = $m_cust->getCustomer();
+
+        $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
+        $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $content['data'] = $d_km;
         $content['detail'] = $d_kmi;
 
@@ -178,14 +177,16 @@ class BankMasuk extends Public_Controller {
             $m_km = new \Model\Storage\Km_model();
             $now = $m_km->getDate();
 
-            $no_km = $m_km->getKode('BM');
+            $no_km = $m_km->getKode('BBM');
 
             $m_km->no_km = $no_km;
-            $m_km->tgl_km = $params['tgl_km'];
-            $m_km->no_coa = $params['no_coa'];
-            $m_km->periode = substr($params['tgl_km'], 0, 7);
-            $m_km->kode_cust = $params['kode_cust'];
+            // $m_km->no_coa = $params['no_coa'];
+            // $m_km->kode_cust = $params['kode_cust'];
             $m_km->nama_bank = $params['nama_bank'];
+            $m_km->tgl_km = $params['tgl_km'];
+            $m_km->jurnal_trans = $params['jurnal_trans'];
+            $m_km->periode = substr($params['tgl_km'], 0, 7);
+            $m_km->customer = $params['customer'];
             $m_km->no_giro = $params['no_giro'];
             $m_km->tgl_tempo = $params['tgl_tempo'];
             $m_km->tgl_cair = $params['tgl_cair'];
@@ -196,19 +197,22 @@ class BankMasuk extends Public_Controller {
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_kmi = new \Model\Storage\KmItem_model();
                 $m_kmi->no_km = $no_km;
+                // $m_kmi->no_urut = $v_det['no_urut'];
+                // $m_kmi->no_coa = $v_det['no_coa'];
+                // $m_kmi->nilai_invoice = $v_det['nilai_invoice'];
                 $m_kmi->tgl_km = $params['tgl_km'];
-                $m_kmi->no_urut = $v_det['no_urut'];
                 $m_kmi->periode = substr($params['tgl_km'], 0, 7);
-                $m_kmi->no_coa = $v_det['no_coa'];
+                $m_kmi->det_jurnal_trans = $v_det['det_jurnal_trans'];
+                $m_kmi->coa_asal = $v_det['coa_asal'];
+                $m_kmi->coa_tujuan = $v_det['coa_tujuan'];
                 $m_kmi->keterangan = $v_det['keterangan'];
-                $m_kmi->no_faktur = $v_det['no_faktur'];
-                $m_kmi->nilai_faktur = $v_det['nilai_faktur'];
+                $m_kmi->no_invoice = $v_det['no_invoice'];
                 $m_kmi->nilai = $v_det['nilai'];
                 $m_kmi->save();
             }
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $m_km, $deskripsi_log, $no_km );
+            Modules::run( 'base/event/save', $m_km, $deskripsi_log, null, $no_km );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di simpan.';
@@ -224,7 +228,7 @@ class BankMasuk extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        try {            
+        try {
             $m_km = new \Model\Storage\Km_model();
             $now = $m_km->getDate();
 
@@ -232,16 +236,16 @@ class BankMasuk extends Public_Controller {
 
             $m_km->where('no_km', $no_km)->update(
                 array(
-                    'tgl_km' => $params['tgl_km'],
-                    'no_coa' => $params['no_coa'],
-                    'periode' => substr($params['tgl_km'], 0, 7),
-                    'kode_cust' => $params['kode_cust'],
                     'nama_bank' => $params['nama_bank'],
+                    'tgl_km' => $params['tgl_km'],
+                    'jurnal_trans' => $params['jurnal_trans'],
+                    'periode' => substr($params['tgl_km'], 0, 7),
+                    'customer' => $params['customer'],
                     'no_giro' => $params['no_giro'],
                     'tgl_tempo' => $params['tgl_tempo'],
                     'tgl_cair' => $params['tgl_cair'],
                     'keterangan' => $params['keterangan'],
-                    'nilai' => $params['nilai']
+                    'nilai' => $params['nilai'],
                 )
             );
 
@@ -251,13 +255,16 @@ class BankMasuk extends Public_Controller {
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_kmi = new \Model\Storage\KmItem_model();
                 $m_kmi->no_km = $no_km;
+                // $m_kmi->no_urut = $v_det['no_urut'];
+                // $m_kmi->no_coa = $v_det['no_coa'];
+                // $m_kmi->nilai_invoice = $v_det['nilai_invoice'];
                 $m_kmi->tgl_km = $params['tgl_km'];
-                $m_kmi->no_urut = $v_det['no_urut'];
                 $m_kmi->periode = substr($params['tgl_km'], 0, 7);
-                $m_kmi->no_coa = $v_det['no_coa'];
+                $m_kmi->det_jurnal_trans = $v_det['det_jurnal_trans'];
+                $m_kmi->coa_asal = $v_det['coa_asal'];
+                $m_kmi->coa_tujuan = $v_det['coa_tujuan'];
                 $m_kmi->keterangan = $v_det['keterangan'];
-                $m_kmi->no_faktur = $v_det['no_faktur'];
-                $m_kmi->nilai_faktur = $v_det['nilai_faktur'];
+                $m_kmi->no_invoice = $v_det['no_invoice'];
                 $m_kmi->nilai = $v_det['nilai'];
                 $m_kmi->save();
             }
@@ -265,7 +272,7 @@ class BankMasuk extends Public_Controller {
             $d_km = $m_km->where('no_km', $no_km)->first();
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_km, $deskripsi_log, $no_km );
+            Modules::run( 'base/event/update', $d_km, $deskripsi_log, null, $no_km );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di update.';
@@ -293,7 +300,7 @@ class BankMasuk extends Public_Controller {
             $m_kmi->where('no_km', $no_km)->delete();
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/delete', $d_km, $deskripsi_log, $no_km );
+            Modules::run( 'base/event/delete', $d_km, $deskripsi_log, null, $no_km );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di hapus.';
@@ -302,55 +309,6 @@ class BankMasuk extends Public_Controller {
         }
 
         display_json( $this->result );
-    }
-
-    public function updatePo($no_po)
-    {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select 
-                pi.po_no as no_po,
-                pi.item_kode as item_kode,
-                pi.harga as harga,
-                pi.jumlah as jumlah_po,
-                isnull(t.jumlah_terima, 0) as jumlah_terima
-            from po_item pi
-            right join
-                po p 
-                on
-                    pi.po_no = p.no_po
-            left join
-                (
-                    select ti.item_kode, ti.harga, sum(ti.jumlah_terima) as jumlah_terima, t.po_no from terima_item ti 
-                    right join
-                        terima t
-                        on
-                            ti.terima_kode = t.kode_terima 
-                    where
-                        t.po_no is not null
-                    group by
-                        ti.item_kode, ti.harga, t.po_no
-                ) t
-                on
-                    t.po_no = p.no_po and
-                    t.item_kode = pi.item_kode
-            where
-                pi.jumlah > isnull(t.jumlah_terima, 0) and
-                p.no_po = '".$no_po."'
-        ";
-        $d_po = $m_conf->hydrateRaw( $sql );
-
-        if ( $d_po->count() == 0 ) {
-            $m_po = new \Model\Storage\Po_model();
-            $m_po->where('no_po', $no_po)->update(
-                array('done' => 1)
-            );
-        } else {
-            $m_po = new \Model\Storage\Po_model();
-            $m_po->where('no_po', $no_po)->update(
-                array('done' => 0)
-            );
-        }
     }
 
     public function printPreview($no_bm) {        
@@ -362,8 +320,14 @@ class BankMasuk extends Public_Controller {
         $m_kmi = new \Model\Storage\KmItem_model();
         $d_kmi = $m_kmi->getKmItem( $kode );
 
+        $m_prs = new \Model\Storage\Perusahaan_model();
+        $d_prs = $m_prs->orderBy('id', 'desc')->with(['d_kota'])->first();
+
+        $content['perusahaan'] = $d_prs->toArray();
         $content['data'] = $d_km;
         $content['detail'] = $d_kmi;
+
+        cetak_r($d_kmi);
 
         $res_view_html = $this->load->view($this->pathView.'exportPdf', $content, true);
 

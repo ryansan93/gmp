@@ -31,14 +31,15 @@
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Customer</label></div>
 		<div class="col-xs-7 no-padding">
-			<select class="form-control customer">
+			<input type="text" class="col-xs-12 form-control customer uppercase" placeholder="Nama Customer (MAX:100)" maxlength="100" data-required="1">
+			<!-- <select class="form-control customer">
 				<option value="">Pilih Customer</option>
 				<?php if ( !empty($customer) ): ?>
 					<?php foreach ($customer as $k_customer => $v_customer): ?>
 						<option value="<?php echo $v_customer['kode_cust']; ?>" data-nama="<?php echo $v_customer['nama_cust']; ?>"><?php echo $v_customer['kode_cust'].' | '.$v_customer['nama_cust']; ?></option>
 					<?php endforeach ?>
 				<?php endif ?>
-			</select>
+			</select> -->
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -47,12 +48,12 @@
 			<textarea class="form-control keterangan"></textarea>
 		</div>
 	</div>
-	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<!-- <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Nama Bank</label></div>
 		<div class="col-xs-4 no-padding">
 			<input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" data-required="1">
 		</div>
-	</div>
+	</div> -->
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">No. Giro</label></div>
 		<div class="col-xs-4 no-padding">
@@ -112,10 +113,10 @@
 					<tr class="data" data-urut="">
 						<td style="width: 20%; max-width: 20%;">
 							<select class="form-control det_jurnal_trans" data-required="1">
-								<option value="">Pilih No. COA</option>
+								<option value="">Pilih Transaksi</option>
 								<?php if ( !empty($det_jurnal_trans) ): ?>
 									<?php foreach ($det_jurnal_trans as $k_djt => $v_djt): ?>
-										<option value="<?php echo $v_djt['kode']; ?>" data-idjt="<?php echo $v_djt['id_header']; ?>"><?php echo $v_djt['nama']; ?></option>
+										<option value="<?php echo $v_djt['kode']; ?>" data-idjt="<?php echo $v_djt['id_header']; ?>" data-coaasal="<?php echo $v_djt['sumber_coa']; ?>" data-coatujuan="<?php echo $v_djt['tujuan_coa']; ?>"><?php echo $v_djt['nama']; ?></option>
 									<?php endforeach ?>
 								<?php endif ?>
 							</select>

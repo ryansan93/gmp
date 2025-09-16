@@ -38,11 +38,19 @@ class Event extends Public_Controller {
     return $m_log;
   }
 
-  public function update($model, $message = null) {
+  public function update($model, $message = null, $tbl_name = null, $tbl_id = null, $json = null) {
+    if ( empty($tbl_name) ) {
+      $tbl_name = $model->getTable();
+    }
+
+    if ( empty($tbl_id) ) {
+      $tbl_id = $model->id;
+    }
+
     $m_log = new \Model\Storage\LogTables_model();
     $now = $m_log->getDate();
-    $m_log->tbl_name = $model->getTable();
-    $m_log->tbl_id = $model->id;
+    $m_log->tbl_name = $tbl_name;
+    $m_log->tbl_id = $tbl_id;
     $m_log->user_id = $this->userid;
     $m_log->waktu = $now['waktu'];
     $m_log->deskripsi = $message ?: $this->userdata['Nama_User'];
@@ -58,11 +66,19 @@ class Event extends Public_Controller {
     return $m_log;
   }
 
-  public function delete($model, $message = null) {
+  public function delete($model, $message = null, $tbl_name = null, $tbl_id = null, $json = null) {
+    if ( empty($tbl_name) ) {
+      $tbl_name = $model->getTable();
+    }
+
+    if ( empty($tbl_id) ) {
+      $tbl_id = $model->id;
+    }
+
     $m_log = new \Model\Storage\LogTables_model();
     $now = $m_log->getDate();
-    $m_log->tbl_name = $model->getTable();
-    $m_log->tbl_id = $model->id;
+    $m_log->tbl_name = $tbl_name;
+    $m_log->tbl_id = $tbl_id;
     $m_log->user_id = $this->userid;
     $m_log->waktu = $now['waktu'];
     $m_log->deskripsi = $message ?: $this->userdata['Nama_User'];

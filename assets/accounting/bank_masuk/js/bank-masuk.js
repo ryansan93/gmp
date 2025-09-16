@@ -31,16 +31,16 @@ var bm = {
             }
         });
 
-        // $("#TglKm, #TglTempo, #TglCair").datetimepicker({
-        //     locale: 'id',
-        //     format: 'DD MMM Y',
-        // });
-        // $.map( $("#TglKm, #TglTempo, #TglCair"), function(div) {
-        //     if ( !empty($(div).find('input').data('tgl')) ) {
-        //         var tgl = $(div).find('input').data('tgl');
-        //         $(div).data('DateTimePicker').date( moment(new Date((tgl))) );
-        //     }
-        // });
+        $("#TglKm, #TglTempo, #TglCair").datetimepicker({
+            locale: 'id',
+            format: 'DD MMM Y',
+        });
+        $.map( $("#TglKm, #TglTempo, #TglCair"), function(div) {
+            if ( !empty($(div).find('input').data('tgl')) ) {
+                var tgl = $(div).find('input').data('tgl');
+                $(div).data('DateTimePicker').date( moment(new Date((tgl))) );
+            }
+        });
         // App.setTutupBulan( ["#TglKm", "#TglTempo", "#TglCair"] );
 
         $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal],[data-tipe=decimal3],[data-tipe=decimal4],[data-tipe=number]').each(function(){
@@ -309,9 +309,9 @@ var bm = {
                 'end_date': dateSQL( $(dcontent).find('#EndDate').data('DateTimePicker').date() )
             };
 
-            if ($.fn.dataTable.isDataTable('.tbl_riwayat')) {
-                $('.tbl_riwayat').DataTable().destroy();
-            }
+            // if ($.fn.dataTable.isDataTable('.tbl_riwayat')) {
+            //     $('.tbl_riwayat').DataTable().destroy();
+            // }
 
             $.ajax({
                 url : 'accounting/BankMasuk/getLists',
@@ -324,9 +324,9 @@ var bm = {
                 success : function(html){
                     App.hideLoaderInContent( $(tbody), html );
 
-                    if ( $('.tbl_riwayat').find('tbody tr.data').length > 0 ) {
-                        $('.tbl_riwayat').DataTable();
-                    }
+                    // if ( $('.tbl_riwayat').find('tbody tr.data').length > 0 ) {
+                    //     $('.tbl_riwayat').DataTable();
+                    // }
                 },
             });
         }
@@ -455,12 +455,16 @@ var bm = {
                     var no_urut = 1;
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
-                            'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            // 'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
+                            // 'no_coa': $(tr).find('select.no_coa').select2().val(),
+                            // 'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
+                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            'no_faktur': $(tr).find('select.faktur').select2().val(),
-							'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
+                            // 'no_faktur': $(tr).find('select.faktur').select2().val(),
+							// 'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
+                            'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
 						};
 
@@ -471,10 +475,12 @@ var bm = {
 
 					var data = {
 						'tgl_km': dateSQL( $(dcontent).find('#TglKm').data('DateTimePicker').date() ),
-						'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
-                        'kode_cust': $(dcontent).find('select.customer').select2().val(),
+						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
+						'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
+                        // 'kode_cust': $(dcontent).find('select.customer').select2().val(),
+                        'customer': $(dcontent).find('input.customer').val(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
+                        // 'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
                         'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
@@ -523,12 +529,16 @@ var bm = {
                     var no_urut = 1;
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
-                            'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            // 'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
+                            // 'no_coa': $(tr).find('select.no_coa').select2().val(),
+                            // 'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
+                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            'no_faktur': $(tr).find('select.faktur').select2().val(),
-							'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
+                            // 'no_faktur': $(tr).find('select.faktur').select2().val(),
+							// 'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
+                            'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
 						};
 
@@ -538,12 +548,14 @@ var bm = {
 					});
 
 					var data = {
-						'no_km': $(elm).attr('data-kode'),
+                        'no_km': $(elm).attr('data-kode'),
 						'tgl_km': dateSQL( $(dcontent).find('#TglKm').data('DateTimePicker').date() ),
-                        'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
-                        'kode_cust': $(dcontent).find('select.customer').select2().val(),
+						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
+						'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
+                        // 'kode_cust': $(dcontent).find('select.customer').select2().val(),
+                        'customer': $(dcontent).find('input.customer').val(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
+                        // 'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
                         'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
