@@ -24,6 +24,18 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Unit</label></div>
+		<div class="col-xs-3 no-padding" style="padding-right: 5px;">
+			<select class="form-control unit" data-required="1">
+				<?php if ( !empty($unit) ): ?>
+					<?php foreach ($unit as $k_unit => $v_unit): ?>
+						<option value="<?php echo $v_unit['kode']; ?>"><?php echo $v_unit['nama']; ?></option>
+					<?php endforeach ?>
+				<?php endif ?>
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Bank Keluar</label></div>
 		<div class="col-xs-4 no-padding">
 			<div class="input-group date datetimepicker" name="tglKk" id="TglKk">
@@ -35,23 +47,28 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Supplier</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">No. Supplier</label></div>
 		<div class="col-xs-7 no-padding">
-			<input type="text" class="col-xs-12 form-control supplier uppercase" placeholder="Nama Supplier (MAX:100)" maxlength="100" data-required="1" value="<?php echo $data['nama_supl']; ?>" >	
-			<!-- <select class="form-control supplier" data-nokk="<?php echo $data['no_kk']; ?>">
+			<select class="form-control no_supplier">
 				<option value="">Pilih Supplier</option>
 				<?php if ( !empty($supplier) ): ?>
-					<?php foreach ($supplier as $k_supplier => $v_supplier): ?>
+					<?php foreach ($supplier as $k_supl => $v_supl): ?>
 						<?php
 							$selected = null;
-							if ( $v_supplier['kode_supl'] == $data['kode_supl'] ) {
+							if ( $v_supl['nomor'] == $data['no_supplier'] ) {
 								$selected = 'selected';
-							}
+							}	
 						?>
-						<option value="<?php echo $v_supplier['kode_supl']; ?>" data-nama="<?php echo $v_supplier['nama_supl']; ?>" <?php echo $selected; ?> ><?php echo $v_supplier['kode_supl'].' | '.$v_supplier['nama_supl']; ?></option>
+						<option value="<?php echo $v_supl['nomor']; ?>" data-nama="<?php echo strtoupper($v_supl['nama']); ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_supl['nomor'].' | '.$v_supl['nama']); ?></option>
 					<?php endforeach ?>
 				<?php endif ?>
-			</select> -->
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Nama Supplier</label></div>
+		<div class="col-xs-7 no-padding">
+			<input type="text" class="col-xs-12 form-control supplier uppercase" placeholder="Nama Supplier (MAX:100)" maxlength="100" data-required="1" value="<?php echo $data['supplier']; ?>">
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -63,7 +80,21 @@
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Nama Bank</label></div>
 		<div class="col-xs-4 no-padding">
-			<input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" value="<?php echo $data['nama_bank']; ?>" data-required="1">
+			<!-- <input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" value="<?php echo $data['nama_bank']; ?>" data-required="1"> -->
+			<select class="form-control bank">
+				<option value="">Pilih Bank</option>
+				<?php if ( !empty($bank) ): ?>
+					<?php foreach ($bank as $k_bank => $v_bank): ?>
+						<?php
+							$selected = null;
+							if ( $v_bank['no_coa'] == $data['coa_bank'] ) {
+								$selected = 'selected';
+							}	
+						?>
+						<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
+					<?php endforeach ?>
+				<?php endif ?>
+			</select>
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

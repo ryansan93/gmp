@@ -282,7 +282,7 @@
 										<div class="col-xs-12" style="display: inline; text-align: left;">
 											<label style="display: inline-block; width: 18%;">Kepada</label>
 											<label style="display: inline-block; width: 2%;">:</label>
-											<label style="display: inline-block; width: 75.5%;"><?php echo $data['nama_supl']; ?></label>
+											<label style="display: inline-block; width: 75.5%;"><?php echo $data['supplier']; ?></label>
 										</div>
 									</td>
 								</tr>

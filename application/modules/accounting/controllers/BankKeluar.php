@@ -156,6 +156,9 @@ class BankKeluar extends Public_Controller {
 
     public function editForm($kode)
     {
+        $m_coa = new \Model\Storage\Coa_model();
+        $m_supl = new \Model\Storage\Supplier_model();
+        $m_wilayah = new \Model\Storage\Wilayah_model();
         $m_jt = new \Model\Storage\JurnalTrans_model();
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
@@ -165,6 +168,9 @@ class BankKeluar extends Public_Controller {
         $m_kki = new \Model\Storage\KkItem_model();
         $d_kki = $m_kki->getKkItem( $kode );
 
+        $content['bank'] = $m_coa->getDataBank();
+        $content['supplier'] = $m_supl->getDataSupplier();
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
         $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $content['data'] = $d_kk;
@@ -180,6 +186,8 @@ class BankKeluar extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            // cetak_r( $params, 1 );
+            
             $m_nbbk = new \Model\Storage\NoBbk_model();
             $m_kk = new \Model\Storage\Kk_model();
 
@@ -192,17 +200,19 @@ class BankKeluar extends Public_Controller {
 
             $m_kk->no_kk = $no_kk;
             // $m_kk->no_coa = $params['no_coa'];
-            // $m_kk->kode_supl = $params['kode_supl'];
+            $m_kk->coa_bank = $params['coa_bank'];
             $m_kk->nama_bank = $params['nama_bank'];
             $m_kk->tgl_kk = $params['tgl_kk'];
             $m_kk->jurnal_trans = $params['jurnal_trans'];
             $m_kk->periode = substr($params['tgl_kk'], 0, 7);
+            $m_kk->no_supplier = $params['no_supplier'];
             $m_kk->supplier = $params['supplier'];
             $m_kk->no_giro = $params['no_giro'];
             $m_kk->tgl_tempo = $params['tgl_tempo'];
             $m_kk->tgl_cair = $params['tgl_cair'];
             $m_kk->keterangan = $params['keterangan'];
             $m_kk->nilai = $params['nilai'];
+            $m_kk->unit = $params['unit'];
             $m_kk->save();
 
             foreach ($params['detail'] as $k_det => $v_det) {
@@ -247,16 +257,19 @@ class BankKeluar extends Public_Controller {
 
             $m_kk->where('no_kk', $no_kk)->update(
                 array(
+                    'coa_bank' => $params['coa_bank'],
                     'nama_bank' => $params['nama_bank'],
                     'tgl_kk' => $params['tgl_kk'],
                     'jurnal_trans' => $params['jurnal_trans'],
                     'periode' => substr($params['tgl_kk'], 0, 7),
+                    'no_supplier' => $params['no_supplier'],
                     'supplier' => $params['supplier'],
                     'no_giro' => $params['no_giro'],
                     'tgl_tempo' => $params['tgl_tempo'],
                     'tgl_cair' => $params['tgl_cair'],
                     'keterangan' => $params['keterangan'],
                     'nilai' => $params['nilai'],
+                    'unit' => $params['unit']
                 )
             );
 

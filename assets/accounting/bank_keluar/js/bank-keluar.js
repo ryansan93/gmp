@@ -54,7 +54,7 @@ var bk = {
         $('select.unit').select2();
         $('select.bank').select2();
 
-        $('select.no_pelanggan').select2().on("select2:select", function (e) {
+        $('select.no_supplier').select2().on("select2:select", function (e) {
             bk.getNamaSupplier();
         });
 
@@ -501,11 +501,13 @@ var bk = {
                         'no_supplier': $(dcontent).find('select.no_supplier').select2().val(),
                         'supplier': $(dcontent).find('input.supplier').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
+                        'coa_bank': $(dcontent).find('select.bank').select2().val().toUpperCase(),
+                        'nama_bank': $(dcontent).find('select.bank').find('option:selected').attr('data-nama'),
                         'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
+                        'unit': $(dcontent).find('select.unit').select2().val(),
 						'detail': detail
 					};
 
@@ -568,14 +570,16 @@ var bk = {
 						'tgl_kk': dateSQL( $(dcontent).find('#TglKk').data('DateTimePicker').date() ),
 						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
                         'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
-                        // 'kode_supl': $(dcontent).find('select.supplier').select2().val(),
+                        'no_supplier': $(dcontent).find('select.no_supplier').select2().val(),
                         'supplier': $(dcontent).find('input.supplier').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
+                        'coa_bank': $(dcontent).find('select.bank').select2().val().toUpperCase(),
+                        'nama_bank': $(dcontent).find('select.bank').find('option:selected').attr('data-nama'),
                         'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
+                        'unit': $(dcontent).find('select.unit').select2().val(),
 						'detail': detail
 					};
 

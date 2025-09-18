@@ -25,7 +25,7 @@ class Kk_model extends Conf{
 		$sql = "
 			select 
 				k.*,
-				jt.nama as jurnal_trans_nama,
+				jt.nama as jurnal_trans_nama
 			from kk k
 			left join
 				(

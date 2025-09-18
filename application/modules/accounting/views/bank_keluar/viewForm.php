@@ -12,6 +12,12 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Unit</label></div>
+		<div class="col-xs-4 no-padding">
+			<label class="control-label">: <?php echo $data['unit']; ?></label>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Bank Keluar</label></div>
 		<div class="col-xs-4 no-padding">
 			<label class="control-label">: <?php echo strtoupper(tglIndonesia($data['tgl_kk'], '-', ' ')); ?></label>
