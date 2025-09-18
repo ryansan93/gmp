@@ -760,9 +760,9 @@ class OngkosAngkutPindahPakan extends Public_Controller
             $m_oap->sopir = $params['sopir'];
             $m_oap->save();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'OA PAKAN', '".$params['no_sj']."', NULL, ".$params['ongkos_angkut'].", 'oa_pindah_pakan', ".$m_oap->id.", NULL, 1";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal 'OA PAKAN', '".$params['no_sj']."', NULL, ".$params['ongkos_angkut'].", 'oa_pindah_pakan', ".$m_oap->id.", NULL, 1";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_oap, $deskripsi_log);
@@ -794,9 +794,9 @@ class OngkosAngkutPindahPakan extends Public_Controller
 
             $d_oap = $m_oap->where('id', $params['id'])->first();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'OA PAKAN', '".$params['no_sj']."', NULL, ".$params['ongkos_angkut'].", 'oa_pindah_pakan', ".$params['id'].", ".$params['id'].", 2";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal 'OA PAKAN', '".$params['no_sj']."', NULL, ".$params['ongkos_angkut'].", 'oa_pindah_pakan', ".$params['id'].", ".$params['id'].", 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_oap, $deskripsi_log);
@@ -820,9 +820,9 @@ class OngkosAngkutPindahPakan extends Public_Controller
 
             $m_oap->where('id', $params['id'])->delete();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'oa_pindah_pakan', ".$params['id'].", ".$params['id'].", 3";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'oa_pindah_pakan', ".$params['id'].", ".$params['id'].", 3";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_oap, $deskripsi_log);
