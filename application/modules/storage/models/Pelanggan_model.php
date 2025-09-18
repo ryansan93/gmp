@@ -60,6 +60,41 @@ class Pelanggan_model extends Conf {
 		return $this->hasOne('\Model\Storage\DaftarKunjungan_model', 'no_pelanggan', 'nomor')->orderBy('id', 'desc');
 	}
 
+	public function getDataPelanggan()
+	{
+		$sql = "
+			select
+                p.*
+				-- , kab_kota.nama as kab_kota
+            from pelanggan p
+            right join
+                ( select max(id) as id, nomor from pelanggan where tipe='pelanggan' group by nomor ) p1
+                on
+                    p.id = p1.id
+            -- right join
+            --     lokasi kec
+            --     on
+            --         kec.id = p.alamat_kecamatan
+            -- right join
+            --     lokasi kab_kota
+            --     on
+            --         kab_kota.id = kec.induk
+            where
+                p.mstatus = 1 and
+                p.tipe = 'pelanggan'
+			order by
+				p.nama asc
+		";
+		$d_pelanggan = $this->hydrateRaw( $sql );
+
+		$data = null;
+		if ( $d_pelanggan->count() > 0 ) {
+			$data = $d_pelanggan->toArray();
+		}
+
+		return $data;
+	}
+
   	public function getDashboard($status)
 	{
     	$table_name = $this->table;

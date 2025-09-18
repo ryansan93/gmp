@@ -24,6 +24,24 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Unit</label></div>
+		<div class="col-xs-3 no-padding" style="padding-right: 5px;">
+			<select class="form-control unit" data-required="1">
+				<?php if ( !empty($unit) ): ?>
+					<?php foreach ($unit as $k_unit => $v_unit): ?>
+						<?php
+							$selected = null;
+							if ( $v_unit['kode'] == $data['unit'] ) {
+								$selected = 'selected';
+							}	
+						?>
+						<option value="<?php echo $v_unit['kode']; ?>"><?php echo $v_unit['nama']; ?></option>
+					<?php endforeach ?>
+				<?php endif ?>
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Bank Masuk</label></div>
 		<div class="col-xs-4 no-padding">
 			<div class="input-group date datetimepicker" name="tglKm" id="TglKm">
@@ -35,23 +53,28 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Customer</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">No. Pelanggan</label></div>
 		<div class="col-xs-7 no-padding">
-			<input type="text" class="col-xs-12 form-control customer uppercase" placeholder="Nama Customer (MAX:100)" maxlength="100" data-required="1" value="<?php echo $data['nama_cust']; ?>" >
-			<!-- <select class="form-control customer" data-nokm="<?php echo $data['no_km']; ?>">
-				<option value="">Pilih Customer</option>
-				<?php if ( !empty($customer) ): ?>
-					<?php foreach ($customer as $k_customer => $v_customer): ?>
+			<select class="form-control no_pelanggan">
+				<option value="">Pilih Pelanggan</option>
+				<?php if ( !empty($pelanggan) ): ?>
+					<?php foreach ($pelanggan as $k_plg => $v_plg): ?>
 						<?php
 							$selected = null;
-							if ( $v_customer['kode_cust'] == $data['kode_cust'] ) {
+							if ( $v_plg['nomor'] == $data['no_pelanggan'] ) {
 								$selected = 'selected';
-							}
+							}	
 						?>
-						<option value="<?php echo $v_customer['kode_cust']; ?>" data-nama="<?php echo $v_customer['nama_cust']; ?>" <?php echo $selected; ?> ><?php echo $v_customer['kode_cust'].' | '.$v_customer['nama_cust']; ?></option>
+						<option value="<?php echo $v_plg['nomor']; ?>" data-nama="<?php echo strtoupper($v_plg['nama']); ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_plg['nomor'].' | '.$v_plg['nama']); ?></option>
 					<?php endforeach ?>
 				<?php endif ?>
-			</select> -->
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Nama Pelanggan</label></div>
+		<div class="col-xs-7 no-padding">
+			<input type="text" class="col-xs-12 form-control pelanggan uppercase" placeholder="Nama Pelanggan (MAX:100)" maxlength="100" data-required="1" value="<?php echo $data['pelanggan']; ?>">
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -63,7 +86,21 @@
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Nama Bank</label></div>
 		<div class="col-xs-4 no-padding">
-			<input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" value="<?php echo $data['nama_bank']; ?>" data-required="1">
+			<!-- <input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" value="<?php echo $data['nama_bank']; ?>" data-required="1"> -->
+			<select class="form-control bank">
+				<option value="">Pilih Bank</option>
+				<?php if ( !empty($bank) ): ?>
+					<?php foreach ($bank as $k_bank => $v_bank): ?>
+						<?php
+							$selected = null;
+							if ( $v_bank['no_coa'] == $data['coa_bank'] ) {
+								$selected = 'selected';
+							}	
+						?>
+						<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
+					<?php endforeach ?>
+				<?php endif ?>
+			</select>
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

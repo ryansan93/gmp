@@ -111,8 +111,7 @@
 						<th class="text-center" style="width: 5%; vertical-align: middle;">Transaksi</th>
 						<th class="text-center" style="width: 6%; vertical-align: middle;">Tanggal</th>
 						<th class="text-center" style="width: 5%; vertical-align: middle;">Unit</th>
-						<th class="text-center" style="width: 15%; vertical-align: middle;">Asal</th>
-						<th class="text-center" style="width: 15%; vertical-align: middle;">Tujuan</th>
+						<th class="text-center" style="width: 18%; vertical-align: middle;">Peternak</th>
 						<th class="text-center" style="width: 10%; vertical-align: middle;">Barang</th>
 						<th class="text-center" style="width: 7%; vertical-align: middle;">No. SJ</th>
 						<th class="text-center" style="width: 5%; vertical-align: middle;">Jumlah</th>
@@ -120,8 +119,8 @@
 						<th class="text-center" style="width: 5%; vertical-align: middle;">OA Mutasi</th>
 						<th class="text-center" style="width: 7%; vertical-align: middle;">Hrg Beli</th>
 						<th class="text-center" style="width: 10%; vertical-align: middle;">Total Beli</th>
-						<!-- <th class="text-center" style="width: 7%; vertical-align: middle;">Hrg Jual</th>
-						<th class="text-center" style="width: 10%; vertical-align: middle;">Total Jual</th> -->
+						<th class="text-center" style="width: 7%; vertical-align: middle;">Hrg Jual</th>
+						<th class="text-center" style="width: 10%; vertical-align: middle;">Total Jual</th>
 						
 					</tr>
 				</thead>

@@ -49,6 +49,40 @@ class Supplier_model extends Conf {
   		return $this->hasOne('\Model\Storage\AktifPelanggan_model', 'pelanggan', 'id');
   	}
 
+	public function getDataSupplier()
+	{
+		$sql = "
+			select
+                p.*
+				-- , kab_kota.nama as kab_kota
+            from pelanggan p
+            right join
+                ( select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor ) p1
+                on
+                    p.id = p1.id
+            -- right join
+            --     lokasi kec
+            --     on
+            --         kec.id = p.alamat_kecamatan
+            -- right join
+            --     lokasi kab_kota
+            --     on
+            --         kab_kota.id = kec.induk
+            where
+                p.mstatus = 1
+			order by
+				p.nama asc
+		";
+		$d_supplier = $this->hydrateRaw( $sql );
+
+		$data = null;
+		if ( $d_supplier->count() > 0 ) {
+			$data = $d_supplier->toArray();
+		}
+
+		return $data;
+	}
+
   	public function getDashboard($status)
 	{
     	$table_name = $this->table;

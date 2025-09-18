@@ -39,11 +39,9 @@ class DistribusiBarang extends Public_Controller {
 
             $data = $this->includes;
 
-            $m_wilayah = new \Model\Storage\Wilayah_model();
-
             $content['akses'] = $akses;
             $content['barang'] = $this->getBarang();
-            $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
+            $content['unit'] = $this->getUnit();
             $content['perusahaan'] = $this->getPerusahaan();
 
             $content['title_menu'] = 'Distribusi Barang';
@@ -125,263 +123,6 @@ class DistribusiBarang extends Public_Controller {
         $data = null;
         if ( $d_perusahaan->count() > 0 ) {
             $data = $d_perusahaan->toArray();
-        }
-
-        return $data;
-    }
-
-    public function getData( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis ) {
-        $sql_jenis = "";
-        if ( !empty($jenis) ) {
-            $sql_jenis .= "and dss.jenis_barang in ('$jenis')";
-        }
-
-        $sql_brg = "";
-        if ( !in_array('all', $barang) ) {
-            $sql_brg .= "and dss.item in ('".implode("', '", $barang)."')";
-        }
-
-        $sql_unit = "";
-        if ( !in_array('all', $unit) ) {
-            $sql_unit .= "and (asal.unit in ('".implode("', '", $unit)."') or tujuan.unit in ('".implode("', '", $unit)."'))";
-        }
-
-        // $sql_perusahaan = "";
-        // if ( !in_array('all', $perusahaan) ) {
-        //     $sql_perusahaan .= "and data.kode_prs in ('".implode("', '", $perusahaan)."')";
-        // }
-
-        $sql_jenis_transaksi = "";
-        if ( !empty($jenis_transaksi) && !in_array('all', $jenis_transaksi) ) {
-            $sql_jenis_transaksi .= "and dss.jenis_trans in ('".implode("', '", $jenis_transaksi)."')";
-        }
-
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select * from
-            (
-                select
-                    -- dss.*,
-                    -- dss.jenis_trans,
-                    case
-                        when dss.jenis_trans like '%order%' then
-                            'DISTRIBUSI'
-                        else
-                            dss.jenis_trans
-                    end as jenis_trans,
-                    dss.tgl_trans,
-                    dss.kode_barang,
-                    brg.nama as nama_barang,
-                    dss.kode_trans,
-                    krm.no_sj,
-                    dss.jumlah,
-                    dss.oa,
-                    dss.hrg_beli,
-                    (dss.jumlah * dss.hrg_beli) as tot_beli,
-                    krm.asal,
-                    asal.nama as nama_asal,
-                    asal.kandang as kdg_asal,
-                    krm.tujuan,
-                    tujuan.nama as nama_tujuan,
-                    tujuan.kandang as kdg_tujuan,
-                    case
-                        when asal.unit is not null and tujuan.unit is not null then
-                            tujuan.unit
-                        else
-                            case
-                                when asal.unit is not null then
-                                    asal.unit
-                                when tujuan.unit is not null then
-                                    tujuan.unit
-                            end
-                    end as unit,
-                    krm.no_polisi,
-                    krm.sopir,
-                    krm.ekspedisi,
-                    dss.urut
-                from
-                    (
-                        select
-                            dss.jenis_trans,
-                            dss.jenis_barang,
-                            dss.tgl_trans,
-                            dss.kode_barang,
-                            dss.kode_trans,
-                            dss.jumlah,
-                            dss.oa,
-                            dss.hrg_beli,
-                            2 as urut
-                        from det_stok_siklus dss
-
-                        union all
-
-                        select
-                            dss.jenis_trans,
-                            dss.jenis_barang,
-                            dsts.tgl_trans,
-                            dsts.kode_barang,
-                            dsts.kode_trans,
-                            0-dsts.jumlah as jumlah,
-                            dss.oa,
-                            dss.hrg_beli,
-                            1 as urut
-                        from det_stok_trans_siklus dsts
-                        left join
-                            det_stok_siklus dss
-                            on
-                                dsts.kode_trans = dss.kode_trans and
-                                dsts.kode_barang = dss.kode_barang
-                        where
-                            dsts.tbl_name <> 'lhk'
-                    ) dss
-                left join
-                    (
-                        select od.supplier as asal, od.noreg as tujuan, 'doc' as jenis, td.no_order as kode_trans, td.nopol as no_polisi, '' as sopir, '' as ekspedisi, td.no_sj from
-                        (
-                            select td1.* from terima_doc td1
-                            right join
-                                (select max(id) as id, no_order from terima_doc group by no_order) td2
-                                on  
-                                    td1.id = td2.id
-                        ) td
-                        left join
-                        (
-                            select od1.* from order_doc od1
-                            right join
-                                (select max(id) as id, no_order from order_doc group by no_order) od2
-                                on
-                                    od1.id = od2.id
-                        ) od
-                            on
-                                td.no_order = od.no_order
-    
-                        union all
-    
-                        select cast(asal as varchar(20)) as asal, cast(tujuan as varchar(20)) as tujuan, 'pakan' as jenis, no_order as kode_trans, no_polisi, sopir, ekspedisi, no_sj from kirim_pakan kp
-    
-                        union all
-    
-                        select cast(asal as varchar(20)) as asal, cast(tujuan as varchar(20)) as tujuan, 'voadip' as jenis, no_order as kode_trans, no_polisi, sopir, ekspedisi, no_sj from kirim_voadip kv
-                    ) krm
-                    on
-                        dss.kode_trans = krm.kode_trans and
-                        dss.jenis_barang = krm.jenis
-                left join
-                    (
-                        select plg1.nomor, nama, '' as unit, '' as kandang from pelanggan plg1
-                        right join
-                            (select max(id) as id, nomor from pelanggan group by nomor) plg2
-                            on
-                                plg1.id = plg2.id
-    
-                        union all
-    
-                        select rs.noreg as nomor, m.nama, w.kode as unit, cast(k.kandang as varchar(5)) as kandang from rdim_submit rs
-                        left join
-                            (
-                                select mm1.* from mitra_mapping mm1
-                                right join
-                                    (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                                    on
-                                        mm1.id = mm2.id
-                            ) mm
-                            on
-                                rs.nim = mm.nim
-                        left join
-                            mitra m
-                            on
-                                m.id = mm.mitra
-                        left join
-                            kandang k
-                            on
-                                k.id = rs.kandang
-                        left join
-                            wilayah w
-                            on
-                                w.id = k.unit
-    
-                        union all
-    
-                        select cast(gdg.id as varchar(20)) as nomor, gdg.nama, w.kode as unit, '' as kandang from gudang gdg
-                        left join
-                            wilayah w
-                            on
-                                w.id = gdg.unit
-                    ) asal
-                    on
-                        krm.asal = asal.nomor
-                left join
-                    (
-                        select plg1.nomor, nama, '' as unit, '' as kandang from pelanggan plg1
-                        right join
-                            (select max(id) as id, nomor from pelanggan group by nomor) plg2
-                            on
-                                plg1.id = plg2.id
-    
-                        union all
-    
-                        select rs.noreg as nomor, m.nama, w.kode as unit, cast(k.kandang as varchar(5)) as kandang from rdim_submit rs
-                        left join
-                            (
-                                select mm1.* from mitra_mapping mm1
-                                right join
-                                    (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                                    on
-                                        mm1.id = mm2.id
-                            ) mm
-                            on
-                                rs.nim = mm.nim
-                        left join
-                            mitra m
-                            on
-                                m.id = mm.mitra
-                        left join
-                            kandang k
-                            on
-                                k.id = rs.kandang
-                        left join
-                            wilayah w
-                            on
-                                w.id = k.unit
-    
-                        union all
-    
-                        select cast(gdg.id as varchar(20)) as nomor, gdg.nama, w.kode as unit, '' as kandang from gudang gdg
-                        left join
-                            wilayah w
-                            on
-                                w.id = gdg.unit
-                    ) tujuan
-                    on
-                        krm.tujuan = tujuan.nomor
-                left join
-                    (
-                        select brg1.* from barang brg1
-                        right join
-                            (select max(id) as id, kode from barang group by kode) brg2
-                            on
-                                brg1.id = brg2.id
-                    ) brg
-                    on
-                        dss.kode_barang = brg.kode
-                where
-                    dss.tgl_trans between '".$start_date."' and '".$end_date."'
-                    ".$sql_jenis."
-                    ".$sql_unit."
-                    ".$sql_jenis_transaksi."
-            ) data
-            order by
-                data.tgl_trans asc,
-                data.unit asc,
-                data.no_sj asc,
-                data.nama_barang asc,
-                data.urut asc
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
-
-        $data = null;
-        if ( $d_conf->count() > 0 ) {
-            $data = $d_conf->toArray();
         }
 
         return $data;
@@ -1327,19 +1068,13 @@ class DistribusiBarang extends Public_Controller {
             $end_date = $params['end_date'].' 23:59:59.999';
             $unit = $params['unit'];
             $perusahaan = $params['perusahaan'];
-            $jenis_transaksi = $params['jenis_transaksi'];
-            // $jenis_transaksi = null;
 
-            $data = $this->getData( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis );
-
-            // cetak_r( $data, 1 );
-
-            // $data = null;
-            // if ( stristr($jenis, 'pakan') !== FALSE ) {
-            //     $data = $this->getDataPakan( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis );
-            // } else if ( stristr($jenis, 'voadip') !== FALSE ) {
-            //     $data = $this->getDataVoadip( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis );
-            // }
+            $data = null;
+            if ( stristr($jenis, 'pakan') !== FALSE ) {
+                $data = $this->getDataPakan( $start_date, $end_date, $barang, $unit, $perusahaan );
+            } else if ( stristr($jenis, 'voadip') !== FALSE ) {
+                $data = $this->getDataVoadip( $start_date, $end_date, $barang, $unit, $perusahaan );
+            }
 
             $content['data'] = $data;
 
@@ -1474,15 +1209,8 @@ class DistribusiBarang extends Public_Controller {
         $filename = $file_name;
         $writer->save('export_excel/'.$filename);
 
-        // cetak_r( FCPATH.'/export_excel/', 1 );
-
         $this->load->helper('download');
-        $data = file_get_contents(FCPATH.'/export_excel/'.$filename);
-
-        // cetak_r( $filename, 1);
-        // cetak_r( $data );
-
-        force_download($filename, $data);
+        force_download('export_excel/'.$filename, NULL);
     }
 
     public function exportExcel($params_encrypt)
@@ -1496,41 +1224,35 @@ class DistribusiBarang extends Public_Controller {
         $end_date = $params['end_date'].' 23:59:59.999';
         $unit = $params['unit'];
         $perusahaan = $params['perusahaan'];
-        $jenis_transaksi = $params['jenis_transaksi'];
 
-        $data = $this->getData( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis );
-
-        // cetak_r( $data, 1 );
-
-        // $data = null;
-        // if ( stristr($jenis, 'pakan') !== FALSE ) {
-        //     $data = $this->getDataPakan( $start_date, $end_date, $barang, $unit, $perusahaan );
-        // } else if ( stristr($jenis, 'voadip') !== FALSE ) {
-        //     $data = $this->getDataVoadip( $start_date, $end_date, $barang, $unit, $perusahaan );
-        // }
+        $data = null;
+        if ( stristr($jenis, 'pakan') !== FALSE ) {
+            $data = $this->getDataPakan( $start_date, $end_date, $barang, $unit, $perusahaan );
+        } else if ( stristr($jenis, 'voadip') !== FALSE ) {
+            $data = $this->getDataVoadip( $start_date, $end_date, $barang, $unit, $perusahaan );
+        }
             
-        $filename = 'DISTRIBUSI_'.strtoupper($jenis).'_'.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xlsx';
+        $filename = 'DISTRIBUSI_'.strtoupper($jenis).'_'.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xls';
 
-        $arr_header = array('Transaksi', 'Tanggal', 'Unit', 'Asal', 'Tujuan', 'Barang', 'No. SJ', 'Jumlah', 'OA', 'OA Mutasi', 'Hrg Beli', 'Total Beli');
+        $arr_header = array('Transaksi', 'Tanggal', 'Unit', 'Peternak', 'Barang', 'No. SJ', 'Jumlah', 'OA', 'OA Mutasi', 'Hrg Beli', 'Total Beli', 'Hrg Jual', 'Total Jual');
         $arr_column = null;
         if ( !empty($data) ) {
             $idx = 0;
             foreach ($data as $key => $value) {
                 $arr_column[ $idx ] = array(
-                    'Transaksi' => array('value' => strtoupper($value['jenis_trans']), 'data_type' => 'string'),
-                    'Tanggal' => array('value' => $value['tgl_trans'], 'data_type' => 'date'),
+                    'Transaksi' => array('value' => strtoupper($value['jenis']), 'data_type' => 'string'),
+                    'Tanggal' => array('value' => $value['datang'], 'data_type' => 'date'),
                     'Unit' => array('value' => $value['unit'], 'data_type' => 'string'),
-                    'Asal' => array('value' => strtoupper($value['nama_asal']).( !empty($value['kdg_asal']) ? ' (KDG:'.$value['kdg_asal'].')' : '' ), 'data_type' => 'string'),
-                    'Tujuan' => array('value' => strtoupper($value['nama_tujuan']).( !empty($value['kdg_tujuan']) ? ' (KDG:'.$value['kdg_tujuan'].')' : '' ), 'data_type' => 'string'),
-                    'Barang' => array('value' => strtoupper($value['nama_barang']), 'data_type' => 'string'),
+                    'Peternak' => array('value' => strtoupper($value['nama_peternak']), 'data_type' => 'string'),
+                    'Barang' => array('value' => strtoupper($value['barang']), 'data_type' => 'string'),
                     'No. SJ' => array('value' => strtoupper($value['no_sj']), 'data_type' => 'string'),
                     'Jumlah' => array('value' => $value['jumlah'], 'data_type' => 'decimal2'),
                     'OA' => array('value' => isset($value['oa']) ? $value['oa'] : 0, 'data_type' => 'decimal2'),
                     'OA Mutasi' => array('value' => isset($value['oa_mutasi']) ? $value['oa_mutasi'] : 0, 'data_type' => 'decimal2'),
                     'Hrg Beli' => array('value' => $value['hrg_beli'], 'data_type' => 'decimal2'),
                     'Total Beli' => array('value' => $value['tot_beli'], 'data_type' => 'decimal2'),
-                    // 'Hrg Jual' => array('value' => $value['hrg_jual'], 'data_type' => 'decimal2'),
-                    // 'Total Jual' => array('value' => $value['tot_jual'], 'data_type' => 'decimal2'),
+                    'Hrg Jual' => array('value' => $value['hrg_jual'], 'data_type' => 'decimal2'),
+                    'Total Jual' => array('value' => $value['tot_jual'], 'data_type' => 'decimal2'),
                 );
 
                 $idx++;

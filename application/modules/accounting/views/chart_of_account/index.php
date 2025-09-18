@@ -20,11 +20,12 @@
 							<th class="col-md-1 hide">Unit</th>
 							<th class="col-md-1">COA</th>
 							<th class="col-md-2">Nama</th>
-							<th class="col-md-1">Gol 1</th>
+							<th class="col-md-1">Bank</th>
+							<!-- <th class="col-md-1">Gol 1</th>
 							<th class="col-md-1">Gol 2</th>
 							<th class="col-md-1">Gol 3</th>
 							<th class="col-md-1">Gol 4</th>
-							<th class="col-md-1">Gol 5</th>
+							<th class="col-md-1">Gol 5</th> -->
 							<th class="col-md-1">Laporan</th>
 							<th class="col-md-1">Posisi COA</th>
 							<th class="col-md-1">Status</th>
@@ -32,7 +33,7 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td colspan="10">Data tidak ditemukan.</td>
+							<td colspan="6">Data tidak ditemukan.</td>
 	                   </tr>
 					</tbody>
 				</table>

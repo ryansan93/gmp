@@ -117,9 +117,15 @@ class BankKeluar extends Public_Controller {
 
     public function addForm()
     {
+        $m_coa = new \Model\Storage\Coa_model();
+        $m_supl = new \Model\Storage\Supplier_model();
+        $m_wilayah = new \Model\Storage\Wilayah_model();
         $m_jt = new \Model\Storage\JurnalTrans_model();
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
+        $content['bank'] = $m_coa->getDataBank();
+        $content['supplier'] = $m_supl->getDataSupplier();
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
         $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);

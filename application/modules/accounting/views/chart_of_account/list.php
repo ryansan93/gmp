@@ -5,11 +5,18 @@
 			<td class="hide"><?php echo !empty($v_data['id_unit']) ? strtoupper($v_data['id_unit']) : '-'; ?></td>
 			<td class="text-center"><?php echo strtoupper($v_data['coa']); ?></td>
 			<td><?php echo strtoupper($v_data['nama_coa']); ?></td>
-			<td><?php echo !empty($v_data['gol1']) ? strtoupper($v_data['gol1']) : '-'; ?></td>
+			<td>
+				<?php if ($v_data['bank'] == 1) { ?>
+					<i class="fa fa-check"></i>
+				<?php } else { ?>
+					<i class="fa fa-minus"></i>
+				<?php } ?>
+			</td>
+			<!-- <td><?php echo !empty($v_data['gol1']) ? strtoupper($v_data['gol1']) : '-'; ?></td>
 			<td><?php echo !empty($v_data['gol2']) ? strtoupper($v_data['gol2']) : '-'; ?></td>
 			<td><?php echo !empty($v_data['gol3']) ? strtoupper($v_data['gol3']) : '-'; ?></td>
 			<td><?php echo !empty($v_data['gol4']) ? strtoupper($v_data['gol4']) : '-'; ?></td>
-			<td><?php echo !empty($v_data['gol5']) ? strtoupper($v_data['gol5']) : '-'; ?></td>
+			<td><?php echo !empty($v_data['gol5']) ? strtoupper($v_data['gol5']) : '-'; ?></td> -->
 			<td class="text-center"><?php echo ($v_data['lap'] == 'N') ? 'NERACA' : 'LABA / RUGI'; ?></td>
 			<td class="text-center"><?php echo ($v_data['coa_pos'] == 'D') ? 'DEBIT' : 'KREDIT'; ?></td>
 			<td class="text-center"><?php echo ($v_data['status'] == 1) ? 'AKTIF' : 'NON AKTIF'; ?></td>
@@ -17,6 +24,6 @@
 	<?php endforeach ?>
 <?php else: ?>
 	<tr>
-		<td colspan="10">Data tidak ditemukan.</td>
+		<td colspan="6">Data tidak ditemukan.</td>
 	</tr>
 <?php endif ?>

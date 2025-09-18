@@ -51,7 +51,15 @@ var bm = {
             bm.getDetJurnalTrans();
         });
 
+        $('select.unit').select2();
+        $('select.bank').select2();
+
+        $('select.no_pelanggan').select2().on("select2:select", function (e) {
+            bm.getNamaPelanggan();
+        });
+
         bm.getDetJurnalTrans();
+        bm.getNamaPelanggan();
 
         // $('select.no_coa_header').select2({matcher: matchStart}).on('select2:select', function (e) {
         //     var data = e.params.data.element.dataset;
@@ -130,6 +138,20 @@ var bm = {
     
             $(select).select2();
         } );
+    }, // end - getData
+
+    getNamaPelanggan: function() {
+        var no_pelanggan = $('select.no_pelanggan').select2().val();
+
+        $('input.pelanggan').removeAttr('disabled', 'disabled');
+        if ( !empty(no_pelanggan) ) {
+            var nama_pelanggan = $('select.no_pelanggan').find('option:selected').attr('data-nama');
+
+            $('input.pelanggan').val( nama_pelanggan.toUpperCase() );
+            $('input.pelanggan').attr('disabled', 'disabled');
+        } else {
+            // $('input.pelanggan').val(null);
+        }
     }, // end - getData
 
     addRow: function (elm) {
@@ -481,14 +503,16 @@ var bm = {
 						'tgl_km': dateSQL( $(dcontent).find('#TglKm').data('DateTimePicker').date() ),
 						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
 						'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
-                        // 'kode_cust': $(dcontent).find('select.customer').select2().val(),
-                        'customer': $(dcontent).find('input.customer').val().toUpperCase(),
+                        'no_pelanggan': $(dcontent).find('select.no_pelanggan').select2().val(),
+                        'pelanggan': $(dcontent).find('input.pelanggan').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
+                        'coa_bank': $(dcontent).find('select.bank').select2().val().toUpperCase(),
+                        'nama_bank': $(dcontent).find('select.bank').find('option:selected').attr('data-nama'),
                         'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
+						'unit': $(dcontent).find('select.unit').select2().val(),
 						'detail': detail
 					};
 
@@ -556,14 +580,16 @@ var bm = {
 						'tgl_km': dateSQL( $(dcontent).find('#TglKm').data('DateTimePicker').date() ),
 						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
 						'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
-                        // 'kode_cust': $(dcontent).find('select.customer').select2().val(),
-                        'customer': $(dcontent).find('input.customer').val().toUpperCase(),
+                        'no_pelanggan': $(dcontent).find('select.no_pelanggan').select2().val(),
+                        'pelanggan': $(dcontent).find('input.pelanggan').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
+                        'coa_bank': $(dcontent).find('select.bank').select2().val().toUpperCase(),
+                        'nama_bank': $(dcontent).find('select.bank').find('option:selected').attr('data-nama'),
                         'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
+                        'unit': $(dcontent).find('select.unit').select2().val(),
 						'detail': detail
 					};
 

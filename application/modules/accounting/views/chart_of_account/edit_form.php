@@ -48,7 +48,15 @@
 							<label class="control-label">Nama COA</label>
 						</td>
 						<td class="col-md-9">
-							<input type="text" class="col-sm-4 form-control nama uppercase" placeholder="NAMA COA" data-required="1" disabled value="<?php echo $data['nama_coa']; ?>">
+							<input type="text" class="col-sm-4 form-control nama uppercase" placeholder="NAMA COA" data-required="1" value="<?php echo $data['nama_coa']; ?>">
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Bank</label>
+						</td>
+						<td class="col-md-9">
+							<input type="checkbox" class="cursor-p bank" <?php echo ($data['bank'] == 1) ? 'checked' : null; ?> >
 						</td>
 					</tr>
 					<!-- <tr>

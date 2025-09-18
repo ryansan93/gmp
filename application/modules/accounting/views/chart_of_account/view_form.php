@@ -39,6 +39,21 @@
 							<label class="control-label">: <?php echo strtoupper($data['nama_coa']); ?></label>
 						</td>
 					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Bank</label>
+						</td>
+						<td class="col-md-9">
+							<label class="control-label">
+								:
+								<?php if ( $data['bank'] == 1 ) { ?>
+									<i class="fa fa-check"></i>
+								<?php } else { ?>
+									<i class="fa fa-minus"></i>
+								<?php } ?>
+							</label>
+						</td>
+					</tr>
 					<!-- <tr>
 						<td class="col-md-3">
 							<label class="control-label">Golongan 1</label>

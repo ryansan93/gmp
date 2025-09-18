@@ -117,9 +117,15 @@ class BankMasuk extends Public_Controller {
 
     public function addForm()
     {
+        $m_coa = new \Model\Storage\Coa_model();
+        $m_plg = new \Model\Storage\Pelanggan_model();
+        $m_wilayah = new \Model\Storage\Wilayah_model();
         $m_jt = new \Model\Storage\JurnalTrans_model();
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
+        $content['bank'] = $m_coa->getDataBank();
+        $content['pelanggan'] = $m_plg->getDataPelanggan();
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
         $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
@@ -150,6 +156,9 @@ class BankMasuk extends Public_Controller {
 
     public function editForm($kode)
     {
+        $m_coa = new \Model\Storage\Coa_model();
+        $m_plg = new \Model\Storage\Pelanggan_model();
+        $m_wilayah = new \Model\Storage\Wilayah_model();
         $m_jt = new \Model\Storage\JurnalTrans_model();
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
@@ -159,6 +168,9 @@ class BankMasuk extends Public_Controller {
         $m_kmi = new \Model\Storage\KmItem_model();
         $d_kmi = $m_kmi->getKmItem( $kode );
 
+        $content['bank'] = $m_coa->getDataBank();
+        $content['pelanggan'] = $m_plg->getDataPelanggan();
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
         $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $content['data'] = $d_km;
@@ -186,17 +198,19 @@ class BankMasuk extends Public_Controller {
 
             $m_km->no_km = $no_km;
             // $m_km->no_coa = $params['no_coa'];
-            // $m_km->kode_cust = $params['kode_cust'];
+            $m_km->coa_bank = $params['coa_bank'];
             $m_km->nama_bank = $params['nama_bank'];
             $m_km->tgl_km = $params['tgl_km'];
             $m_km->jurnal_trans = $params['jurnal_trans'];
             $m_km->periode = substr($params['tgl_km'], 0, 7);
-            $m_km->customer = $params['customer'];
+            $m_km->no_pelanggan = $params['no_pelanggan'];
+            $m_km->pelanggan = $params['pelanggan'];
             $m_km->no_giro = $params['no_giro'];
             $m_km->tgl_tempo = $params['tgl_tempo'];
             $m_km->tgl_cair = $params['tgl_cair'];
             $m_km->keterangan = $params['keterangan'];
             $m_km->nilai = $params['nilai'];
+            $m_km->unit = $params['unit'];
             $m_km->save();
 
             foreach ($params['detail'] as $k_det => $v_det) {
@@ -241,16 +255,19 @@ class BankMasuk extends Public_Controller {
 
             $m_km->where('no_km', $no_km)->update(
                 array(
+                    'coa_bank' => $params['coa_bank'],
                     'nama_bank' => $params['nama_bank'],
                     'tgl_km' => $params['tgl_km'],
                     'jurnal_trans' => $params['jurnal_trans'],
                     'periode' => substr($params['tgl_km'], 0, 7),
-                    'customer' => $params['customer'],
+                    'no_pelanggan' => $params['no_pelanggan'],
+                    'pelanggan' => $params['pelanggan'],
                     'no_giro' => $params['no_giro'],
                     'tgl_tempo' => $params['tgl_tempo'],
                     'tgl_cair' => $params['tgl_cair'],
                     'keterangan' => $params['keterangan'],
                     'nilai' => $params['nilai'],
+                    'unit' => $params['unit'],
                 )
             );
 

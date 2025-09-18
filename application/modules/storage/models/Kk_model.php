@@ -26,9 +26,6 @@ class Kk_model extends Conf{
 			select 
 				k.*,
 				jt.nama as jurnal_trans_nama,
-				k.supplier as nama_supl
-				-- c.nama_coa,
-				-- supl.nama_supl
 			from kk k
 			left join
 				(
@@ -40,14 +37,6 @@ class Kk_model extends Conf{
 				) jt
 				on
 					k.jurnal_trans = jt.kode
-            -- left join
-			-- 	coa c
-			-- 	on
-			-- 		k.no_coa = c.no_coa
-			-- left join
-			-- 	supplier supl
-			-- 	on
-			-- 		k.kode_supl = supl.kode_supl
 			".$sql_id."
 			order by
 				k.tgl_kk desc,
@@ -67,15 +56,8 @@ class Kk_model extends Conf{
 
 		$sql = "
 			select 
-				k.*,
-				jt.nama as nama_bank,
-				k.supplier as nama_supl
-				-- supl.nama_supl
+				k.*
 			from kk k
-			-- left join
-			-- 	supplier supl
-			-- 	on
-			-- 		k.kode_supl = supl.kode_supl
 			left join
 				(
 					select jt1.* from jurnal_trans jt1

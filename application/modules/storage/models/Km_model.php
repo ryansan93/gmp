@@ -25,10 +25,7 @@ class Km_model extends Conf{
 		$sql = "
 			select 
 				k.*,
-				jt.nama as jurnal_trans_nama,
-				k.customer as nama_cust
-				-- c.nama_coa,
-				-- cust.nama_cust
+				jt.nama as jurnal_trans_nama
 			from km k
 			left join
 				(
@@ -40,14 +37,6 @@ class Km_model extends Conf{
 				) jt
 				on
 					k.jurnal_trans = jt.kode
-            -- left join
-			-- 	coa c
-			-- 	on
-			-- 		k.no_coa = c.no_coa
-			-- left join
-			-- 	customer cust
-			-- 	on
-			-- 		k.kode_cust = cust.kode_cust
 			".$sql_id."
 			order by
 				k.tgl_km desc,
@@ -67,15 +56,8 @@ class Km_model extends Conf{
 
 		$sql = "
 			select 
-				k.*,
-				-- jt.nama as nama_bank,
-				k.customer as nama_cust
-				-- cust.nama_cust
+				k.*
 			from km k
-			-- left join
-			-- 	customer cust
-			-- 	on
-			-- 		k.kode_cust = cust.kode_cust
 			left join
 				(
 					select jt1.* from jurnal_trans jt1

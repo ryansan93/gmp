@@ -173,6 +173,7 @@ class ChartOfAccount extends Public_Controller
             $m_coa->lap = $params['laporan'];
             $m_coa->coa_pos = $params['posisi'];
             $m_coa->status = 1;
+            $m_coa->bank = $params['bank'];
             $m_coa->save();
             // $m_coa->gol1 = $params['gol1'];
             // $m_coa->gol2 = $params['gol2'];
@@ -212,7 +213,8 @@ class ChartOfAccount extends Public_Controller
                     'coa' => $params['coa'],
                     'lap' => $params['laporan'],
                     'coa_pos' => $params['posisi'],
-                    'status' => 1
+                    'status' => 1,
+                    'bank' => $params['bank']
                     // 'gol1' => $params['gol1'],
                     // 'gol2' => $params['gol2'],
                     // 'gol3' => $params['gol3'],

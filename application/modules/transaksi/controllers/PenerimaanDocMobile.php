@@ -712,6 +712,36 @@ class PenerimaanDocMobile extends Public_Controller {
     }
 
     public function tes() {
-        Modules::run( 'base/InsertJurnal/exec', $this->url, null, 1, 3);
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select max(td.id) as id, td.datang, od.noreg 
+            from terima_doc td 
+            left join
+                order_doc od 
+                on
+                    td.no_order = od.no_order
+            where td.no_order not in (
+                select kode_trans from det_stok_siklus dss 
+            )
+            group by
+                td.datang, od.noreg
+            order by
+                td.datang asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                $tanggal = substr( $value['datang'], 0, 10 );
+
+                $conf = new \Model\Storage\Conf();
+                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
+                $conf->hydrateRaw($sql);
+            }
+        }
+            
+        // EXEC hitung_stok_siklus 'doc', 'terima_doc', '18', '2025-09-05', 1, '25090020101', null
     }
 }

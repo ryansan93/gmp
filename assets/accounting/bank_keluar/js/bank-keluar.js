@@ -51,7 +51,15 @@ var bk = {
             bk.getDetJurnalTrans();
         });
 
+        $('select.unit').select2();
+        $('select.bank').select2();
+
+        $('select.no_pelanggan').select2().on("select2:select", function (e) {
+            bk.getNamaSupplier();
+        });
+
         bk.getDetJurnalTrans();
+        bk.getNamaSupplier();
 
         // $('select.no_coa_header').select2({matcher: matchStart}).on('select2:select', function (e) {
         //     var data = e.params.data.element.dataset;
@@ -130,6 +138,20 @@ var bk = {
     
             $(select).select2();
         } );
+    }, // end - getData
+
+    getNamaSupplier: function() {
+        var no_supplier = $('select.no_supplier').select2().val();
+
+        $('input.supplier').removeAttr('disabled', 'disabled');
+        if ( !empty(no_supplier) ) {
+            var nama_pelanggan = $('select.no_supplier').find('option:selected').attr('data-nama');
+
+            $('input.supplier').val( nama_pelanggan.toUpperCase() );
+            $('input.supplier').attr('disabled', 'disabled');
+        } else {
+            // $('input.supplier').val(null);
+        }
     }, // end - getData
 
     addRow: function (elm) {
@@ -476,7 +498,7 @@ var bk = {
 						'tgl_kk': dateSQL( $(dcontent).find('#TglKk').data('DateTimePicker').date() ),
 						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
                         'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
-                        // 'kode_supl': $(dcontent).find('select.supplier').select2().val(),
+                        'no_supplier': $(dcontent).find('select.no_supplier').select2().val(),
                         'supplier': $(dcontent).find('input.supplier').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
                         'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),

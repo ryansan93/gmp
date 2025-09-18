@@ -87,6 +87,21 @@ var db = {
         });
         $('select.perusahaan').next('span.select2').css('width', '100%');
 
+		$('select.jenis_transaksi').select2({placeholder: 'Pilih Jenis Transaksi'}).on("select2:select", function (e) {
+            var jenis = $('select.jenis_transaksi').select2().val();
+
+            for (var i = 0; i < jenis.length; i++) {
+                if ( jenis[i] == 'all' ) {
+                    $('select.jenis_transaksi').select2().val('all').trigger('change');
+
+                    i = jenis.length;
+                }
+            }
+
+            $('select.jenis_transaksi').next('span.select2').css('width', '100%');
+        });
+        $('select.jenis_transaksi').next('span.select2').css('width', '100%');
+
         // $('.perusahaan').select2();
 	}, // end - settingUp
 
@@ -112,6 +127,7 @@ var db = {
 				'end_date': dateSQL($('#EndDate').data('DateTimePicker').date()),
 				'unit': $('select.unit').select2('val'),
 				'perusahaan': $('select.perusahaan').select2('val'),
+				'jenis_transaksi': $('select.jenis_transaksi').select2('val'),
 			};
 
 			$.ajax({
@@ -175,6 +191,7 @@ var db = {
 				'end_date': dateSQL($('#EndDate').data('DateTimePicker').date()),
 				'unit': $('select.unit').select2('val'),
 				'perusahaan': $('select.perusahaan').select2('val'),
+				'jenis_transaksi': $('select.jenis_transaksi').select2('val'),
 			};
 
 			$.ajax({
