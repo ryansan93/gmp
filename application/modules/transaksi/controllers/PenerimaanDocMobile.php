@@ -584,6 +584,11 @@ class PenerimaanDocMobile extends Public_Controller {
 
             $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order_old'])->orderBy('id', 'desc')->first();
 
+            $tgl_stok = $params['tiba'];
+            if ( $d_terima_doc->datang < $tgl_stok ) {
+                $tgl_stok = $params['tiba'];
+            }
+
             $id = $d_terima_doc->id;
 
             $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
@@ -634,7 +639,7 @@ class PenerimaanDocMobile extends Public_Controller {
             }
 
             $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$params['tiba']."', 2, null, null";
+            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
             $d_conf = $conf->hydrateRaw($sql);
 
             // $m_conf = new \Model\Storage\Conf();

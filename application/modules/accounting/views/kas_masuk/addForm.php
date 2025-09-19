@@ -18,6 +18,18 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Unit</label></div>
+		<div class="col-xs-3 no-padding" style="padding-right: 5px;">
+			<select class="form-control unit" data-required="1">
+				<?php if ( !empty($unit) ): ?>
+					<?php foreach ($unit as $k_unit => $v_unit): ?>
+						<option value="<?php echo $v_unit['kode']; ?>"><?php echo $v_unit['nama']; ?></option>
+					<?php endforeach ?>
+				<?php endif ?>
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Kas Masuk</label></div>
 		<div class="col-xs-4 no-padding">
 			<div class="input-group date datetimepicker" name="tglKm" id="TglKm">
@@ -29,17 +41,22 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Customer</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">No. Pelanggan</label></div>
 		<div class="col-xs-7 no-padding">
-			<input type="text" class="col-xs-12 form-control customer uppercase" placeholder="Nama Customer (MAX:100)" maxlength="100" data-required="1">
-			<!-- <select class="form-control customer">
-				<option value="">Pilih Customer</option>
-				<?php if ( !empty($customer) ): ?>
-					<?php foreach ($customer as $k_customer => $v_customer): ?>
-						<option value="<?php echo $v_customer['kode_cust']; ?>" data-nama="<?php echo $v_customer['nama_cust']; ?>"><?php echo $v_customer['kode_cust'].' | '.$v_customer['nama_cust']; ?></option>
+			<select class="form-control no_pelanggan">
+				<option value="">Pilih Pelanggan</option>
+				<?php if ( !empty($pelanggan) ): ?>
+					<?php foreach ($pelanggan as $k_plg => $v_plg): ?>
+						<option value="<?php echo $v_plg['nomor']; ?>" data-nama="<?php echo strtoupper($v_plg['nama']); ?>"><?php echo strtoupper($v_plg['nomor'].' | '.$v_plg['nama']); ?></option>
 					<?php endforeach ?>
 				<?php endif ?>
-			</select> -->
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Nama Pelanggan</label></div>
+		<div class="col-xs-7 no-padding">
+			<input type="text" class="col-xs-12 form-control pelanggan uppercase" placeholder="Nama Pelanggan (MAX:100)" maxlength="100" data-required="1">
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -48,7 +65,7 @@
 			<textarea class="form-control keterangan"></textarea>
 		</div>
 	</div>
-	<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
+	<!-- <div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Nama Bank</label></div>
 		<div class="col-xs-4 no-padding">
 			<input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20">
@@ -81,7 +98,7 @@
 				</span>
 			</div>
 		</div>
-	</div>
+	</div> -->
 </div>
 <div class="col-xs-5 no-padding" style="padding-left: 5px;">
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

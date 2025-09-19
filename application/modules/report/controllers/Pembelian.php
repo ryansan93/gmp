@@ -240,6 +240,8 @@ class Pembelian extends Public_Controller {
                 data.total
             order by
                 data.datang asc,
+                data.unit asc,
+                data.no_sj asc,
                 data.nama asc
         ";
         $d_beli = $m_conf->hydrateRaw( $sql );

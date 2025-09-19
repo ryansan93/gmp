@@ -1089,6 +1089,11 @@ class ODVP extends Public_Controller {
             $id_old = $d_terima_doc->id;
 
             if ( $execute == 1 ) {
+                $tgl_stok = $params['datang'];
+                if ( $d_terima_doc->datang < $tgl_stok ) {
+                    $tgl_stok = $d_terima_doc->datang;
+                }
+
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
                 $now = $m_terima_doc->getDate();
 
@@ -1120,7 +1125,7 @@ class ODVP extends Public_Controller {
                 $m_terima_doc->save();
 
                 $conf = new \Model\Storage\Conf();
-                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id_terima."', '".$params['datang']."', 2, null, null";
+                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id_terima."', '".$tgl_stok."', 2, null, null";
                 $d_conf = $conf->hydrateRaw($sql);
                 
                 // $m_conf = new \Model\Storage\Conf();
