@@ -75,7 +75,7 @@ class KasKeluar extends Public_Controller {
         $end_date = $params['end_date'];
 
         $m_kk = new \Model\Storage\Kk_model();
-        $d_kk = $m_kk->getKkByDate($start_date, $end_date, 'KK');
+        $d_kk = $m_kk->getKkByDate($start_date, $end_date, 'BKK');
 
         $content['data'] = $d_kk;
         $html = $this->load->view($this->pathView . 'list', $content, true);
@@ -83,25 +83,25 @@ class KasKeluar extends Public_Controller {
         echo $html;
     }
 
-    public function getNoLpb() {
-        $params = $this->input->get('params');
+    // public function getNoLpb() {
+    //     $params = $this->input->get('params');
 
-        $kode_supl = $params['kode_supl'];
-        $no_kk = (isset($params['no_kk']) && !empty($params['no_kk'])) ? $params['no_kk'] : null;
+    //     $kode_supl = $params['kode_supl'];
+    //     $no_kk = (isset($params['no_kk']) && !empty($params['no_kk'])) ? $params['no_kk'] : null;
 
-        $m_bl = new \Model\Storage\Beli_model();
-        $d_bl = $m_bl->getBeliDebt($kode_supl, $no_kk);
+    //     $m_bl = new \Model\Storage\Beli_model();
+    //     $d_bl = $m_bl->getBeliDebt($kode_supl, $no_kk);
 
-        $html = '<option value="">Pilih No. Invoice</option>';
-        if ( !empty($d_bl) && count($d_bl) > 0 ) {
-            foreach ($d_bl as $k_lpb => $v_lpb) {
-                $selected = null;
-                $html .= '<option value="'.$v_lpb['no_lpb'].'" data-nilai="'.$v_lpb['sisa'].'" data-tgllpb="'.substr($v_lpb['tgl_lpb'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_lpb['tgl_lpb'], 0, 10)).' | '.$v_lpb['no_lpb'].' | '.$v_lpb['no_inv'].'</option>';
-            }
-        }
+    //     $html = '<option value="">Pilih No. Invoice</option>';
+    //     if ( !empty($d_bl) && count($d_bl) > 0 ) {
+    //         foreach ($d_bl as $k_lpb => $v_lpb) {
+    //             $selected = null;
+    //             $html .= '<option value="'.$v_lpb['no_lpb'].'" data-nilai="'.$v_lpb['sisa'].'" data-tgllpb="'.substr($v_lpb['tgl_lpb'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_lpb['tgl_lpb'], 0, 10)).' | '.$v_lpb['no_lpb'].' | '.$v_lpb['no_inv'].'</option>';
+    //         }
+    //     }
 
-        echo $html;
-    }
+    //     echo $html;
+    // }
 
     public function riwayat() {
         $start_date = substr(date('Y-m-d'), 0, 7).'-01';
@@ -117,12 +117,17 @@ class KasKeluar extends Public_Controller {
 
     public function addForm()
     {
-        $m_coa = new \Model\Storage\Coa_model();
+        // $m_coa = new \Model\Storage\Coa_model();
         $m_supl = new \Model\Storage\Supplier_model();
+        $m_wilayah = new \Model\Storage\Wilayah_model();
+        $m_jt = new \Model\Storage\JurnalTrans_model();
+        $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
-        $content['coa_header'] = $m_coa->getCoa( implode("' ,'", array('1101')), 'SUBSTRING(c.no_coa, 0, 5)' );
-        $content['coa'] = $m_coa->getCoa();
-        $content['supplier'] = $m_supl->getSupplier();
+        // $content['bank'] = $m_coa->getDataBank();
+        $content['supplier'] = $m_supl->getDataSupplier();
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
+        $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
+        $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
 
         return $html;
@@ -151,8 +156,11 @@ class KasKeluar extends Public_Controller {
 
     public function editForm($kode)
     {
-        $m_coa = new \Model\Storage\Coa_model();
+        // $m_coa = new \Model\Storage\Coa_model();
         $m_supl = new \Model\Storage\Supplier_model();
+        $m_wilayah = new \Model\Storage\Wilayah_model();
+        $m_jt = new \Model\Storage\JurnalTrans_model();
+        $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
         $m_kk = new \Model\Storage\Kk_model();
         $d_kk = $m_kk->getKk( $kode )[0];
@@ -160,9 +168,11 @@ class KasKeluar extends Public_Controller {
         $m_kki = new \Model\Storage\KkItem_model();
         $d_kki = $m_kki->getKkItem( $kode );
         
-        $content['coa_header'] = $m_coa->getCoa( implode("' ,'", array('1101')), 'SUBSTRING(c.no_coa, 0, 5)' );
-        $content['coa'] = $m_coa->getCoa();
-        $content['supplier'] = $m_supl->getSupplier();
+        // $content['bank'] = $m_coa->getDataBank();
+        $content['supplier'] = $m_supl->getDataSupplier();
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
+        $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
+        $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $content['data'] = $d_kk;
         $content['detail'] = $d_kki;
 
@@ -176,40 +186,52 @@ class KasKeluar extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            $m_nbbk = new \Model\Storage\NoBbk_model();
             $m_kk = new \Model\Storage\Kk_model();
-            $now = $m_kk->getDate();
 
-            $no_kk = $m_kk->getKode('KK');
+            $no_kk = $m_nbbk->getKode('BKK');
+
+            $m_nbbk->tbl_name = $m_kk->getTable();
+            $m_nbbk->tbl_id = $no_kk;
+            $m_nbbk->kode = $no_kk;
+            $m_nbbk->save();
 
             $m_kk->no_kk = $no_kk;
+            // $m_kk->no_coa = $params['no_coa'];
+            // $m_kk->coa_bank = $params['coa_bank'];
+            // $m_kk->nama_bank = $params['nama_bank'];
             $m_kk->tgl_kk = $params['tgl_kk'];
-            $m_kk->no_coa = $params['no_coa'];
+            $m_kk->jurnal_trans = $params['jurnal_trans'];
             $m_kk->periode = substr($params['tgl_kk'], 0, 7);
-            $m_kk->kode_supl = $params['kode_supl'];
-            $m_kk->nama_bank = $params['nama_bank'];
-            $m_kk->no_giro = $params['no_giro'];
-            $m_kk->tgl_tempo = $params['tgl_tempo'];
-            $m_kk->tgl_cair = $params['tgl_cair'];
+            $m_kk->no_supplier = $params['no_supplier'];
+            $m_kk->supplier = $params['supplier'];
+            // $m_kk->no_giro = $params['no_giro'];
+            // $m_kk->tgl_tempo = $params['tgl_tempo'];
+            // $m_kk->tgl_cair = $params['tgl_cair'];
             $m_kk->keterangan = $params['keterangan'];
             $m_kk->nilai = $params['nilai'];
+            $m_kk->unit = $params['unit'];
             $m_kk->save();
 
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_kki = new \Model\Storage\KkItem_model();
                 $m_kki->no_kk = $no_kk;
+                // $m_kki->no_urut = $v_det['no_urut'];
+                // $m_kki->no_coa = $v_det['no_coa'];
+                // $m_kki->nilai_invoice = $v_det['nilai_invoice'];
                 $m_kki->tgl_kk = $params['tgl_kk'];
-                $m_kki->no_urut = $v_det['no_urut'];
                 $m_kki->periode = substr($params['tgl_kk'], 0, 7);
-                $m_kki->no_coa = $v_det['no_coa'];
+                $m_kki->det_jurnal_trans = $v_det['det_jurnal_trans'];
+                $m_kki->coa_asal = $v_det['coa_asal'];
+                $m_kki->coa_tujuan = $v_det['coa_tujuan'];
                 $m_kki->keterangan = $v_det['keterangan'];
-                $m_kki->no_lpb = $v_det['no_lpb'];
-                $m_kki->nilai_lpb = $v_det['nilai_lpb'];
+                $m_kki->no_invoice = $v_det['no_invoice'];
                 $m_kki->nilai = $v_det['nilai'];
                 $m_kki->save();
             }
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $m_kk, $deskripsi_log, $no_kk );
+            Modules::run( 'base/event/save', $m_kk, $deskripsi_log, null, $no_kk );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di simpan.';
@@ -225,7 +247,7 @@ class KasKeluar extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        try {            
+        try {
             $m_kk = new \Model\Storage\Kk_model();
             $now = $m_kk->getDate();
 
@@ -233,16 +255,19 @@ class KasKeluar extends Public_Controller {
 
             $m_kk->where('no_kk', $no_kk)->update(
                 array(
+                    // 'coa_bank' => $params['coa_bank'],
+                    // 'nama_bank' => $params['nama_bank'],
                     'tgl_kk' => $params['tgl_kk'],
-                    'no_coa' => $params['no_coa'],
+                    'jurnal_trans' => $params['jurnal_trans'],
                     'periode' => substr($params['tgl_kk'], 0, 7),
-                    'kode_supl' => $params['kode_supl'],
-                    'nama_bank' => $params['nama_bank'],
-                    'no_giro' => $params['no_giro'],
-                    'tgl_tempo' => $params['tgl_tempo'],
-                    'tgl_cair' => $params['tgl_cair'],
+                    'no_supplier' => $params['no_supplier'],
+                    'supplier' => $params['supplier'],
+                    // 'no_giro' => $params['no_giro'],
+                    // 'tgl_tempo' => $params['tgl_tempo'],
+                    // 'tgl_cair' => $params['tgl_cair'],
                     'keterangan' => $params['keterangan'],
-                    'nilai' => $params['nilai']
+                    'nilai' => $params['nilai'],
+                    'unit' => $params['unit']
                 )
             );
 
@@ -252,13 +277,16 @@ class KasKeluar extends Public_Controller {
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_kki = new \Model\Storage\KkItem_model();
                 $m_kki->no_kk = $no_kk;
+                // $m_kki->no_urut = $v_det['no_urut'];
+                // $m_kki->no_coa = $v_det['no_coa'];
+                // $m_kki->nilai_invoice = $v_det['nilai_invoice'];
                 $m_kki->tgl_kk = $params['tgl_kk'];
-                $m_kki->no_urut = $v_det['no_urut'];
                 $m_kki->periode = substr($params['tgl_kk'], 0, 7);
-                $m_kki->no_coa = $v_det['no_coa'];
+                $m_kki->det_jurnal_trans = $v_det['det_jurnal_trans'];
+                $m_kki->coa_asal = $v_det['coa_asal'];
+                $m_kki->coa_tujuan = $v_det['coa_tujuan'];
                 $m_kki->keterangan = $v_det['keterangan'];
-                $m_kki->no_lpb = $v_det['no_lpb'];
-                $m_kki->nilai_lpb = $v_det['nilai_lpb'];
+                $m_kki->no_invoice = $v_det['no_invoice'];
                 $m_kki->nilai = $v_det['nilai'];
                 $m_kki->save();
             }
@@ -266,7 +294,7 @@ class KasKeluar extends Public_Controller {
             $d_kk = $m_kk->where('no_kk', $no_kk)->first();
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_kk, $deskripsi_log, $no_kk );
+            Modules::run( 'base/event/update', $d_kk, $deskripsi_log, null, $no_kk );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di update.';
@@ -293,8 +321,11 @@ class KasKeluar extends Public_Controller {
             $m_kki = new \Model\Storage\KkItem_model();
             $m_kki->where('no_kk', $no_kk)->delete();
 
+            $m_nbbk = new \Model\Storage\NoBbk_model();
+            $m_nbbk->where('tbl_name', $m_kk->getTable())->where('tbl_id', $no_kk)->delete();
+
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/delete', $d_kk, $deskripsi_log, $no_kk );
+            Modules::run( 'base/event/delete', $d_kk, $deskripsi_log, null, $no_kk );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di hapus.';
@@ -305,54 +336,54 @@ class KasKeluar extends Public_Controller {
         display_json( $this->result );
     }
 
-    public function updatePo($no_po)
-    {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select 
-                pi.po_no as no_po,
-                pi.item_kode as item_kode,
-                pi.harga as harga,
-                pi.jumlah as jumlah_po,
-                isnull(t.jumlah_terima, 0) as jumlah_terima
-            from po_item pi
-            right join
-                po p 
-                on
-                    pi.po_no = p.no_po
-            left join
-                (
-                    select ti.item_kode, ti.harga, sum(ti.jumlah_terima) as jumlah_terima, t.po_no from terima_item ti 
-                    right join
-                        terima t
-                        on
-                            ti.terima_kode = t.kode_terima 
-                    where
-                        t.po_no is not null
-                    group by
-                        ti.item_kode, ti.harga, t.po_no
-                ) t
-                on
-                    t.po_no = p.no_po and
-                    t.item_kode = pi.item_kode
-            where
-                pi.jumlah > isnull(t.jumlah_terima, 0) and
-                p.no_po = '".$no_po."'
-        ";
-        $d_po = $m_conf->hydrateRaw( $sql );
+    // public function updatePo($no_po)
+    // {
+    //     $m_conf = new \Model\Storage\Conf();
+    //     $sql = "
+    //         select 
+    //             pi.po_no as no_po,
+    //             pi.item_kode as item_kode,
+    //             pi.harga as harga,
+    //             pi.jumlah as jumlah_po,
+    //             isnull(t.jumlah_terima, 0) as jumlah_terima
+    //         from po_item pi
+    //         right join
+    //             po p 
+    //             on
+    //                 pi.po_no = p.no_po
+    //         left join
+    //             (
+    //                 select ti.item_kode, ti.harga, sum(ti.jumlah_terima) as jumlah_terima, t.po_no from terima_item ti 
+    //                 right join
+    //                     terima t
+    //                     on
+    //                         ti.terima_kode = t.kode_terima 
+    //                 where
+    //                     t.po_no is not null
+    //                 group by
+    //                     ti.item_kode, ti.harga, t.po_no
+    //             ) t
+    //             on
+    //                 t.po_no = p.no_po and
+    //                 t.item_kode = pi.item_kode
+    //         where
+    //             pi.jumlah > isnull(t.jumlah_terima, 0) and
+    //             p.no_po = '".$no_po."'
+    //     ";
+    //     $d_po = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_po->count() == 0 ) {
-            $m_po = new \Model\Storage\Po_model();
-            $m_po->where('no_po', $no_po)->update(
-                array('done' => 1)
-            );
-        } else {
-            $m_po = new \Model\Storage\Po_model();
-            $m_po->where('no_po', $no_po)->update(
-                array('done' => 0)
-            );
-        }
-    }
+    //     if ( $d_po->count() == 0 ) {
+    //         $m_po = new \Model\Storage\Po_model();
+    //         $m_po->where('no_po', $no_po)->update(
+    //             array('done' => 1)
+    //         );
+    //     } else {
+    //         $m_po = new \Model\Storage\Po_model();
+    //         $m_po->where('no_po', $no_po)->update(
+    //             array('done' => 0)
+    //         );
+    //     }
+    // }
 
     public function printPreview($no_kk) {        
         $kode = exDecrypt( $no_kk );
@@ -363,6 +394,10 @@ class KasKeluar extends Public_Controller {
         $m_kki = new \Model\Storage\KkItem_model();
         $d_kki = $m_kki->getKkItem( $kode );
 
+        $m_prs = new \Model\Storage\Perusahaan_model();
+        $d_prs = $m_prs->orderBy('id', 'desc')->with(['d_kota'])->first();
+
+        $content['perusahaan'] = $d_prs->toArray();
         $content['data'] = $d_kk;
         $content['detail'] = $d_kki;
 

@@ -54,13 +54,12 @@
 					<th class="col-xs-2">Customer</th>
 					<th class="col-xs-2">Supplier</th>
 					<th class="col-xs-3">Keterangan</th>
-					<th class="col-xs-1">Debit</th>
-					<th class="col-xs-1">Kredit</th>
+					<th class="col-xs-2">Nilai</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr>
-					<td colspan="7">Data tidak ditemukan.</td>
+					<td colspan="6">Data tidak ditemukan.</td>
 				</tr>
 			</tbody>
 		</table>

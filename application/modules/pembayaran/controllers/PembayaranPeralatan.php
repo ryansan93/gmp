@@ -731,6 +731,14 @@ class PembayaranPeralatan extends Public_Controller
 
                 $id = $m_bp->id;
 
+                $m_nbbm = new \Model\Storage\NoBbm_model();
+                $no_km = $m_nbbm->getKode('BBK');
+
+                $m_nbbm->tbl_name = $m_bp->getTable();
+                $m_nbbm->tbl_id = $id;
+                $m_nbbm->kode = $no_km;
+                $m_nbbm->save();
+
                 if ( isset($data['dn']) && !empty($data['dn']) ) {
                     foreach ($data['dn'] as $k_dn => $v_dn) {
                         $m_rpd = new \Model\Storage\BayarPeralatanDn_model();
@@ -873,6 +881,9 @@ class PembayaranPeralatan extends Public_Controller
 
             $m_bp = new \Model\Storage\BayarPeralatan_model();
             $d_bp = $m_bp->where('id', $params['id'])->first();
+
+            $m_nbbm = new \Model\Storage\NoBbm_model();
+            $m_nbbm->where('tbl_name', $m_bp->getTable())->where('tbl_id', $params['id'])->delete();
 
             $m_bp->where('id', $params['id'])->delete();
 

@@ -1649,6 +1649,14 @@ class RealisasiPembayaran extends Public_Controller
                     $no_bukti_auto = $m_rp->getNextNomorAuto( $kode );
                 }
 
+                $m_nbbm = new \Model\Storage\NoBbm_model();
+                $no_km = $m_nbbm->getKode('BBK');
+
+                $m_nbbm->tbl_name = $m_rp->getTable();
+                $m_nbbm->tbl_id = $nomor;
+                $m_nbbm->kode = $no_km;
+                $m_nbbm->save();
+
                 $m_rp->nomor = $nomor;
                 $m_rp->no_bukti_auto = $no_bukti_auto;
                 $m_rp->tgl_bayar = $data['tgl_bayar'];
@@ -1834,9 +1842,7 @@ class RealisasiPembayaran extends Public_Controller
         $data = json_decode($this->input->post('data'),TRUE);
         $files = isset($_FILES['files']) ? $_FILES['files'] : [];
 
-        try {
-            // cetak_r( $data, 1 );
-            
+        try {            
             $id = $data['id'];
 
             $jenis_transaksi = null;
@@ -2073,6 +2079,9 @@ class RealisasiPembayaran extends Public_Controller
             $m_conf = new \Model\Storage\Conf();
             $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 3";
             $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $m_nbbm = new \Model\Storage\NoBbm_model();
+            $m_nbbm->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->delete();
 
             $m_rpd->where('id_header', $id)->delete();
             $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();

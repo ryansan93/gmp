@@ -185,9 +185,7 @@ class BankKeluar extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        try {
-            // cetak_r( $params, 1 );
-            
+        try {            
             $m_nbbk = new \Model\Storage\NoBbk_model();
             $m_kk = new \Model\Storage\Kk_model();
 
@@ -324,7 +322,7 @@ class BankKeluar extends Public_Controller {
             $m_kki->where('no_kk', $no_kk)->delete();
 
             $m_nbbk = new \Model\Storage\NoBbk_model();
-            $m_nbbk->where('kode', $no_kk)->delete();
+            $m_nbbk->where('tbl_name', $m_kk->getTable())->where('tbl_id', $no_kk)->delete();
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_kk, $deskripsi_log, null, $no_kk );

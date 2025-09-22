@@ -26,7 +26,7 @@
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Supplier</label></div>
 		<div class="col-xs-7 no-padding">
-			<label class="control-label">: <?php echo !empty($data['nama_supl']) ? $data['nama_supl'] : '-'; ?></label>
+			<label class="control-label">: <?php echo !empty($data['supplier']) ? $data['supplier'] : '-'; ?></label>
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

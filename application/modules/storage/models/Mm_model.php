@@ -25,17 +25,18 @@ class Mm_model extends Conf{
 		$sql = "
 			select 
 				m.*,
-				cust.nama_cust,
-				supl.nama_supl
+				jt.nama as jurnal_trans_nama
 			from mm m
 			left join
-				customer cust
+				(
+					select jt1.* from jurnal_trans jt1
+					right join
+						(select max(id) as id, kode from jurnal_trans group by kode) jt2
+						on
+							jt1.id = jt2.id
+				) jt
 				on
-					m.kode_cust = cust.kode_cust
-            left join
-                supplier supl
-                on
-                    m.kode_supl = supl.kode_supl
+					m.jurnal_trans = jt.kode
 			".$sql_id."
 			order by
 				m.tgl_mm desc,
@@ -56,17 +57,18 @@ class Mm_model extends Conf{
 		$sql = "
 			select 
 				m.*,
-				cust.nama_cust,
-                supl.nama_supl
+				jt.nama as jurnal_trans_nama
 			from mm m
 			left join
-				customer cust
+				(
+					select jt1.* from jurnal_trans jt1
+					right join
+						(select max(id) as id, kode from jurnal_trans group by kode) jt2
+						on
+							jt1.id = jt2.id
+				) jt
 				on
-					m.kode_cust = cust.kode_cust
-            left join
-                supplier supl
-                on
-                    m.kode_supl = supl.kode_supl
+					m.jurnal_trans = jt.kode
 			where
 				m.tgl_mm between '".$start_date."' and '".$end_date."'
 			order by

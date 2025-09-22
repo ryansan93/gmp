@@ -433,4 +433,12 @@ class Pegawai extends Public_Controller
 			}
 		}
 	}
+
+	public function tesPassword () {
+		$userId = 'USR2509008';
+		
+		$hash_password = password_hash($userId, PASSWORD_BCRYPT);
+
+		cetak_r( $hash_password );
+	}
 }

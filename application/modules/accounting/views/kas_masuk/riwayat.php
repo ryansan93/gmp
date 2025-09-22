@@ -51,10 +51,10 @@
 				<tr>
 					<th class="col-xs-1">Tanggal</th>
 					<th class="col-xs-2">No. Kas Masuk</th>
-					<th class="col-xs-2">Supplier</th>
+					<th class="col-xs-2">Pelanggan</th>
 					<th class="col-xs-3">Keterangan</th>
-					<th class="col-xs-2">Nama Bank</th>
-					<th class="col-xs-1">Nilai</th>
+					<th class="col-xs-1">Unit</th>
+					<th class="col-xs-2">Nilai</th>
 				</tr>
 			</thead>
 			<tbody>

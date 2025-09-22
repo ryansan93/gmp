@@ -2,15 +2,15 @@ var bm = {
 	start_up: function () {
 		bm.setting_up();
 
-        // if ( !empty($("#StartDate").find('input').data('tgl')) && empty($("#StartDate").find('input').val()) ) {
-        //     var tgl = $("#StartDate").find('input').data('tgl');
-        //     $("#StartDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
-        // }
-        // if ( !empty($("#EndDate").find('input').data('tgl')) && empty($("#EndDate").find('input').val()) ) {
-        //     var tgl = $("#EndDate").find('input').data('tgl');
-        //     $("#EndDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
-        // }
-        // bm.getLists();
+        if ( !empty($("#StartDate").find('input').data('tgl')) && empty($("#StartDate").find('input').val()) ) {
+            var tgl = $("#StartDate").find('input').data('tgl');
+            $("#StartDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
+        }
+        if ( !empty($("#EndDate").find('input').data('tgl')) && empty($("#EndDate").find('input').val()) ) {
+            var tgl = $("#EndDate").find('input').data('tgl');
+            $("#EndDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
+        }
+        bm.getLists();
 	}, // end - start_up
 
 	setting_up: function() {
@@ -243,7 +243,7 @@ var bm = {
         if ( $(tbody).find('tr').length > 1 ) {
             $(tr).remove();
 
-            bm.hitGrandTotal(elm);
+            bm.hitGrandTotal( $(tbody).find('tr:first()') );
         }
     }, // end - addRow
 

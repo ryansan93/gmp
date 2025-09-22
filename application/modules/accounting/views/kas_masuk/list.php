@@ -3,10 +3,10 @@
 		<tr class="search cursor-p data" onclick="km.changeTabActive(this)" data-href="action" data-kode="<?php echo $v_data['no_km']; ?>" data-edit="">
 			<td class="text-center" data-order="<?php echo str_replace('-', '/', $v_data['tgl_km']); ?>"><?php echo strtoupper(tglIndonesia($v_data['tgl_km'], '-', ' ')); ?></td>
 			<td><?php echo strtoupper($v_data['no_km']); ?></td>
-			<td><?php echo strtoupper($v_data['nama_cust']); ?></td>
+			<td><?php echo strtoupper($v_data['pelanggan']); ?></td>
 			<td><?php echo !empty($v_data['keterangan']) ? strtoupper($v_data['keterangan']) : '-'; ?></td>
-			<td><?php echo strtoupper($v_data['nama_bank']); ?></td>
-			<td class="text-right"><?php echo formatAngka($v_data['nilai']); ?></td>
+			<td><?php echo strtoupper($v_data['unit']); ?></td>
+			<td class="text-right"><?php echo angkaDecimal($v_data['nilai']); ?></td>
 		</tr>
 	<?php endforeach ?>
 <?php else: ?>

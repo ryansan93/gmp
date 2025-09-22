@@ -41,157 +41,199 @@ var km = {
                 $(div).data('DateTimePicker').date( moment(new Date((tgl))) );
             }
         });
-        App.setTutupBulan( ["#TglKm", "#TglTempo", "#TglCair"] );
+        // App.setTutupBulan( ["#TglKm", "#TglTempo", "#TglCair"] );
 
         $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal],[data-tipe=decimal3],[data-tipe=decimal4],[data-tipe=number]').each(function(){
-            priceFormat( $(this) );
+            $(this).priceFormat(Config[$(this).data('tipe')]);
         });
 
-        $('select.no_coa_header').select2({matcher: matchStart}).on('select2:select', function (e) {
-            var data = e.params.data.element.dataset;
-            var nama = data.nama;
-
-            $('select.nama_coa_header').val(nama).trigger('change');
-        });
-        $('select.nama_coa_header').select2().on('select2:select', function (e) {
-            var data = e.params.data.element.dataset;
-            var no = data.no;
-
-            $('select.no_coa_header').val(no).trigger('change');
+        $('select.jurnal_trans').select2().on("select2:select", function (e) {
+            km.getDetJurnalTrans();
         });
 
-        $('select.no_coa').select2({matcher: matchStart}).on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
+        $('select.unit').select2();
+        // $('select.bank').select2();
 
-            var data = e.params.data.element.dataset;
-            var nama = data.nama;
-
-            $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        $('select.no_pelanggan').select2().on("select2:select", function (e) {
+            km.getNamaPelanggan();
         });
-        $('select.nama_coa').select2().on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
 
-            var data = e.params.data.element.dataset;
-            var no = data.no;
+        km.getDetJurnalTrans();
+        km.getNamaPelanggan();
 
-            $(_tr).find('select.no_coa').val(no).trigger('change');
-        });
-        $('select.customer').select2().on('select2:select', function (e) {
-            var kode_cust = e.params.data.id;
+        // $('select.no_coa_header').select2({matcher: matchStart}).on('select2:select', function (e) {
+        //     var data = e.params.data.element.dataset;
+        //     var nama = data.nama;
 
-            km.getNoFaktur( kode_cust );
-        });
-        $('select.faktur').select2().on('select2:select', function (e) {
-            var _tr = $(this).closest('tr');
+        //     $('select.nama_coa_header').val(nama).trigger('change');
+        // });
+        // $('select.nama_coa_header').select2().on('select2:select', function (e) {
+        //     var data = e.params.data.element.dataset;
+        //     var no = data.no;
 
-            var no_faktur = e.params.data.id;
+        //     $('select.no_coa_header').val(no).trigger('change');
+        // });
 
-            var data = e.params.data.element.dataset;
-            var nilai = data.nilai;
+        // $('select.no_coa').select2({matcher: matchStart}).on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-            $(_tr).find('input.nilai_faktur').val( numeral.format(nilai) );
-            $(_tr).find('input.nilai').val( numeral.format(nilai) );
+        //     var data = e.params.data.element.dataset;
+        //     var nama = data.nama;
 
-            var ket = '';
-            if ( !empty(no_faktur) ) {
-                $(_tr).find('select.no_coa').val('1104.02.00').trigger('change');
-                var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
+        //     $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        // });
+        // $('select.nama_coa').select2().on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-                $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //     var data = e.params.data.element.dataset;
+        //     var no = data.no;
 
-                var nama_cust = $('select.customer').find('option:selected').attr('data-nama');
+        //     $(_tr).find('select.no_coa').val(no).trigger('change');
+        // });
+        // $('select.customer').select2().on('select2:select', function (e) {
+        //     var kode_cust = e.params.data.id;
 
-                ket = 'Pelunasan Piutang a.n '+nama_cust+' / '+no_faktur;
-                $(_tr).find('input.keterangan').val(ket);
-            } else {
-                $(_tr).find('select.no_coa').val('').trigger('change');
-                $(_tr).find('select.nama_coa').val('').trigger('change');
+        //     km.getNoFaktur( kode_cust );
+        // });
+        // $('select.faktur').select2().on('select2:select', function (e) {
+        //     var _tr = $(this).closest('tr');
 
-                $(_tr).find('input.keterangan').val(ket);
-            }
+        //     var no_faktur = e.params.data.id;
 
-            km.hitGrandTotal( $(this) );
-        });
+        //     var data = e.params.data.element.dataset;
+        //     var nilai = data.nilai;
+
+        //     $(_tr).find('input.nilai_faktur').val( numeral.format(nilai) );
+        //     $(_tr).find('input.nilai').val( numeral.format(nilai) );
+
+        //     var ket = '';
+        //     if ( !empty(no_faktur) ) {
+        //         $(_tr).find('select.no_coa').val('1104.02.00').trigger('change');
+        //         var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
+
+        //         $(_tr).find('select.nama_coa').val(nama).trigger('change');
+
+        //         var nama_cust = $('select.customer').find('option:selected').attr('data-nama');
+
+        //         ket = 'Pelunasan Piutang a.n '+nama_cust+' / '+no_faktur;
+        //         $(_tr).find('input.keterangan').val(ket);
+        //     } else {
+        //         $(_tr).find('select.no_coa').val('').trigger('change');
+        //         $(_tr).find('select.nama_coa').val('').trigger('change');
+
+        //         $(_tr).find('input.keterangan').val(ket);
+        //     }
+
+        //     km.hitGrandTotal( $(this) );
+        // });
     }, // end - setting_up
+
+    getDetJurnalTrans: function() {
+        var jt_id = $('select.jurnal_trans').find('option:selected').attr('data-id');
+
+        $.map( $('select.det_jurnal_trans'), function(select) {
+            $(select).find('option').removeAttr('disabled');
+            $(select).find('option:not([data-idjt="'+jt_id+'"])').attr('disabled', 'disabled');
+            $(select).find('option[value="all"]').removeAttr('disabled');
+    
+            $(select).select2();
+        } );
+    }, // end - getData
+
+    getNamaPelanggan: function() {
+        var no_pelanggan = $('select.no_pelanggan').select2().val();
+
+        $('input.pelanggan').removeAttr('disabled', 'disabled');
+        if ( !empty(no_pelanggan) ) {
+            var nama_pelanggan = $('select.no_pelanggan').find('option:selected').attr('data-nama');
+
+            $('input.pelanggan').val( nama_pelanggan.toUpperCase() );
+            $('input.pelanggan').attr('disabled', 'disabled');
+        } else {
+            // $('input.pelanggan').val(null);
+        }
+    }, // end - getData
 
     addRow: function (elm) {
         var tr = $(elm).closest('tr');
         var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.no_coa, select.nama_coa, select.faktur').select2('destroy')
+        $(tr).find('select.det_jurnal_trans').select2('destroy')
                                    .removeAttr('data-live-search')
                                    .removeAttr('data-select2-id')
                                    .removeAttr('aria-hidden')
                                    .removeAttr('tabindex');
-        $(tr).find('select.no_coa option, select.nama_coa option, select.faktur option').removeAttr('data-select2-id');
+        $(tr).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
 
         var tr_clone = $(tr).clone();
 
         $(tr_clone).find('input, select').val('');
 
         $(tr_clone).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
-            priceFormat( $(this) );
+            $(this).priceFormat(Config[$(this).data('tipe')]);
         });
 
         $(tbody).append( $(tr_clone) );
 
-        $.each($(tbody).find('select'), function(a) {
-            if ( $(this).hasClass('no_coa') ) {
-                $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        km.getDetJurnalTrans();
+
+        // $.each($(tbody).find('select'), function(a) {
+        //     if ( $(this).hasClass('no_coa') ) {
+        //         $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
         
-                    var data = e.params.data.element.dataset;
-                    var nama = data.nama;
+        //             var data = e.params.data.element.dataset;
+        //             var nama = data.nama;
         
-                    $(_tr).find('select.nama_coa').val(nama).trigger('change');
-                });
-            }
+        //             $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //         });
+        //     }
 
-            if ( $(this).hasClass('nama_coa') ) {
-                $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        //     if ( $(this).hasClass('nama_coa') ) {
+        //         $(this).select2({matcher: matchStart}).on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
 
-                    var data = e.params.data.element.dataset;
-                    var no = data.no;
+        //             var data = e.params.data.element.dataset;
+        //             var no = data.no;
 
-                    $(_tr).find('select.no_coa').val(no).trigger('change');
-                });
-            }
+        //             $(_tr).find('select.no_coa').val(no).trigger('change');
+        //         });
+        //     }
 
-            if ( $(this).hasClass('faktur') ) {
-                $(this).select2().on('select2:select', function (e) {
-                    var _tr = $(this).closest('tr');
+        //     if ( $(this).hasClass('faktur') ) {
+        //         $(this).select2().on('select2:select', function (e) {
+        //             var _tr = $(this).closest('tr');
 
-                    var no_faktur = e.params.data.id;
+        //             var no_faktur = e.params.data.id;
 
-                    var data = e.params.data.element.dataset;
-                    var nilai = data.nilai;
+        //             var data = e.params.data.element.dataset;
+        //             var nilai = data.nilai;
 
-                    $(_tr).find('input.nilai_faktur').val( numeral.format(nilai) );
-                    $(_tr).find('input.nilai').val( numeral.format(nilai) );
+        //             $(_tr).find('input.nilai_faktur').val( numeral.format(nilai) );
+        //             $(_tr).find('input.nilai').val( numeral.format(nilai) );
 
-                    var ket = '';
-                    if ( !empty(no_faktur) ) {
-                        $(_tr).find('select.no_coa').val('1104.02.00').trigger('change');
-                        var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
+        //             var ket = '';
+        //             if ( !empty(no_faktur) ) {
+        //                 $(_tr).find('select.no_coa').val('1104.02.00').trigger('change');
+        //                 var nama =  $(_tr).find('select.no_coa option:selected').attr('data-nama');
 
-                        $(_tr).find('select.nama_coa').val(nama).trigger('change');
+        //                 $(_tr).find('select.nama_coa').val(nama).trigger('change');
 
-                        var nama_cust = $('select.customer').find('option:selected').attr('data-nama');
+        //                 var nama_cust = $('select.customer').find('option:selected').attr('data-nama');
 
-                        ket = 'Pelunasan Piutang a.n '+nama_cust+' / '+no_faktur;
-                        $(_tr).find('input.keterangan').val(ket);
-                    } else {
-                        $(_tr).find('select.no_coa').val('').trigger('change');
-                        $(_tr).find('select.nama_coa').val('').trigger('change');
+        //                 ket = 'Pelunasan Piutang a.n '+nama_cust+' / '+no_faktur;
+        //                 $(_tr).find('input.keterangan').val(ket);
+        //             } else {
+        //                 $(_tr).find('select.no_coa').val('').trigger('change');
+        //                 $(_tr).find('select.nama_coa').val('').trigger('change');
 
-                        $(_tr).find('input.keterangan').val(ket);
-                    }
+        //                 $(_tr).find('input.keterangan').val(ket);
+        //             }
 
-                    km.hitGrandTotal( $(this) );
-                });
-            }
-        });
+        //             km.hitGrandTotal( $(this) );
+        //         });
+        //     }
+        // });
     }, // end - addRow
 
     removeRow: function (elm) {
@@ -201,7 +243,7 @@ var km = {
         if ( $(tbody).find('tr').length > 1 ) {
             $(tr).remove();
 
-            km.hitGrandTotal(elm);
+            km.hitGrandTotal( $(tbody).find('tr:first()') );
         }
     }, // end - addRow
 
@@ -260,12 +302,12 @@ var km = {
                 $(dcontent).html(html);
                 km.setting_up();
 
-                if ( !empty(resubmit) ) {
-                    var kode_cust = $(dcontent).find('select.customer').select2().val();
-                    if ( !empty(kode_cust) ) {
-                        km.getNoFaktur( kode_cust );
-                    }
-                }
+                // if ( !empty(resubmit) ) {
+                //     var kode_cust = $(dcontent).find('select.customer').select2().val();
+                //     if ( !empty(kode_cust) ) {
+                //         km.getNoFaktur( kode_cust );
+                //     }
+                // }
             },
         });
     }, // end - loadForm
@@ -293,9 +335,9 @@ var km = {
                 'end_date': dateSQL( $(dcontent).find('#EndDate').data('DateTimePicker').date() )
             };
 
-            if ($.fn.dataTable.isDataTable('.tbl_riwayat')) {
-                $('.tbl_riwayat').DataTable().destroy();
-            }
+            // if ($.fn.dataTable.isDataTable('.tbl_riwayat')) {
+            //     $('.tbl_riwayat').DataTable().destroy();
+            // }
 
             $.ajax({
                 url : 'accounting/KasMasuk/getLists',
@@ -308,50 +350,50 @@ var km = {
                 success : function(html){
                     App.hideLoaderInContent( $(tbody), html );
 
-                    if ( $('.tbl_riwayat').find('tbody tr.data').length > 0 ) {
-                        $('.tbl_riwayat').DataTable();
-                    }
+                    // if ( $('.tbl_riwayat').find('tbody tr.data').length > 0 ) {
+                    //     $('.tbl_riwayat').DataTable();
+                    // }
                 },
             });
         }
     }, // end - getLists
 
-    getNoFaktur: function(kode_cust, no_km = null) {
-        var dcontent = $('div#action');
+    // getNoFaktur: function(kode_cust, no_km = null) {
+    //     var dcontent = $('div#action');
 
-        no_km = $(dcontent).find('select.customer').attr('data-nokm');
+    //     no_km = $(dcontent).find('select.customer').attr('data-nokm');
 
-        var params = {
-            'kode_cust': kode_cust,
-            'no_km': no_km
-        };
+    //     var params = {
+    //         'kode_cust': kode_cust,
+    //         'no_km': no_km
+    //     };
 
-        $.ajax({
-            url : 'accounting/KasMasuk/getNoFaktur',
-            data : {
-                'params' : params
-            },
-            type : 'GET',
-            dataType : 'HTML',
-            beforeSend : function(){ showLoading('Sedang mengambil No. Faktur . . .'); },
-            success : function(html){
-                hideLoading();
+    //     $.ajax({
+    //         url : 'accounting/KasMasuk/getNoFaktur',
+    //         data : {
+    //             'params' : params
+    //         },
+    //         type : 'GET',
+    //         dataType : 'HTML',
+    //         beforeSend : function(){ showLoading('Sedang mengambil No. Faktur . . .'); },
+    //         success : function(html){
+    //             hideLoading();
 
-                $('select.faktur').html( html );
-                $.map( $(dcontent).find('table tbody tr'), function(tr) {
-                    $(tr).find('select.faktur').select2().val('');
+    //             $('select.faktur').html( html );
+    //             $.map( $(dcontent).find('table tbody tr'), function(tr) {
+    //                 $(tr).find('select.faktur').select2().val('');
 
-                    var val = $(tr).find('select.faktur').attr('data-val');
-                    if ( !empty(val) && !empty(kode_cust) ) {
-                        $(tr).find('select.faktur').select2().val( val ).trigger('change');
-                    } else {
-                        $(tr).find('input.nilai_faktur').val('');
-                        $(tr).find('select.faktur').select2().val('').trigger('change');
-                    }
-                });
-            },
-        });
-    }, // end - getNoFaktur
+    //                 var val = $(tr).find('select.faktur').attr('data-val');
+    //                 if ( !empty(val) && !empty(kode_cust) ) {
+    //                     $(tr).find('select.faktur').select2().val( val ).trigger('change');
+    //                 } else {
+    //                     $(tr).find('input.nilai_faktur').val('');
+    //                     $(tr).find('select.faktur').select2().val('').trigger('change');
+    //                 }
+    //             });
+    //         },
+    //     });
+    // }, // end - getNoFaktur
 
     cekData: function() {
         var dcontent = $('#action');
@@ -439,13 +481,17 @@ var km = {
                     var no_urut = 1;
                     var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
                         var _detail = {
-                            'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            // 'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
+                            // 'no_coa': $(tr).find('select.no_coa').select2().val(),
+                            // 'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
+                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            'no_faktur': $(tr).find('select.faktur').select2().val(),
-                            'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
-                            'nilai': numeral.unformat($(tr).find('input.nilai').val())
+                            // 'no_faktur': $(tr).find('select.faktur').select2().val(),
+							// 'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
+                            'no_invoice': $(tr).find('input.no_invoice').val(),
+							'nilai': numeral.unformat($(tr).find('input.nilai').val())
                         };
 
                         no_urut++;
@@ -455,14 +501,18 @@ var km = {
 
                     var data = {
                         'tgl_km': dateSQL( $(dcontent).find('#TglKm').data('DateTimePicker').date() ),
-                        'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
-                        'kode_cust': $(dcontent).find('select.customer').select2().val(),
+                        // 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
+                        'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
+                        'no_pelanggan': $(dcontent).find('select.no_pelanggan').select2().val(),
+                        'pelanggan': $(dcontent).find('input.pelanggan').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
-                        'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
-                        'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
-                        'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
+                        // 'coa_bank': $(dcontent).find('select.bank').select2().val().toUpperCase(),
+                        // 'nama_bank': $(dcontent).find('select.bank').find('option:selected').attr('data-nama'),
+                        // 'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
+						// 'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
+						// 'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
+						'unit': $(dcontent).find('select.unit').select2().val(),
                         'detail': detail
                     };
 
@@ -507,12 +557,16 @@ var km = {
                     var no_urut = 1;
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
-                            'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            // 'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
+                            // 'no_coa': $(tr).find('select.no_coa').select2().val(),
+                            // 'nama_coa': $(tr).find('select.nama_coa').select2().val(),
+                            'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
+                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            'no_faktur': $(tr).find('select.faktur').select2().val(),
-							'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
+                            // 'no_faktur': $(tr).find('select.faktur').select2().val(),
+							// 'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
+                            'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
 						};
 
@@ -522,16 +576,20 @@ var km = {
 					});
 
 					var data = {
-						'no_km': $(elm).attr('data-kode'),
+                        'no_km': $(elm).attr('data-kode'),
 						'tgl_km': dateSQL( $(dcontent).find('#TglKm').data('DateTimePicker').date() ),
-                        'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
-                        'kode_cust': $(dcontent).find('select.customer').select2().val(),
+						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
+						'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
+                        'no_pelanggan': $(dcontent).find('select.no_pelanggan').select2().val(),
+                        'pelanggan': $(dcontent).find('input.pelanggan').val().toUpperCase(),
                         'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'nama_bank': $(dcontent).find('input.nama_bank').val().toUpperCase(),
-                        'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
-						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
-						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
+                        // 'coa_bank': $(dcontent).find('select.bank').select2().val().toUpperCase(),
+                        // 'nama_bank': $(dcontent).find('select.bank').find('option:selected').attr('data-nama'),
+                        // 'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
+						// 'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
+						// 'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
+                        'unit': $(dcontent).find('select.unit').select2().val(),
 						'detail': detail
 					};
 

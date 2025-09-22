@@ -261,10 +261,10 @@
 								<tr>
 									<td class="col-xs-6" style="vertical-align: top;">
 										<div class="col-xs-12" style="display: inline; text-align: left; font-size: 12pt;">
-											<label style="display: inline-block; width: 100%;"><b><?php echo strtoupper($this->config->item('nama_perusahaan')); ?></b></label>
+											<label style="display: inline-block; width: 100%;"><b><?php echo strtoupper($perusahaan['perusahaan']); ?></b></label>
 										</div>
 										<div class="col-xs-12" style="display: inline; text-align: left; font-size: 10pt;">
-											<label style="display: inline-block; width: 100%;"><?php echo strtoupper($this->config->item('alamat').'<br>'.$this->config->item('kota').', '.$this->config->item('provinsi').'<br>'.$this->config->item('telp')); ?></label>
+											<label style="display: inline-block; width: 100%;"><?php echo strtoupper($perusahaan['alamat'].'<br>'.$perusahaan['d_kota']['nama'].', '.$perusahaan['d_kota']['d_provinsi_with_negara']['nama']); ?></label>
 										</div>
 									</td>
 									<td class="col-xs-6" style="vertical-align: top; font-size: 10pt;">
@@ -281,7 +281,7 @@
 										<div class="col-xs-12" style="display: inline; text-align: left;">
 											<label style="display: inline-block; width: 18%;">Dari</label>
 											<label style="display: inline-block; width: 2%;">:</label>
-											<label style="display: inline-block; width: 75.5%;"><?php echo $data['nama_cust']; ?></label>
+											<label style="display: inline-block; width: 75.5%;"><?php echo $data['pelanggan']; ?></label>
 										</div>
 									</td>
 								</tr>
@@ -292,6 +292,13 @@
 					<div class="col-xs-12" style="display: inline-block; text-align: left; font-size: 10pt;">
 						<table class="border-field" style="width: 100%;">
 							<thead>
+								<tr>
+									<td colspan="3">
+										<label style="display: inline-block; width: 50%; text-align: left;">
+											<label class="col-xs-12" style="display: inline-block;">Unit : <?php echo $data['unit']; ?></label>
+										</label>
+									</td>
+								</tr>
 								<tr>
 									<th class="text-center" style="width: 5%;">No.</th>
 									<th class="text-center" style="width: 75%;">Uraian</th>
@@ -322,7 +329,7 @@
 												?>
 												<?php // echo strtoupper($detail[ $idx ]['keterangan']); ?>
 											</td>
-											<td align="right"><?php echo formatAngka($detail[ $idx ]['nilai']); ?></td>
+											<td align="right"><?php echo angkaDecimal($detail[ $idx ]['nilai']); ?></td>
 										</tr>
 										<?php 
 											$total += $detail[ $idx ]['nilai']; 
@@ -344,7 +351,7 @@
 								<?php } ?>
 								<tr class="foot total">
 									<td class="text-right" colspan="2" style="vertical-align: top;">TOTAL</td>
-									<td class="text-right"><?php echo formatAngka($total); ?></td>
+									<td class="text-right"><?php echo angkaDecimal($total); ?></td>
 								</tr>
 								<tr class="foot keterangan">
 									<td colspan="4">

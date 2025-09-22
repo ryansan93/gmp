@@ -83,45 +83,45 @@ class Memorial extends Public_Controller {
         echo $html;
     }
 
-    public function getNoFaktur() {
-        $params = $this->input->get('params');
+    // public function getNoFaktur() {
+    //     $params = $this->input->get('params');
 
-        $kode_cust = $params['kode_cust'];
-        $no_mm = (isset($params['no_mm']) && !empty($params['no_mm'])) ? $params['no_mm'] : null;
+    //     $kode_cust = $params['kode_cust'];
+    //     $no_mm = (isset($params['no_mm']) && !empty($params['no_mm'])) ? $params['no_mm'] : null;
 
-        $m_faktur = new \Model\Storage\Faktur_model();
-        $d_faktur = $m_faktur->getFakturDebt($kode_cust, $no_mm);
+    //     $m_faktur = new \Model\Storage\Faktur_model();
+    //     $d_faktur = $m_faktur->getFakturDebt($kode_cust, $no_mm);
 
-        $html = '<option value="">Pilih No. Faktur</option>';
-        if ( !empty($d_faktur) && count($d_faktur) > 0 ) {
-            foreach ($d_faktur as $k_faktur => $v_faktur) {
-                $selected = null;
-                $html .= '<option value="'.$v_faktur['no_faktur'].'" data-nilai="'.$v_faktur['sisa'].'" data-tglfaktur="'.substr($v_faktur['tgl_faktur'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_faktur['tgl_faktur'], 0, 10)).' | '.$v_faktur['no_faktur'].'</option>';
-            }
-        }
+    //     $html = '<option value="">Pilih No. Faktur</option>';
+    //     if ( !empty($d_faktur) && count($d_faktur) > 0 ) {
+    //         foreach ($d_faktur as $k_faktur => $v_faktur) {
+    //             $selected = null;
+    //             $html .= '<option value="'.$v_faktur['no_faktur'].'" data-nilai="'.$v_faktur['sisa'].'" data-tglfaktur="'.substr($v_faktur['tgl_faktur'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_faktur['tgl_faktur'], 0, 10)).' | '.$v_faktur['no_faktur'].'</option>';
+    //         }
+    //     }
 
-        echo $html;
-    }
+    //     echo $html;
+    // }
 
-    public function getNoLpb() {
-        $params = $this->input->get('params');
+    // public function getNoLpb() {
+    //     $params = $this->input->get('params');
 
-        $kode_supl = $params['kode_supl'];
-        $no_mm = (isset($params['no_mm']) && !empty($params['no_mm'])) ? $params['no_mm'] : null;
+    //     $kode_supl = $params['kode_supl'];
+    //     $no_mm = (isset($params['no_mm']) && !empty($params['no_mm'])) ? $params['no_mm'] : null;
 
-        $m_bl = new \Model\Storage\Beli_model();
-        $d_bl = $m_bl->getBeliDebt($kode_supl, $no_mm);
+    //     $m_bl = new \Model\Storage\Beli_model();
+    //     $d_bl = $m_bl->getBeliDebt($kode_supl, $no_mm);
 
-        $html = '<option value="">Pilih No. Invoice</option>';
-        if ( !empty($d_bl) && count($d_bl) > 0 ) {
-            foreach ($d_bl as $k_lpb => $v_lpb) {
-                $selected = null;
-                $html .= '<option value="'.$v_lpb['no_lpb'].'" data-nilai="'.$v_lpb['sisa'].'" data-tgllpb="'.substr($v_lpb['tgl_lpb'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_lpb['tgl_lpb'], 0, 10)).' | '.$v_lpb['no_inv'].'</option>';
-            }
-        }
+    //     $html = '<option value="">Pilih No. Invoice</option>';
+    //     if ( !empty($d_bl) && count($d_bl) > 0 ) {
+    //         foreach ($d_bl as $k_lpb => $v_lpb) {
+    //             $selected = null;
+    //             $html .= '<option value="'.$v_lpb['no_lpb'].'" data-nilai="'.$v_lpb['sisa'].'" data-tgllpb="'.substr($v_lpb['tgl_lpb'], 0, 10).'" '.$selected.' >'.str_replace('-', '/', substr($v_lpb['tgl_lpb'], 0, 10)).' | '.$v_lpb['no_inv'].'</option>';
+    //         }
+    //     }
 
-        echo $html;
-    }
+    //     echo $html;
+    // }
 
     public function riwayat() {
         $start_date = substr(date('Y-m-d'), 0, 7).'-01';
@@ -137,13 +137,19 @@ class Memorial extends Public_Controller {
 
     public function addForm()
     {
-        $m_coa = new \Model\Storage\Coa_model();
-        $m_cust = new \Model\Storage\Customer_model();
+        // $m_coa = new \Model\Storage\Coa_model();
+        $m_plg = new \Model\Storage\Pelanggan_model();
         $m_supl = new \Model\Storage\Supplier_model();
+        $m_wilayah = new \Model\Storage\Wilayah_model();
+        $m_jt = new \Model\Storage\JurnalTrans_model();
+        $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
-        $content['coa'] = $m_coa->getCoa();
-        $content['customer'] = $m_cust->getCustomer();
-        $content['supplier'] = $m_supl->getSupplier();
+        // $content['bank'] = $m_coa->getDataBank();
+        $content['pelanggan'] = $m_plg->getDataPelanggan();
+        $content['supplier'] = $m_supl->getDataSupplier();
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
+        $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
+        $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
 
         return $html;
@@ -172,9 +178,12 @@ class Memorial extends Public_Controller {
 
     public function editForm($kode)
     {
-        $m_coa = new \Model\Storage\Coa_model();
+        // $m_coa = new \Model\Storage\Coa_model();
+        $m_plg = new \Model\Storage\Pelanggan_model();
         $m_supl = new \Model\Storage\Supplier_model();
-        $m_cust = new \Model\Storage\Customer_model();
+        $m_wilayah = new \Model\Storage\Wilayah_model();
+        $m_jt = new \Model\Storage\JurnalTrans_model();
+        $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
         $m_mm = new \Model\Storage\Mm_model();
         $d_mm = $m_mm->getMm( $kode )[0];
@@ -182,9 +191,12 @@ class Memorial extends Public_Controller {
         $m_mmi = new \Model\Storage\MmItem_model();
         $d_mmi = $m_mmi->getMmItem( $kode );
         
-        $content['coa'] = $m_coa->getCoa();
-        $content['supplier'] = $m_supl->getSupplier();
-        $content['customer'] = $m_cust->getCustomer();
+        // $content['bank'] = $m_coa->getDataBank();
+        $content['pelanggan'] = $m_plg->getDataPelanggan();
+        $content['supplier'] = $m_supl->getDataSupplier();
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
+        $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
+        $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $content['data'] = $d_mm;
         $content['detail'] = $d_mmi;
 
@@ -204,32 +216,43 @@ class Memorial extends Public_Controller {
             $no_mm = $m_mm->getKode('MM');
 
             $m_mm->no_mm = $no_mm;
+            // $m_mm->no_coa = $params['no_coa'];
+            // $m_mm->coa_bank = $params['coa_bank'];
+            // $m_mm->nama_bank = $params['nama_bank'];
             $m_mm->tgl_mm = $params['tgl_mm'];
+            $m_mm->jurnal_trans = $params['jurnal_trans'];
             $m_mm->periode = substr($params['tgl_mm'], 0, 7);
-            $m_mm->kode_supl = $params['kode_supl'];
-            $m_mm->kode_cust = $params['kode_cust'];
+            $m_mm->no_pelanggan = $params['no_pelanggan'];
+            $m_mm->pelanggan = $params['pelanggan'];
+            $m_mm->no_supplier = $params['no_supplier'];
+            $m_mm->supplier = $params['supplier'];
+            // $m_mm->no_giro = $params['no_giro'];
+            // $m_mm->tgl_tempo = $params['tgl_tempo'];
+            // $m_mm->tgl_cair = $params['tgl_cair'];
             $m_mm->keterangan = $params['keterangan'];
-            $m_mm->tot_debet = $params['tot_debet'];
-            $m_mm->tot_kredit = $params['tot_kredit'];
+            $m_mm->nilai = $params['nilai'];
+            $m_mm->unit = $params['unit'];
             $m_mm->save();
 
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_mmi = new \Model\Storage\MmItem_model();
-                $m_mmi->no_urut = $v_det['no_urut'];
                 $m_mmi->no_mm = $no_mm;
+                // $m_mmi->no_urut = $v_det['no_urut'];
+                // $m_mmi->no_coa = $v_det['no_coa'];
+                // $m_mmi->nilai_invoice = $v_det['nilai_invoice'];
                 $m_mmi->tgl_mm = $params['tgl_mm'];
                 $m_mmi->periode = substr($params['tgl_mm'], 0, 7);
+                $m_mmi->det_jurnal_trans = $v_det['det_jurnal_trans'];
+                $m_mmi->coa_asal = $v_det['coa_asal'];
+                $m_mmi->coa_tujuan = $v_det['coa_tujuan'];
                 $m_mmi->keterangan = $v_det['keterangan'];
-                $m_mmi->debet = $v_det['debet'];
-                $m_mmi->kredit = $v_det['kredit'];
-                $m_mmi->no_faktur = $v_det['no_faktur'];
-                $m_mmi->no_lpb = $v_det['no_lpb'];
-                $m_mmi->no_coa = $v_det['no_coa'];
+                $m_mmi->no_invoice = $v_det['no_invoice'];
+                $m_mmi->nilai = $v_det['nilai'];
                 $m_mmi->save();
             }
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $m_mm, $deskripsi_log, $no_mm );
+            Modules::run( 'base/event/save', $m_mm, $deskripsi_log, null, $no_mm );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di simpan.';
@@ -245,7 +268,7 @@ class Memorial extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        try {            
+        try {
             $m_mm = new \Model\Storage\Mm_model();
             $now = $m_mm->getDate();
 
@@ -254,12 +277,15 @@ class Memorial extends Public_Controller {
             $m_mm->where('no_mm', $no_mm)->update(
                 array(
                     'tgl_mm' => $params['tgl_mm'],
+                    'jurnal_trans' => $params['jurnal_trans'],
                     'periode' => substr($params['tgl_mm'], 0, 7),
-                    'kode_supl' => $params['kode_supl'],
-                    'kode_cust' => $params['kode_cust'],
+                    'no_pelanggan' => $params['no_pelanggan'],
+                    'pelanggan' => $params['pelanggan'],
+                    'no_supplier' => $params['no_supplier'],
+                    'supplier' => $params['supplier'],
                     'keterangan' => $params['keterangan'],
-                    'tot_debet' => $params['tot_debet'],
-                    'tot_kredit' => $params['tot_kredit']
+                    'nilai' => $params['nilai'],
+                    'unit' => $params['unit'],
                 )
             );
 
@@ -268,23 +294,22 @@ class Memorial extends Public_Controller {
 
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_mmi = new \Model\Storage\MmItem_model();
-                $m_mmi->no_urut = $v_det['no_urut'];
                 $m_mmi->no_mm = $no_mm;
                 $m_mmi->tgl_mm = $params['tgl_mm'];
                 $m_mmi->periode = substr($params['tgl_mm'], 0, 7);
+                $m_mmi->det_jurnal_trans = $v_det['det_jurnal_trans'];
+                $m_mmi->coa_asal = $v_det['coa_asal'];
+                $m_mmi->coa_tujuan = $v_det['coa_tujuan'];
                 $m_mmi->keterangan = $v_det['keterangan'];
-                $m_mmi->debet = $v_det['debet'];
-                $m_mmi->kredit = $v_det['kredit'];
-                $m_mmi->no_faktur = $v_det['no_faktur'];
-                $m_mmi->no_lpb = $v_det['no_lpb'];
-                $m_mmi->no_coa = $v_det['no_coa'];
+                $m_mmi->no_invoice = $v_det['no_invoice'];
+                $m_mmi->nilai = $v_det['nilai'];
                 $m_mmi->save();
             }
 
             $d_mm = $m_mm->where('no_mm', $no_mm)->first();
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_mm, $deskripsi_log, $no_mm );
+            Modules::run( 'base/event/update', $d_mm, $deskripsi_log, null, $no_mm );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di update.';
@@ -312,7 +337,7 @@ class Memorial extends Public_Controller {
             $m_mmi->where('no_mm', $no_mm)->delete();
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/delete', $d_mm, $deskripsi_log, $no_mm );
+            Modules::run( 'base/event/delete', $d_mm, $deskripsi_log, null, $no_mm );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di hapus.';
@@ -381,6 +406,10 @@ class Memorial extends Public_Controller {
         $m_mmi = new \Model\Storage\MmItem_model();
         $d_mmi = $m_mmi->getMmItem( $kode );
 
+        $m_prs = new \Model\Storage\Perusahaan_model();
+        $d_prs = $m_prs->orderBy('id', 'desc')->with(['d_kota'])->first();
+
+        $content['perusahaan'] = $d_prs->toArray();
         $content['data'] = $d_mm;
         $content['detail'] = $d_mmi;
 

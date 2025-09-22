@@ -322,7 +322,7 @@ class BankMasuk extends Public_Controller {
             $m_kmi->where('no_km', $no_km)->delete();
 
             $m_nbbm = new \Model\Storage\NoBbm_model();
-            $m_nbbm->where('kode', $no_km)->delete();
+            $m_nbbm->where('tbl_name', $m_km->getTable())->where('tbl_id', $no_km)->delete();
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_km, $deskripsi_log, null, $no_km );

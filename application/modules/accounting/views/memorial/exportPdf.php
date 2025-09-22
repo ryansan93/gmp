@@ -239,7 +239,7 @@
 		$jumlah_page = (isset($detail) && !empty($detail)) ? ceil($jml_baris / $jml_data) : 0; 
 	?>
 	<?php $jumlah_cetak = 1; $grand_total = 0; ?>
-	<?php $total_debet = 0; $total_kredit = 0; ?>
+	<?php $total = 0; ?>
 	<?php for ($i=0; $i < $jumlah_page; $i++) { ?>
 		<?php
 			$cls_page_break = "page-break";
@@ -261,10 +261,10 @@
 								<tr>
 									<td class="col-xs-6" style="vertical-align: top;">
 										<div class="col-xs-12" style="display: inline; text-align: left; font-size: 12pt;">
-											<label style="display: inline-block; width: 100%;"><b><?php echo strtoupper($this->config->item('nama_perusahaan')); ?></b></label>
+											<label style="display: inline-block; width: 100%;"><b><?php echo strtoupper($perusahaan['perusahaan']); ?></b></label>
 										</div>
 										<div class="col-xs-12" style="display: inline; text-align: left; font-size: 10pt;">
-											<label style="display: inline-block; width: 100%;"><?php echo strtoupper($this->config->item('alamat').'<br>'.$this->config->item('kota').', '.$this->config->item('provinsi').'<br>'.$this->config->item('telp')); ?></label>
+											<label style="display: inline-block; width: 100%;"><?php echo strtoupper($perusahaan['alamat'].'<br>'.$perusahaan['d_kota']['nama'].', '.$perusahaan['d_kota']['d_provinsi_with_negara']['nama']); ?></label>
 										</div>
 									</td>
 									<td class="col-xs-6" style="vertical-align: top; font-size: 10pt;">
@@ -279,14 +279,14 @@
 											<label style="display: inline-block; width: 75.5%;"><?php echo strtoupper(tglIndonesia(substr($data['tgl_mm'], 0, 10), '-', ' ')); ?></label>
 										</div>
 										<div class="col-xs-12" style="display: inline; text-align: left;">
-											<label style="display: inline-block; width: 18%;">Customer</label>
+											<label style="display: inline-block; width: 18%;">Pelanggan</label>
 											<label style="display: inline-block; width: 2%;">:</label>
-											<label style="display: inline-block; width: 75.5%;"><?php echo $data['nama_cust']; ?></label>
+											<label style="display: inline-block; width: 75.5%;"><?php echo $data['pelanggan']; ?></label>
 										</div>
 										<div class="col-xs-12" style="display: inline; text-align: left;">
 											<label style="display: inline-block; width: 18%;">Supplier</label>
 											<label style="display: inline-block; width: 2%;">:</label>
-											<label style="display: inline-block; width: 75.5%;"><?php echo $data['nama_supl']; ?></label>
+											<label style="display: inline-block; width: 75.5%;"><?php echo $data['supplier']; ?></label>
 										</div>
 									</td>
 								</tr>
@@ -298,10 +298,16 @@
 						<table class="border-field" style="width: 100%;">
 							<thead>
 								<tr>
+									<td colspan="3">
+										<label style="display: inline-block; width: 50%; text-align: left;">
+											<label class="col-xs-12" style="display: inline-block;">Unit : <?php echo $data['unit']; ?></label>
+										</label>
+									</td>
+								</tr>
+								<tr>
 									<th class="text-center" style="width: 5%;">No.</th>
-									<th class="text-center" style="width: 55%;">Uraian</th>
-									<th class="text-center" style="width: 20%;">Debet</th>
-									<th class="text-center" style="width: 20%;">Kredit</th>
+									<th class="text-center" style="width: 75%;">Uraian</th>
+									<th class="text-center" style="width: 20%;">Jumlah</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -312,13 +318,26 @@
 									<?php if ( isset($detail[ $idx ]) ) { ?>
 										<tr>
 											<td align="center"><?php echo (($i*$jml_data)+$j); ?></td>
-											<td align="left"><?php echo strtoupper($detail[ $idx ]['keterangan']); ?></td>
-											<td align="right"><?php echo formatAngka($detail[ $idx ]['debet']); ?></td>
-											<td align="right"><?php echo formatAngka($detail[ $idx ]['kredit']); ?></td>
+											<td align="left">
+												<?php
+													$ket = '';
+													if ( !empty($detail[ $idx ]['no_faktur']) ) {
+														if ( !empty($detail[ $idx ]['keterangan']) ) {
+															$ket = strtoupper($detail[ $idx ]['keterangan']);
+														} else {
+															$ket = strtoupper('Pelunasan Piutang a.n '.$data['nama_cust'].' / '.$detail[ $idx ]['no_faktur']);
+														}
+													} else {
+														$ket = !empty($detail[ $idx ]['keterangan']) ? strtoupper($detail[ $idx ]['keterangan']) : '-';
+													}
+													echo $ket; 
+												?>
+												<?php // echo strtoupper($detail[ $idx ]['keterangan']); ?>
+											</td>
+											<td align="right"><?php echo angkaDecimal($detail[ $idx ]['nilai']); ?></td>
 										</tr>
 										<?php 
-											$total_debet += $detail[ $idx ]['debet']; 
-											$total_kredit += $detail[ $idx ]['kredit']; 
+											$total += $detail[ $idx ]['nilai']; 
 										?>
 									<?php } else { ?>
 										<?php
@@ -331,15 +350,13 @@
 											<td class="<?php echo $_class; ?>">&nbsp;</td>
 											<td class="<?php echo $_class; ?>">&nbsp;</td>
 											<td class="<?php echo $_class; ?>">&nbsp;</td>
-											<td class="<?php echo $_class; ?>">&nbsp;</td>
 										</tr>
 										<?php $kosong++; ?>
 									<?php } ?>
 								<?php } ?>
 								<tr class="foot total">
 									<td class="text-right" colspan="2" style="vertical-align: top;">TOTAL</td>
-									<td class="text-right"><?php echo formatAngka($total_debet); ?></td>
-									<td class="text-right"><?php echo formatAngka($total_kredit); ?></td>
+									<td class="text-right"><?php echo angkaDecimal($total); ?></td>
 								</tr>
 								<tr class="foot keterangan">
 									<td colspan="4">

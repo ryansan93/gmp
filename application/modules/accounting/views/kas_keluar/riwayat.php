@@ -53,7 +53,7 @@
 					<th class="col-xs-2">No. Kas Keluar</th>
 					<th class="col-xs-2">Supplier</th>
 					<th class="col-xs-3">Keterangan</th>
-					<th class="col-xs-2">Nama Bank</th>
+					<th class="col-xs-2">Unit</th>
 					<th class="col-xs-1">Nilai</th>
 				</tr>
 			</thead>

@@ -6,9 +6,15 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">No. COA</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">Voucher</label></div>
 		<div class="col-xs-4 no-padding">
-			<label class="control-label">: <?php echo $data['no_coa'].' | '.$data['nama_coa']; ?></label>
+			<label class="control-label">: <?php echo $data['jurnal_trans_nama']; ?></label>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Unit</label></div>
+		<div class="col-xs-4 no-padding">
+			<label class="control-label">: <?php echo $data['unit']; ?></label>
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -20,7 +26,7 @@
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Supplier</label></div>
 		<div class="col-xs-7 no-padding">
-			<label class="control-label">: <?php echo !empty($data['nama_supl']) ? $data['nama_supl'] : '-'; ?></label>
+			<label class="control-label">: <?php echo !empty($data['supplier']) ? $data['supplier'] : '-'; ?></label>
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -29,7 +35,7 @@
 			<label class="control-label">: <?php echo !empty($data['keterangan']) ? $data['keterangan'] : '-'; ?></label>
 		</div>
 	</div>
-	<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
+	<!-- <div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Nama Bank</label></div>
 		<div class="col-xs-4 no-padding">
 			<label class="control-label">: <?php echo !empty($data['nama_bank']) ? $data['nama_bank'] : '-'; ?></label>
@@ -52,7 +58,7 @@
 		<div class="col-xs-4 no-padding">
 			<label class="control-label">: <?php echo strtoupper(tglIndonesia($data['tgl_cair'], '-', ' ')); ?></label>
 		</div>
-	</div>
+	</div> -->
 </div>
 <div class="col-xs-5 no-padding" style="padding-left: 5px;">
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -61,7 +67,7 @@
 		<div class="col-xs-6 no-padding nilai">
 			<div class="col-xs-1 no-padding"><label class="control-label">:</label></div>
 			<div class="col-xs-11 no-padding text-right">
-				<label class="control-label"><?php echo formatAngka($data['nilai']); ?></label>
+				<label class="control-label"><?php echo angkaDecimal($data['nilai']); ?></label>
 			</div>
 		</div>
 	</div>
@@ -75,11 +81,10 @@
 			<table class="table table-bordered tbl_detail" style="margin-bottom: 0px; max-width: 100%; width: 100%;">
 				<thead>
 					<tr>
-						<th style="width: 10%;">No. COA</th>
-						<th style="width: 20%;">Nama. COA</th>
-						<th style="width: 20%;">Keterangan</th>
+						<th style="width: 20%;">Transaksi</th>
+						<th style="width: 50%;">Keterangan</th>
 						<th style="width: 20%;">No. Invoice</th>
-						<th style="width: 10%;">Nilai Invoice</th>
+						<!-- <th style="width: 10%;">Nilai Invoice</th> -->
 						<th style="width: 10%;">Nilai</th>
 					</tr>
 				</thead>
@@ -87,35 +92,20 @@
 					<?php if ( !empty($detail) ) { ?>
 						<?php foreach ($detail as $k_det => $v_det) { ?>
 							<tr class="data" data-urut="">
-								<td>
+								<!-- <td>
 									<?php echo strtoupper($v_det['no_coa']); ?>
 								</td>
 								<td>
 									<?php echo strtoupper($v_det['nama_coa']); ?>
-								</td>
-								<td>
-									<?php
-										$ket = '';
-										if ( !empty($v_det['no_lpb']) ) {
-											if ( !empty($v_det['keterangan']) ) {
-												$ket = strtoupper($v_det['keterangan']);
-											} else {
-												$ket = strtoupper('Pelunasan Hutang a.n '.$data['nama_supl'].' / '.$v_det['no_lpb']);
-											}
-										} else {
-											$ket = !empty($v_det['keterangan']) ? strtoupper($v_det['keterangan']) : '-';
-										}
-										echo $ket; 
-									?>
-								</td>
-								<td>
-									<?php echo strtoupper($v_det['no_lpb']); ?>
-								</td>
+								</td> -->
+								<td><?php echo strtoupper($v_det['det_jurnal_trans_nama']); ?></td>
+								<td><?php echo !empty($v_det['keterangan']) ? strtoupper($v_det['keterangan']) : '-'; ?></td>
+								<td><?php echo strtoupper($v_det['no_invoice']); ?></td>
+								<!-- <td class="text-right">
+									<?php echo angkaDecimal($v_det['nilai_lpb']); ?>
+								</td> -->
 								<td class="text-right">
-									<?php echo formatAngka($v_det['nilai_lpb']); ?>
-								</td>
-								<td class="text-right">
-									<?php echo formatAngka($v_det['nilai']); ?>
+									<?php echo angkaDecimal($v_det['nilai']); ?>
 								</td>
 							</tr>
 						<?php } ?>

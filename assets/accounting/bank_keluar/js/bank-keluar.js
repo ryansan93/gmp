@@ -2,15 +2,15 @@ var bk = {
 	start_up: function () {
 		bk.setting_up();
 
-        // if ( !empty($("#StartDate").find('input').data('tgl')) && empty($("#StartDate").find('input').val()) ) {
-        //     var tgl = $("#StartDate").find('input').data('tgl');
-        //     $("#StartDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
-        // }
-        // if ( !empty($("#EndDate").find('input').data('tgl')) && empty($("#EndDate").find('input').val()) ) {
-        //     var tgl = $("#EndDate").find('input').data('tgl');
-        //     $("#EndDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
-        // }
-        // bk.getLists();
+        if ( !empty($("#StartDate").find('input').data('tgl')) && empty($("#StartDate").find('input').val()) ) {
+            var tgl = $("#StartDate").find('input').data('tgl');
+            $("#StartDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
+        }
+        if ( !empty($("#EndDate").find('input').data('tgl')) && empty($("#EndDate").find('input').val()) ) {
+            var tgl = $("#EndDate").find('input').data('tgl');
+            $("#EndDate").data('DateTimePicker').date( moment(new Date((tgl+' 00:00:00'))) );
+        }
+        bk.getLists();
 	}, // end - start_up
 
 	setting_up: function() {
@@ -243,7 +243,7 @@ var bk = {
         if ( $(tbody).find('tr').length > 1 ) {
             $(tr).remove();
 
-            bk.hitGrandTotal(elm);
+            bk.hitGrandTotal( $(tbody).find('tr:first()') );
         }
     }, // end - addRow
 
@@ -302,12 +302,12 @@ var bk = {
                 $(dcontent).html(html);
                 bk.setting_up();
 
-                if ( !empty(resubmit) ) {
-                    var kode_supl = $(dcontent).find('select.supplier').select2().val();
-                    if ( !empty(kode_supl) ) {
-                        bk.getNoLpb( kode_supl );
-                    }
-                }
+                // if ( !empty(resubmit) ) {
+                //     var kode_supl = $(dcontent).find('select.supplier').select2().val();
+                //     if ( !empty(kode_supl) ) {
+                //         bk.getNoLpb( kode_supl );
+                //     }
+                // }
             },
         });
     }, // end - loadForm
@@ -358,42 +358,42 @@ var bk = {
         }
     }, // end - getLists
 
-    getNoLpb: function(kode_supl, no_kk = null) {
-        var dcontent = $('div#action');
+    // getNoLpb: function(kode_supl, no_kk = null) {
+    //     var dcontent = $('div#action');
 
-        no_kk = $(dcontent).find('select.supplier').attr('data-nokk');
+    //     no_kk = $(dcontent).find('select.supplier').attr('data-nokk');
 
-        var params = {
-            'kode_supl': kode_supl,
-            'no_kk': no_kk
-        };
+    //     var params = {
+    //         'kode_supl': kode_supl,
+    //         'no_kk': no_kk
+    //     };
 
-        $.ajax({
-            url : 'accounting/BankKeluar/getNoLpb',
-            data : {
-                'params' : params
-            },
-            type : 'GET',
-            dataType : 'HTML',
-            beforeSend : function(){ showLoading('Sedang mengambil No. LPB . . .'); },
-            success : function(html){
-                hideLoading();
+    //     $.ajax({
+    //         url : 'accounting/BankKeluar/getNoLpb',
+    //         data : {
+    //             'params' : params
+    //         },
+    //         type : 'GET',
+    //         dataType : 'HTML',
+    //         beforeSend : function(){ showLoading('Sedang mengambil No. LPB . . .'); },
+    //         success : function(html){
+    //             hideLoading();
 
-                $('select.lpb').html( html );
-                $.map( $(dcontent).find('table tbody tr'), function(tr) {
-                    $(tr).find('select.lpb').select2().val('');
+    //             $('select.lpb').html( html );
+    //             $.map( $(dcontent).find('table tbody tr'), function(tr) {
+    //                 $(tr).find('select.lpb').select2().val('');
 
-                    var val = $(tr).find('select.lpb').attr('data-val');
-                    if ( !empty(val) && !empty(kode_supl) ) {
-                        $(tr).find('select.lpb').select2().val( val ).trigger('change');
-                    } else {
-                        $(tr).find('input.nilai_lpb').val('');
-                        $(tr).find('select.lpb').select2().val('').trigger('change');
-                    }
-                });
-            },
-        });
-    }, // end - getNoLpb
+    //                 var val = $(tr).find('select.lpb').attr('data-val');
+    //                 if ( !empty(val) && !empty(kode_supl) ) {
+    //                     $(tr).find('select.lpb').select2().val( val ).trigger('change');
+    //                 } else {
+    //                     $(tr).find('input.nilai_lpb').val('');
+    //                     $(tr).find('select.lpb').select2().val('').trigger('change');
+    //                 }
+    //             });
+    //         },
+    //     });
+    // }, // end - getNoLpb
 
     cekData: function() {
         var dcontent = $('#action');

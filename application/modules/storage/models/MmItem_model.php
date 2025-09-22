@@ -17,17 +17,32 @@ class MmItem_model extends Conf{
 		$sql = "
 			select 
 				mi.*,
-                c.nama_coa,
-				b.no_inv
+                -- c.nama_coa,
+				-- b.no_inv
+				djt.nama as det_jurnal_trans_nama
 			from mmitem mi
-            left join
-                coa c
-                on
-                    mi.no_coa = c.no_coa
 			left join
-				beli b
+				(
+					select djt1.* from det_jurnal_trans djt1
+					right join
+						(select max(id) as id, kode from det_jurnal_trans group by kode) djt2
+						on
+							djt1.id = djt2.id
+				) djt
 				on
-					b.no_lpb = mi.no_lpb
+					mi.det_jurnal_trans = djt.kode
+			left join
+				mm m
+				on
+					mi.no_mm = m.no_mm
+            -- left join
+            --     coa c
+            --     on
+            --         mi.no_coa = c.no_coa
+			-- left join
+			-- 	beli b
+			-- 	on
+			-- 		b.no_lpb = mi.no_lpb
 			".$sql_id."
 			order by
 				mi.no_urut asc

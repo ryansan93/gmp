@@ -51,7 +51,7 @@
 				<tr>
 					<th class="col-xs-1">Tanggal</th>
 					<th class="col-xs-2">No. Bank Masuk</th>
-					<th class="col-xs-2">Customer</th>
+					<th class="col-xs-2">Pelanggan</th>
 					<th class="col-xs-3">Keterangan</th>
 					<th class="col-xs-2">Nama Bank</th>
 					<th class="col-xs-1">Nilai</th>
