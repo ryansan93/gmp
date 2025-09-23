@@ -213,6 +213,12 @@ class BankKeluar extends Public_Controller {
             $m_kk->unit = $params['unit'];
             $m_kk->save();
 
+            // $m_jurnal = new \Model\Storage\Jurnal_model();
+            // $m_jurnal->tanggal = $params['tgl_kk'];
+            // $m_jurnal->unit = $params['unit'];
+            // $m_jurnal->jurnal_trans_id = $params['jurnal_trans'];
+            // $m_jurnal->save();
+
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_kki = new \Model\Storage\KkItem_model();
                 $m_kki->no_kk = $no_kk;
@@ -228,6 +234,37 @@ class BankKeluar extends Public_Controller {
                 $m_kki->no_invoice = $v_det['no_invoice'];
                 $m_kki->nilai = $v_det['nilai'];
                 $m_kki->save();
+
+                // $m_djurnal = new \Model\Storage\DetJurnal_model();
+                // id
+                // id_header
+                // tanggal
+                // det_jurnal_trans_id
+                // jurnal_trans_sumber_tujuan_id
+                // supplier
+                // perusahaan
+                // keterangan
+                // nominal
+                // saldo
+                // ref_id
+                // asal
+                // coa_asal
+                // tujuan
+                // coa_tujuan
+                // unit
+                // pic
+                // tbl_name
+                // tbl_id
+                // noreg
+                // periode
+                // invoice
+                // no_bukti
+                // kode_trans
+                // kode_jurnal
+                // gudang
+                // pelanggan
+                // mitra
+                // $m_jurnal->save();
             }
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];

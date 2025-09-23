@@ -15,12 +15,20 @@
 							<label class="control-label">: <?php echo strtoupper($data['d_perusahaan']['perusahaan']); ?></label>
 						</td>
 					</tr>
-					<tr class="hide">
+					<tr>
 						<td class="col-md-3">				
 							<label class="control-label">Unit</label>
 						</td>
 						<td class="col-md-9">
 							<label class="control-label">: <?php echo !empty($data['id_unit']) ? strtoupper($data['id_unit']) : '-'; ?></label>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">				
+							<label class="control-label">Kode</label>
+						</td>
+						<td class="col-md-9">
+							<label class="control-label">: <?php echo !empty($data['kode']) ? strtoupper($data['kode']) : '-'; ?></label>
 						</td>
 					</tr>
 					<tr>
@@ -47,6 +55,21 @@
 							<label class="control-label">
 								:
 								<?php if ( $data['bank'] == 1 ) { ?>
+									<i class="fa fa-check"></i>
+								<?php } else { ?>
+									<i class="fa fa-minus"></i>
+								<?php } ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Kas</label>
+						</td>
+						<td class="col-md-9">
+							<label class="control-label">
+								:
+								<?php if ( $data['kas'] == 1 ) { ?>
 									<i class="fa fa-check"></i>
 								<?php } else { ?>
 									<i class="fa fa-minus"></i>

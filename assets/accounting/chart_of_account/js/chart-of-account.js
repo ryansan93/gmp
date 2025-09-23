@@ -137,6 +137,8 @@ var coa = {
                 });
 
 				$(this).find('input.coa').mask("99999.999");
+
+				$(this).find('.unit').select2();
             });
         },'html');
 	}, // end - add_form
@@ -187,6 +189,10 @@ var coa = {
                 $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal]').each(function(){
                     $(this).priceFormat(Config[$(this).data('tipe')]);
                 });
+
+				$(this).find('.unit').select2({
+					dropdownParent: $('.modal') // Or $('#myModal .modal-body')
+				});
             });
         },'html');
 	}, // end - edit_form
@@ -220,6 +226,9 @@ var coa = {
 						'coa': $(modal).find('.coa').val(),
 						'nama': $(modal).find('.nama').val(),
 						'bank': ($(modal).find('.bank').is(':checked')) ? 1 : 0,
+						'kas': ($(modal).find('.kas').is(':checked')) ? 1 : 0,
+						'unit': $(modal).find('.unit').select2().val(),
+						'kode': !empty($(modal).find('.kode').val()) ? $(modal).find('.kode').val().toUpperCase() : null,
 						// 'gol1': $(modal).find('.gol1').val(),
 						// 'gol2': $(modal).find('.gol2').val(),
 						// 'gol3': $(modal).find('.gol3').val(),
@@ -277,6 +286,9 @@ var coa = {
 						'coa': $(modal).find('.coa').val(),
 						'nama': $(modal).find('.nama').val(),
 						'bank': ($(modal).find('.bank').is(':checked')) ? 1 : 0,
+						'kas': ($(modal).find('.kas').is(':checked')) ? 1 : 0,
+						'unit': $(modal).find('.unit').select2().val(),
+						'kode': !empty($(modal).find('.kode').val()) ? $(modal).find('.kode').val().toUpperCase() : null,
 						// 'gol1': $(modal).find('.gol1').val(),
 						// 'gol2': $(modal).find('.gol2').val(),
 						// 'gol3': $(modal).find('.gol3').val(),

@@ -27,9 +27,11 @@ class ChartOfAccount extends Public_Controller
             // $this->set_title('Berita Acara Serah Terima Titip Budidaya');
             $this->add_external_js(array(
                 'assets/jquery/maskedinput/jquery.maskedinput.min.js',
+                "assets/select2/js/select2.min.js",
                 'assets/accounting/chart_of_account/js/chart-of-account.js')
             );
             $this->add_external_css(array(
+                "assets/select2/css/select2.min.css",
                 'assets/accounting/chart_of_account/css/chart-of-account.css')
             );
             $data = $this->includes;
@@ -123,6 +125,9 @@ class ChartOfAccount extends Public_Controller
 
     public function add_form()
     {
+        $m_wilayah = new \Model\Storage\Wilayah_model();
+
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['perusahaan'] = $this->get_perusahaan();
         $html = $this->load->view($this->pathView . 'add_form', $content); 
         
@@ -148,10 +153,13 @@ class ChartOfAccount extends Public_Controller
     {
         $id = $this->input->get('id');
 
+        $m_wilayah = new \Model\Storage\Wilayah_model();
+        
         $m_coa = new \Model\Storage\Coa_model();
         $d_coa = $m_coa->where('id', $id)->with(['d_perusahaan', 'logs'])->first()->toArray();
-
+        
         $content['data'] = $d_coa;
+        $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['perusahaan'] = $this->get_perusahaan();
         $content['akses'] = $this->akses;
 
@@ -174,6 +182,9 @@ class ChartOfAccount extends Public_Controller
             $m_coa->coa_pos = $params['posisi'];
             $m_coa->status = 1;
             $m_coa->bank = $params['bank'];
+            $m_coa->kas = $params['kas'];
+            $m_coa->unit = $params['unit'];
+            $m_coa->kode = $params['kode'];
             $m_coa->save();
             // $m_coa->gol1 = $params['gol1'];
             // $m_coa->gol2 = $params['gol2'];
@@ -214,7 +225,10 @@ class ChartOfAccount extends Public_Controller
                     'lap' => $params['laporan'],
                     'coa_pos' => $params['posisi'],
                     'status' => 1,
-                    'bank' => $params['bank']
+                    'bank' => $params['bank'],
+                    'kas' => $params['kas'],
+                    'unit' => $params['unit'],
+                    'kode' => $params['kode']
                     // 'gol1' => $params['gol1'],
                     // 'gol2' => $params['gol2'],
                     // 'gol3' => $params['gol3'],

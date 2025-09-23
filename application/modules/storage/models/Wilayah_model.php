@@ -111,6 +111,9 @@ class Wilayah_model extends Conf{
           w1.kode is not null
           ".$sql_unit."
       ) data
+      group by
+        data.nama,
+        data.kode
       order by
         data.nama asc
     ";

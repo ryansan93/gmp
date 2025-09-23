@@ -26,12 +26,33 @@
 							</select>
 						</td>
 					</tr>
-					<tr class="hide">
+					<tr>
 						<td class="col-md-3">				
 							<label class="control-label">Unit</label>
 						</td>
 						<td class="col-md-9">
-							<input type="text" class="col-sm-12 form-control unit uppercase" placeholder="UNIT" value="<?php echo $data['id_unit']; ?>">
+							<select class="form-control unit">
+								<?php if ( !empty($unit) ): ?>
+									<?php foreach ($unit as $k_unit => $v_unit): ?>
+										<?php
+											$selected = null;
+											if ( $v_unit['kode'] == $data['unit'] ) {
+												$selected = 'selected';
+											}	
+										?>
+										<option value="<?php echo $v_unit['kode']; ?>" <?php echo $selected; ?> ><?php echo $v_unit['nama']; ?></option>
+									<?php endforeach ?>
+								<?php endif ?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Kode</label>
+						</td>
+						<td class="col-md-9">
+							<!-- <input type="text" class="col-sm-4 form-control coa uppercase" placeholder="No. COA (MAX:10)" data-required="1" maxlength="10" onblur="coa.cekNoCoa(this)"> -->
+							<input type="text" class="col-sm-4 form-control kode uppercase" placeholder="Kode (MAX:5)" data-required="1" maxlength="5" value="<?php echo $data['kode']; ?>">
 						</td>
 					</tr>
 					<tr>
@@ -57,6 +78,14 @@
 						</td>
 						<td class="col-md-9">
 							<input type="checkbox" class="cursor-p bank" <?php echo ($data['bank'] == 1) ? 'checked' : null; ?> >
+						</td>
+					</tr>
+					<tr>
+						<td class="col-md-3">
+							<label class="control-label">Kas</label>
+						</td>
+						<td class="col-md-9">
+							<input type="checkbox" class="cursor-p kas" <?php echo ($data['kas'] == 1) ? 'checked' : null; ?> >
 						</td>
 					</tr>
 					<!-- <tr>

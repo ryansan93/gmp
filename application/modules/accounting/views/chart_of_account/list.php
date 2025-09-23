@@ -2,11 +2,19 @@
 	<?php foreach ($data as $k_data => $v_data): ?>
 		<tr class="search cursor-p" onclick="coa.view_form(this)" data-id="<?php echo $v_data['id']; ?>">
 			<td class="hide"><?php echo strtoupper($v_data['d_perusahaan']['perusahaan']); ?></td>
-			<td class="hide"><?php echo !empty($v_data['id_unit']) ? strtoupper($v_data['id_unit']) : '-'; ?></td>
+			<td><?php echo !empty($v_data['id_unit']) ? strtoupper($v_data['id_unit']) : '-'; ?></td>
+			<td class="text-center"><?php echo strtoupper($v_data['kode']); ?></td>
 			<td class="text-center"><?php echo strtoupper($v_data['coa']); ?></td>
 			<td><?php echo strtoupper($v_data['nama_coa']); ?></td>
 			<td>
 				<?php if ($v_data['bank'] == 1) { ?>
+					<i class="fa fa-check"></i>
+				<?php } else { ?>
+					<i class="fa fa-minus"></i>
+				<?php } ?>
+			</td>
+			<td>
+				<?php if ($v_data['kas'] == 1) { ?>
 					<i class="fa fa-check"></i>
 				<?php } else { ?>
 					<i class="fa fa-minus"></i>

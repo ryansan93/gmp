@@ -17,10 +17,12 @@
 					<thead>
 						<tr>
 							<th class="col-md-3 hide">Perusahaan</th>
-							<th class="col-md-1 hide">Unit</th>
-							<th class="col-md-1">COA</th>
-							<th class="col-md-2">Nama</th>
+							<th class="col-md-1">Unit</th>
+							<th class="col-md-1">Kode</th>
+							<th class="col-md-1">No. COA</th>
+							<th class="col-md-2">Nama COA</th>
 							<th class="col-md-1">Bank</th>
+							<th class="col-md-1">Kas</th>
 							<!-- <th class="col-md-1">Gol 1</th>
 							<th class="col-md-1">Gol 2</th>
 							<th class="col-md-1">Gol 3</th>
