@@ -1815,9 +1815,12 @@ class RealisasiPembayaran extends Public_Controller
 
                 $jenis_transaksi = ($jenis_transaksi == 'PLASMA') ? 'RHPP' : $jenis_transaksi;
 
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal '".$jenis_transaksi."', '".$nomor."', NULL, NULL, 'realisasi_pembayaran', ".$id.", NULL, 1";
-                $d_conf = $m_conf->hydrateRaw( $sql );
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal '".$jenis_transaksi."', '".$nomor."', NULL, NULL, 'realisasi_pembayaran', ".$id.", NULL, 1";
+                // $d_conf = $m_conf->hydrateRaw( $sql );
+
+                $id_old = null;
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
 
                 $d_rp = $m_rp->where('id', $id)->first();
 
