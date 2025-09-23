@@ -2045,9 +2045,12 @@ class RealisasiPembayaran extends Public_Controller
 
             $jenis_transaksi = ($jenis_transaksi == 'PLASMA') ? 'RHPP' : $jenis_transaksi;
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal '".$jenis_transaksi."', '".$d_rp->nomor."', NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 2";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal '".$jenis_transaksi."', '".$d_rp->nomor."', NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            // $id_old = null;
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_rp, $deskripsi_log);
@@ -2079,9 +2082,11 @@ class RealisasiPembayaran extends Public_Controller
                 $m_rpdcd->where('id_header', $v_det['id'])->delete();
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 3";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 3";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 3);
 
             $m_nbbm = new \Model\Storage\NoBbm_model();
             $m_nbbm->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->delete();
