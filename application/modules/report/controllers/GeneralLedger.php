@@ -152,6 +152,7 @@ class GeneralLedger extends Public_Controller {
         //         c.coa asc
         // ";
         $sql = "
+            /*
             select
                 c.coa as no_coa,
                 case
@@ -195,6 +196,54 @@ class GeneralLedger extends Public_Controller {
                 ) dj_tujuan
                 on
                     dj_tujuan.coa_tujuan = c.coa
+            left join
+                (select * from saldo_bulanan where tanggal between '".$start_date."' and '".$end_date."') sb
+                on
+                    sb.coa = c.coa
+            order by
+                c.coa asc
+            */
+
+            select
+                c.coa as no_coa,
+                case
+                    when c.unit is not null then
+                        c.unit
+                    else
+                        dj.unit
+                end as unit,
+                c.nama_coa,
+            --    c.lap,
+            --    c.coa_pos,
+                isnull(sb.saldo_awal, 0) as saldo_awal,
+                isnull(dj.kredit, 0) as kredit,
+                isnull(dj.debet, 0) as debet,
+                ((isnull(sb.saldo_awal, 0) + isnull(dj.debet, 0)) - isnull(dj.kredit, 0)) as saldo_akhir
+            from coa c
+            left join
+                (
+                    select no_coa, sum(kredit) as kredit, sum(debet) as debet, unit from (
+                        select dj.coa_asal as no_coa, sum(dj.nominal) as kredit, 0 as debet, dj.unit
+                        from det_jurnal dj 
+                        where 
+                            dj.tanggal between '".$start_date."' and '".$end_date."'
+                            -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+                        group by dj.coa_asal, dj.unit
+                        
+                        union all
+                        
+                        select dj.coa_tujuan as no_coa, 0 as kredit, sum(dj.nominal) as debet, dj.unit
+                        from det_jurnal dj 
+                        where 
+                            dj.tanggal between '".$start_date."' and '".$end_date."'
+                            -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+                        group by dj.coa_tujuan, dj.unit
+                    ) data
+                    group by
+                        no_coa, unit
+                ) dj
+                on
+                    dj.no_coa = c.coa
             left join
                 (select * from saldo_bulanan where tanggal between '".$start_date."' and '".$end_date."') sb
                 on
