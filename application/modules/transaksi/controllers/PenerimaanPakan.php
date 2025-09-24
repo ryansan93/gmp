@@ -480,7 +480,7 @@ class PenerimaanPakan extends Public_Controller {
                             $tujuan = $d_gudang->nama;
                         }
 
-                        $key = str_replace('-', '', $v_tp['tgl_terima']).'|'.$v_tp['id_kirim_pakan'];
+                        $key = str_replace('-', '', $v_tp['tgl_terima']).'|'.$v_tp['id_kirim_pakan'].'|'.$v_tp['id'];
                         $data[ $key ] = array(
                             'id' => $v_tp['id'],
                             'no_sj' => $d_kp['no_sj'],

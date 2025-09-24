@@ -93,7 +93,7 @@ class PenerimaanVoadipMobile extends Public_Controller {
                         $asal = $d_rdim_submit->mitra->dMitra->nama;
                     }
 
-                    $key = str_replace('-', '', $d_terima_voadip->tgl_terima).' - '.$v_kirim_voadip['no_sj'];
+                    $key = str_replace('-', '', $d_terima_voadip->tgl_terima).' - '.$v_kirim_voadip['no_sj'].' - '.$d_terima_voadip->id;
                     $data[ $key ] = array(
                         'no_sj' => $v_kirim_voadip['no_sj'],
                         'tiba' => $d_terima_voadip->tgl_terima,

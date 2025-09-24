@@ -93,7 +93,7 @@ class PenerimaanPakanMobile extends Public_Controller {
                         $asal = $d_rdim_submit->mitra->dMitra->nama;
                     }
 
-                    $key = str_replace('-', '', $d_terima_pakan->tgl_terima).' - '.$v_kirim_pakan['no_sj'];
+                    $key = str_replace('-', '', $d_terima_pakan->tgl_terima).' - '.$v_kirim_pakan['no_sj'].' - '.$d_terima_pakan->id;
                     $data[ $key ] = array(
                         'no_sj' => $v_kirim_pakan['no_sj'],
                         'tiba' => $d_terima_pakan->tgl_terima,

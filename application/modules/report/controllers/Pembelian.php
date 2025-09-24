@@ -397,6 +397,7 @@ class Pembelian extends Public_Controller {
             select
                 data.no_order,
                 data.no_sj,
+                data.id_terima,
                 data.datang,
                 data.nama,
                 data.kandang,
@@ -412,6 +413,7 @@ class Pembelian extends Public_Controller {
                 select
                     ov.no_order,
                     kv.no_sj,
+                    tv.id as id_terima,
                     tv.tgl_terima as datang,
                     null as nama,
                     null as kandang,
@@ -490,6 +492,7 @@ class Pembelian extends Public_Controller {
             group by
                 data.no_order,
                 data.no_sj,
+                data.id_terima,
                 data.datang,
                 data.nama,
                 data.kandang,
