@@ -365,7 +365,7 @@ class PenerimaanVoadip extends Public_Controller {
                             $tujuan = $d_gudang->nama;
                         }
 
-                        $key = str_replace('-', '', $v_tv['tgl_terima']).'|'.$v_tv['id_kirim_voadip'];
+                        $key = str_replace('-', '', $v_tv['tgl_terima']).'|'.$v_tv['id_kirim_voadip'].'|'.$v_tv['id'];;
                         $data[ $key ] = array(
                             'id' => $v_tv['id'],
                             'no_sj' => $d_kv['no_sj'],
