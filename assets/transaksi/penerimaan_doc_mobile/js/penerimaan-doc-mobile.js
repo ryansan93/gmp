@@ -289,8 +289,6 @@ var pdm = {
         let err = 0;
         let div = $(elm).closest('div#transaksi');
 
-		$(elm).attr('disabled', 'disabled');
-
         $.map( $(div).find('[data-required=1]'), function(ipt) {
             if ( empty($(ipt).val()) ) {
                 $(ipt).parent().addClass('has-error');
@@ -303,6 +301,7 @@ var pdm = {
         if ( err > 0 ) {
             bootbox.alert( 'Harap lengkapi data penerimaan DOC.' );
         } else {
+			$(elm).attr('disabled', 'disabled');
             bootbox.confirm( 'Apakah anda yakin ingin menyimpan data ?', function(result) {
                 if ( result ) {
                 	// var formData = new FormData();
@@ -370,7 +369,9 @@ var pdm = {
 			                }
 			            },
 			        });
-                }
+                } else {
+					$(elm).removeAttr('disabled');
+				}
             });
         }
     }, // end - save

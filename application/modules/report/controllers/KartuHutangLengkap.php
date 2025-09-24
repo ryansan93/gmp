@@ -174,9 +174,11 @@ class KartuHutangLengkap extends Public_Controller {
     
                     union all
 
+                    /*
                     select kpop.nomor, kpop.ekspedisi_id as supplier, kpop.total from konfirmasi_pembayaran_oa_pakan kpop
                     where
                         kpop.tgl_bayar < '".$start_date."'
+                    */
     
                     union all
     

@@ -235,6 +235,14 @@ class PengirimanPakan extends Public_Controller {
             where
                 kp.tgl_kirim between '".$params['start_date']."' and '".$params['end_date']."' and
                 ((asal.unit = '".$kode_unit."') or (tujuan.unit = '".$kode_unit."'))
+            group by
+                kp.id,
+                kp.no_order,
+                kp.tgl_kirim,
+                asal.nama,
+                tujuan.nama,
+                kp.no_polisi,
+                tp.tgl_terima
             order by
                 kp.tgl_kirim desc,
                 kp.id desc

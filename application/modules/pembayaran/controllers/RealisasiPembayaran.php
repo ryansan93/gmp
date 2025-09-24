@@ -1600,6 +1600,8 @@ class RealisasiPembayaran extends Public_Controller
             'detail' => $detail
         );
 
+        $m_coa = new \Model\Storage\Coa_model();
+
         $content['data'] = $data;
         $content['d_cn'] = !empty($d_cn) ? json_encode($d_cn) : null;
         $content['d_dn'] = !empty($d_dn) ? json_encode($d_dn) : null;

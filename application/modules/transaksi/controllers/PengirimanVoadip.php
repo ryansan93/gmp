@@ -233,6 +233,14 @@ class PengirimanVoadip extends Public_Controller {
             where
                 kv.tgl_kirim between '".$params['start_date']."' and '".$params['end_date']."' and
                 ((asal.unit = '".$kode_unit."') or (tujuan.unit = '".$kode_unit."'))
+            group by
+                kv.id,
+                kv.no_order,
+                kv.tgl_kirim,
+                asal.nama,
+                tujuan.nama,
+                kv.no_polisi,
+                tv.tgl_terima
             order by
                 kv.tgl_kirim desc,
                 kv.id desc

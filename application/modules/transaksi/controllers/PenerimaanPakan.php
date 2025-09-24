@@ -1351,15 +1351,16 @@ class PenerimaanPakan extends Public_Controller {
     {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select kp.no_order, tp.* from terima_pakan tp 
+            select tp.id from terima_pakan tp 
             left join
                 kirim_pakan kp
                 on
                     tp.id_kirim_pakan = kp.id
             where
-                kp.jenis_kirim = 'opks' and
-                tp.tgl_terima >= '2024-02-27' and
-                not EXISTS (select * from konfirmasi_pembayaran_pakan_det where no_sj = kp.no_sj)
+                kp.jenis_kirim = 'opkg'
+            order by
+                tp.tgl_terima asc,
+                tp.id asc
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -1367,8 +1368,10 @@ class PenerimaanPakan extends Public_Controller {
             $d_conf = $d_conf->toArray();
 
             foreach ($d_conf as $key => $value) {
-                $this->insertKonfirmasi($value['id']);
+                // $this->insertKonfirmasi($value['id']);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
             }
         }
+
     }
 }
