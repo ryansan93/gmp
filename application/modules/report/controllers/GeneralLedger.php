@@ -249,9 +249,9 @@ class GeneralLedger extends Public_Controller {
                 on
                     sb.coa = c.coa
             where
-                isnull(sb.saldo_awal, 0) = 0 and
-                isnull(dj.kredit, 0) = 0 and
-                isnull(dj.debet, 0) = 0
+                isnull(sb.saldo_awal, 0) > 0 or
+                isnull(dj.kredit, 0) > 0 or
+                isnull(dj.debet, 0) > 0
             order by
                 c.coa asc
         ";
