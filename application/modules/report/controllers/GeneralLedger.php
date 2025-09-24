@@ -248,6 +248,10 @@ class GeneralLedger extends Public_Controller {
                 (select * from saldo_bulanan where tanggal between '".$start_date."' and '".$end_date."') sb
                 on
                     sb.coa = c.coa
+            where
+                isnull(sb.saldo_awal, 0) = 0 and
+                isnull(dj.kredit, 0) = 0 and
+                isnull(dj.debet, 0) = 0
             order by
                 c.coa asc
         ";
