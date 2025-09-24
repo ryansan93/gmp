@@ -21,24 +21,14 @@ class KkItem_model extends Conf{
 				ki.no_urut,
 				ki.periode,
 				ki.no_coa,
-				-- case
-				-- 	when ki.no_lpb is not null and ki.no_lpb <> '' then
-				-- 		case
-				-- 			when ki.keterangan is null or ki.keterangan = '' then
-				--				'PELUNASAN HUTANG A.N '+supl.nama_supl+' / '+ki.no_lpb
-				--			else
-				--				ki.keterangan
-				--		end
-				--	else
-				--		ki.keterangan
-				--end as keterangan,
 				ki.keterangan,
 				ki.no_invoice,
 				ki.nilai_invoice,
 				ki.nilai,
 				ki.det_jurnal_trans,
-                -- c.nama_coa
-				djt.nama as det_jurnal_trans_nama
+				djt.nama as det_jurnal_trans_nama,
+				ki.coa_tujuan,
+				c.nama_coa as coa_tujuan_nama
 			from kkitem ki
 			left join
 				(
@@ -54,14 +44,10 @@ class KkItem_model extends Conf{
 				kk k
 				on
 					ki.no_kk = k.no_kk
-            -- left join
-            --     coa c
-            --     on
-            --         ki.no_coa = c.no_coa
-			-- left join
-			-- 	supplier supl
-			-- 	on
-			-- 		k.kode_supl = supl.kode_supl
+            left join
+                coa c
+                on
+                    ki.coa_tujuan = c.coa
 			".$sql_id."
 			order by
 				ki.no_urut asc

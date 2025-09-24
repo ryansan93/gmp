@@ -23,7 +23,7 @@
 			</select>
 		</div>
 	</div>
-	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<!-- <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Unit</label></div>
 		<div class="col-xs-3 no-padding" style="padding-right: 5px;">
 			<select class="form-control unit" data-required="1">
@@ -40,7 +40,7 @@
 				<?php endif ?>
 			</select>
 		</div>
-	</div>
+	</div> -->
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Bank Masuk</label></div>
 		<div class="col-xs-4 no-padding">
@@ -53,10 +53,10 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">No. Pelanggan</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">No. Asal</label></div>
 		<div class="col-xs-7 no-padding">
 			<select class="form-control no_pelanggan">
-				<option value="">Pilih Pelanggan</option>
+				<option value="">Pilih Asal</option>
 				<?php if ( !empty($pelanggan) ): ?>
 					<?php foreach ($pelanggan as $k_plg => $v_plg): ?>
 						<?php
@@ -72,9 +72,9 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Nama Pelanggan</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">Nama Asal</label></div>
 		<div class="col-xs-7 no-padding">
-			<input type="text" class="col-xs-12 form-control pelanggan uppercase" placeholder="Nama Pelanggan (MAX:100)" maxlength="100" data-required="1" value="<?php echo $data['pelanggan']; ?>">
+			<input type="text" class="col-xs-12 form-control pelanggan uppercase" placeholder="Nama Asal (MAX:100)" maxlength="100" data-required="1" value="<?php echo $data['pelanggan']; ?>">
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -97,7 +97,7 @@
 								$selected = 'selected';
 							}	
 						?>
-						<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
+						<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" data-unit="<?php echo $v_bank['unit']; ?>" data-kode="<?php echo $v_bank['kode'] ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
 					<?php endforeach ?>
 				<?php endif ?>
 			</select>
@@ -150,20 +150,21 @@
 			<table class="table table-bordered tbl_detail" style="margin-bottom: 0px; max-width: 100%; width: 100%;">
 				<thead>
 					<tr>
-						<th>Transaksi</th>
-						<th>Keterangan</th>
-						<th>No. Invoice</th>
+						<th class="col-xs-2">Transaksi</th>
+						<th class="col-xs-2">COA</th>
+						<th class="col-xs-3">Keterangan</th>
+						<th class="col-xs-1">No. Invoice</th>
 						<!-- <th>Nilai Invoice</th> -->
-						<th>Nilai</th>
-						<th>Action</th>
+						<th class="col-xs-2">Nilai</th>
+						<th class="col-xs-1">Action</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php if ( !empty($detail) ) { ?>
 						<?php foreach ($detail as $k_det => $v_det) { ?>
 							<tr class="data" data-urut="<?php echo $v_det['no_urut']; ?>">
-								<td style="width: 20%; max-width: 20%;">
-									<select class="form-control det_jurnal_trans" data-required="1">
+								<td>
+									<select class="form-control det_jurnal_trans">
 										<option value="">Pilih Transaksi</option>
 										<?php if ( !empty($det_jurnal_trans) ): ?>
 											<?php foreach ($det_jurnal_trans as $k_djt => $v_djt): ?>
@@ -178,20 +179,36 @@
 										<?php endif ?>
 									</select>
 								</td>
-								<td style="width: 30%; max-width: 30%;">
+								<td>
+									<select class="form-control asal" data-required="1">
+										<option value="">Pilih COA</option>
+										<?php if ( !empty($coa) ): ?>
+											<?php foreach ($coa as $k_coa => $v_coa): ?>
+												<?php
+													$selected = null;
+													if ( $v_coa['no_coa'] == $v_det['coa_asal'] ) {
+														$selected = 'selected';
+													}
+												?>
+												<option value="<?php echo $v_coa['no_coa']; ?>" data-nama="<?php echo $v_coa['nama_coa']; ?>" <?php echo $selected; ?> ><?php echo $v_coa['no_coa'].' | '.$v_coa['nama_coa']; ?></option>
+											<?php endforeach ?>
+										<?php endif ?>
+									</select>
+								</td>
+								<td>
 									<?php $ket = strtoupper($v_det['keterangan']); ?>
 									<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan" maxlength="50" value="<?php echo strtoupper($ket); ?>">
 								</td>
-								<td style="width: 20%; max-width: 20%;">
+								<td>
 									<input type="text" class="form-control no_invoice uppercase" placeholder="No. Invoice" maxlength="50" value="<?php echo $v_det['no_invoice']; ?>" >
 								</td>
-								<!-- <td style="width: 10%; max-width: 10%;">
+								<!-- <td>
 									<input type="text" class="form-control text-right nilai_faktur uppercase" placeholder="Nilai Faktur" data-tipe="decimal" maxlength="19" value="<?php echo angkaDecimal($v_det['nilai_faktur']); ?>" disabled>
 								</td> -->
-								<td style="width: 15%; max-width: 15%;">
+								<td>
 									<input type="text" class="form-control text-right nilai uppercase" placeholder="Nilai" data-tipe="decimal" maxlength="19" data-required="1" onblur="bm.hitGrandTotal(this)" value="<?php echo angkaDecimal($v_det['nilai']); ?>">
 								</td>
-								<td style="width: 15%; max-width: 15%;">
+								<td>
 									<div class="col-xs-12 no-padding">
 										<div class="col-xs-6 no-padding" style="padding-right: 3px;">
 											<button type="button" class="col-xs-12 btn btn-danger" onclick="bm.removeRow(this)"><i class="fa fa-times"></i></button>
@@ -205,8 +222,8 @@
 						<?php } ?>
 					<?php } else { ?>
 						<tr class="data" data-urut="">
-							<td style="width: 20%; max-width: 20%;">
-								<select class="form-control det_jurnal_trans" data-required="1">
+							<td>
+								<select class="form-control det_jurnal_trans">
 									<option value="">Pilih Transaksi</option>
 									<?php if ( !empty($det_jurnal_trans) ): ?>
 										<?php foreach ($det_jurnal_trans as $k_djt => $v_djt): ?>
@@ -215,19 +232,29 @@
 									<?php endif ?>
 								</select>
 							</td>
-							<td style="width: 30%; max-width: 30%;">
+							<td>
+								<select class="form-control asal" data-required="1">
+									<option value="">Pilih COA</option>
+									<?php if ( !empty($coa) ): ?>
+										<?php foreach ($coa as $k_coa => $v_coa): ?>
+											<option value="<?php echo $v_coa['no_coa']; ?>" data-nama="<?php echo $v_coa['nama_coa']; ?>" ><?php echo $v_coa['no_coa'].' | '.$v_coa['nama_coa']; ?></option>
+										<?php endforeach ?>
+									<?php endif ?>
+								</select>
+							</td>
+							<td>
 								<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan" maxlength="50">
 							</td>
-							<td style="width: 20%; max-width: 20%;">
+							<td>
 								<input type="text" class="form-control no_invoice uppercase" placeholder="No. Invoice" maxlength="50">
 							</td>
-							<!-- <td style="width: 10%; max-width: 10%;">
-								<input type="text" class="form-control text-right nilai_faktur uppercase" placeholder="Nilai Faktur" data-tipe="decimal" maxlength="19" disabled>
+							<!-- <td>
+								<input type="text" class="form-control text-right nilai_lpb uppercase" placeholder="Nilai Invoice" data-tipe="decimal" maxlength="19" disabled>
 							</td> -->
-							<td style="width: 15%; max-width: 15%;">
+							<td>
 								<input type="text" class="form-control text-right nilai uppercase" placeholder="Nilai" data-tipe="decimal" maxlength="19" data-required="1" onblur="bm.hitGrandTotal(this)">
 							</td>
-							<td style="width: 15%; max-width: 15%;">
+							<td>
 								<div class="col-xs-12 no-padding">
 									<div class="col-xs-6 no-padding" style="padding-right: 3px;">
 										<button type="button" class="col-xs-12 btn btn-danger" onclick="bm.removeRow(this)"><i class="fa fa-times"></i></button>

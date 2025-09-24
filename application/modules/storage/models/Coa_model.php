@@ -17,14 +17,63 @@ class Coa_model extends Conf{
 		return $this->hasMany('\Model\Storage\LogTables_model', 'tbl_id', 'id')->where('tbl_name', $this->table);
 	}
 
+	public function getDataCoa() {
+		$sql = "
+			select 
+				c.coa as no_coa,
+				c.nama_coa,
+				c.unit,
+				c.kode
+			from coa c
+			where
+				c.status = 1
+			order by
+				c.coa
+		";
+		$d_coa = $this->hydrateRaw( $sql );
+
+		$data = null;
+		if ( $d_coa->count() > 0 ) {
+			$data = $d_coa->toArray();
+		}
+
+		return $data;
+	}
+
 	public function getDataBank() {
 		$sql = "
 			select 
 				c.coa as no_coa,
-				c.nama_coa
+				c.nama_coa,
+				c.unit,
+				c.kode
 			from coa c
 			where
 				c.bank = 1 and
+				c.status = 1
+			order by
+				c.coa
+		";
+		$d_coa = $this->hydrateRaw( $sql );
+
+		$data = null;
+		if ( $d_coa->count() > 0 ) {
+			$data = $d_coa->toArray();
+		}
+
+		return $data;
+	}
+
+	public function getDataKas() {
+		$sql = "
+			select 
+				c.coa as no_coa,
+				c.nama_coa,
+				c.unit,
+				c.kode
+			from coa c
+			where
+				c.kas = 1 and
 				c.status = 1
 			order by
 				c.coa

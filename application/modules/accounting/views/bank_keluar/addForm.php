@@ -17,7 +17,7 @@
 			</select>
 		</div>
 	</div>
-	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<!-- <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Unit</label></div>
 		<div class="col-xs-3 no-padding" style="padding-right: 5px;">
 			<select class="form-control unit" data-required="1">
@@ -28,7 +28,7 @@
 				<?php endif ?>
 			</select>
 		</div>
-	</div>
+	</div> -->
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Bank Keluar</label></div>
 		<div class="col-xs-4 no-padding">
@@ -41,10 +41,10 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">No. Supplier</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">No. Tujuan</label></div>
 		<div class="col-xs-7 no-padding">
 			<select class="form-control no_supplier">
-				<option value="">Pilih Supplier</option>
+				<option value="">Pilih Tujuan</option>
 				<?php if ( !empty($supplier) ): ?>
 					<?php foreach ($supplier as $k_supl => $v_supl): ?>
 						<option value="<?php echo $v_supl['nomor']; ?>" data-nama="<?php echo strtoupper($v_supl['nama']); ?>"><?php echo strtoupper($v_supl['nomor'].' | '.$v_supl['nama']); ?></option>
@@ -54,9 +54,9 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Nama Supplier</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">Nama Tujuan</label></div>
 		<div class="col-xs-7 no-padding">
-			<input type="text" class="col-xs-12 form-control supplier uppercase" placeholder="Nama Supplier (MAX:100)" maxlength="100" data-required="1">
+			<input type="text" class="col-xs-12 form-control supplier uppercase" placeholder="Nama Tujuan (MAX:100)" maxlength="100" data-required="1">
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -73,7 +73,7 @@
 				<option value="">Pilih Bank</option>
 				<?php if ( !empty($bank) ): ?>
 					<?php foreach ($bank as $k_bank => $v_bank): ?>
-						<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>"><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
+						<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" data-unit="<?php echo $v_bank['unit']; ?>" data-kode="<?php echo $v_bank['kode'] ?>" ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
 					<?php endforeach ?>
 				<?php endif ?>
 			</select>
@@ -126,18 +126,19 @@
 			<table class="table table-bordered tbl_detail" style="margin-bottom: 0px; max-width: 100%; width: 100%;">
 				<thead>
 					<tr>
-						<th>Transaksi</th>
-						<th>Keterangan</th>
-						<th>No. Invoice</th>
+						<th class="col-xs-2">Transaksi</th>
+						<th class="col-xs-2">COA</th>
+						<th class="col-xs-3">Keterangan</th>
+						<th class="col-xs-1">No. Invoice</th>
 						<!-- <th>Nilai Invoice</th> -->
-						<th>Nilai</th>
-						<th>Action</th>
+						<th class="col-xs-2">Nilai</th>
+						<th class="col-xs-1">Action</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr class="data" data-urut="">
-						<td style="width: 20%; max-width: 20%;">
-							<select class="form-control det_jurnal_trans" data-required="1">
+						<td>
+							<select class="form-control det_jurnal_trans">
 								<option value="">Pilih Transaksi</option>
 								<?php if ( !empty($det_jurnal_trans) ): ?>
 									<?php foreach ($det_jurnal_trans as $k_djt => $v_djt): ?>
@@ -146,19 +147,29 @@
 								<?php endif ?>
 							</select>
 						</td>
-						<td style="width: 30%; max-width: 30%;">
+						<td>
+							<select class="form-control tujuan" data-required="1">
+								<option value="">Pilih COA</option>
+								<?php if ( !empty($coa) ): ?>
+									<?php foreach ($coa as $k_coa => $v_coa): ?>
+										<option value="<?php echo $v_coa['no_coa']; ?>" data-nama="<?php echo $v_coa['nama_coa']; ?>" ><?php echo $v_coa['no_coa'].' | '.$v_coa['nama_coa']; ?></option>
+									<?php endforeach ?>
+								<?php endif ?>
+							</select>
+						</td>
+						<td>
 							<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan" maxlength="50">
 						</td>
-						<td style="width: 20%; max-width: 20%;">
+						<td>
 							<input type="text" class="form-control no_invoice uppercase" placeholder="No. Invoice" maxlength="50">
 						</td>
-						<!-- <td style="width: 10%; max-width: 10%;">
+						<!-- <td>
 							<input type="text" class="form-control text-right nilai_lpb uppercase" placeholder="Nilai Invoice" data-tipe="decimal" maxlength="19" disabled>
 						</td> -->
-						<td style="width: 15%; max-width: 15%;">
+						<td>
 							<input type="text" class="form-control text-right nilai uppercase" placeholder="Nilai" data-tipe="decimal" maxlength="19" data-required="1" onblur="bk.hitGrandTotal(this)">
 						</td>
-						<td style="width: 15%; max-width: 15%;">
+						<td>
 							<div class="col-xs-12 no-padding">
 								<div class="col-xs-6 no-padding" style="padding-right: 3px;">
 									<button type="button" class="col-xs-12 btn btn-danger" onclick="bk.removeRow(this)"><i class="fa fa-times"></i></button>

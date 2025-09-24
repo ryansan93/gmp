@@ -81,29 +81,22 @@
 			<table class="table table-bordered tbl_detail" style="margin-bottom: 0px; max-width: 100%; width: 100%;">
 				<thead>
 					<tr>
-						<th style="width: 20%;">Transaksi</th>
-						<th style="width: 50%;">Keterangan</th>
-						<th style="width: 20%;">No. Invoice</th>
-						<!-- <th style="width: 10%;">Nilai Invoice</th> -->
-						<th style="width: 10%;">Nilai</th>
+						<th class="col-xs-2">Transaksi</th>
+						<th class="col-xs-2">COA</th>
+						<th class="col-xs-3">Keterangan</th>
+						<th class="col-xs-1">No. Invoice</th>
+						<!-- <th>Nilai Invoice</th> -->
+						<th class="col-xs-2">Nilai</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php if ( !empty($detail) ) { ?>
 						<?php foreach ($detail as $k_det => $v_det) { ?>
 							<tr class="data" data-urut="">
-								<!-- <td>
-									<?php echo strtoupper($v_det['no_coa']); ?>
-								</td>
-								<td>
-									<?php echo strtoupper($v_det['nama_coa']); ?>
-								</td> -->
 								<td><?php echo strtoupper($v_det['det_jurnal_trans_nama']); ?></td>
+								<td><?php echo strtoupper($v_det['coa_tujuan'].' | '.$v_det['coa_tujuan_nama']); ?></td>
 								<td><?php echo !empty($v_det['keterangan']) ? strtoupper($v_det['keterangan']) : '-'; ?></td>
 								<td><?php echo strtoupper($v_det['no_invoice']); ?></td>
-								<!-- <td class="text-right">
-									<?php echo angkaDecimal($v_det['nilai_lpb']); ?>
-								</td> -->
 								<td class="text-right">
 									<?php echo angkaDecimal($v_det['nilai']); ?>
 								</td>

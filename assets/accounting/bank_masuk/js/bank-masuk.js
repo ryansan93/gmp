@@ -135,10 +135,34 @@ var bm = {
             $(select).find('option').removeAttr('disabled');
             $(select).find('option:not([data-idjt="'+jt_id+'"])').attr('disabled', 'disabled');
             $(select).find('option[value="all"]').removeAttr('disabled');
+            $(select).find('option[value=""]').removeAttr('disabled');
     
-            $(select).select2();
+            $(select).select2().on("select2:select", function (e) {
+                bm.getAsalCoa( $(select) );
+            });
+
+            bm.getAsalCoa( $(select) );
         } );
     }, // end - getData
+
+    getAsalCoa: function(elm) {
+        var tr = $(elm).closest('tr');
+
+        $(tr).find('select.asal').select2();
+
+        var val_det_jurnal_trans = $(tr).find('select.det_jurnal_trans').select2().val();
+
+        if ( !empty(val_det_jurnal_trans) ) {
+            $(tr).find('select.asal').attr('disabled', 'disabled');
+
+            var asal = $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal');
+
+            $(tr).find('select.asal').select2().val( asal );
+            $(tr).find('select.asal').trigger('change');
+        } else {
+            $(tr).find('select.asal').removeAttr('disabled', 'disabled');
+        }
+    }, // end - getAsalCoa
 
     getNamaPelanggan: function() {
         var no_pelanggan = $('select.no_pelanggan').select2().val();
@@ -158,12 +182,12 @@ var bm = {
         var tr = $(elm).closest('tr');
         var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.det_jurnal_trans').select2('destroy')
+        $(tr).find('select.det_jurnal_trans, select.asal').select2('destroy')
                                    .removeAttr('data-live-search')
                                    .removeAttr('data-select2-id')
                                    .removeAttr('aria-hidden')
                                    .removeAttr('tabindex');
-        $(tr).find('select.det_jurnal_trans').removeAttr('data-select2-id');
+        $(tr).find('select.det_jurnal_trans option, select.asal option').removeAttr('data-select2-id');
 
         var tr_clone = $(tr).clone();
 
@@ -176,6 +200,7 @@ var bm = {
         $(tbody).append( $(tr_clone) );
 
         bm.getDetJurnalTrans();
+        bm.getAsalCoa();
 
         // $.each($(tbody).find('select'), function(a) {
         //     if ( $(this).hasClass('no_coa') ) {
@@ -481,15 +506,13 @@ var bm = {
                     var no_urut = 1;
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
-                            // 'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            // 'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            // 'nama_coa': $(tr).find('select.nama_coa').select2().val(),
                             'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
-                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
-                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
+                            // 'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_asal': $(tr).find('select.asal').select2().val(),
+                            'coa_asal_nama': $(tr).find('select.asal option:selected').attr('data-nama'),
+                            'coa_tujuan': $(dcontent).find('select.bank').select2().val(),
+                            'coa_tujuan_nama': $(dcontent).find('select.bank option:selected').attr('data-nama'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            // 'no_faktur': $(tr).find('select.faktur').select2().val(),
-							// 'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
                             'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
 						};
@@ -512,7 +535,9 @@ var bm = {
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
-						'unit': $(dcontent).find('select.unit').select2().val(),
+						// 'unit': $(dcontent).find('select.unit').select2().val(),
+                        'unit': $(dcontent).find('select.bank').find('option:selected').attr('data-unit'),
+                        'kode': $(dcontent).find('select.bank').find('option:selected').attr('data-kode'),
 						'detail': detail
 					};
 
@@ -557,15 +582,13 @@ var bm = {
                     var no_urut = 1;
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
-                            // 'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            // 'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            // 'nama_coa': $(tr).find('select.nama_coa').select2().val(),
                             'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
-                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
-                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
+                            // 'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_asal': $(tr).find('select.asal').select2().val(),
+                            'coa_asal_nama': $(tr).find('select.asal option:selected').attr('data-nama'),
+                            'coa_tujuan': $(dcontent).find('select.bank').select2().val(),
+                            'coa_tujuan_nama': $(dcontent).find('select.bank option:selected').attr('data-nama'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            // 'no_faktur': $(tr).find('select.faktur').select2().val(),
-							// 'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
                             'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
 						};
@@ -589,7 +612,9 @@ var bm = {
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
-                        'unit': $(dcontent).find('select.unit').select2().val(),
+						// 'unit': $(dcontent).find('select.unit').select2().val(),
+                        'unit': $(dcontent).find('select.bank').find('option:selected').attr('data-unit'),
+                        'kode': $(dcontent).find('select.bank').find('option:selected').attr('data-kode'),
 						'detail': detail
 					};
 

@@ -81,66 +81,117 @@ class GeneralLedger extends Public_Controller {
         }
 
         $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select
+        //         c.coa as no_coa,
+        //         c.nama_coa,
+        //         c.lap,
+        //         c.coa_pos,
+        //         case
+        //             when c.coa_pos = 'D' then
+        //                 isnull(sb.saldo_awal, 0)
+        //         end as saldo_awal_debet,
+        //         case
+        //             when c.coa_pos = 'K' then
+        //                 isnull(sb.saldo_awal, 0)
+        //         end as saldo_awal_kredit,
+        //         isnull(dj_asal.nominal, 0) as kredit,
+        //         isnull(dj_tujuan.nominal, 0) as debet,
+        //         case
+        //             when c.coa_pos = 'D' then
+        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
+        //         end as saldo_akhir_debet,
+        //         case
+        //             when c.coa_pos = 'K' then
+        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
+        //         end as saldo_akhir_kredit,
+        //         case
+        //             when c.lap = 'L' and c.coa_pos = 'D' then
+        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
+        //         end as lr_debet,
+        //         case
+        //             when c.lap = 'L' and c.coa_pos = 'K' then
+        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
+        //         end as lr_kredit,
+        //         case
+        //             when c.lap = 'N' and c.coa_pos = 'D' then
+        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
+        //         end as neraca_debet,
+        //         case
+        //             when c.lap = 'N' and c.coa_pos = 'K' then
+        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
+        //         end as neraca_kredit
+        //     from coa c
+        //     left join
+        //         (
+        //             select dj.coa_asal, sum(dj.nominal) as nominal 
+        //             from det_jurnal dj 
+        //             where 
+        //                 dj.tanggal between '".$start_date."' and '".$end_date."'
+        //                 -- ".$sql_kode_gabung_perusahaan."
+        //             group by dj.coa_asal
+        //         ) dj_asal
+        //         on
+        //             dj_asal.coa_asal = c.coa
+        //     left join
+        //         (
+        //             select dj.coa_tujuan, sum(dj.nominal) as nominal 
+        //             from det_jurnal dj 
+        //             where 
+        //                 dj.tanggal between '".$start_date."' and '".$end_date."'
+        //                 -- ".$sql_kode_gabung_perusahaan."
+        //             group by dj.coa_tujuan
+        //         ) dj_tujuan
+        //         on
+        //             dj_tujuan.coa_tujuan = c.coa
+        //     left join
+        //         (select * from saldo_bulanan where tanggal between '".$start_date."' and '".$end_date."') sb
+        //         on
+        //             sb.coa = c.coa
+        //     order by
+        //         c.coa asc
+        // ";
         $sql = "
             select
                 c.coa as no_coa,
+                case
+                    when c.unit is not null then
+                        c.unit
+                    else
+                        case
+                        	when dj_asal.unit is not null then
+                        		dj_asal.unit
+                        	else
+                        		dj_tujuan.unit
+                        end
+                end as unit,
                 c.nama_coa,
                 c.lap,
                 c.coa_pos,
-                case
-                    when c.coa_pos = 'D' then
-                        isnull(sb.saldo_awal, 0)
-                end as saldo_awal_debet,
-                case
-                    when c.coa_pos = 'K' then
-                        isnull(sb.saldo_awal, 0)
-                end as saldo_awal_kredit,
+                isnull(sb.saldo_awal, 0) as saldo_awal,
                 isnull(dj_asal.nominal, 0) as kredit,
                 isnull(dj_tujuan.nominal, 0) as debet,
-                case
-                    when c.coa_pos = 'D' then
-                        (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-                end as saldo_akhir_debet,
-                case
-                    when c.coa_pos = 'K' then
-                        (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-                end as saldo_akhir_kredit,
-                case
-                    when c.lap = 'L' and c.coa_pos = 'D' then
-                        (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-                end as lr_debet,
-                case
-                    when c.lap = 'L' and c.coa_pos = 'K' then
-                        (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-                end as lr_kredit,
-                case
-                    when c.lap = 'N' and c.coa_pos = 'D' then
-                        (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-                end as neraca_debet,
-                case
-                    when c.lap = 'N' and c.coa_pos = 'K' then
-                        (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-                end as neraca_kredit
+                ((isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0)) as saldo_akhir
             from coa c
             left join
                 (
-                    select dj.coa_asal, sum(dj.nominal) as nominal 
+                    select dj.coa_asal, sum(dj.nominal) as nominal, dj.unit
                     from det_jurnal dj 
                     where 
                         dj.tanggal between '".$start_date."' and '".$end_date."'
-                        ".$sql_kode_gabung_perusahaan."
-                    group by dj.coa_asal
+                        -- ".$sql_kode_gabung_perusahaan."
+                    group by dj.coa_asal, dj.unit
                 ) dj_asal
                 on
                     dj_asal.coa_asal = c.coa
             left join
                 (
-                    select dj.coa_tujuan, sum(dj.nominal) as nominal 
+                    select dj.coa_tujuan, sum(dj.nominal) as nominal, dj.unit
                     from det_jurnal dj 
                     where 
                         dj.tanggal between '".$start_date."' and '".$end_date."'
-                        ".$sql_kode_gabung_perusahaan."
-                    group by dj.coa_tujuan
+                        -- ".$sql_kode_gabung_perusahaan."
+                    group by dj.coa_tujuan, dj.unit
                 ) dj_tujuan
                 on
                     dj_tujuan.coa_tujuan = c.coa

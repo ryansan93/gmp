@@ -74,16 +74,15 @@
         <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 		<div class="col-xs-12 no-padding" style="overflow-x: auto;">
 			<small>
-				<table class="table table-bordered" style="margin-bottom: 0px; max-width: 130%; width: 150%;">
+				<table class="table table-bordered" style="margin-bottom: 0px; max-width: 100%; width: 150%;">
 					<thead>
-						<tr>
+						<!-- <tr>
 							<th class="text-center" rowspan="2" style="width: 5%;">No. COA</th>
 							<th class="text-center" rowspan="2" style="width: 10%;">Nama</th>
 							<th class="text-center" rowspan="2" style="width: 2.5%;">N/L</th>
 							<th class="text-center" rowspan="2" style="width: 2.5%;">D/K</th>
 							<th class="text-center" colspan="2">Saldo Awal</th>
 							<th class="text-center" colspan="2">Mutasi</th>
-							<!-- <th class="text-center" colspan="2">Penyesuaian</th> -->
 							<th class="text-center" colspan="2">Saldo Akhir</th>
 							<th class="text-center" colspan="2">Laba-Rugi</th>
 							<th class="text-center" colspan="2">Neraca</th>
@@ -93,19 +92,26 @@
                             <th class="text-center" style="width: 6.66%;">Kredit</th>
                             <th class="text-center" style="width: 6.66%;">Debit</th>
                             <th class="text-center" style="width: 6.66%;">Kredit</th>
-                            <!-- <th class="text-center" style="width: 6.66%;">Debit</th>
-                            <th class="text-center" style="width: 6.66%;">Kredit</th> -->
                             <th class="text-center" style="width: 6.66%;">Debit</th>
                             <th class="text-center" style="width: 6.66%;">Kredit</th>
                             <th class="text-center" style="width: 6.66%;">Debit</th>
                             <th class="text-center" style="width: 6.66%;">Kredit</th>
                             <th class="text-center" style="width: 6.66%;">Debit</th>
                             <th class="text-center" style="width: 6.66%;">Kredit</th>
-                        </tr>
+                        </tr> -->
+						<tr>
+							<th class="text-center col-xs-1">No. COA</th>
+							<th class="text-center col-xs-1">Unit</th>
+							<th class="text-center col-xs-2">Nama COA</th>
+							<th class="text-center col-xs-1">Saldo Awal</th>
+							<th class="text-center col-xs-1">Debet</th>
+							<th class="text-center col-xs-1">Kredit</th>
+							<th class="text-center col-xs-1">Saldo Akhir</th>
+						</tr>
 					</thead>
 					<tbody>
 						<tr>
-							<td colspan="14">Data tidak ditemukan.</td>
+							<td colspan="7">Data tidak ditemukan.</td>
 						</tr>
 					</tbody>
 				</table>

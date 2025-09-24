@@ -17,9 +17,9 @@ class MmItem_model extends Conf{
 		$sql = "
 			select 
 				mi.*,
-                -- c.nama_coa,
-				-- b.no_inv
-				djt.nama as det_jurnal_trans_nama
+				djt.nama as det_jurnal_trans_nama,
+				c_asal.nama_coa as coa_asal_nama,
+				c_tujuan.nama_coa as coa_tujuan_nama
 			from mmitem mi
 			left join
 				(
@@ -35,10 +35,14 @@ class MmItem_model extends Conf{
 				mm m
 				on
 					mi.no_mm = m.no_mm
-            -- left join
-            --     coa c
-            --     on
-            --         mi.no_coa = c.no_coa
+            left join
+                coa c_asal
+                on
+                    mi.coa_asal = c_asal.coa
+			left join
+                coa c_tujuan
+                on
+                    mi.coa_tujuan = c_tujuan.coa
 			-- left join
 			-- 	beli b
 			-- 	on

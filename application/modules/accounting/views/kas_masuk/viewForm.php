@@ -24,7 +24,7 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Pelanggan</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">Asal</label></div>
 		<div class="col-xs-7 no-padding">
 			<label class="control-label">: <?php echo !empty($data['pelanggan']) ? $data['pelanggan'] : '-'; ?></label>
 		</div>
@@ -35,13 +35,13 @@
 			<label class="control-label">: <?php echo !empty($data['keterangan']) ? $data['keterangan'] : '-'; ?></label>
 		</div>
 	</div>
-	<!-- <div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Nama Bank</label></div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Nama Kas</label></div>
 		<div class="col-xs-4 no-padding">
 			<label class="control-label">: <?php echo !empty($data['nama_bank']) ? $data['nama_bank'] : '-'; ?></label>
 		</div>
 	</div>
-	<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
+	<!-- <div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">No. Giro</label></div>
 		<div class="col-xs-4 no-padding">
 			<label class="control-label">: <?php echo !empty($data['no_giro']) ? $data['no_giro'] : '-'; ?></label>
@@ -81,29 +81,22 @@
 			<table class="table table-bordered tbl_detail" style="margin-bottom: 0px; max-width: 100%; width: 100%;">
 				<thead>
 					<tr>
-						<th style="width: 20%;">Transaksi</th>
-						<th style="width: 50%;">Keterangan</th>
-						<th style="width: 20%;">No. Invoice</th>
-						<!-- <th style="width: 10%;">Nilai Faktur</th> -->
-						<th style="width: 10%;">Nilai</th>
+						<th class="col-xs-2">Transaksi</th>
+						<th class="col-xs-2">COA</th>
+						<th class="col-xs-3">Keterangan</th>
+						<th class="col-xs-1">No. Invoice</th>
+						<!-- <th>Nilai Invoice</th> -->
+						<th class="col-xs-2">Nilai</th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php if ( !empty($detail) ) { ?>
 						<?php foreach ($detail as $k_det => $v_det) { ?>
 							<tr class="data" data-urut="">
-								<!-- <td>
-									<?php echo strtoupper($v_det['no_coa']); ?>
-								</td>
-								<td>
-									<?php echo strtoupper($v_det['nama_coa']); ?>
-								</td> -->
-								<td><?php echo strtoupper($v_det['det_jurnal_trans_nama']) ?></td>
+								<td><?php echo strtoupper($v_det['det_jurnal_trans_nama']); ?></td>
+								<td><?php echo strtoupper($v_det['coa_asal'].' | '.$v_det['coa_asal_nama']); ?></td>
 								<td><?php echo !empty($v_det['keterangan']) ? strtoupper($v_det['keterangan']) : '-'; ?></td>
-								<td><?php echo !empty($v_det['no_invoice']) ? strtoupper($v_det['no_invoice']) : '-'; ?></td>
-								<!-- <td class="text-right">
-									<?php echo angkaDecimal($v_det['nilai_faktur']); ?>
-								</td> -->
+								<td><?php echo strtoupper($v_det['no_invoice']); ?></td>
 								<td class="text-right">
 									<?php echo angkaDecimal($v_det['nilai']); ?>
 								</td>
@@ -111,7 +104,7 @@
 						<?php } ?>
 					<?php } else { ?>
 						<tr>
-							<td colspan="6">Data tidak di temukan.</td>
+							<td colspan="6">Data tidak ditemukan.</td>
 						</tr>
 					<?php } ?>
 				</tbody>

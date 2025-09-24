@@ -51,7 +51,7 @@ class Km_model extends Conf{
 		return $data;
 	}
 
-	public function getKmByDate($start_date, $end_date, $kode) {
+	public function getBmByDate($start_date, $end_date) {
 		$data = null;
 
 		$sql = "
@@ -68,9 +68,50 @@ class Km_model extends Conf{
 				) jt
 				on
 					k.jurnal_trans = jt.kode
+			left join
+				coa c
+				on
+					k.coa_bank = c.coa
 			where
 				k.tgl_km between '".$start_date."' and '".$end_date."' and
-                k.no_km like '".$kode."%'
+                c.bank = 1
+			order by
+				k.tgl_km desc,
+				k.no_km desc
+		";
+		$d_km = $this->hydrateRaw($sql);
+
+        if ( !empty($d_km) && $d_km->count() > 0 ) {
+            $data = $d_km->toArray();
+        }
+
+		return $data;
+	}
+
+	public function getKmByDate($start_date, $end_date) {
+		$data = null;
+
+		$sql = "
+			select 
+				k.*
+			from km k
+			left join
+				(
+					select jt1.* from jurnal_trans jt1
+					right join
+						(select max(id) as id, kode from jurnal_trans group by kode) jt2
+						on
+							jt1.id = jt2.id
+				) jt
+				on
+					k.jurnal_trans = jt.kode
+			left join
+				coa c
+				on
+					k.coa_bank = c.coa
+			where
+				k.tgl_km between '".$start_date."' and '".$end_date."' and
+                c.kas = 1
 			order by
 				k.tgl_km desc,
 				k.no_km desc

@@ -135,10 +135,34 @@ var bk = {
             $(select).find('option').removeAttr('disabled');
             $(select).find('option:not([data-idjt="'+jt_id+'"])').attr('disabled', 'disabled');
             $(select).find('option[value="all"]').removeAttr('disabled');
+            $(select).find('option[value=""]').removeAttr('disabled');
     
-            $(select).select2();
-        } );
-    }, // end - getData
+            $(select).select2().on("select2:select", function (e) {
+                bk.getTujuanCoa( $(select) );
+            });
+
+            bk.getTujuanCoa( $(select) );
+        });
+    }, // end - getDetJurnalTrans
+
+    getTujuanCoa: function(elm) {
+        var tr = $(elm).closest('tr');
+
+        $(tr).find('select.tujuan').select2();
+
+        var val_det_jurnal_trans = $(tr).find('select.det_jurnal_trans').select2().val();
+
+        if ( !empty(val_det_jurnal_trans) ) {
+            $(tr).find('select.tujuan').attr('disabled', 'disabled');
+
+            var tujuan = $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan');
+
+            $(tr).find('select.tujuan').select2().val( tujuan );
+            $(tr).find('select.tujuan').trigger('change');
+        } else {
+            $(tr).find('select.tujuan').removeAttr('disabled', 'disabled');
+        }
+    }, // end - getTujuanCoa
 
     getNamaSupplier: function() {
         var no_supplier = $('select.no_supplier').select2().val();
@@ -158,12 +182,12 @@ var bk = {
         var tr = $(elm).closest('tr');
         var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.det_jurnal_trans').select2('destroy')
+        $(tr).find('select.det_jurnal_trans, select.tujuan').select2('destroy')
                                    .removeAttr('data-live-search')
                                    .removeAttr('data-select2-id')
                                    .removeAttr('aria-hidden')
                                    .removeAttr('tabindex');
-        $(tr).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
+        $(tr).find('select.det_jurnal_trans option, select.tujuan option').removeAttr('data-select2-id');
 
         var tr_clone = $(tr).clone();
 
@@ -176,6 +200,7 @@ var bk = {
         $(tbody).append( $(tr_clone) );
 
         bk.getDetJurnalTrans();
+        bk.getTujuanCoa();
 
         // $.each($(tbody).find('select'), function(a) {
         //     if ( $(this).hasClass('no_coa') ) {
@@ -482,8 +507,11 @@ var bk = {
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
                             'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
-                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
-                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
+                            // 'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_asal': $(dcontent).find('select.bank').select2().val(),
+                            'coa_asal_nama': $(dcontent).find('select.bank option:selected').attr('data-nama'),
+                            'coa_tujuan': $(tr).find('select.tujuan').select2().val(),
+                            'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
                             'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
@@ -507,7 +535,9 @@ var bk = {
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
-                        'unit': $(dcontent).find('select.unit').select2().val(),
+                        // 'unit': $(dcontent).find('select.unit').select2().val(),
+                        'unit': $(dcontent).find('select.bank').find('option:selected').attr('data-unit'),
+                        'kode': $(dcontent).find('select.bank').find('option:selected').attr('data-kode'),
 						'detail': detail
 					};
 
@@ -553,8 +583,11 @@ var bk = {
 					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
 						var _detail = {
                             'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
-                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
-                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
+                            // 'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                            'coa_asal': $(dcontent).find('select.bank').select2().val(),
+                            'coa_asal_nama': $(dcontent).find('select.bank option:selected').attr('data-nama'),
+                            'coa_tujuan': $(tr).find('select.tujuan').select2().val(),
+                            'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
                             'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
@@ -579,7 +612,9 @@ var bk = {
 						'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
-                        'unit': $(dcontent).find('select.unit').select2().val(),
+                        // 'unit': $(dcontent).find('select.unit').select2().val(),
+                        'unit': $(dcontent).find('select.bank').find('option:selected').attr('data-unit'),
+                        'kode': $(dcontent).find('select.bank').find('option:selected').attr('data-kode'),
 						'detail': detail
 					};
 

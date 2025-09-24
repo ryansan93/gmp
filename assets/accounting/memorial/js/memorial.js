@@ -102,10 +102,40 @@ var mm = {
             $(select).find('option').removeAttr('disabled');
             $(select).find('option:not([data-idjt="'+jt_id+'"])').attr('disabled', 'disabled');
             $(select).find('option[value="all"]').removeAttr('disabled');
+            $(select).find('option[value=""]').removeAttr('disabled');
     
-            $(select).select2();
-        } );
+            $(select).select2().on("select2:select", function (e) {
+                mm.getAsalTujuanCoa( $(select) );
+            });
+
+            mm.getAsalTujuanCoa( $(select) );
+        });
     }, // end - getDetJurnalTrans
+
+    getAsalTujuanCoa: function(elm) {
+        var tr = $(elm).closest('tr');
+
+        $(tr).find('select.asal').select2();
+        $(tr).find('select.tujuan').select2();
+
+        var val_det_jurnal_trans = $(tr).find('select.det_jurnal_trans').select2().val();
+
+        if ( !empty(val_det_jurnal_trans) ) {
+            $(tr).find('select.asal').attr('disabled', 'disabled');
+            $(tr).find('select.tujuan').attr('disabled', 'disabled');
+
+            var asal = $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal');
+            var tujuan = $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan');
+
+            $(tr).find('select.asal').select2().val( asal );
+            $(tr).find('select.asal').trigger('change');
+            $(tr).find('select.tujuan').select2().val( tujuan );
+            $(tr).find('select.tujuan').trigger('change');
+        } else {
+            $(tr).find('select.asal').removeAttr('disabled', 'disabled');
+            $(tr).find('select.tujuan').removeAttr('disabled', 'disabled');
+        }
+    }, // end - getTujuanCoa
 
     getNamaPelanggan: function() {
         var no_pelanggan = $('select.no_pelanggan').select2().val();
@@ -171,12 +201,12 @@ var mm = {
         var tr = $(elm).closest('tr');
         var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.det_jurnal_trans').select2('destroy')
+        $(tr).find('select.det_jurnal_trans, select.asal, select.tujuan').select2('destroy')
                                    .removeAttr('data-live-search')
                                    .removeAttr('data-select2-id')
                                    .removeAttr('aria-hidden')
                                    .removeAttr('tabindex');
-        $(tr).find('select.det_jurnal_trans option').removeAttr('data-select2-id');
+        $(tr).find('select.det_jurnal_trans option, select.asal option, select.tujuan option').removeAttr('data-select2-id');
 
         var tr_clone = $(tr).clone();
 
@@ -189,6 +219,7 @@ var mm = {
         $(tbody).append( $(tr_clone) );
 
         mm.getDetJurnalTrans();
+        mm.getTujuanCoa();
 
         // $.each($(tbody).find('select'), function(a) {
         //     if ( $(this).hasClass('no_coa') ) {
@@ -693,15 +724,12 @@ var mm = {
                     var no_urut = 1;
                     var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
                         var _detail = {
-                            // 'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            // 'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            // 'nama_coa': $(tr).find('select.nama_coa').select2().val(),
                             'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
-                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
-                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
+                            'coa_asal': $(tr).find('select.asal').select2().val(),
+                            'coa_asal_nama': $(tr).find('select.asal option:selected').attr('data-nama'),
+                            'coa_tujuan': $(tr).find('select.tujuan').select2().val(),
+                            'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            // 'no_faktur': $(tr).find('select.faktur').select2().val(),
-							// 'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
                             'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
                         };
@@ -771,15 +799,12 @@ var mm = {
                     var no_urut = 1;
                     var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
                         var _detail = {
-                            // 'no_urut': !empty($(tr).attr('data-urut')) ? $(tr).attr('data-urut') : no_urut,
-                            // 'no_coa': $(tr).find('select.no_coa').select2().val(),
-                            // 'nama_coa': $(tr).find('select.nama_coa').select2().val(),
                             'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
-                            'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
-                            'coa_tujuan': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coatujuan'),
+                            'coa_asal': $(tr).find('select.asal').select2().val(),
+                            'coa_asal_nama': $(tr).find('select.asal option:selected').attr('data-nama'),
+                            'coa_tujuan': $(tr).find('select.tujuan').select2().val(),
+                            'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            // 'no_faktur': $(tr).find('select.faktur').select2().val(),
-							// 'nilai_faktur': numeral.unformat($(tr).find('input.nilai_faktur').val()),
                             'no_invoice': $(tr).find('input.no_invoice').val(),
 							'nilai': numeral.unformat($(tr).find('input.nilai').val())
                         };

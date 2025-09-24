@@ -21,24 +21,14 @@ class KmItem_model extends Conf{
 				ki.no_urut,
 				ki.periode,
 				ki.no_coa,
-				-- case
-				-- 	when ki.no_faktur is not null and ki.no_faktur <> '' then
-				-- 		case
-				-- 			when ki.keterangan is null or ki.keterangan = '' then
-				-- 				'PELUNASAN PIUTANG A.N '+cust.nama_cust+' / '+ki.no_faktur
-				-- 			else
-				-- 				ki.keterangan
-				-- 		end
-				-- 	else
-				--		ki.keterangan
-				-- end as keterangan,
 				ki.keterangan,
 				ki.no_invoice,
 				ki.nilai_invoice,
 				ki.nilai,
 				ki.det_jurnal_trans,
-                -- c.nama_coa
-				djt.nama as det_jurnal_trans_nama
+				djt.nama as det_jurnal_trans_nama,
+				ki.coa_asal,
+				c.nama_coa as coa_asal_nama
 			from kmitem ki
 			left join
 				(
@@ -54,14 +44,10 @@ class KmItem_model extends Conf{
 				km k
 				on
 					ki.no_km = k.no_km
-            -- left join
-            --     coa c
-            --     on
-            --         ki.no_coa = c.no_coa
-			-- left join
-			-- 	customer cust
-			-- 	on
-			-- 		k.kode_cust = cust.kode_cust
+            left join
+                coa c
+                on
+                    ki.coa_asal = c.coa
 			".$sql_id."
 			order by
 				ki.no_urut asc

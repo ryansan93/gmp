@@ -75,7 +75,7 @@ class KasMasuk extends Public_Controller {
         $end_date = $params['end_date'];
 
         $m_km = new \Model\Storage\Km_model();
-        $d_km = $m_km->getKmByDate($start_date, $end_date, 'BKM');
+        $d_km = $m_km->getKmByDate($start_date, $end_date);
 
         $content['data'] = $d_km;
         $html = $this->load->view($this->pathView . 'list', $content, true);
@@ -117,13 +117,14 @@ class KasMasuk extends Public_Controller {
 
     public function addForm()
     {
-        // $m_coa = new \Model\Storage\Coa_model();
+        $m_coa = new \Model\Storage\Coa_model();
         $m_plg = new \Model\Storage\Pelanggan_model();
         $m_wilayah = new \Model\Storage\Wilayah_model();
         $m_jt = new \Model\Storage\JurnalTrans_model();
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
-        // $content['bank'] = $m_coa->getDataBank();
+        $content['coa'] = $m_coa->getDataCoa();
+        $content['bank'] = $m_coa->getDataKas();
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
@@ -156,7 +157,7 @@ class KasMasuk extends Public_Controller {
 
     public function editForm($kode)
     {
-        // $m_coa = new \Model\Storage\Coa_model();
+        $m_coa = new \Model\Storage\Coa_model();
         $m_plg = new \Model\Storage\Pelanggan_model();
         $m_wilayah = new \Model\Storage\Wilayah_model();
         $m_jt = new \Model\Storage\JurnalTrans_model();
@@ -168,7 +169,8 @@ class KasMasuk extends Public_Controller {
         $m_kmi = new \Model\Storage\KmItem_model();
         $d_kmi = $m_kmi->getKmItem( $kode );
         
-        // $content['bank'] = $m_coa->getDataBank();
+        $content['coa'] = $m_coa->getDataCoa();
+        $content['bank'] = $m_coa->getDataKas();
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
@@ -189,7 +191,8 @@ class KasMasuk extends Public_Controller {
             $m_nbbm = new \Model\Storage\NoBbm_model();
             $m_km = new \Model\Storage\Km_model();
 
-            $no_km = $m_nbbm->getKode('BKM');
+            // $no_km = $m_nbbm->getKode('BKM');
+            $no_km = $m_nbbm->getKodeMasuk($params['kode']);
 
             $m_nbbm->tbl_name = $m_km->getTable();
             $m_nbbm->tbl_id = $no_km;
@@ -197,17 +200,13 @@ class KasMasuk extends Public_Controller {
             $m_nbbm->save();
 
             $m_km->no_km = $no_km;
-            // $m_km->no_coa = $params['no_coa'];
-            // $m_km->coa_bank = $params['coa_bank'];
-            // $m_km->nama_bank = $params['nama_bank'];
+            $m_km->coa_bank = $params['coa_bank'];
+            $m_km->nama_bank = $params['nama_bank'];
             $m_km->tgl_km = $params['tgl_km'];
             $m_km->jurnal_trans = $params['jurnal_trans'];
             $m_km->periode = substr($params['tgl_km'], 0, 7);
             $m_km->no_pelanggan = $params['no_pelanggan'];
             $m_km->pelanggan = $params['pelanggan'];
-            // $m_km->no_giro = $params['no_giro'];
-            // $m_km->tgl_tempo = $params['tgl_tempo'];
-            // $m_km->tgl_cair = $params['tgl_cair'];
             $m_km->keterangan = $params['keterangan'];
             $m_km->nilai = $params['nilai'];
             $m_km->unit = $params['unit'];
@@ -228,6 +227,33 @@ class KasMasuk extends Public_Controller {
                 $m_kmi->no_invoice = $v_det['no_invoice'];
                 $m_kmi->nilai = $v_det['nilai'];
                 $m_kmi->save();
+
+                $id_djt = null;
+                if ( !empty($v_det['det_jurnal_trans']) ) {
+                    $m_djt = new \Model\Storage\DetJurnalTrans_model();
+                    $d_djt = $m_djt->where('kode', $v_det['det_jurnal_trans'])->orderBy('id', 'desc')->first();
+
+                    $id_djt = $d_djt->id;
+                }
+
+                $m_djurnal = new \Model\Storage\DetJurnal_model();
+                $m_djurnal->tanggal = $params['tgl_km'];
+                $m_djurnal->det_jurnal_trans_id = $id_djt;
+                // $m_djurnal->supplier = $params['no_supplier'];
+                $m_djurnal->keterangan = $v_det['keterangan'];
+                $m_djurnal->nominal = $v_det['nilai'];
+                $m_djurnal->asal = $v_det['coa_asal_nama'];
+                $m_djurnal->coa_asal = $v_det['coa_asal'];
+                $m_djurnal->tujuan = $v_det['coa_tujuan_nama'];
+                $m_djurnal->coa_tujuan = $v_det['coa_tujuan'];
+                $m_djurnal->unit = $params['unit'];
+                $m_djurnal->tbl_name = $m_km->getTable();
+                $m_djurnal->tbl_id = $no_km;
+                $m_djurnal->invoice = $v_det['no_invoice'];
+                $m_djurnal->kode_trans = $no_km;
+                $m_djurnal->kode_jurnal = $no_km;
+                $m_djurnal->pelanggan = $params['no_pelanggan'];
+                $m_djurnal->save();
             }
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -248,6 +274,8 @@ class KasMasuk extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            // cetak_r( $params, 1 );
+
             $m_km = new \Model\Storage\Km_model();
             $now = $m_km->getDate();
 
@@ -255,21 +283,22 @@ class KasMasuk extends Public_Controller {
 
             $m_km->where('no_km', $no_km)->update(
                 array(
-                    // 'coa_bank' => $params['coa_bank'],
-                    // 'nama_bank' => $params['nama_bank'],
+                    'no_km' => $no_km,
+                    'coa_bank' => $params['coa_bank'],
+                    'nama_bank' => $params['nama_bank'],
                     'tgl_km' => $params['tgl_km'],
                     'jurnal_trans' => $params['jurnal_trans'],
                     'periode' => substr($params['tgl_km'], 0, 7),
                     'no_pelanggan' => $params['no_pelanggan'],
                     'pelanggan' => $params['pelanggan'],
-                    // 'no_giro' => $params['no_giro'],
-                    // 'tgl_tempo' => $params['tgl_tempo'],
-                    // 'tgl_cair' => $params['tgl_cair'],
                     'keterangan' => $params['keterangan'],
                     'nilai' => $params['nilai'],
                     'unit' => $params['unit'],
                 )
             );
+
+            $m_djurnal = new \Model\Storage\DetJurnal_model();
+            $m_djurnal->where('tbl_name', $m_km->getTable())->where('tbl_id', $no_km)->delete();
 
             $m_kmi = new \Model\Storage\KmItem_model();
             $m_kmi->where('no_km', $no_km)->delete();
@@ -289,6 +318,33 @@ class KasMasuk extends Public_Controller {
                 $m_kmi->no_invoice = $v_det['no_invoice'];
                 $m_kmi->nilai = $v_det['nilai'];
                 $m_kmi->save();
+
+                $id_djt = null;
+                if ( !empty($v_det['det_jurnal_trans']) ) {
+                    $m_djt = new \Model\Storage\DetJurnalTrans_model();
+                    $d_djt = $m_djt->where('kode', $v_det['det_jurnal_trans'])->orderBy('id', 'desc')->first();
+
+                    $id_djt = $d_djt->id;
+                }
+
+                $m_djurnal = new \Model\Storage\DetJurnal_model();
+                $m_djurnal->tanggal = $params['tgl_km'];
+                $m_djurnal->det_jurnal_trans_id = $id_djt;
+                // $m_djurnal->supplier = $params['no_supplier'];
+                $m_djurnal->keterangan = $v_det['keterangan'];
+                $m_djurnal->nominal = $v_det['nilai'];
+                $m_djurnal->asal = $v_det['coa_asal_nama'];
+                $m_djurnal->coa_asal = $v_det['coa_asal'];
+                $m_djurnal->tujuan = $v_det['coa_tujuan_nama'];
+                $m_djurnal->coa_tujuan = $v_det['coa_tujuan'];
+                $m_djurnal->unit = $params['unit'];
+                $m_djurnal->tbl_name = $m_km->getTable();
+                $m_djurnal->tbl_id = $no_km;
+                $m_djurnal->invoice = $v_det['no_invoice'];
+                $m_djurnal->kode_trans = $no_km;
+                $m_djurnal->kode_jurnal = $no_km;
+                $m_djurnal->pelanggan = $params['no_pelanggan'];
+                $m_djurnal->save();
             }
 
             $d_km = $m_km->where('no_km', $no_km)->first();
@@ -316,13 +372,16 @@ class KasMasuk extends Public_Controller {
             $m_km = new \Model\Storage\Km_model();
             $d_km = $m_km->where('no_km', $no_km)->first();
 
-            $m_km->where('no_km', $no_km)->delete();
-
+            $m_djurnal = new \Model\Storage\DetJurnal_model();
+            $m_djurnal->where('tbl_name', $m_km->getTable())->where('tbl_id', $no_km)->delete();
+            
             $m_kmi = new \Model\Storage\KmItem_model();
             $m_kmi->where('no_km', $no_km)->delete();
-
+            
             $m_nbbm = new \Model\Storage\NoBbm_model();
             $m_nbbm->where('tbl_name', $m_km->getTable())->where('tbl_id', $no_km)->delete();
+
+            $m_km->where('no_km', $no_km)->delete();
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_km, $deskripsi_log, null, $no_km );

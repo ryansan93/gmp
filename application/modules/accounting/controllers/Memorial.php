@@ -137,14 +137,14 @@ class Memorial extends Public_Controller {
 
     public function addForm()
     {
-        // $m_coa = new \Model\Storage\Coa_model();
+        $m_coa = new \Model\Storage\Coa_model();
         $m_plg = new \Model\Storage\Pelanggan_model();
         $m_supl = new \Model\Storage\Supplier_model();
         $m_wilayah = new \Model\Storage\Wilayah_model();
         $m_jt = new \Model\Storage\JurnalTrans_model();
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
-        // $content['bank'] = $m_coa->getDataBank();
+        $content['coa'] = $m_coa->getDataCoa();
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['supplier'] = $m_supl->getDataSupplier();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
@@ -178,7 +178,7 @@ class Memorial extends Public_Controller {
 
     public function editForm($kode)
     {
-        // $m_coa = new \Model\Storage\Coa_model();
+        $m_coa = new \Model\Storage\Coa_model();
         $m_plg = new \Model\Storage\Pelanggan_model();
         $m_supl = new \Model\Storage\Supplier_model();
         $m_wilayah = new \Model\Storage\Wilayah_model();
@@ -191,7 +191,7 @@ class Memorial extends Public_Controller {
         $m_mmi = new \Model\Storage\MmItem_model();
         $d_mmi = $m_mmi->getMmItem( $kode );
         
-        // $content['bank'] = $m_coa->getDataBank();
+        $content['coa'] = $m_coa->getDataCoa();
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['supplier'] = $m_supl->getDataSupplier();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
@@ -210,15 +210,14 @@ class Memorial extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            // cetak_r( $params, 1 );
+
             $m_mm = new \Model\Storage\Mm_model();
             $now = $m_mm->getDate();
 
             $no_mm = $m_mm->getKode('MM');
 
             $m_mm->no_mm = $no_mm;
-            // $m_mm->no_coa = $params['no_coa'];
-            // $m_mm->coa_bank = $params['coa_bank'];
-            // $m_mm->nama_bank = $params['nama_bank'];
             $m_mm->tgl_mm = $params['tgl_mm'];
             $m_mm->jurnal_trans = $params['jurnal_trans'];
             $m_mm->periode = substr($params['tgl_mm'], 0, 7);
@@ -226,9 +225,6 @@ class Memorial extends Public_Controller {
             $m_mm->pelanggan = $params['pelanggan'];
             $m_mm->no_supplier = $params['no_supplier'];
             $m_mm->supplier = $params['supplier'];
-            // $m_mm->no_giro = $params['no_giro'];
-            // $m_mm->tgl_tempo = $params['tgl_tempo'];
-            // $m_mm->tgl_cair = $params['tgl_cair'];
             $m_mm->keterangan = $params['keterangan'];
             $m_mm->nilai = $params['nilai'];
             $m_mm->unit = $params['unit'];
@@ -249,6 +245,33 @@ class Memorial extends Public_Controller {
                 $m_mmi->no_invoice = $v_det['no_invoice'];
                 $m_mmi->nilai = $v_det['nilai'];
                 $m_mmi->save();
+
+                $id_djt = null;
+                if ( !empty($v_det['det_jurnal_trans']) ) {
+                    $m_djt = new \Model\Storage\DetJurnalTrans_model();
+                    $d_djt = $m_djt->where('kode', $v_det['det_jurnal_trans'])->orderBy('id', 'desc')->first();
+
+                    $id_djt = $d_djt->id;
+                }
+
+                $m_djurnal = new \Model\Storage\DetJurnal_model();
+                $m_djurnal->tanggal = $params['tgl_mm'];
+                $m_djurnal->det_jurnal_trans_id = $id_djt;
+                $m_djurnal->supplier = $params['no_supplier'];
+                $m_djurnal->keterangan = $v_det['keterangan'];
+                $m_djurnal->nominal = $v_det['nilai'];
+                $m_djurnal->asal = $v_det['coa_asal_nama'];
+                $m_djurnal->coa_asal = $v_det['coa_asal'];
+                $m_djurnal->tujuan = $v_det['coa_tujuan_nama'];
+                $m_djurnal->coa_tujuan = $v_det['coa_tujuan'];
+                $m_djurnal->unit = $params['unit'];
+                $m_djurnal->tbl_name = $m_mm->getTable();
+                $m_djurnal->tbl_id = $no_mm;
+                $m_djurnal->invoice = $v_det['no_invoice'];
+                $m_djurnal->kode_trans = $no_mm;
+                $m_djurnal->kode_jurnal = $no_mm;
+                $m_djurnal->pelanggan = $params['no_pelanggan'];
+                $m_djurnal->save();
             }
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -289,12 +312,18 @@ class Memorial extends Public_Controller {
                 )
             );
 
+            $m_djurnal = new \Model\Storage\DetJurnal_model();
+            $m_djurnal->where('tbl_name', $m_mm->getTable())->where('tbl_id', $no_mm)->delete();
+
             $m_mmi = new \Model\Storage\MmItem_model();
             $m_mmi->where('no_mm', $no_mm)->delete();
 
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_mmi = new \Model\Storage\MmItem_model();
                 $m_mmi->no_mm = $no_mm;
+                // $m_mmi->no_urut = $v_det['no_urut'];
+                // $m_mmi->no_coa = $v_det['no_coa'];
+                // $m_mmi->nilai_invoice = $v_det['nilai_invoice'];
                 $m_mmi->tgl_mm = $params['tgl_mm'];
                 $m_mmi->periode = substr($params['tgl_mm'], 0, 7);
                 $m_mmi->det_jurnal_trans = $v_det['det_jurnal_trans'];
@@ -304,6 +333,33 @@ class Memorial extends Public_Controller {
                 $m_mmi->no_invoice = $v_det['no_invoice'];
                 $m_mmi->nilai = $v_det['nilai'];
                 $m_mmi->save();
+
+                $id_djt = null;
+                if ( !empty($v_det['det_jurnal_trans']) ) {
+                    $m_djt = new \Model\Storage\DetJurnalTrans_model();
+                    $d_djt = $m_djt->where('kode', $v_det['det_jurnal_trans'])->orderBy('id', 'desc')->first();
+
+                    $id_djt = $d_djt->id;
+                }
+
+                $m_djurnal = new \Model\Storage\DetJurnal_model();
+                $m_djurnal->tanggal = $params['tgl_mm'];
+                $m_djurnal->det_jurnal_trans_id = $id_djt;
+                $m_djurnal->supplier = $params['no_supplier'];
+                $m_djurnal->keterangan = $v_det['keterangan'];
+                $m_djurnal->nominal = $v_det['nilai'];
+                $m_djurnal->asal = $v_det['coa_asal_nama'];
+                $m_djurnal->coa_asal = $v_det['coa_asal'];
+                $m_djurnal->tujuan = $v_det['coa_tujuan_nama'];
+                $m_djurnal->coa_tujuan = $v_det['coa_tujuan'];
+                $m_djurnal->unit = $params['unit'];
+                $m_djurnal->tbl_name = $m_mm->getTable();
+                $m_djurnal->tbl_id = $no_mm;
+                $m_djurnal->invoice = $v_det['no_invoice'];
+                $m_djurnal->kode_trans = $no_mm;
+                $m_djurnal->kode_jurnal = $no_mm;
+                $m_djurnal->pelanggan = $params['no_pelanggan'];
+                $m_djurnal->save();
             }
 
             $d_mm = $m_mm->where('no_mm', $no_mm)->first();
@@ -331,10 +387,13 @@ class Memorial extends Public_Controller {
             $m_mm = new \Model\Storage\Mm_model();
             $d_mm = $m_mm->where('no_mm', $no_mm)->first();
 
-            $m_mm->where('no_mm', $no_mm)->delete();
-
+            $m_djurnal = new \Model\Storage\DetJurnal_model();
+            $m_djurnal->where('tbl_name', $m_mm->getTable())->where('tbl_id', $no_mm)->delete();
+            
             $m_mmi = new \Model\Storage\MmItem_model();
             $m_mmi->where('no_mm', $no_mm)->delete();
+
+            $m_mm->where('no_mm', $no_mm)->delete();
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_mm, $deskripsi_log, null, $no_mm );
