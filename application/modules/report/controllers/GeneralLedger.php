@@ -216,9 +216,9 @@ class GeneralLedger extends Public_Controller {
             --    c.lap,
             --    c.coa_pos,
                 isnull(sb.saldo_awal, 0) as saldo_awal,
-                isnull(dj.kredit, 0) as kredit,
+                (0-isnull(dj.kredit, 0)) as kredit,
                 isnull(dj.debet, 0) as debet,
-                ((isnull(sb.saldo_awal, 0) + isnull(dj.debet, 0)) - isnull(dj.kredit, 0)) as saldo_akhir
+                ((isnull(sb.saldo_awal, 0) + isnull(dj.debet, 0)) + (0-isnull(dj.kredit, 0))) as saldo_akhir
             from coa c
             left join
                 (
@@ -249,9 +249,9 @@ class GeneralLedger extends Public_Controller {
                 on
                     sb.coa = c.coa
             where
-                isnull(sb.saldo_awal, 0) > 0 or
-                isnull(dj.kredit, 0) > 0 or
-                isnull(dj.debet, 0) > 0
+                isnull(sb.saldo_awal, 0) <> 0 or
+                (0-isnull(dj.kredit, 0)) <> 0 or
+                isnull(dj.debet, 0) <> 0
             order by
                 c.coa asc
         ";
