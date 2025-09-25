@@ -418,6 +418,7 @@ var pdm = {
                     var no_sj = $(div).find('input.no_sj').val().toUpperCase();
 
                     let data = {
+                        'id': $(elm).attr('data-id'),
                         'noreg': $(div).find('#select_noreg').val(),
                         'no_order': $(div).find('#select_no_order').val(),
                         'no_order_old': $(div).find('#select_no_order').data('old'),
@@ -454,7 +455,7 @@ var pdm = {
 			                hideLoading();
 			                if ( data.status == 1 ) {
 			                    bootbox.alert( data.message, function() {
-			                        pdm.load_form(no_order, null, 'transaksi');
+			                        pdm.load_form($(elm).attr('data-id'), null, 'transaksi');
 			                        // location.reload();
 			                    });
 			                } else {
@@ -472,12 +473,13 @@ var pdm = {
 		pdm.load_form(id, null, 'transaksi');
 	}, // end - batal_edit
 
-	delete: function() {
+	delete: function(elm) {
     	var div = $('div#transaksi');
 
     	bootbox.confirm('Apakah anda yakin ingin meng-hapus data penerimaan DOC ?', function(result) {
 			if ( result ) {
 				var data = {
+					'id': $(elm).attr('data-id'),
 					'no_order': $(div).find('div.no_order').data('val')
 				};
 

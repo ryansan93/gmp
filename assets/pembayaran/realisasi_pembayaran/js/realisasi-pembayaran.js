@@ -1142,6 +1142,9 @@ var rp = {
             'cn': !empty(cn) ? cn : null,
             'potongan': !empty(potongan) ? potongan : null,
             'keterangan': ket,
+            'coa_bank': $(modal_body).find('.bank').val(),
+            'nama_bank': $(modal_body).find('.bank option:selected').attr('data-nama'),
+            'kode_bank': $(modal_body).find('.bank option:selected').attr('data-kode'),
             'detail': detail
         };
 
@@ -1284,6 +1287,9 @@ var rp = {
             'cn': !empty(cn) ? cn : null,
             'potongan': !empty(potongan) ? potongan : null,
             'keterangan': ket,
+            'coa_bank': $(modal_body).find('.bank').val(),
+            'nama_bank': $(modal_body).find('.bank option:selected').attr('data-nama'),
+            'kode_bank': $(modal_body).find('.bank option:selected').attr('data-kode'),
             'detail': detail
         };
 

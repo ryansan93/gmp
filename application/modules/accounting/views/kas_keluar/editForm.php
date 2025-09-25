@@ -8,7 +8,7 @@
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Voucher</label></div>
 		<div class="col-xs-6 no-padding" style="padding-right: 5px;">
-			<select class="form-control jurnal_trans" data-required="1">
+			<select class="form-control jurnal_trans">
 				<?php if ( !empty($jurnal_trans) ): ?>
 					<?php foreach ($jurnal_trans as $k_jt => $v_jt): ?>
 						<?php

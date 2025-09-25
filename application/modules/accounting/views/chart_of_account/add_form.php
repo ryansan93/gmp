@@ -26,6 +26,7 @@
 						</td>
 						<td class="col-md-9">
 							<select class="form-control unit">
+								<option value="">Pilih Unit</option>
 								<?php if ( !empty($unit) ): ?>
 									<?php foreach ($unit as $k_unit => $v_unit): ?>
 										<option value="<?php echo $v_unit['kode']; ?>"><?php echo $v_unit['nama']; ?></option>
@@ -40,7 +41,7 @@
 						</td>
 						<td class="col-md-9">
 							<!-- <input type="text" class="col-sm-4 form-control coa uppercase" placeholder="No. COA (MAX:10)" data-required="1" maxlength="10" onblur="coa.cekNoCoa(this)"> -->
-							<input type="text" class="col-sm-4 form-control kode uppercase" placeholder="Kode (MAX:5)" data-required="1" maxlength="5">
+							<input type="text" class="col-sm-4 form-control kode uppercase" placeholder="Kode (MAX:5)" maxlength="5">
 						</td>
 					</tr>
 					<tr>

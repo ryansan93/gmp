@@ -78,17 +78,21 @@ class PenerimaanDocMobile extends Public_Controller {
             $d_order_doc = $d_order_doc->toArray();
             foreach ($d_order_doc as $k_order_doc => $v_order_doc) {
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-                $d_terima_doc = $m_terima_doc->where('no_order', $v_order_doc['no_order'])->orderBy('id', 'desc')->first();
+                $d_terima_doc = $m_terima_doc->where('no_order', $v_order_doc['no_order'])->orderBy('id', 'desc')->get();
 
-                if ( !empty($d_terima_doc) ) {
-                    $data[ $v_order_doc['no_order'] ] = array(
-                        'no_order' => $v_order_doc['no_order'],
-                        'tiba' => $d_terima_doc->datang,
-                        'ekor' => $d_terima_doc->jml_ekor,
-                        'bb' => $d_terima_doc->bb,
-                    );
-
-                    krsort($data);
+                if ( $d_terima_doc->count() > 0 ) {
+                    $d_terima_doc = $d_terima_doc->toArray();
+                    foreach ($d_terima_doc as $key => $value) {
+                        $data[ $value['id'].' | '.$v_order_doc['no_order'] ] = array(
+                            'id' => $value['id'],
+                            'no_order' => $v_order_doc['no_order'],
+                            'tiba' => $value['datang'],
+                            'ekor' => $value['jml_ekor'],
+                            'bb' => $value['bb'],
+                        );
+    
+                        krsort($data);
+                    }
                 }
             }
         }
@@ -130,10 +134,12 @@ class PenerimaanDocMobile extends Public_Controller {
         return $html;
     }
 
-    public function detail_form($no_order)
+    public function detail_form($id)
     {
         $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-        $d_terima_doc = $m_terima_doc->where('no_order', $no_order)->orderBy('id', 'desc')->first();
+        $d_terima_doc = $m_terima_doc->where('id', $id)->orderBy('id', 'desc')->first();
+
+        $no_order = $d_terima_doc->no_order;
 
         $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
         $d_terima_doc_ket = $m_terima_doc_ket->where('id_header', $d_terima_doc->id)->get();
@@ -145,6 +151,7 @@ class PenerimaanDocMobile extends Public_Controller {
         $d_rs = $m_rs->where('noreg', $d_order_doc->noreg)->with(['mitra'])->first();
 
         $data = array(
+            'id' => $id,
             'no_order' => $no_order,
             'mitra' => $d_rs->mitra->dMitra->nama,
             'nomor' => $d_rs->mitra->dMitra->nomor,
@@ -168,10 +175,12 @@ class PenerimaanDocMobile extends Public_Controller {
         return $html;
     }
 
-    public function edit_form($no_order, $mitra)
+    public function edit_form($id, $mitra)
     {
         $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-        $d_terima_doc = $m_terima_doc->where('no_order', $no_order)->first();
+        $d_terima_doc = $m_terima_doc->where('id', $id)->orderBy('id', 'desc')->first();
+
+        $no_order = $d_terima_doc->no_order;
 
         $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
         $d_terima_doc_ket = $m_terima_doc_ket->where('id_header', $d_terima_doc->id)->get();
@@ -183,6 +192,7 @@ class PenerimaanDocMobile extends Public_Controller {
         $d_rs = $m_rs->where('noreg', $d_order_doc->noreg)->with(['mitra'])->first();
 
         $data = array(
+            'id' => $id,
             'no_order' => $no_order,
             'mitra' => $d_rs->mitra->dMitra->nama,
             'nomor' => $d_rs->mitra->dMitra->nomor,
@@ -495,60 +505,66 @@ class PenerimaanDocMobile extends Public_Controller {
 
             $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
 
-            $m_terima_doc->id = $id;
-            $m_terima_doc->no_terima = $nomor;
-            $m_terima_doc->no_order = $params['no_order'];
-            $m_terima_doc->no_sj = $params['no_sj'];
-            $m_terima_doc->no_bbm = $no_bbm;
-            $m_terima_doc->nopol = $params['nopol'];
-            $m_terima_doc->datang = $params['tiba'];
-            $m_terima_doc->supplier = $d_order_doc->supplier;
-            $m_terima_doc->jml_ekor = $params['jml_ekor'];
-            $m_terima_doc->jml_box = $params['jml_box'];
-            $m_terima_doc->user_submit = $this->userid;
-            $m_terima_doc->tgl_submit = $now['waktu'];
-            $m_terima_doc->kondisi = $params['kondisi'];
-            $m_terima_doc->keterangan = null;
-            $m_terima_doc->version = 1;
-            $m_terima_doc->kirim = $params['kirim'];
-            $m_terima_doc->bb = $params['bb'];
-            $m_terima_doc->harga = $d_order_doc->harga;
-            $m_terima_doc->total = $d_order_doc->harga * $params['jml_ekor'];
-            $m_terima_doc->path = $path_name;
-            $m_terima_doc->uniformity = $params['uniformity'];
-            $m_terima_doc->save();
+            $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+            $d_terima_doc = $m_terima_doc->where('no_bbm')->first();
 
-            if ( !empty($params['data_ket']) ) {
-                foreach ($params['data_ket'] as $k_dk => $v_dk) {
-                    $path_name_ket = null;
-                    $file = isset($mappingFiles[ $v_dk['keterangan'] ]) ? $mappingFiles[ $v_dk['keterangan'] ] : null;
-                    if ( !empty($file) ) {
-                        $moved = uploadFile($file);
-                        $isMoved = $moved['status'];
-                        if ($isMoved) {
-                            $path_name_ket = $moved['path'];
+            if ( !$d_terima_doc ) {
+                $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+                $m_terima_doc->id = $id;
+                $m_terima_doc->no_terima = $nomor;
+                $m_terima_doc->no_order = $params['no_order'];
+                $m_terima_doc->no_sj = $params['no_sj'];
+                $m_terima_doc->no_bbm = $no_bbm;
+                $m_terima_doc->nopol = $params['nopol'];
+                $m_terima_doc->datang = $params['tiba'];
+                $m_terima_doc->supplier = $d_order_doc->supplier;
+                $m_terima_doc->jml_ekor = $params['jml_ekor'];
+                $m_terima_doc->jml_box = $params['jml_box'];
+                $m_terima_doc->user_submit = $this->userid;
+                $m_terima_doc->tgl_submit = $now['waktu'];
+                $m_terima_doc->kondisi = $params['kondisi'];
+                $m_terima_doc->keterangan = null;
+                $m_terima_doc->version = 1;
+                $m_terima_doc->kirim = $params['kirim'];
+                $m_terima_doc->bb = $params['bb'];
+                $m_terima_doc->harga = $d_order_doc->harga;
+                $m_terima_doc->total = $d_order_doc->harga * $params['jml_ekor'];
+                $m_terima_doc->path = $path_name;
+                $m_terima_doc->uniformity = $params['uniformity'];
+                $m_terima_doc->save();
+    
+                if ( !empty($params['data_ket']) ) {
+                    foreach ($params['data_ket'] as $k_dk => $v_dk) {
+                        $path_name_ket = null;
+                        $file = isset($mappingFiles[ $v_dk['keterangan'] ]) ? $mappingFiles[ $v_dk['keterangan'] ] : null;
+                        if ( !empty($file) ) {
+                            $moved = uploadFile($file);
+                            $isMoved = $moved['status'];
+                            if ($isMoved) {
+                                $path_name_ket = $moved['path'];
+                            }
                         }
+    
+                        $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
+                        $m_terima_doc_ket->id_header = $id;
+                        $m_terima_doc_ket->keterangan = $v_dk['keterangan'];
+                        $m_terima_doc_ket->lampiran = $path_name_ket;
+                        $m_terima_doc_ket->save();
                     }
-
-                    $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
-                    $m_terima_doc_ket->id_header = $id;
-                    $m_terima_doc_ket->keterangan = $v_dk['keterangan'];
-                    $m_terima_doc_ket->lampiran = $path_name_ket;
-                    $m_terima_doc_ket->save();
                 }
+    
+                $conf = new \Model\Storage\Conf();
+                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$params['tiba']."', 1, null, null";
+                $d_conf = $conf->hydrateRaw($sql);
+    
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", NULL, 1";
+                // $m_conf->hydrateRaw( $sql );
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, null, 1);
+    
+                $deskripsi_log_terima_doc = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log_terima_doc);
             }
-
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$params['tiba']."', 1, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
-
-            // $m_conf = new \Model\Storage\Conf();
-            // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", NULL, 1";
-            // $m_conf->hydrateRaw( $sql );
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, null, 1);
-
-            $deskripsi_log_terima_doc = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log_terima_doc);
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data Terima DOC berhasil disimpan.';
@@ -589,7 +605,8 @@ class PenerimaanDocMobile extends Public_Controller {
                 $tgl_stok = $params['tiba'];
             }
 
-            $id = $d_terima_doc->id;
+            // $id = $d_terima_doc->id;
+            $id = $params['id'];
 
             $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
 
@@ -667,11 +684,13 @@ class PenerimaanDocMobile extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            $id = $params['id'];
+            
             $m_order_doc = new \Model\Storage\OrderDoc_model();
             $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
 
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-            $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order'])->first();
+            $d_terima_doc = $m_terima_doc->where('id', $id)->first();
 
             $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".$d_terima_doc->datang."', 3, '".$d_order_doc->noreg."', null";
@@ -719,19 +738,7 @@ class PenerimaanDocMobile extends Public_Controller {
     public function tes() {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select max(td.id) as id, td.datang, od.noreg 
-            from terima_doc td 
-            left join
-                order_doc od 
-                on
-                    td.no_order = od.no_order
-            where td.no_order not in (
-                select kode_trans from det_stok_siklus dss 
-            )
-            group by
-                td.datang, od.noreg
-            order by
-                td.datang asc
+            select * from terima_doc td where no_order is null
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -739,11 +746,13 @@ class PenerimaanDocMobile extends Public_Controller {
             $d_conf = $d_conf->toArray();
 
             foreach ($d_conf as $key => $value) {
-                $tanggal = substr( $value['datang'], 0, 10 );
+                // $tanggal = substr( $value['datang'], 0, 10 );
 
-                $conf = new \Model\Storage\Conf();
-                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
-                $conf->hydrateRaw($sql);
+                // $conf = new \Model\Storage\Conf();
+                // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 3, null, null";
+                // $conf->hydrateRaw($sql);
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 3);
             }
         }
             

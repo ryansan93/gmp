@@ -161,10 +161,10 @@
 	<div class="col-xs-12 detailed">
 		<form role="form" class="form-horizontal">
 			<div class="col-xs-6 no-padding" style="padding-right: 5px;">
-				<button type="button" class="btn btn-primary col-xs-12" onclick="pdm.change_tab(this)" data-id="<?php echo $data['no_order']; ?>" data-noreg="<?php echo $data['noreg']; ?>" data-nomor="<?php echo $data['nomor']; ?>" data-edit="edit" data-href="transaksi"><i class="fa fa-edit"></i> Edit</button>
+				<button type="button" class="btn btn-primary col-xs-12" onclick="pdm.change_tab(this)" data-id="<?php echo $data['id']; ?>" data-noreg="<?php echo $data['noreg']; ?>" data-nomor="<?php echo $data['nomor']; ?>" data-edit="edit" data-href="transaksi"><i class="fa fa-edit"></i> Edit</button>
 			</div>
 			<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-				<button type="button" class="btn btn-danger col-xs-12" onclick="pdm.delete()"><i class="fa fa-trash"></i> Hapus</button>
+				<button type="button" class="btn btn-danger col-xs-12" onclick="pdm.delete(this)" data-id="<?php echo $data['id']; ?>"><i class="fa fa-trash"></i> Hapus</button>
 			</div>
 		</form>
 	</div>

@@ -894,98 +894,97 @@ class ODVP extends Public_Controller {
 
             $m_kpd = new \Model\Storage\KonfirmasiPembayaranDoc_model();
             $m_kpd->where('id', $d_kpdd->id_header)->delete();
-        }
-
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select
-                od.tgl_submit as tgl_bayar,
-                od.rencana_tiba as periode_docin,
-                od.perusahaan,
-                od.supplier,
-                od.tgl_submit as tgl_order,
-                SUBSTRING(od.no_order, 5, 3) as id_kab_kota,
-                od.no_order,
-                mm.nomor as no_peternak,
-                cast(SUBSTRING(od.noreg, 10, 2) as int) as kandang,
-                od.jml_ekor,
-                od.harga,
-                od.total,
-                rs.populasi
-            from
-            (
-                select od1.* from order_doc od1
-                right join
-                    (select max(id) as id, no_order from order_doc group by no_order) od2
-                    on
-                        od1.id = od2.id
-            ) od
-            left join
-                rdim_submit rs
-                on
-                    rs.noreg = od.noreg
-            left join
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    od.tgl_submit as tgl_bayar,
+                    od.rencana_tiba as periode_docin,
+                    od.perusahaan,
+                    od.supplier,
+                    od.tgl_submit as tgl_order,
+                    SUBSTRING(od.no_order, 5, 3) as id_kab_kota,
+                    od.no_order,
+                    mm.nomor as no_peternak,
+                    cast(SUBSTRING(od.noreg, 10, 2) as int) as kandang,
+                    od.jml_ekor,
+                    od.harga,
+                    od.total,
+                    rs.populasi
+                from
                 (
-                    select mm1.* from mitra_mapping mm1
+                    select od1.* from order_doc od1
                     right join
-                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        (select max(id) as id, no_order from order_doc group by no_order) od2
                         on
-                            mm1.nim = mm2.nim
-                ) mm
-                on
-                    mm.nim = rs.nim
-            where
-                od.no_order = '".$no_order."'
-            group by
-                od.tgl_submit,
-                od.rencana_tiba,
-                od.perusahaan,
-                od.supplier,
-                SUBSTRING(od.no_order, 5, 3),
-                od.no_order,
-                mm.nomor,
-                cast(SUBSTRING(od.noreg, 10, 2) as int),
-                od.jml_ekor,
-                od.harga,
-                od.total,
-                rs.populasi
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
-
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray()[0];
-
-            $m_kpd = new \Model\Storage\KonfirmasiPembayaranDoc_model();
-            $nomor = $m_kpd->getNextNomor();
-
-            $m_kpd->nomor = $nomor;
-            $m_kpd->tgl_bayar = substr($d_conf['tgl_bayar'], 0, 10);
-            $m_kpd->periode = trim($d_conf['periode_docin']);
-            $m_kpd->perusahaan = $d_conf['perusahaan'];
-            $m_kpd->supplier = $d_conf['supplier'];
-            $m_kpd->total = $d_conf['total'];
-            // $m_kpd->rekening = $d_conf['rekening'];
-            // $m_kpd->total = $params['total'];
-            $m_kpd->save();
-
-            $id = $m_kpd->id;
-
-            $m_kpdd = new \Model\Storage\KonfirmasiPembayaranDocDet_model();
-            $m_kpdd->id_header = $id;
-            $m_kpdd->tgl_order = substr($d_conf['tgl_order'], 0, 10);
-            $m_kpdd->kode_unit = $d_conf['id_kab_kota'];
-            $m_kpdd->no_order = $d_conf['no_order'];
-            $m_kpdd->mitra = $d_conf['no_peternak'];
-            $m_kpdd->kandang = $d_conf['kandang'];
-            $m_kpdd->populasi = $d_conf['populasi'];
-            $m_kpdd->harga = $d_conf['harga'];
-            $m_kpdd->total = $d_conf['total'];
-            $m_kpdd->save();
-
-            $d_kpd = $m_kpd->where('id', $id)->first();
-
-            $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $d_kpd, $deskripsi_log);
+                            od1.id = od2.id
+                ) od
+                left join
+                    rdim_submit rs
+                    on
+                        rs.noreg = od.noreg
+                left join
+                    (
+                        select mm1.* from mitra_mapping mm1
+                        right join
+                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                            on
+                                mm1.nim = mm2.nim
+                    ) mm
+                    on
+                        mm.nim = rs.nim
+                where
+                    od.no_order = '".$no_order."'
+                group by
+                    od.tgl_submit,
+                    od.rencana_tiba,
+                    od.perusahaan,
+                    od.supplier,
+                    SUBSTRING(od.no_order, 5, 3),
+                    od.no_order,
+                    mm.nomor,
+                    cast(SUBSTRING(od.noreg, 10, 2) as int),
+                    od.jml_ekor,
+                    od.harga,
+                    od.total,
+                    rs.populasi
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+    
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+    
+                $m_kpd = new \Model\Storage\KonfirmasiPembayaranDoc_model();
+                $nomor = $m_kpd->getNextNomor();
+    
+                $m_kpd->nomor = $nomor;
+                $m_kpd->tgl_bayar = substr($d_conf['tgl_bayar'], 0, 10);
+                $m_kpd->periode = trim($d_conf['periode_docin']);
+                $m_kpd->perusahaan = $d_conf['perusahaan'];
+                $m_kpd->supplier = $d_conf['supplier'];
+                $m_kpd->total = $d_conf['total'];
+                // $m_kpd->rekening = $d_conf['rekening'];
+                // $m_kpd->total = $params['total'];
+                $m_kpd->save();
+    
+                $id = $m_kpd->id;
+    
+                $m_kpdd = new \Model\Storage\KonfirmasiPembayaranDocDet_model();
+                $m_kpdd->id_header = $id;
+                $m_kpdd->tgl_order = substr($d_conf['tgl_order'], 0, 10);
+                $m_kpdd->kode_unit = $d_conf['id_kab_kota'];
+                $m_kpdd->no_order = $d_conf['no_order'];
+                $m_kpdd->mitra = $d_conf['no_peternak'];
+                $m_kpdd->kandang = $d_conf['kandang'];
+                $m_kpdd->populasi = $d_conf['populasi'];
+                $m_kpdd->harga = $d_conf['harga'];
+                $m_kpdd->total = $d_conf['total'];
+                $m_kpdd->save();
+    
+                $d_kpd = $m_kpd->where('id', $id)->first();
+    
+                $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/save', $d_kpd, $deskripsi_log);
+            }
         }
     }
 

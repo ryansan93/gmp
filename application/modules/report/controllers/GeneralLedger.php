@@ -232,12 +232,21 @@ class GeneralLedger extends Public_Controller {
                         
                         union all
                         
-                        select dj.coa_tujuan as no_coa, 0 as kredit, sum(dj.nominal) as debet, dj.unit
+                        select 
+                            dj.coa_tujuan as no_coa, 
+                            0 as kredit, 
+                            sum(dj.nominal) as debet, 
+                            case
+                                when dj.unit_tujuan is not null then
+                                    dj.unit_tujuan
+                                else
+                                    dj.unit
+                            end as unit
                         from det_jurnal dj 
                         where 
                             dj.tanggal between '".$start_date."' and '".$end_date."'
                             -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
-                        group by dj.coa_tujuan, dj.unit
+                        group by dj.coa_tujuan, dj.unit, dj.unit_tujuan
                     ) data
                     group by
                         no_coa, unit

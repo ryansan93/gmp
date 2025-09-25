@@ -1177,6 +1177,8 @@ class RealisasiPembayaran extends Public_Controller
                 'detail' => $detail,
                 'dn_realisasi_pembayaran' => $d_rp['dn_realisasi_pembayaran'],
                 'cn_realisasi_pembayaran' => $d_rp['cn_realisasi_pembayaran'],
+                'coa_bank' => $d_rp['coa_bank'],
+                'nama_bank' => $d_rp['nama_bank'],
                 'potongan' => $d_potongan,
                 'delete' => $delete
             );
@@ -1480,6 +1482,8 @@ class RealisasiPembayaran extends Public_Controller
         $uang_muka = 0;
         $total_dn = 0;
         $total_cn = 0;
+        $coa_bank = null;
+        $nama_bank = null;
 
         $d_cn = null;
         $d_dn = null;
@@ -1496,6 +1500,8 @@ class RealisasiPembayaran extends Public_Controller
             $uang_muka = $d_rp->uang_muka;
             $total_dn = $d_rp->dn;
             $total_cn = $d_rp->cn;
+            $coa_bank = $d_rp->coa_bank;
+            $nama_bank = $d_rp->nama_bank;
 
             $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
             $d_rpcn = $m_rpcn->where('id_header', $id)->get();
@@ -1597,12 +1603,15 @@ class RealisasiPembayaran extends Public_Controller
             'ekspedisi' => !empty($ekspedisi) ? $ekspedisi[0]['nama'] : null,
             'bank_ekspedisi' => $bank_ekspedisi,
             'form_uang_muka' => $form_uang_muka,
+            'coa_bank' => $coa_bank,
+            'nama_bank' => $nama_bank,
             'detail' => $detail
         );
 
         $m_coa = new \Model\Storage\Coa_model();
 
         $content['data'] = $data;
+        $content['bank'] = $m_coa->getDataBank();
         $content['d_cn'] = !empty($d_cn) ? json_encode($d_cn) : null;
         $content['d_dn'] = !empty($d_dn) ? json_encode($d_dn) : null;
         $html = $this->load->view('pembayaran/realisasi_pembayaran/realisasi_pembayaran', $content, true);
@@ -1651,13 +1660,15 @@ class RealisasiPembayaran extends Public_Controller
                     $no_bukti_auto = $m_rp->getNextNomorAuto( $kode );
                 }
 
-                $m_nbbm = new \Model\Storage\NoBbm_model();
-                $no_km = $m_nbbm->getKode('BBK');
+                $m_nbbk = new \Model\Storage\NoBbk_model();
 
-                $m_nbbm->tbl_name = $m_rp->getTable();
-                $m_nbbm->tbl_id = $nomor;
-                $m_nbbm->kode = $no_km;
-                $m_nbbm->save();
+                // $no_kk = $m_nbbk->getKode('BBK');
+                $no_kk = $m_nbbk->getKodeKeluar($data['kode_bank']);
+
+                $m_nbbk->tbl_name = $m_rp->getTable();
+                $m_nbbk->tbl_id = $nomor;
+                $m_nbbk->kode = $no_kk;
+                $m_nbbk->save();
 
                 $m_rp->nomor = $nomor;
                 $m_rp->no_bukti_auto = $no_bukti_auto;
@@ -1676,6 +1687,8 @@ class RealisasiPembayaran extends Public_Controller
                 $m_rp->ekspedisi = isset($data['ekspedisi']) ? $data['ekspedisi'] : null;
                 $m_rp->potongan = $data['total_potongan'];
                 $m_rp->uang_muka = $data['uang_muka'];
+                $m_rp->coa_bank = $data['coa_bank'];
+                $m_rp->nama_bank = $data['nama_bank'];
                 $m_rp->save();
 
                 $potongan = $data['total_potongan'];
@@ -1887,6 +1900,19 @@ class RealisasiPembayaran extends Public_Controller
                 $m_rpd->where('id', $v_rpd['id'])->delete();
             }
 
+            $d_rp = $m_rp->where('id', $id)->first();
+
+            $m_nbbk = new \Model\Storage\NoBbk_model();
+            $d_nbbk = $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->where('kode', 'like', $data['kode_bank'].'%')->first();
+
+            if ( !$d_nbbk ) {
+                $m_nbbk = new \Model\Storage\NoBbk_model();
+                $no_kk = $m_nbbk->getKodeKeluar($data['kode_bank']);
+                $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->update(
+                    array('kode' => $no_kk)
+                );
+            }
+
             $m_rp->where('id', $id)->update(
                 array(
                     'tgl_bayar' => $data['tgl_bayar'],
@@ -1904,6 +1930,8 @@ class RealisasiPembayaran extends Public_Controller
                     'ekspedisi' => isset($data['ekspedisi']) ? $data['ekspedisi'] : null,
                     'potongan' => $data['total_potongan'],
                     'uang_muka' => $data['uang_muka'],
+                    'coa_bank' => $data['coa_bank'],
+                    'nama_bank' => $data['nama_bank']
                 )
             );
 
@@ -2043,19 +2071,19 @@ class RealisasiPembayaran extends Public_Controller
                 }
             }
 
-            $d_rp = $m_rp->where('id', $id)->first();
+            $_d_rp = $m_rp->where('id', $id)->first();
 
             $jenis_transaksi = ($jenis_transaksi == 'PLASMA') ? 'RHPP' : $jenis_transaksi;
 
             // $m_conf = new \Model\Storage\Conf();
-            // $sql = "exec insert_jurnal '".$jenis_transaksi."', '".$d_rp->nomor."', NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 2";
+            // $sql = "exec insert_jurnal '".$jenis_transaksi."', '".$_d_rp->nomor."', NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 2";
             // $d_conf = $m_conf->hydrateRaw( $sql );
 
             // $id_old = null;
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_rp, $deskripsi_log);
+            Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
 
             $this->result['status'] = 1;
             $this->result['content'] = array('id' => $id);
@@ -2090,8 +2118,8 @@ class RealisasiPembayaran extends Public_Controller
 
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 3);
 
-            $m_nbbm = new \Model\Storage\NoBbm_model();
-            $m_nbbm->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->delete();
+            $m_nbbk = new \Model\Storage\NoBbk_model();
+            $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->delete();
 
             $m_rpd->where('id_header', $id)->delete();
             $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
@@ -2644,8 +2672,9 @@ class RealisasiPembayaran extends Public_Controller
 
     public function tes()
     {
-        $rekening = '3337773888';
-
-        cetak_r( substr($rekening, 1, 3) );
+        $id = 3;
+        $id_old = null;
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
     }
 }

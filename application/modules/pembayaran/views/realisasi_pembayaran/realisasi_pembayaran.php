@@ -55,6 +55,29 @@
 					</div>
 				</div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+					<div class="col-xs-4 no-padding">Bank</div>
+					<div class="col-xs-1 no-padding text-center">:</div>
+					<div class="col-xs-7 no-padding">
+						<!-- <input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" data-required="1"> -->
+						<select class="form-control bank">
+							<option value="">Pilih Bank</option>
+							<?php if ( !empty($bank) ): ?>
+								<?php foreach ($bank as $k_bank => $v_bank): ?>
+									<?php
+										$selected = null;
+										if ( isset($data['coa_bank']) && !empty($data['coa_bank']) ) {
+											if ( $v_bank['no_coa'] == $data['coa_bank'] ) {
+												$selected = 'selected';
+											}
+										}	
+									?>
+									<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" data-unit="<?php echo $v_bank['unit']; ?>" data-kode="<?php echo $v_bank['kode'] ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
+								<?php endforeach ?>
+							<?php endif ?>
+						</select>
+					</div>
+				</div>
+				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-4 no-padding">Tgl Bayar</div>
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
@@ -107,7 +130,7 @@
 					</div>
 				</div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<div class="col-xs-4 no-padding">No. Rekening</div>
+					<div class="col-xs-4 no-padding">No. Rekening Tujuan</div>
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
 						<?php if ( stristr($data['jenis_pembayaran'], 'supplier') !== FALSE ) { ?>

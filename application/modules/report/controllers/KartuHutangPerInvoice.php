@@ -408,9 +408,13 @@ class KartuHutangPerInvoice extends Public_Controller {
                                 0 as dn, 
                                 sum(rpd.potongan) as potongan, 
                                 sum(rpd.uang_muka) as uang_muka, 
-                                sum(rpd.transfer) as transfer, 
+                                sum(rpd.transfer+isnull(kpop.potongan_pph_23, 0)) as transfer, 
                                 0 as saldo 
                             from realisasi_pembayaran_det rpd
+                            left join
+                                konfirmasi_pembayaran_oa_pakan kpop
+                                on
+                                    rpd.no_bayar = kpop.nomor
                             left join
                                 realisasi_pembayaran rp
                                 on
@@ -822,9 +826,13 @@ class KartuHutangPerInvoice extends Public_Controller {
                         end as supplier,
                         rpd.no_bayar as nomor,
                         0 as debet,
-                        sum(rpd.potongan+rpd.uang_muka+rpd.transfer) as kredit,
+                        sum(rpd.potongan+rpd.uang_muka+rpd.transfer+isnull(kpop.potongan_pph_23, 0)) as kredit,
                         rpd.no_bayar as kode_trans
                     from realisasi_pembayaran_det rpd
+                    left join
+                        konfirmasi_pembayaran_oa_pakan kpop
+                        on
+                            rpd.no_bayar = kpop.nomor
                     left join
                         realisasi_pembayaran rp
                         on
@@ -952,7 +960,7 @@ class KartuHutangPerInvoice extends Public_Controller {
             ) data
             left join
                 (
-                    select p1.nomor, p1.nama from pelanggan p1
+                    select p1.nomor, p1.nama, p1.tipe from pelanggan p1
                     right join
                         (select max(id) as id, nomor from pelanggan p where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p2
                         on
@@ -960,7 +968,7 @@ class KartuHutangPerInvoice extends Public_Controller {
 
                     union all
                             
-                    select e1.nomor, e1.nama from ekspedisi e1
+                    select e1.nomor, e1.nama, 'ekspedisi' as tipe from ekspedisi e1
                     right join
                         (select max(id) as id, nomor from ekspedisi e group by nomor) e2
                         on
@@ -968,7 +976,7 @@ class KartuHutangPerInvoice extends Public_Controller {
 
                     union all
 
-                    select m1.nomor, m1.nama from mitra m1
+                    select m1.nomor, m1.nama, 'plasma' as tipe from mitra m1
                     right join
                         (select max(id) as id, nomor from mitra group by nomor) m2
                         on

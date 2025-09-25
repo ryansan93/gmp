@@ -607,29 +607,36 @@ class PenerimaanVoadipMobile extends Public_Controller {
             }
 
             $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
-            $now = $m_terima_voadip->getDate();
+            $d_terima_voadip = $m_terima_voadip->where('no_bbm', $no_bbm)->first();
 
-            $m_terima_voadip->id_kirim_voadip = $d_kirim_voadip->id;
-            $m_terima_voadip->tgl_trans = $now['waktu'];
-            $m_terima_voadip->tgl_terima = $params['tiba'];
-            $m_terima_voadip->no_bbm = $no_bbm;
-            $m_terima_voadip->save();
-
-            $id_terima = $m_terima_voadip->id;
-
-            foreach ($params['data_brg'] as $k_detail => $v_detail) {
-                $m_terima_voadip_detail = new \Model\Storage\TerimaVoadipDetail_model();
-                $m_terima_voadip_detail->id_header = $id_terima;
-                $m_terima_voadip_detail->item = $v_detail['kode_brg'];
-                $m_terima_voadip_detail->jumlah = $v_detail['jumlah'];
-                $m_terima_voadip_detail->kondisi = !empty($v_detail['kondisi']) ? strtoupper($v_detail['kondisi']) : null;
-                $m_terima_voadip_detail->save();
+            if ( !$d_terima_voadip ) {
+                $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
+                $now = $m_terima_voadip->getDate();
+    
+                $m_terima_voadip->id_kirim_voadip = $d_kirim_voadip->id;
+                $m_terima_voadip->tgl_trans = $now['waktu'];
+                $m_terima_voadip->tgl_terima = $params['tiba'];
+                $m_terima_voadip->no_bbm = $no_bbm;
+                $m_terima_voadip->save();
+    
+                $id_terima = $m_terima_voadip->id;
+    
+                foreach ($params['data_brg'] as $k_detail => $v_detail) {
+                    $m_terima_voadip_detail = new \Model\Storage\TerimaVoadipDetail_model();
+                    $m_terima_voadip_detail->id_header = $id_terima;
+                    $m_terima_voadip_detail->item = $v_detail['kode_brg'];
+                    $m_terima_voadip_detail->jumlah = $v_detail['jumlah'];
+                    $m_terima_voadip_detail->kondisi = !empty($v_detail['kondisi']) ? strtoupper($v_detail['kondisi']) : null;
+                    $m_terima_voadip_detail->save();
+                }
+    
+                $d_terima_voadip = $m_terima_voadip->where('id', $id_terima)->first();
+    
+                $deskripsi_log_terima_voadip = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/save', $d_terima_voadip, $deskripsi_log_terima_voadip);
+            } else {
+                $id_terima = $d_terima_voadip->id;
             }
-
-            $d_terima_voadip = $m_terima_voadip->where('id', $id_terima)->first();
-
-            $deskripsi_log_terima_voadip = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $d_terima_voadip, $deskripsi_log_terima_voadip);
 
             $this->result['status'] = 1;
             // $this->result['content'] = array('id_terima' => $id_terima);

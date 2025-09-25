@@ -764,6 +764,8 @@ class OngkosAngkutPindahPakan extends Public_Controller
             // $sql = "exec insert_jurnal 'OA PAKAN', '".$params['no_sj']."', NULL, ".$params['ongkos_angkut'].", 'oa_pindah_pakan', ".$m_oap->id.", NULL, 1";
             // $d_conf = $m_conf->hydrateRaw( $sql );
 
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $m_oap->id, null, 1);
+
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_oap, $deskripsi_log);
 
@@ -798,6 +800,8 @@ class OngkosAngkutPindahPakan extends Public_Controller
             // $sql = "exec insert_jurnal 'OA PAKAN', '".$params['no_sj']."', NULL, ".$params['ongkos_angkut'].", 'oa_pindah_pakan', ".$params['id'].", ".$params['id'].", 2";
             // $d_conf = $m_conf->hydrateRaw( $sql );
 
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 2);
+
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_oap, $deskripsi_log);
 
@@ -823,6 +827,8 @@ class OngkosAngkutPindahPakan extends Public_Controller
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'oa_pindah_pakan', ".$params['id'].", ".$params['id'].", 3";
             // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 3);
 
             $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_oap, $deskripsi_log);

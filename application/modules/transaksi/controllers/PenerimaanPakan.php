@@ -1351,16 +1351,24 @@ class PenerimaanPakan extends Public_Controller {
     {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select tp.id from terima_pakan tp 
-            left join
-                kirim_pakan kp
-                on
-                    tp.id_kirim_pakan = kp.id
-            where
-                kp.jenis_kirim = 'opkg'
-            order by
-                tp.tgl_terima asc,
-                tp.id asc
+            select tp.id from terima_pakan tp where
+            id in
+            (
+            12,
+            13,
+            67,
+            72,
+            74,
+            90,
+            108,
+            109,
+            131,
+            132,
+            166,
+            167,
+            189,
+            190
+            )
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

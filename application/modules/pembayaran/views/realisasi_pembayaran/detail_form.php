@@ -17,6 +17,14 @@
 	</div>
 	<div class="col-xs-12 no-padding">
 		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+			<div class="col-xs-2 no-padding"><label class="control-label text-left">Bank</label></div>
+			<div class="col-xs-10 no-padding">
+				<label class="control-label text-left"><?php echo ': '.(!empty($data['nama_bank']) ? $data['nama_bank'] : '-'); ?></label>
+			</div>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding">
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 			<div class="col-xs-2 no-padding"><label class="control-label text-left">Jumlah Potongan</label></div>
 			<div class="col-xs-10 no-padding">
 				<label class="control-label text-left"><?php echo ': '.angkaDecimal($data['total_potongan']); ?></label>

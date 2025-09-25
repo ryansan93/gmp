@@ -599,29 +599,36 @@ class PenerimaanPakanMobile extends Public_Controller {
             }
 
             $m_terima_pakan = new \Model\Storage\TerimaPakan_model();
-            $now = $m_terima_pakan->getDate();
+            $d_terima_pakan = $m_terima_pakan->where('no_bbm', $no_bbm)->first();
 
-            $m_terima_pakan->id_kirim_pakan = $d_kirim_pakan->id;
-            $m_terima_pakan->tgl_trans = $now['waktu'];
-            $m_terima_pakan->tgl_terima = $params['tiba'];
-            $m_terima_pakan->no_bbm = $no_bbm;
-            $m_terima_pakan->save();
-
-            $id_terima = $m_terima_pakan->id;
-
-            foreach ($params['data_brg'] as $k_detail => $v_detail) {
-                $m_terima_pakan_detail = new \Model\Storage\TerimaPakanDetail_model();
-                $m_terima_pakan_detail->id_header = $id_terima;
-                $m_terima_pakan_detail->item = $v_detail['kode_brg'];
-                $m_terima_pakan_detail->jumlah = $v_detail['jumlah'];
-                $m_terima_pakan_detail->kondisi = !empty($v_detail['kondisi']) ? strtoupper($v_detail['kondisi']) : null;
-                $m_terima_pakan_detail->save();
+            if ( !$d_terima_pakan ) {
+                $m_terima_pakan = new \Model\Storage\TerimaPakan_model();
+                $now = $m_terima_pakan->getDate();
+    
+                $m_terima_pakan->id_kirim_pakan = $d_kirim_pakan->id;
+                $m_terima_pakan->tgl_trans = $now['waktu'];
+                $m_terima_pakan->tgl_terima = $params['tiba'];
+                $m_terima_pakan->no_bbm = $no_bbm;
+                $m_terima_pakan->save();
+    
+                $id_terima = $m_terima_pakan->id;
+    
+                foreach ($params['data_brg'] as $k_detail => $v_detail) {
+                    $m_terima_pakan_detail = new \Model\Storage\TerimaPakanDetail_model();
+                    $m_terima_pakan_detail->id_header = $id_terima;
+                    $m_terima_pakan_detail->item = $v_detail['kode_brg'];
+                    $m_terima_pakan_detail->jumlah = $v_detail['jumlah'];
+                    $m_terima_pakan_detail->kondisi = !empty($v_detail['kondisi']) ? strtoupper($v_detail['kondisi']) : null;
+                    $m_terima_pakan_detail->save();
+                }
+    
+                $d_terima_pakan = $m_terima_pakan->where('id', $id_terima)->first();
+    
+                $deskripsi_log_terima_pakan = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/save', $d_terima_pakan, $deskripsi_log_terima_pakan);
+            } else {
+                $id_terima = $d_terima_pakan->id;
             }
-
-            $d_terima_pakan = $m_terima_pakan->where('id', $id_terima)->first();
-
-            $deskripsi_log_terima_pakan = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $d_terima_pakan, $deskripsi_log_terima_pakan);
 
             $this->result['status'] = 1;
             // $this->result['content'] = array('id_terima' => $id_terima);

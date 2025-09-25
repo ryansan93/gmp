@@ -226,10 +226,10 @@
 	<div class="col-lg-12 detailed">
 		<form role="form" class="form-horizontal">
 			<div class="col-xs-6 no-padding" style="padding-right: 5px;">
-				<button type="button" class="btn btn-primary pull-right col-xs-12" onclick="pdm.edit()"><i class="fa fa-save"></i> Simpan Perubahan</button>
+				<button type="button" class="btn btn-primary pull-right col-xs-12" onclick="pdm.edit(this)" data-id="<?php echo $data['id']; ?>"><i class="fa fa-save"></i> Simpan Perubahan</button>
 			</div>
 			<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-				<button type="button" class="btn btn-danger pull-right col-xs-12" onclick="pdm.change_tab(this)" data-id="<?php echo $data['no_order']; ?>" data-noreg="<?php echo $data['noreg']; ?>" data-nomor="<?php echo $data['nomor']; ?>" data-edit="" data-href="transaksi"><i class="fa fa-times"></i> Batal</button>
+				<button type="button" class="btn btn-danger pull-right col-xs-12" onclick="pdm.change_tab(this)" data-id="<?php echo $data['id']; ?>" data-noreg="<?php echo $data['noreg']; ?>" data-nomor="<?php echo $data['nomor']; ?>" data-edit="" data-href="transaksi"><i class="fa fa-times"></i> Batal</button>
 			</div>
 		</form>
 	</div>

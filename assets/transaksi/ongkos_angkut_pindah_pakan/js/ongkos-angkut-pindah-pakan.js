@@ -263,7 +263,8 @@ var oap = {
 				if ( result ) {
 					var params = {
 						'id': $(elm).attr('data-id'),
-						'no_sj': $(div).find('.no_sj').select2('val'),
+						// 'no_sj': $(div).find('.no_sj').select2('val'),
+						'no_sj': $(div).find('.no_sj').val(),
 						'ongkos_angkut': numeral.unformat( $(div).find('.ongkos_angkut').val() ),
 						'ekspedisi': $(div).find('.ekspedisi').val().toUpperCase(),
 						'no_polisi': $(div).find('.no_polisi').val().toUpperCase(),
