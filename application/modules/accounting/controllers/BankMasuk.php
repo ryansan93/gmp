@@ -73,9 +73,10 @@ class BankMasuk extends Public_Controller {
 
         $start_date = $params['start_date'];
         $end_date = $params['end_date'];
+        $bank = $params['bank'];
 
         $m_km = new \Model\Storage\Km_model();
-        $d_km = $m_km->getBmByDate($start_date, $end_date);
+        $d_km = $m_km->getBmByDate($start_date, $end_date, $bank);
 
         $content['data'] = $d_km;
         $html = $this->load->view($this->pathView . 'list', $content, true);
@@ -107,8 +108,11 @@ class BankMasuk extends Public_Controller {
         $start_date = substr(date('Y-m-d'), 0, 7).'-01';
         $end_date = date("Y-m-t", strtotime($start_date));
 
+        $m_coa = new \Model\Storage\Coa_model();
+
         $content['start_date'] = $start_date;
         $content['end_date'] = $end_date;
+        $content['bank'] = $m_coa->getDataBank(1, $this->userid);
         $content['akses'] = $this->hakAkses;
         $html = $this->load->view($this->pathView . 'riwayat', $content, TRUE);
 
@@ -124,7 +128,7 @@ class BankMasuk extends Public_Controller {
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
         $content['coa'] = $m_coa->getDataCoa();
-        $content['bank'] = $m_coa->getDataBank();
+        $content['bank'] = $m_coa->getDataBank(1, $this->userid);
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
@@ -170,7 +174,7 @@ class BankMasuk extends Public_Controller {
         $d_kmi = $m_kmi->getKmItem( $kode );
 
         $content['coa'] = $m_coa->getDataCoa();
-        $content['bank'] = $m_coa->getDataBank();
+        $content['bank'] = $m_coa->getDataBank(1, $this->userid);
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );

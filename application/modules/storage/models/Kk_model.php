@@ -51,7 +51,7 @@ class Kk_model extends Conf{
 		return $data;
 	}
 
-	public function getBkByDate($start_date, $end_date) {
+	public function getBkByDate($start_date, $end_date, $bank) {
 		$data = null;
 
 		$sql = "
@@ -74,6 +74,7 @@ class Kk_model extends Conf{
 					k.coa_bank = c.coa
 			where
 				k.tgl_kk between '".$start_date."' and '".$end_date."' and
+				k.coa_bank = '".$bank."' and
 				c.bank = 1
 			order by
 				k.tgl_kk desc,
@@ -88,7 +89,7 @@ class Kk_model extends Conf{
 		return $data;
 	}
 
-	public function getKkByDate($start_date, $end_date) {
+	public function getKkByDate($start_date, $end_date, $bank) {
 		$data = null;
 
 		$sql = "
@@ -111,6 +112,7 @@ class Kk_model extends Conf{
 					k.coa_bank = c.coa
 			where
 				k.tgl_kk between '".$start_date."' and '".$end_date."' and
+				k.coa_bank = '".$bank."' and
 				c.kas = 1
 			order by
 				k.tgl_kk desc,

@@ -73,9 +73,10 @@ class KasKeluar extends Public_Controller {
 
         $start_date = $params['start_date'];
         $end_date = $params['end_date'];
+        $bank = $params['bank'];
 
         $m_kk = new \Model\Storage\Kk_model();
-        $d_kk = $m_kk->getKkByDate($start_date, $end_date);
+        $d_kk = $m_kk->getKkByDate($start_date, $end_date, $bank);
 
         $content['data'] = $d_kk;
         $html = $this->load->view($this->pathView . 'list', $content, true);
@@ -107,8 +108,11 @@ class KasKeluar extends Public_Controller {
         $start_date = substr(date('Y-m-d'), 0, 7).'-01';
         $end_date = date("Y-m-t", strtotime($start_date));
 
+        $m_coa = new \Model\Storage\Coa_model();
+
         $content['start_date'] = $start_date;
         $content['end_date'] = $end_date;
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
         $content['akses'] = $this->hakAkses;
         $html = $this->load->view($this->pathView . 'riwayat', $content, TRUE);
 
@@ -124,7 +128,7 @@ class KasKeluar extends Public_Controller {
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
         $content['coa'] = $m_coa->getDataCoa();
-        $content['bank'] = $m_coa->getDataKas();
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
         $content['supplier'] = $m_supl->getDataSupplier();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
@@ -170,7 +174,7 @@ class KasKeluar extends Public_Controller {
         $d_kki = $m_kki->getKkItem( $kode );
         
         $content['coa'] = $m_coa->getDataCoa();
-        $content['bank'] = $m_coa->getDataKas();
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
         $content['supplier'] = $m_supl->getDataSupplier();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );

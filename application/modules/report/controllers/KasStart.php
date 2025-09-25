@@ -46,7 +46,7 @@ class KasStart extends Public_Controller {
 
             $m_coa = new \Model\Storage\Coa_model();
 
-            $content['kas'] = $m_coa->getDataKas();
+            $content['kas'] = $m_coa->getDataKas(1, $this->userid);
             $content['periode'] = $periode;
             $content['perusahaan'] = $this->getPerusahaan();
             $content['title_menu'] = 'Laporan Kas';
@@ -116,6 +116,16 @@ class KasStart extends Public_Controller {
         $sql_kas = null;
         if ( stristr($kas, 'all') === false ) {
             $sql_kas = "where data.kas = '".$kas."'";
+        } else {
+            $m_coa = new \Model\Storage\Coa_model();
+            $kas = $m_coa->getDataKas(1, $this->userid);
+
+            $arr_kas = null;
+            foreach ($kas as $key => $value) {
+                $arr_kas[] = $value['no_coa'];
+            }
+
+            $sql_kas = "where data.kas in ('".implode("', '", $arr_kas)."')";
         }
 
         $m_conf = new \Model\Storage\Conf();

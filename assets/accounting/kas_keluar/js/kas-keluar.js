@@ -53,6 +53,7 @@ var kk = {
 
         $('select.unit').select2();
         $('select.bank').select2();
+        $('select.bank_riwayat').select2();
 
         $('select.no_supplier').select2().on("select2:select", function (e) {
             kk.getNamaSupplier();
@@ -357,7 +358,8 @@ var kk = {
 
             var params = {
                 'start_date': dateSQL( $(dcontent).find('#StartDate').data('DateTimePicker').date() ),
-                'end_date': dateSQL( $(dcontent).find('#EndDate').data('DateTimePicker').date() )
+                'end_date': dateSQL( $(dcontent).find('#EndDate').data('DateTimePicker').date() ),
+                'bank': $(dcontent).find('select.bank_riwayat').select2().val().toUpperCase()
             };
 
             // if ($.fn.dataTable.isDataTable('.tbl_riwayat')) {

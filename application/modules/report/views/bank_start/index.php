@@ -40,7 +40,7 @@
         </div>
 		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 			<div class="col-xs-6 no-padding" style="padding-right: 5px;">
-				<div class="col-xs-12 no-padding"><label class="control-label">Kas</label></div>
+				<div class="col-xs-12 no-padding"><label class="control-label">Bank</label></div>
 				<div class="col-xs-12 no-padding">
 					<select class="form-control kas" data-required="1">
 						<option value="all">ALL</option>

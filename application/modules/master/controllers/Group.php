@@ -147,6 +147,8 @@ class Group extends Public_Controller
 
 	public function exec_edit($params)
 	{
+		// cetak_r( $params, 1 );
+		
 		$m_grp = new \Model\Storage\Group_model();
 
 		$id_group = $params['id_group'];
@@ -161,7 +163,10 @@ class Group extends Public_Controller
 		foreach ($params['detail_group'] as $key => $val) {
 			$m_dgrp = new \Model\Storage\DetGroup_model();
 
-			$id_detgroup = $m_dgrp->getNextId();
+			$id_detgroup = $m_dgrp->getNextIdRibuan();
+
+			// cetak_r( $id_detgroup );
+			// cetak_r( $id_group );
 
 			$m_dgrp->id_detgroup = $id_detgroup;
 			$m_dgrp->id_detfitur = $val['id_detfitur'];

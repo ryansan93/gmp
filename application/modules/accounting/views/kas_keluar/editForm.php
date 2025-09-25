@@ -36,6 +36,26 @@
 		</div>
 	</div> -->
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Nama Kas</label></div>
+		<div class="col-xs-4 no-padding">
+			<!-- <input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" value="<?php echo $data['nama_bank']; ?>" data-required="1"> -->
+			<select class="form-control bank">
+				<!-- <option value="">Pilih Kas</option> -->
+				<?php if ( !empty($bank) ): ?>
+					<?php foreach ($bank as $k_bank => $v_bank): ?>
+						<?php
+							$selected = null;
+							if ( $v_bank['no_coa'] == $data['coa_bank'] ) {
+								$selected = 'selected';
+							}	
+						?>
+						<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" data-unit="<?php echo $v_bank['unit']; ?>" data-kode="<?php echo $v_bank['kode'] ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
+					<?php endforeach ?>
+				<?php endif ?>
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Kas Keluar</label></div>
 		<div class="col-xs-4 no-padding">
 			<div class="input-group date datetimepicker" name="tglKk" id="TglKk">
@@ -75,26 +95,6 @@
 		<div class="col-xs-3 no-padding"><label class="control-label">Keterangan</label></div>
 		<div class="col-xs-9 no-padding">
 			<textarea class="form-control keterangan"><?php echo $data['keterangan']; ?></textarea>
-		</div>
-	</div>
-	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Nama Kas</label></div>
-		<div class="col-xs-4 no-padding">
-			<!-- <input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" value="<?php echo $data['nama_bank']; ?>" data-required="1"> -->
-			<select class="form-control bank">
-				<option value="">Pilih Kas</option>
-				<?php if ( !empty($bank) ): ?>
-					<?php foreach ($bank as $k_bank => $v_bank): ?>
-						<?php
-							$selected = null;
-							if ( $v_bank['no_coa'] == $data['coa_bank'] ) {
-								$selected = 'selected';
-							}	
-						?>
-						<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" data-unit="<?php echo $v_bank['unit']; ?>" data-kode="<?php echo $v_bank['kode'] ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
-					<?php endforeach ?>
-				<?php endif ?>
-			</select>
 		</div>
 	</div>
 	<!-- <div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
