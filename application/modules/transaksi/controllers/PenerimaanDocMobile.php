@@ -506,7 +506,7 @@ class PenerimaanDocMobile extends Public_Controller {
             $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
 
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-            $d_terima_doc = $m_terima_doc->where('no_bbm')->first();
+            $d_terima_doc = $m_terima_doc->where('no_bbm', $no_bbm)->first();
 
             if ( !$d_terima_doc ) {
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
@@ -738,7 +738,7 @@ class PenerimaanDocMobile extends Public_Controller {
     public function tes() {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select * from terima_doc td where no_order is null
+            select * from terima_doc td where id = 117
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -752,7 +752,7 @@ class PenerimaanDocMobile extends Public_Controller {
                 // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 3, null, null";
                 // $conf->hydrateRaw($sql);
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 3);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
             }
         }
             
