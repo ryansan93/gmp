@@ -567,6 +567,7 @@ class PenerimaanDocMobile extends Public_Controller {
             }
 
             $this->result['status'] = 1;
+            $this->result['content'] = array('id' => $id);
             $this->result['message'] = 'Data Terima DOC berhasil disimpan.';
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();

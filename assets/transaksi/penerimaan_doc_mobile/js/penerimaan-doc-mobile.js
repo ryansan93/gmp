@@ -361,7 +361,7 @@ var pdm = {
 			                hideLoading();
 			                if ( data.status == 1 ) {
 			                    bootbox.alert( data.message, function() {
-			                        pdm.load_form(no_order, null, 'transaksi');
+			                        pdm.load_form(data.content.id, null, 'transaksi');
 			                        // location.reload();
 			                    });
 			                } else {
