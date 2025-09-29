@@ -53,18 +53,21 @@ class RealisasiChickIn extends Public_Controller {
         }
     }
 
-    public function getLists() {
-        $params = $this->input->get('params');
-
-        // cetak_r( $params, 1 );
-
-        $start_date = $params['start_date'];
-        $end_date = $params['end_date'];
-        $unit = $params['unit'];
-
+    public function getData($start_date, $end_date, $unit, $jenis) {
         $sql_unit = null;
         if ( !in_array('all', $unit) ) {
-            $sql_unit = "and data.kode_unit in ('".implode("', '", $unit)."')";
+            $sql_unit = "and w.kode in ('".implode("', '", $unit)."')";
+        }
+
+        $sql_periode = "
+            where
+                rs.tgl_docin between '".$start_date."' and '".$end_date."'
+        ";
+        if ( stristr($jenis, 'realisasi') !== FALSE ) {
+            $sql_periode = "
+                where
+                    td.datang between '".$start_date."' and '".$end_date."'
+            ";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -156,8 +159,8 @@ class RealisasiChickIn extends Public_Controller {
                 ) td
                 on
                     rs.noreg = td.noreg
-            where
-                rs.tgl_docin between '".$start_date."' and '".$end_date."'
+            ".$sql_periode."
+            ".$sql_unit."
             order by
                 w.kode asc,
                 rs.tgl_docin asc,
@@ -171,10 +174,209 @@ class RealisasiChickIn extends Public_Controller {
             $data = $d_conf->toArray();
         }
 
+        return $data;
+    }
+
+    public function getLists() {
+        $params = $this->input->get('params');
+
+        // cetak_r( $params, 1 );
+
+        $start_date = $params['start_date'].' 00:00:00.001';
+        $end_date = $params['end_date'].' 23:53:59.999';
+        $unit = $params['unit'];
+        $jenis = $params['jenis'];
+
+        $data = $this->getData($start_date, $end_date, $unit, $jenis);
+
         $content['data'] = $data;
 
         $html = $this->load->view($this->pathView.'list', $content);
 
         echo $html;
+    }
+
+    public function encryptParams()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $params_encrypt = exEncrypt( json_encode($params) );
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params_encrypt;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function exportExcelUsingSpreadSheet( $file_name, $arr_header, $arr_column ) {
+        /* Spreadsheet Init */
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        /* Excel Header */
+        for ($i=0; $i < count($arr_header); $i++) { 
+            $huruf = toAlpha($i+1);
+
+            $posisi = $huruf.'1';
+            $sheet->setCellValue($posisi, $arr_header[$i]);
+
+            $styleBold = [
+                'font' => [
+                    'bold' => true,
+                ]
+            ];
+            $spreadsheet->getActiveSheet()->getStyle($posisi)->applyFromArray($styleBold);
+        }
+
+        $baris = 2;
+        if ( !empty($arr_column) && count($arr_column) ) {
+            for ($i=0; $i < count($arr_column); $i++) {
+                for ($j=0; $j < count($arr_header); $j++) {
+                    $huruf = toAlpha($j+1);
+
+                    $data = $arr_column[ $i ][ $arr_header[ $j ] ];
+
+                    if ( !empty($data['value']) ) {
+                        if ( isset($data['rowspan']) && $data['rowspan'] > 1 ) {
+                            $spreadsheet->getActiveSheet()->mergeCells($huruf.$baris.':'.$huruf.(($baris+$data['rowspan'])-1));
+                        }
+
+                        if ( $data['data_type'] == 'string' ) {
+                            $sheet->setCellValue($huruf.$baris, strtoupper($data['value']));
+                        }
+
+                        if ( $data['data_type'] == 'nik' ) {
+                            $sheet->getCell($huruf.$baris)->setValueExplicit($data['value'], DataType::TYPE_STRING);
+                            // $sheet->setCellValue($huruf.$baris, strtoupper($data['value']));
+                            // $spreadsheet->getActiveSheet()->getStyle('A9')
+                            //             ->getNumberFormat()
+                            //             ->setFormatCode(
+                            //                 '00000000000'
+                            //             );
+                        }
+
+                        if ( $data['data_type'] == 'text' ) {
+                            $sheet->setCellValue($huruf.$baris, strtoupper($data['value']));
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_GENERAL);
+                        }
+
+                        if ( $data['data_type'] == 'date' ) {
+                            $dt = Date::PHPToExcel(DateTime::createFromFormat('!Y-m-d', substr($data['value'], 0, 10)));
+                            $sheet->setCellValue($huruf.$baris, $dt);
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
+                        }
+
+                        if ( $data['data_type'] == 'datetime' ) {
+                            $dt = Date::PHPToExcel(new DateTimeImmutable($data['value']));
+                            $sheet->setCellValue($huruf.$baris, $dt);
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_DATE_XLSX14);
+                        }
+
+                        if ( $data['data_type'] == 'integer' ) {
+                            $sheet->setCellValue($huruf.$baris, $data['value']);
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_NUMBER);
+                        }
+
+                        if ( $data['data_type'] == 'decimal2' ) {
+                            $sheet->setCellValue($huruf.$baris, $data['value']);
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED2);
+                        }
+                    }
+                }
+
+                $baris++;
+            }
+        } else {
+            $range1 = 'A'.$baris;
+            $range2 = toAlpha(count($arr_header)).$baris;
+
+            $spreadsheet->getActiveSheet()->mergeCells("$range1:$range2");
+            $sheet->setCellValue($range1, 'Data tidak ditemukan.');
+        }
+
+        $styleArray = [
+            'borders' => [
+                'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+            ],
+        ];
+        
+        $spreadsheet->getActiveSheet()->getStyle('A1:'.toAlpha(count($arr_header)).$baris)->applyFromArray($styleArray, false);
+
+        /* Excel File Format */
+        $writer = new Xlsx($spreadsheet);
+        $filename = $file_name;
+        $writer->save('export_excel/'.$filename);
+
+        // cetak_r( FCPATH.'/export_excel/', 1 );
+
+        $this->load->helper('download');
+        $data = file_get_contents(FCPATH.'/export_excel/'.$filename);
+
+        // cetak_r( $filename, 1);
+        // cetak_r( $data );
+
+        force_download($filename, $data);
+    }
+
+    public function exportExcel($params_encrypt)
+    {
+        $params = json_decode( exDecrypt($params_encrypt), true );
+
+        $start_date = $params['start_date'].' 00:00:00.001';
+        $end_date = $params['end_date'].' 23:53:59.999';
+        $unit = $params['unit'];
+        $jenis = $params['jenis'];
+
+        $data = $this->getData($start_date, $end_date, $unit, $jenis);
+            
+        $filename = 'REPORT_CHICK_IN_BY_'.strtoupper($jenis).'_'.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xlsx';
+
+        $arr_header = array('Unit', 'Nama', 'Kandang', 'Alamat', 'Noreg', 'Tanggal Rencana', 'Box Rencana', 'Ekor Rencana', 'Tanggal Realisasi', 'Box Realisasi', 'Ekor Realisasi');
+        $arr_column = null;
+        if ( !empty($data) ) {
+            $idx = 0;
+            foreach ($data as $key => $value) {
+                $arr_column[ $idx ] = array(
+                    'Unit' => array('value' => strtoupper($value['kode_unit']), 'data_type' => 'string'),
+                    'Nama' => array('value' => strtoupper($value['nama_plasma']), 'data_type' => 'string'),
+                    'Kandang' => array('value' => strtoupper($value['kandang']), 'data_type' => 'string'),
+                    'Alamat' => array('value' => strtoupper($value['alamat']), 'data_type' => 'string'),
+                    'Noreg' => array('value' => strtoupper($value['noreg']), 'data_type' => 'string'),
+                    'Tanggal Rencana' => array('value' => $value['rcn_tgl_docin'], 'data_type' => 'date'),
+                    'Box Rencana' => array('value' => $value['rcn_jml_box'], 'data_type' => 'integer'),
+                    'Ekor Rencana' => array('value' => $value['rcn_jml_ekor'], 'data_type' => 'integer'),
+                    'Tanggal Realisasi' => array('value' => $value['real_tgl_docin'], 'data_type' => 'datetime'),
+                    'Box Realisasi' => array('value' => $value['real_jml_box'], 'data_type' => 'integer'),
+                    'Ekor Realisasi' => array('value' => $value['real_jml_ekor'], 'data_type' => 'integer')
+                );
+
+                $idx++;
+            }
+        }
+
+        $this->exportExcelUsingSpreadSheet( $filename, $arr_header, $arr_column );
+    }
+
+    public function tes() {
+        $dt = DateTime::createFromFormat('!Y-m-d H:i:s', '2025-09-29 13:05:00');
+
+        cetak_r( $dt );
     }
 }

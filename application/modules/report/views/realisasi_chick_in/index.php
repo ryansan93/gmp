@@ -1,7 +1,16 @@
 <div class="row">
 	<div class="col-xs-12">
         <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-            <div class="col-xs-12 no-padding"><label class="control-label">Minggu</label></div>
+            <div class="col-xs-12 no-padding"><label class="control-label">Berdasarkan</label></div>
+            <div class="col-xs-12 no-padding">
+                <select class="form-control jenis">
+                    <option value="rencana">Rencana Chick In</option>
+                    <option value="realisasi">Realisasi Chick In</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+            <div class="col-xs-12 no-padding"><label class="control-label">Periode</label></div>
             <div class="col-xs-12 no-padding">
                 <div class="col-xs-6 no-padding" style="padding-right: 5px;">
                     <div class="input-group date datetimepicker" name="startDate" id="StartDate">
@@ -68,6 +77,10 @@
                     </tbody>
                 </table>
             </small>
+        </div>
+        <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+        <div class="col-xs-12 no-padding">
+            <button type="button" class="btn btn-default pull-right" onclick="rci.encryptParams()"><i class="fa fa-file-excel-o"></i> Export Excel</button>
         </div>
 	</div>
 </div>
