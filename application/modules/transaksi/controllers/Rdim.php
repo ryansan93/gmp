@@ -1604,6 +1604,33 @@ class Rdim extends Public_Controller
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "
+                select kdg1.*, kdg2.nim from kandang kdg1
+                right join
+                    (
+                        select max(kdg.id) as id, mm.nim, kdg.kandang from kandang kdg
+                        left join
+                            mitra_mapping mm
+                            on
+                                kdg.mitra_mapping = mm.id
+                        group by
+                            mm.nim,
+                            kdg.kandang
+                    ) kdg2
+                    on
+                        kdg1.id = kdg2.id
+                where
+                    kdg2.nim = '".$v_data['d_mitra_mapping']['nim']."' and
+                    kdg1.kandang = ".$v_data['d_kandang']['kandang']."
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $grup = null;
+            if ( $d_conf->count() > 0 ) {
+                $grup = $d_conf->toArray()[0]['grup'];
+            }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
                 /*
                 select sum(k.ekor_kapasitas) as populasi from kandang k
                 where
@@ -1613,13 +1640,29 @@ class Rdim extends Public_Controller
 
                 select sum(k.ekor_kapasitas) as populasi from rdim_submit rs
                 left join
-                    kandang k
+                    (
+                        select kdg1.*, kdg2.nim from kandang kdg1
+                        right join
+                            (
+                                select max(kdg.id) as id, mm.nim, kdg.kandang from kandang kdg
+                                left join
+                                    mitra_mapping mm
+                                    on
+                                        kdg.mitra_mapping = mm.id
+                                group by
+                                    mm.nim,
+                                    kdg.kandang
+                            ) kdg2
+                            on
+                                kdg1.id = kdg2.id
+                    ) k
                     on
-                        rs.kandang = k.id
+                        rs.nim = k.nim and
+                        cast(SUBSTRING(rs.noreg, 10, 2) as int) = k.kandang                    
                 where
                     rs.nim = '".$v_data['d_mitra_mapping']['nim']."' and
                     rs.tgl_docin between '".$start_date."' and '".$end_date."' and
-                    k.grup = ".$v_data['d_kandang']['grup']."
+                    k.grup = ".$grup."
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
