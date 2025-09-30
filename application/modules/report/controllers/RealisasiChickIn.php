@@ -74,6 +74,7 @@ class RealisasiChickIn extends Public_Controller {
         $sql = "
             select
                 m.nama as nama_plasma,
+                mm.nim,
                 k.kandang,
                 w.kode as kode_unit,
                 rs.noreg,
@@ -350,19 +351,20 @@ class RealisasiChickIn extends Public_Controller {
             
         $filename = 'REPORT_CHICK_IN_BY_'.strtoupper($jenis).'_'.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xlsx';
 
-        $arr_header = array('Unit', 'Nama', 'Kandang', 'Alamat', 'Kecamatan', 'Kabupaten/Kota', 'Noreg', 'Tanggal Rencana', 'Box Rencana', 'Ekor Rencana', 'Tanggal Realisasi', 'Box Realisasi', 'Ekor Realisasi');
+        $arr_header = array('Unit', 'Nim', 'Noreg', 'Nama', 'Kandang', 'Alamat', 'Kecamatan', 'Kabupaten/Kota', 'Tanggal Rencana', 'Box Rencana', 'Ekor Rencana', 'Tanggal Realisasi', 'Box Realisasi', 'Ekor Realisasi');
         $arr_column = null;
         if ( !empty($data) ) {
             $idx = 0;
             foreach ($data as $key => $value) {
                 $arr_column[ $idx ] = array(
                     'Unit' => array('value' => strtoupper($value['kode_unit']), 'data_type' => 'string'),
+                    'Nim' => array('value' => strtoupper($value['nim']), 'data_type' => 'string'),
+                    'Noreg' => array('value' => strtoupper($value['noreg']), 'data_type' => 'string'),
                     'Nama' => array('value' => strtoupper($value['nama_plasma']), 'data_type' => 'string'),
                     'Kandang' => array('value' => strtoupper($value['kandang']), 'data_type' => 'string'),
                     'Alamat' => array('value' => strtoupper($value['alamat']), 'data_type' => 'string'),
                     'Kecamatan' => array('value' => strtoupper($value['kecamatan']), 'data_type' => 'string'),
                     'Kabupaten/Kota' => array('value' => strtoupper($value['kab_kota']), 'data_type' => 'string'),
-                    'Noreg' => array('value' => strtoupper($value['noreg']), 'data_type' => 'string'),
                     'Tanggal Rencana' => array('value' => $value['rcn_tgl_docin'], 'data_type' => 'date'),
                     'Box Rencana' => array('value' => $value['rcn_jml_box'], 'data_type' => 'integer'),
                     'Ekor Rencana' => array('value' => $value['rcn_jml_ekor'], 'data_type' => 'integer'),
