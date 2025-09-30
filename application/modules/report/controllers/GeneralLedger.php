@@ -1,5 +1,12 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet as Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border as Border;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat as NumberFormat;
+use PhpOffice\PhpSpreadsheet\Shared\Date as Date;
+
 class GeneralLedger extends Public_Controller {
 
     private $pathView = 'report/general_ledger/';
@@ -308,7 +315,7 @@ class GeneralLedger extends Public_Controller {
         echo $html;
     }
 
-    public function excryptParams()
+    public function encryptParams()
     {
         $params = $this->input->post('params');
 
@@ -322,6 +329,129 @@ class GeneralLedger extends Public_Controller {
         }
 
         display_json( $this->result );
+    }
+
+    public function exportExcelUsingSpreadSheet( $file_name, $arr_header, $arr_column ) {
+        /* Spreadsheet Init */
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        /* Excel Header */
+        for ($i=0; $i < count($arr_header); $i++) { 
+            $huruf = toAlpha($i+1);
+
+            $posisi = $huruf.'1';
+            $sheet->setCellValue($posisi, $arr_header[$i]);
+
+            $styleBold = [
+                'font' => [
+                    'bold' => true,
+                ]
+            ];
+            $spreadsheet->getActiveSheet()->getStyle($posisi)->applyFromArray($styleBold);
+        }
+
+        $baris = 2;
+        if ( !empty($arr_column) && count($arr_column) ) {
+            for ($i=0; $i < count($arr_column); $i++) {
+                for ($j=0; $j < count($arr_header); $j++) {
+                    $huruf = toAlpha($j+1);
+
+                    $data = $arr_column[ $i ][ $arr_header[ $j ] ];
+
+                    if ( !empty($data['value']) ) {
+                        if ( isset($data['rowspan']) && $data['rowspan'] > 1 ) {
+                            $spreadsheet->getActiveSheet()->mergeCells($huruf.$baris.':'.$huruf.(($baris+$data['rowspan'])-1));
+                        }
+
+                        if ( $data['data_type'] == 'string' ) {
+                            $sheet->setCellValue($huruf.$baris, strtoupper($data['value']));
+                        }
+
+                        if ( $data['data_type'] == 'nik' ) {
+                            $sheet->getCell($huruf.$baris)->setValueExplicit($data['value'], DataType::TYPE_STRING);
+                            // $sheet->setCellValue($huruf.$baris, strtoupper($data['value']));
+                            // $spreadsheet->getActiveSheet()->getStyle('A9')
+                            //             ->getNumberFormat()
+                            //             ->setFormatCode(
+                            //                 '00000000000'
+                            //             );
+                        }
+
+                        if ( $data['data_type'] == 'text' ) {
+                            $sheet->setCellValue($huruf.$baris, strtoupper($data['value']));
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_GENERAL);
+                        }
+
+                        if ( $data['data_type'] == 'date' ) {
+                            $dt = Date::PHPToExcel(DateTime::createFromFormat('!Y-m-d', substr($data['value'], 0, 10)));
+                            $sheet->setCellValue($huruf.$baris, $dt);
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
+                        }
+
+                        if ( $data['data_type'] == 'datetime' ) {
+                            $dt = Date::PHPToExcel(new DateTimeImmutable($data['value']));
+                            $sheet->setCellValue($huruf.$baris, $dt);
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_DATE_XLSX14);
+                        }
+
+                        if ( $data['data_type'] == 'integer' ) {
+                            $sheet->setCellValue($huruf.$baris, $data['value']);
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_NUMBER);
+                        }
+
+                        if ( $data['data_type'] == 'decimal2' ) {
+                            $sheet->setCellValue($huruf.$baris, $data['value']);
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)
+                                        ->getNumberFormat()
+                                        ->setFormatCode(NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED2);
+                        }
+                    }
+                }
+
+                $baris++;
+            }
+        } else {
+            $range1 = 'A'.$baris;
+            $range2 = toAlpha(count($arr_header)).$baris;
+
+            $spreadsheet->getActiveSheet()->mergeCells("$range1:$range2");
+            $sheet->setCellValue($range1, 'Data tidak ditemukan.');
+        }
+
+        $styleArray = [
+            'borders' => [
+                'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+            ],
+        ];
+        
+        $spreadsheet->getActiveSheet()->getStyle('A1:'.toAlpha(count($arr_header)).$baris)->applyFromArray($styleArray, false);
+
+        /* Excel File Format */
+        $writer = new Xlsx($spreadsheet);
+        $filename = $file_name;
+        $writer->save('export_excel/'.$filename);
+
+        // cetak_r( FCPATH.'/export_excel/', 1 );
+
+        $this->load->helper('download');
+        $data = file_get_contents(FCPATH.'/export_excel/'.$filename);
+
+        // cetak_r( $filename, 1);
+        // cetak_r( $data );
+
+        force_download($filename, $data);
     }
 
     public function exportExcel($params_encrypt)
@@ -344,18 +474,52 @@ class GeneralLedger extends Public_Controller {
         $end_date = date("Y-m-t", strtotime($date));
 
         $data = $this->getData( $start_date, $end_date, $kode_gabung_perusahaan );
+            
+        $filename = 'GL_PERIODE_'.$tahun.$bulan;
 
-        $content['data'] = $data;
-        $content['periode'] = $tahun.'/'.$angka_bulan;
-        $res_view_html = $this->load->view($this->pathView.'exportExcel', $content, true);
-        $filename = "GENERAL_LEDGER_";
+        $arr_header = array('No. COA', 'Unit', 'Nama COA', 'Saldo Awal', 'Debet', 'Kredit', 'Saldo Akhir');
+        $arr_column = null;
+        if ( !empty($data) ) {
+            $idx = 0;
 
-        // header("Content-type: application/xls");
-        // header("Content-Type:   application/vnd.ms-excel; charset=utf-8");
-        // header("Content-type:   application/x-msexcel; charset=utf-8");
-        header("Content-type:   application/ms-excel; charset=utf-8");
-        $filename = $filename.str_replace('-', '', $start_date).'_'.str_replace('-', '', $end_date).'.xls';
-        header("Content-Disposition: attachment; filename=".$filename."");
-        echo $res_view_html;
+            $tot_saldo_awal = 0;
+            $tot_debet = 0;
+            $tot_kredit = 0;
+            $tot_saldo_akhir = 0;
+
+            foreach ($data as $key => $value) {
+                $arr_column[ $idx ] = array(
+                    'No. COA' => array('value' => strtoupper($value['no_coa']), 'data_type' => 'nik'),
+                    'Unit' => array('value' => strtoupper($value['unit']), 'data_type' => 'string'),
+                    'Nama COA' => array('value' => strtoupper($value['nama_coa']), 'data_type' => 'string'),
+                    'Saldo Awal' => array('value' => $value['saldo_awal'], 'data_type' => 'decimal2'),
+                    'Debet' => array('value' => $value['debet'], 'data_type' => 'decimal2'),
+                    'Kredit' => array('value' => $value['kredit'], 'data_type' => 'decimal2'),
+                    'Saldo Akhir' => array('value' => $value['saldo_akhir'], 'data_type' => 'decimal2'),
+                );
+
+                $tot_saldo_awal += $value['saldo_awal'];
+                $tot_debet += $value['debet'];
+                $tot_kredit += $value['kredit'];
+                $tot_saldo_akhir += $value['saldo_akhir'];
+
+                $idx++;
+            }
+
+            $arr_column[] = array(
+                'Nama COA' => array('value' => 'Total', 'data_type' => 'string', 'colspan' => array('A','C'), 'align' => 'right', 'text_style' => 'bold'),
+                'Saldo Awal' => array('value' => $tot_saldo_awal, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+                'Debet' => array('value' => $tot_debet, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+                'Kredit' => array('value' => $tot_kredit, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+                'Saldo Akhir' => array('value' => $tot_saldo_akhir, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+            );
+        }
+
+        // $this->exportExcelUsingSpreadSheet( $filename, $arr_header, $arr_column );
+
+        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column );
+
+        $this->load->helper('download');
+        force_download('export_excel/'.$filename.'.xlsx', NULL);
     }
 }

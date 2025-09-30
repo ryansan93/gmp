@@ -120,7 +120,7 @@
         <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
         <div class="col-xs-12 no-padding">
 			<div class="col-xs-12 no-padding">
-				<button type="button" class="col-xs-12 btn btn-default" onclick="gl.excryptParams()"><i class="fa fa-file-excel-o"></i> Export Excel</button>
+				<button type="button" class="col-xs-12 btn btn-default" onclick="gl.encryptParams()"><i class="fa fa-file-excel-o"></i> Export Excel</button>
 			</div>
 		</div>
 	</div>

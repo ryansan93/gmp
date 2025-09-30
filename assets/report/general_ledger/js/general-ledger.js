@@ -51,7 +51,7 @@ var gl = {
 		}
 	}, // end - getLists
 
-    excryptParams: function() {
+    encryptParams: function() {
 		var err = 0;
 		
 		$.map( $('[data-required=1]'), function (ipt) {
@@ -73,7 +73,7 @@ var gl = {
 			};
 
 			$.ajax({
-	            url: 'report/GeneralLedger/excryptParams',
+	            url: 'report/GeneralLedger/encryptParams',
 	            data: {
 	                'params': params
 	            },
@@ -91,7 +91,7 @@ var gl = {
 	            }
 	        });
 		}
-	}, // end - excryptParams
+	}, // end - encryptParams
 
 	exportExcel : function (params) {
 		goToURL('report/GeneralLedger/exportExcel/'+params);
