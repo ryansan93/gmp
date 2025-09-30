@@ -187,7 +187,15 @@ class GeneralLedger extends Public_Controller {
                     dj_asal.coa_asal = c.coa
             left join
                 (
-                    select dj.coa_tujuan, sum(dj.nominal) as nominal, dj.unit
+                    select 
+                        dj.coa_tujuan, 
+                        sum(dj.nominal) as nominal, 
+                        case
+                            when dj.unit_tujuan is not null then
+                                dj.unit_tujuan
+                            else
+                                dj.unit 
+                        end unit
                     from det_jurnal dj 
                     where 
                         dj.tanggal between '".$start_date."' and '".$end_date."'
