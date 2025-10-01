@@ -133,7 +133,7 @@ class DistribusiBarang extends Public_Controller {
     public function getData( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis ) {
         $sql_jenis = "";
         if ( !empty($jenis) ) {
-            $sql_jenis .= "and dss.jenis_barang in ('$jenis')";
+            $sql_jenis .= "and dss.jenis_barang in ('".$jenis."')";
         }
 
         $sql_brg = "";
@@ -369,6 +369,7 @@ class DistribusiBarang extends Public_Controller {
                     ".$sql_jenis."
                     ".$sql_unit."
                     ".$sql_jenis_transaksi."
+                    ".$sql_brg."
             ) data
             order by
                 data.tgl_trans asc,
