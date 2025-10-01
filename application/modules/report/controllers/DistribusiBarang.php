@@ -138,7 +138,7 @@ class DistribusiBarang extends Public_Controller {
 
         $sql_brg = "";
         if ( !in_array('all', $barang) ) {
-            $sql_brg .= "and dss.item in ('".implode("', '", $barang)."')";
+            $sql_brg .= "and dss.kode_barang in ('".implode("', '", $barang)."')";
         }
 
         $sql_unit = "";
