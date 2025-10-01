@@ -43,7 +43,7 @@
 				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-4">Tgl Order</div>
 					<div class="col-lg-4">
-						<div class="input-group date col-md-12" id="TglOrder" name="tglOrder" data-tgl="<?php echo substr($data_order_doc['tgl_submit'], 0, 10); ?>">
+						<div class="input-group date col-md-12 lock_date_fiskal" id="TglOrder" name="tglOrder" data-tgl="<?php echo substr($data_order_doc['tgl_submit'], 0, 10); ?>">
 					        <input type="text" class="form-control text-center" data-required="1" />
 					        <span class="input-group-addon">
 					            <span class="glyphicon glyphicon-calendar"></span>
@@ -54,7 +54,7 @@
 				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-4">Rencana Tiba Kandang</div>
 					<div class="col-lg-4">
-						<div class="input-group date col-md-12" id="datetimepicker1" name="tgl_tiba_kdg" data-tgl="<?php echo $data_order_doc['rencana_tiba']; ?>">
+						<div class="input-group date col-md-12 lock_date_fiskal" id="datetimepicker1" name="tgl_tiba_kdg" data-tgl="<?php echo $data_order_doc['rencana_tiba']; ?>">
 					        <input type="text" class="form-control text-center" data-required="1" />
 					        <span class="input-group-addon">
 					            <span class="glyphicon glyphicon-calendar"></span>

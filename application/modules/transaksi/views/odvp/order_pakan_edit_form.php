@@ -26,7 +26,7 @@
 					<div class="col-lg-5 d-flex align-items-center">
 						<div class="col-lg-4">Tanggal</div>
 						<div class="col-lg-5">
-							<div class="input-group date datetimepicker" name="tanggal" id="tanggal" data-tanggal="<?php echo $data['tgl_trans']; ?>">
+							<div class="input-group date datetimepicker lock_date_fiskal" name="tanggal" id="tanggal" data-tanggal="<?php echo $data['tgl_trans']; ?>">
 						        <input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" value="<?php echo tglIndonesia($data['tgl_trans'], '-', ' '); ?>" />
 						        <span class="input-group-addon">
 						            <span class="glyphicon glyphicon-calendar"></span>
@@ -56,7 +56,7 @@
 					<div class="col-lg-5 d-flex align-items-center">
 						<div class="col-lg-4">Rencana Kirim</div>
 						<div class="col-lg-5">
-							<div class="input-group date datetimepicker" name="rcn_kirim" id="rcn_kirim" data-tanggal="<?php echo $data['rcn_kirim']; ?>">
+							<div class="input-group date datetimepicker lock_date_fiskal" name="rcn_kirim" id="rcn_kirim" data-tanggal="<?php echo $data['rcn_kirim']; ?>">
 						        <input type="text" class="form-control text-center" placeholder="Rencana Kirim" data-required="1" value="<?php echo tglIndonesia($data['rcn_kirim'], '-', ' '); ?>" />
 						        <span class="input-group-addon">
 						            <span class="glyphicon glyphicon-calendar"></span>

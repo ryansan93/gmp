@@ -1835,7 +1835,7 @@ class RealisasiPembayaran extends Public_Controller
                 // $d_conf = $m_conf->hydrateRaw( $sql );
 
                 $id_old = null;
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1, null, $data['tgl_bayar']);
 
                 $d_rp = $m_rp->where('id', $id)->first();
 
@@ -2080,7 +2080,7 @@ class RealisasiPembayaran extends Public_Controller
             // $d_conf = $m_conf->hydrateRaw( $sql );
 
             // $id_old = null;
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2, null, $data['tgl_bayar']);
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
@@ -2116,7 +2116,7 @@ class RealisasiPembayaran extends Public_Controller
             // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'realisasi_pembayaran', ".$id.", ".$id.", 3";
             // $d_conf = $m_conf->hydrateRaw( $sql );
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 3);
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 3, null, $d_rp->tgl_bayar);
 
             $m_nbbk = new \Model\Storage\NoBbk_model();
             $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->delete();
@@ -2672,9 +2672,23 @@ class RealisasiPembayaran extends Public_Controller
 
     public function tes()
     {
-        $id = 3;
-        $id_old = null;
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
-        Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from realisasi_pembayaran rp
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ($d_conf->count() > 0) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, null, $value['tgl_bayar']);
+            }
+        }
+
+        // $id = 3;
+        // $id_old = null;
+        // // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
     }
 }

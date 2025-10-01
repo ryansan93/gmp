@@ -37,7 +37,7 @@
 				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-4">Tgl Order</div>
 					<div class="col-lg-4">
-						<div class="input-group date col-md-12" id="TglOrder" name="tglOrder">
+						<div class="input-group date col-md-12 lock_date_fiskal" id="TglOrder" name="tglOrder">
 					        <input type="text" class="form-control text-center" data-required="1" />
 					        <span class="input-group-addon">
 					            <span class="glyphicon glyphicon-calendar"></span>
@@ -48,7 +48,7 @@
 				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-4">Rencana Tiba Kandang</div>
 					<div class="col-lg-4">
-						<div class="input-group date col-md-12" id="datetimepicker1" name="tgl_tiba_kdg">
+						<div class="input-group date col-md-12 lock_date_fiskal" id="datetimepicker1" name="tgl_tiba_kdg">
 					        <input type="text" class="form-control text-center" data-required="1" />
 					        <span class="input-group-addon">
 					            <span class="glyphicon glyphicon-calendar"></span>

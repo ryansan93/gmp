@@ -13,12 +13,12 @@
 				<div class="col-sm-10 no-padding perusahaan">
 					<?php echo strtoupper($v_data['nama_perusahaan']); ?>
 				</div>
-				<div class="col-sm-2 no-padding">
+				<div class="col-sm-2 no-padding lock_btn_fiskal" data-date="<?php echo substr($v_data['tanggal'], 0, 10); ?>">
 					<?php if ( $v_data['status_kirim'] == 0 ): ?>
-						<div class="col-sm-4 no-padding text-center cursor-p btn_action">
+						<div class="col-sm-4 no-padding text-center cursor-p btn_action edit">
 							<i class="fa fa-edit" title="EDIT" data-id="<?php echo $v_data['no_order']; ?>" onclick="odvp.order_voadip_edit_form(this)" data-href="action"></i>
 						</div>
-						<div class="col-sm-4 no-padding text-center cursor-p btn_action">
+						<div class="col-sm-4 no-padding text-center cursor-p btn_action edit">
 							<i class="fa fa-trash" title="DELETE" onclick="odvp.order_voadip_delete(this)" data-id="<?php echo $v_data['id']; ?>" data-href="action"></i>
 						</div>
 						<div class="col-sm-4 no-padding text-center cursor-p btn_action">
@@ -28,7 +28,7 @@
 						<div class="col-sm-4 no-padding text-center cursor-p btn_action">
 							<i class="fa fa-file" title="DETAIL" data-id="<?php echo $v_data['no_order']; ?>" onclick="odvp.order_voadip_view_form(this)" data-href="action"></i>
 						</div>
-						<div class="col-sm-4 no-padding text-center cursor-p btn_action">
+						<div class="col-sm-4 no-padding text-center cursor-p btn_action edit">
 							<i class="fa fa-edit" title="EDIT" data-id="<?php echo $v_data['no_order']; ?>" onclick="odvp.order_voadip_edit_form(this)" data-href="action"></i>
 						</div>
 						<div class="col-sm-4 no-padding text-center cursor-p btn_action">

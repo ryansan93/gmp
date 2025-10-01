@@ -118,7 +118,7 @@
 			</ul>
 		</div>
 	</div>
-	<div class="col-xs-6 no-padding div_tutup_bulan" data-val="<?php echo substr($data['tgl_mm'], 0, 10); ?>">
+	<div class="col-xs-6 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_mm'], 0, 10); ?>">
 		<?php if ( $akses['a_edit'] == 1 ) { ?>
 			<button type="button" class="btn btn-primary pull-right btn_tutup_bulan" onclick="mm.changeTabActive(this)" data-href="action" data-edit="edit" data-kode="<?php echo $data['no_mm']; ?>" style="margin-left: 5px;">
 				<i class="fa fa-edit"></i>

@@ -164,7 +164,7 @@
 							</div>
 						</div>
 					</div>
-					<div class="col-lg-2">
+					<div class="col-lg-2 lock_btn_fiskal" data-date="<?php echo substr($data_terima_doc['datang'], 0, 10); ?>">
 						<button type="button" class="btn btn-danger pull-right" data-id="<?php echo $data_terima_doc['id']; ?>" onclick="odvp.delete_terima_doc(this)"><i class="fa fa-trash"></i> Hapus</button>
 					</div>
 				</div>

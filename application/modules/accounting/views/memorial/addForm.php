@@ -32,7 +32,7 @@
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Memo</label></div>
 		<div class="col-xs-4 no-padding">
-			<div class="input-group date datetimepicker" name="tglMm" id="TglMm">
+			<div class="input-group date datetimepicker lock_date_fiskal" name="tglMm" id="TglMm">
 				<input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" data-tgl="<?php echo date('Y-m-d'); ?>" />
 				<span class="input-group-addon">
 					<span class="glyphicon glyphicon-calendar"></span>

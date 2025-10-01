@@ -41,7 +41,7 @@ var mm = {
                 $(div).data('DateTimePicker').date( moment(new Date((tgl))) );
             }
         });
-        // App.setTutupBulan( ["#TglMm", "#TglTempo", "#TglCair"] );
+        App.setTutupBulan();
 
         $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal],[data-tipe=decimal3],[data-tipe=decimal4],[data-tipe=number]').each(function(){
             $(this).priceFormat(Config[$(this).data('tipe')]);

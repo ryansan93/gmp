@@ -10,7 +10,7 @@ class InsertJurnal extends Public_Controller {
     parent::__construct ();
   }
 
-  public function exec($url, $id, $id_old = null, $action, $table = null) {
+  public function exec($url, $id, $id_old = null, $action, $table = null, $tgl_trans = null) {
     try {
         $id_saj = null;
         $query = null;
@@ -18,6 +18,11 @@ class InsertJurnal extends Public_Controller {
         $sql_table = null;
         if ( !empty($table) ) {
             $sql_table = "and saj.tbl_name = '".$table."'";
+        }
+
+        $sql_tgl = null;
+        if ( !empty($tgl_trans) ) {
+            $sql_tgl = "and saj.tgl_berlaku <= '".$tgl_trans."'";
         }
 
         $m_saj = new \Model\Storage\Conf();
@@ -34,8 +39,14 @@ class InsertJurnal extends Public_Controller {
             where
                 df.path_detfitur = '".substr($url, 1)."'
                 ".$sql_table."
+                ".$sql_tgl."
+            order by
+                saj.tgl_berlaku desc
         ";
         $d_saj = $m_saj->hydrateRaw( $sql );
+
+        // cetak_r( $sql, 1 );
+
         if ( $d_saj->count() > 0 ) {
             $d_saj = $d_saj->toArray()[0];
 

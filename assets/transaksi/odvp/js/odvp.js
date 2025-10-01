@@ -108,6 +108,8 @@ var odvp = {
 				}
 			}
 		});
+
+		App.setTutupBulan();
 		
 		// $('[name=tgl_kirim]').on('dp.change', function (e) {
 		// 	odvp.set_item_pwk(this);
@@ -191,6 +193,8 @@ var odvp = {
 				if ( data.status == 1 ) {
 					// $(tbody).find('tr').remove();
 					$(tbody).html(data.content);
+
+					odvp.setting_up();
 				};
 
 				hideLoading();
@@ -244,6 +248,8 @@ var odvp = {
 
 				$(div_detail).find('div.nama_mitra b').html(nama_mitra + ' ' + kandang + ' POPULASI ' + populasi);
 				$(div_detail).find('input[type=hidden]').attr('data-noreg', noreg);
+
+				App.setTutupBulan();
 			});
 		},'html');
 	}, // end - order_doc_form
@@ -1537,6 +1543,8 @@ var odvp = {
 					if ( data.status == 1 ) {
 						// $(tbody).find('tr').remove();
 						$(tbody).html(data.content);
+
+						odvp.setting_up();
 
 						odvp.set_table_page('.tbl_odvp');
 					};

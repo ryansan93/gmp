@@ -16,7 +16,7 @@
 					<span>Tanggal</label>
 				</div>
 				<div class="col-sm-3">
-					<div class="input-group date datetimepicker" name="tgl_order_voadip" id="TglOrder_Voadip" data-tanggal="<?php echo $data['tanggal']; ?>">
+					<div class="input-group date datetimepicker lock_date_fiskal" name="tgl_order_voadip" id="TglOrder_Voadip" data-tanggal="<?php echo $data['tanggal']; ?>">
 				        <input type="text" class="form-control text-center" placeholder="Tanggal" value="<?php echo tglIndonesia($data['tanggal'], '-', ' '); ?>"  data-required="1" />
 				        <span class="input-group-addon">
 				            <span class="glyphicon glyphicon-calendar"></span>

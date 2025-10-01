@@ -266,15 +266,18 @@ var App = {
             beforeSend : function(){},
             success : function(data){
                 if ( !empty( data.content ) ) {
-                    $.map( $('.lock_fiskal').find('.datetimepicker'), function(d) {
+                    $.map( $('.lock_date_fiskal'), function(d) {
                         $(d).data("DateTimePicker").minDate(moment(new Date(data.content.minDate)));
                     });
 
-                    $.map( $('.lock_fiskal').find('.lock_btn_fiskal'), function(btn) {
-                        var val = $(btn).attr('data-date');
+                    $.map( $('.lock_btn_fiskal'), function(div) {
+                        var val = $(div).attr('data-date');
 
                         if ( val < data.content.minDate ) {
-                            $(btn).find('button').remove();
+                            $(div).find('label').remove();
+                            $(div).find('button').remove();
+                            $(div).find('a.edit').remove();
+                            $(div).find('div.edit').remove();
                         }
                     });
                 }

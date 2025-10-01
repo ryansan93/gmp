@@ -37,17 +37,17 @@
 					<td><?php echo angkaRibuan( $v_od['jml_ekor'], '-', ' ' ); ?></td>
 					<td><?php echo !empty($v_od['terima_doc']) ? dateTimeFormat( $v_od['terima_doc']['datang'], '-', ' ' ) : '-'; ?></td>
 					<td><?php echo !empty($v_od['terima_doc']) ? angkaRibuan( $v_od['terima_doc']['jml_ekor'], '-', ' ' ) : '-'; ?></td>
-					<td class="text-center">
+					<td class="text-center lock_btn_fiskal" data-date="<?php echo substr($v_od['terima_doc']['datang'], 0, 10); ?>">
 						<?php if ( !$odc ): ?>
 							<a class="cursor-p" title="ADD ORDER" onclick="odvp.order_doc_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>"><i class="fa fa-plus"></i></a>
 							&nbsp
 						<?php else: ?>
 							<a class="cursor-p" title="DETAIL ORDER" onclick="odvp.order_doc_view_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>"><i class="fa fa-file"></i></a>
 							&nbsp
-							<a class="cursor-p" title="EDIT ORDER" onclick="odvp.order_doc_edit_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>"><i class="fa fa-edit"></i></a>
+							<a class="cursor-p edit" title="EDIT ORDER" onclick="odvp.order_doc_edit_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>"><i class="fa fa-edit"></i></a>
 						<?php endif ?>
 					</td>
-					<td class="text-center">
+					<td class="text-center lock_btn_fiskal" data-date="<?php echo substr($v_od['terima_doc']['datang'], 0, 10); ?>">
 						<?php if ( $odc ): ?>
 							<?php if ( !$tdc ): ?>
 								<a class="cursor-p" title="ADD TERIMA" onclick="odvp.terima_doc_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>"><i class="fa fa-plus"></i></a>
@@ -56,7 +56,7 @@
 								<!-- <a href="#" title="EDIT TERIMA"><i class="fa fa-edit"></i></a> -->
 								<a class="cursor-p" title="DETAIL TERIMA" onclick="odvp.terima_doc_view_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>" data-id="<?php echo $v_od['terima_doc']['id']; ?>"><i class="fa fa-file"></i></a>
 								&nbsp
-								<a class="cursor-p" title="EDIT TERIMA" onclick="odvp.terima_doc_edit_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>" data-id="<?php echo $v_od['terima_doc']['id']; ?>"><i class="fa fa-edit"></i></a>
+								<a class="cursor-p edit" title="EDIT TERIMA" onclick="odvp.terima_doc_edit_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>" data-id="<?php echo $v_od['terima_doc']['id']; ?>"><i class="fa fa-edit"></i></a>
 							<?php endif ?>
 						<?php endif ?>
 					</td>
