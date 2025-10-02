@@ -176,9 +176,60 @@ class KartuHutangPerInvoice extends Public_Controller {
     
                     union all
 
+                    /*
                     select kpop.nomor, kpop.ekspedisi_id as supplier, kpop.total from konfirmasi_pembayaran_oa_pakan kpop
                     where
                         kpop.tgl_bayar < '".$start_date."'
+                    */
+
+                    /* OA PAKAN */
+                    select * from (
+                        select kpop.nomor, kpop.ekspedisi_id as supplier, (kpop.total+kpop.potongan_pph_23) as total from konfirmasi_pembayaran_oa_pakan kpop
+                        where
+                            kpop.tgl_bayar < '".$start_date."'
+
+                        union all
+
+                        select tp.no_bbm as nomor, kp.ekspedisi_id as supplier, sum(dtp.jumlah)*kp.ongkos_angkut as total from det_terima_pakan dtp
+                        left join
+                            terima_pakan tp
+                            on
+                                dtp.id_header = tp.id
+                        left join
+                            kirim_pakan kp
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        where
+                            tp.tgl_terima < '".$start_date."' and
+                            kp.jenis_kirim = 'opkg' and
+                            not exists (select * from konfirmasi_pembayaran_oa_pakan_det kpopd where no_sj = kp.no_sj)
+                        group by
+                            tp.no_bbm, kp.ekspedisi_id, kp.ongkos_angkut
+
+                        union all
+
+                        select opp.no_sj as nomor, krm.ekspedisi_id as supplier, opp.ongkos_angkut as total from oa_pindah_pakan opp
+                        left join
+                            (
+                                select kp.no_sj, tp.no_bbm as kode_trans, kp.ekspedisi_id, tp.tgl_terima as tanggal from kirim_pakan kp
+                                left join
+                                    terima_pakan tp 
+                                    on
+                                        kp.id = tp.id_kirim_pakan
+                                group by
+                                    kp.no_sj, tp.no_bbm, kp.ekspedisi_id, tp.tgl_terima
+                                
+                                union all
+                                
+                                select no_retur as no_sj, no_retur as kode_trans, ekspedisi_id, tgl_retur as tanggal from retur_pakan rp 
+                            ) krm
+                            on
+                                opp.no_sj = krm.no_sj
+                        where
+                            krm.tanggal < '".$start_date."' and
+                            not exists (select * from konfirmasi_pembayaran_oa_pakan_det kpopd where no_sj = opp.no_sj)
+                    ) oa
+                    /* END - OA PAKAN */
     
                     union all
     
@@ -572,6 +623,7 @@ class KartuHutangPerInvoice extends Public_Controller {
     
                     union all
 
+                    /*
                     select kpop.tgl_bayar as tanggal, kpop.nomor, kpop.ekspedisi_id as supplier, kpopd.total, tp.no_bbm as kode_trans from konfirmasi_pembayaran_oa_pakan_det kpopd
                     left join
                         konfirmasi_pembayaran_oa_pakan kpop
@@ -587,6 +639,68 @@ class KartuHutangPerInvoice extends Public_Controller {
                             kp.id = tp.id_kirim_pakan
                     where
                         kpop.tgl_bayar between '".$start_date."' and '".$end_date."'
+                    */
+
+                    /* OA PAKAN */
+                    select * from (
+                        select kpop.tgl_bayar as tanggal, kpop.nomor, kpop.ekspedisi_id as supplier, kpopd.total, tp.no_bbm as kode_trans from konfirmasi_pembayaran_oa_pakan_det kpopd
+                        left join
+                            konfirmasi_pembayaran_oa_pakan kpop
+                            on
+                                kpopd.id_header = kpop.id
+                        left join
+                            kirim_pakan kp
+                            on
+                                kpopd.no_sj = kp.no_sj
+                        left join
+                            terima_pakan tp
+                            on
+                                kp.id = tp.id_kirim_pakan
+                        where
+                            kpop.tgl_bayar between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        select tp.tgl_terima as tanggal, tp.no_bbm as nomor, kp.ekspedisi_id as supplier, sum(dtp.jumlah)*kp.ongkos_angkut as total, tp.no_bbm as kode_trans from det_terima_pakan dtp
+                        left join
+                            terima_pakan tp
+                            on
+                                dtp.id_header = tp.id
+                        left join
+                            kirim_pakan kp
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        where
+                            tp.tgl_terima between '".$start_date."' and '".$end_date."' and
+                            kp.jenis_kirim = 'opkg' and
+                            not exists (select * from konfirmasi_pembayaran_oa_pakan_det kpopd where no_sj = kp.no_sj)
+                        group by
+                            tp.tgl_terima, tp.no_bbm, kp.ekspedisi_id, kp.ongkos_angkut
+
+                        union all
+
+                        select krm.tanggal, opp.no_sj as nomor, krm.ekspedisi_id as supplier, opp.ongkos_angkut as total, krm.kode_trans from oa_pindah_pakan opp
+                        left join
+                            (
+                                select kp.no_sj, tp.no_bbm as kode_trans, kp.ekspedisi_id, tp.tgl_terima as tanggal from kirim_pakan kp
+                                left join
+                                    terima_pakan tp 
+                                    on
+                                        kp.id = tp.id_kirim_pakan
+                                group by
+                                    kp.no_sj, tp.no_bbm, kp.ekspedisi_id, tp.tgl_terima
+                                
+                                union all
+                                
+                                select no_retur as no_sj, no_retur as kode_trans, ekspedisi_id, tgl_retur as tanggal from retur_pakan rp 
+                            ) krm
+                            on
+                                opp.no_sj = krm.no_sj
+                        where
+                            krm.tanggal between '".$start_date."' and '".$end_date."' and
+                            not exists (select * from konfirmasi_pembayaran_oa_pakan_det kpopd where no_sj = opp.no_sj)
+                    ) oa
+                    /* END - OA PAKAN */
     
                     union all
     

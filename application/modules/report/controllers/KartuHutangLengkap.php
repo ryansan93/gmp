@@ -176,7 +176,7 @@ class KartuHutangLengkap extends Public_Controller {
 
                     /* OA PAKAN */
                     select * from (
-                        select kpop.nomor, kpop.ekspedisi_id as supplier, kpop.total from konfirmasi_pembayaran_oa_pakan kpop
+                        select kpop.nomor, kpop.ekspedisi_id as supplier, (kpop.total+kpop.potongan_pph_23) as total from konfirmasi_pembayaran_oa_pakan kpop
                         where
                             kpop.tgl_bayar < '".$start_date."'
 
