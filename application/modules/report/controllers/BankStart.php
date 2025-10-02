@@ -129,6 +129,114 @@ class BankStart extends Public_Controller {
         }
 
         $m_conf = new \Model\Storage\Conf();
+        $sql_sa = "
+            select
+                '' as tanggal,
+                '' as kode,
+                'Saldo Awal' as keterangan,
+                sb.saldo_awal as debet,
+                0 as kredit,
+                sb.coa as kas
+            from saldo_bulanan sb 
+            where
+                sb.tgl_trans = '".$start_date."'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql_sa );
+        if ( $d_conf->count() <= 0 ) {
+            $end_date_new = prev_date($start_date);
+            $start_date_new = substr($end_date_new, 0, 7).'-01';
+
+            $sql_sa = "
+                select
+                    '' as tanggal,
+                    '' as kode,
+                    'Saldo Awal' as keterangan,
+                    sum(isnull(data.debet, 0)) - sum(isnull(data.kredit, 0)) as debet,
+                    0 as kredit,
+                    data.kas
+                from
+                (
+                    /* SALDO AWAL */
+                    select
+                        '' as tanggal,
+                        '' as kode,
+                        'Saldo Awal' as keterangan,
+                        sb.saldo_awal as debet,
+                        0 as kredit,
+                        sb.coa as kas
+                    from saldo_bulanan sb 
+                    where
+                        sb.tgl_trans = '".$start_date_new."'
+                    /* END - SALDO AWAL */
+
+                    union all
+
+                    /* TRANSAKSI */
+                    select
+                        data.tanggal,
+                        nb.kode,
+                        data.keterangan,
+                        data.debet,
+                        data.kredit,
+                        data.kas
+                    from (
+                        select * from no_bbk nb 
+
+                        union all
+
+                        select * from no_bbm nb
+                    ) nb
+                    left join
+                        (
+                            select 
+                                'kk' as tbl_name,
+                                ki.no_kk as tbl_id,
+                                ki.tgl_kk as tanggal,
+                                ki.keterangan,
+                                0 as debet,
+                                ki.nilai as kredit,
+                                k.coa_bank as kas
+                            from kkitem ki 
+                            left join
+                                kk k
+                                on
+                                    ki.no_kk = k.no_kk
+                            where 
+                                ki.no_kk like '%BCA%' and 
+                                ki.tgl_kk between '".$start_date_new."' and '".$end_date_new."'
+
+                            union all
+
+                            select 
+                                'kk' as tbl_name,
+                                ki.no_km as tbl_id,
+                                ki.tgl_km as tanggal,
+                                ki.keterangan,
+                                ki.nilai as debet,
+                                0 as kredit,
+                                k.coa_bank as kas
+                            from kmitem ki 
+                            left join
+                                km k
+                                on
+                                    ki.no_km = k.no_km
+                            where 
+                                ki.no_km like '%BCA%' and 
+                                ki.tgl_km between '".$start_date_new."' and '".$end_date_new."'
+                        ) data
+                        on
+                            nb.tbl_id = data.tbl_id
+                    where
+                        data.tanggal between '".$start_date_new."' and '".$end_date_new."'
+                    /* END - TRANSAKSI */
+                ) data
+                ".$sql_kas."
+                group by
+                    data.kas
+            ";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
                 data.*,

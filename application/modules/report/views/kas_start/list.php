@@ -58,7 +58,7 @@
             $gt_kredit += $kredit;
         ?>
         <?php if ( $idx_kas == 0 ) { ?>
-            <?php if ( stristr($value['keterangan'], 'saldo_awal') === false ) { ?>
+            <?php if ( stristr($value['keterangan'], 'saldo awal') === false ) { ?>
                 <tr>
                     <td></td>
                     <td></td>
@@ -70,7 +70,7 @@
             <?php } ?>
         <?php } ?>
         <tr>
-            <td><?php echo !empty($tanggal) ? tglIndonesia($tanggal, '-', ' ') : ''; ?></td>
+            <td><?php echo (!empty($tanggal) && $tanggal > '1900-01-01 00:00:00.000') ? tglIndonesia($tanggal, '-', ' ') : ''; ?></td>
             <td><?php echo !empty($kode_trans) ? $kode_trans : ''; ?></td>
             <td><?php echo $keterangan; ?></td>
             <td class="text-right"><?php echo angkaDecimal($debet); ?></td>
