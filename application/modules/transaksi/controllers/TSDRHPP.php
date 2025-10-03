@@ -3922,10 +3922,9 @@ class TSDRHPP extends Public_Controller {
 
                 $d_ts = $m_ts->where('id', $id)->first();
 
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", NULL, 1";
-
-                $d_conf = $m_conf->hydrateRaw( $sql );
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", NULL, 1";
+                // $d_conf = $m_conf->hydrateRaw( $sql );
 
                 $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $d_ts, $deskripsi_log);
@@ -4314,10 +4313,10 @@ class TSDRHPP extends Public_Controller {
     
                 $m_ts->where('id', $params['id'])->delete();
     
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'tutup_siklus', ".$params['id'].", ".$params['id'].", 3";
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'tutup_siklus', ".$params['id'].", ".$params['id'].", 3";
     
-                $d_conf = $m_conf->hydrateRaw( $sql );
+                // $d_conf = $m_conf->hydrateRaw( $sql );
     
                 $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/update', $d_ts, $deskripsi_log);
