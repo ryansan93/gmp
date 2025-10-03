@@ -2674,7 +2674,13 @@ class RealisasiPembayaran extends Public_Controller
     {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select * from realisasi_pembayaran rp
+            select rp.id, rp.tgl_bayar from realisasi_pembayaran_det rpd
+            left join
+                realisasi_pembayaran rp 
+                on
+                    rpd.id_header = rp.id
+            where
+                rpd.transaksi like 'oa pakan'
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

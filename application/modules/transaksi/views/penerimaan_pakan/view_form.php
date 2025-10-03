@@ -142,7 +142,7 @@
             </div>
         </div>
     </div>
-    <div class="form-group lock_btn_fiskal" data-date="<?php echo $data['tgl_terima']; ?>">
+    <div class="form-group lock_btn_fiskal" data-date="<?php echo substr($data['tgl_terima'], 0, 10); ?>">
         <div class="col-lg-12">
             <?php if ( $akses['a_edit'] == 1 ): ?>
                 <button type="button" data-href="penerimaan" class="btn btn-primary cursor-p pull-right" title="EDIT" onclick="pp.changeTabActive(this)" style="margin-left: 10px;" data-id="<?php echo $data['id']; ?>" data-edit="edit"> 

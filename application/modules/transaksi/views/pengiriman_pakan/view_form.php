@@ -185,7 +185,7 @@
 <div class="form-group d-flex align-items-center">
 	<div class="col-lg-12"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 </div>
-<div class="form-group d-flex align-items-center">
+<div class="form-group d-flex align-items-center lock_btn_fiskal" data-date="<?php echo substr($data['tgl_kirim'], 0, 10); ?>">
 	<div class="col-lg-12">
 		<button type="button" class="btn btn-default cursor-p pull-right" title="ADD" style="margin-left: 5px;" data-id="<?php echo $data['id']; ?>" onclick="window.open('transaksi/PengirimanPakan/cetak_nota_kiriman/<?php echo $data['id']; ?>')"> 
 			<i class="fa fa-print" aria-hidden="true"></i> Cetak

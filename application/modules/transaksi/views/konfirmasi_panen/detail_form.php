@@ -183,7 +183,7 @@
 	                </p>
 	            <?php endif; ?> -->
 			</div>
-			<div class="col-lg-6 no-padding">
+			<div class="col-lg-6 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['data_konfir']['tgl_panen'], 0, 10); ?>">
 				<form role="form" class="form-horizontal">
 					<div class="col-md-12 no-padding update hide">
 						<button type="button" class="btn btn-primary pull-right" style="margin: 0px 5px;" onclick="kp.update(this)" data-id="<?php echo $data['data_konfir']['id']; ?>"><i class="fa fa-save"></i> Update</button>

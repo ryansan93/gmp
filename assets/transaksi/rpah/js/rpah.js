@@ -171,6 +171,8 @@ var rpah = {
             success : function(html){
                 hideLoading();
 
+                $('.lock_btn_fiskal').attr('data-date', tgl_panen);
+
                 $('table.tbl_data_konfir').find('tbody').html( html );
 
                 App.formatNumber();
@@ -180,6 +182,8 @@ var rpah = {
 
                     rpah.cekPelanggan(this, no_pelanggan);
                 });
+
+                App.setTutupBulan();
             },
         });
     }, // end - get_data

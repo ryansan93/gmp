@@ -69,6 +69,8 @@ var rm = {
 				rm.get_lists();
 			}
 		}
+
+		App.setTutupBulan();
 	}, // end - setting_up
 
 	add_row_plg: function(elm) {

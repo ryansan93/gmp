@@ -79,7 +79,7 @@
 					<label class="control-label">Tanggal Tiba</label>
 				</div>
 				<div class="col-xs-12 no-padding">
-					<div class="input-group date datetimepicker" name="tanggal_tiba" id="tanggal_tiba">
+					<div class="input-group date datetimepicker lock_date_fiskal" name="tanggal_tiba" id="tanggal_tiba">
 		                <input type="text" class="form-control text-center uppercase" placeholder="Tanggal" data-required="1" disabled />
 		                <span class="input-group-addon">
 		                    <span class="glyphicon glyphicon-calendar"></span>

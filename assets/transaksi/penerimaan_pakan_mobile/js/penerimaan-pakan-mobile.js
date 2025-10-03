@@ -108,6 +108,8 @@ var ppm = {
                 $(ipt).data("DateTimePicker").maxDate(moment(new Date()));
             }
         });
+
+        App.setTutupBulan();
 	}, // end - setting_up
 
 	showNameFile : function(elm, isLable = 1) {

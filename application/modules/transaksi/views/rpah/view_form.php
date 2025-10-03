@@ -117,7 +117,7 @@
                 </p>
             <?php endif; ?> -->
         </div>
-        <div class="col-md-6 no-padding">
+        <div class="col-md-6 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_panen'], 0, 10); ?>">
             <?php if ( $data['edit'] == 1 ): ?>
                 <?php if ( $akses['a_edit'] == 1 ): ?>
                     <button type="button" class="btn btn-primary pull-right" onclick="rpah.changeTabActive(this)" data-href="rpah" data-resubmit="edit" data-id="<?php echo $data['id']; ?>"><i class="fa fa-edit"></i> Update</button>

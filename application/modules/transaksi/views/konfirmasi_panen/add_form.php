@@ -24,7 +24,7 @@
 						<h5>Tanggal Panen</h5>
 					</div>
 					<div class="col-lg-4 no-padding action">
-					    <div class="input-group date" id="tgl_panen" name="tanggal-panen">
+					    <div class="input-group date lock_date_fiskal" id="tgl_panen" name="tanggal-panen">
 					        <input type="text" class="form-control text-center" data-required="1" />
 					        <span class="input-group-addon">
 					            <span class="glyphicon glyphicon-calendar"></span>

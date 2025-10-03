@@ -130,7 +130,7 @@
 	<div class="col-lg-12"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 </div>
 <?php if ( !$terima ): ?>
-	<div class="form-group d-flex align-items-center">
+	<div class="form-group d-flex align-items-center lock_btn_fiskal" data-date="<?php echo substr($data['tgl_kirim'], 0, 10); ?>">
 		<div class="col-lg-12">
 			<button type="button" class="btn btn-primary cursor-p pull-right" title="ADD" style="margin-left: 5px;" data-id="<?php echo $data['id']; ?>" onclick="pv.changeTabActive(this)" data-href="pengiriman" data-resubmit="edit"> 
 				<i class="fa fa-edit" aria-hidden="true"></i> Edit

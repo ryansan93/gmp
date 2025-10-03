@@ -41,6 +41,8 @@ var pv = {
         $('select.gudang_asal').select2();
         $('select.peternak').select2();
         $('select.gudang').select2();
+
+		App.setTutupBulan();
 	}, // end - setting_up
 
 	addRowChild: function(elm) {

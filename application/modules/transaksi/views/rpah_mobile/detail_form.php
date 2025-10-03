@@ -161,7 +161,7 @@
 	</div>
 	<div class="col-xs-12 detailed"><hr></div>
 	<?php if ( $edit == 1 ): ?>
-		<div class="col-xs-12 detailed">
+		<div class="col-xs-12 detailed lock_btn_fiskal" data-date="<?php echo substr($data['tgl_panen'], 0, 10); ?>">
 			<form role="form" class="form-horizontal">
 				<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 					<button type="button" class="btn btn-primary col-xs-12" onclick="rm.changeTabActive(this)" data-tglpanen="<?php echo $data['tgl_panen']; ?>" data-noreg="<?php echo $data['noreg']; ?>" data-nomor="<?php echo $data['nomor']; ?>" data-edit="edit" data-href="transaksi"><i class="fa fa-edit"></i> Edit</button>

@@ -78,7 +78,10 @@ class PenerimaanDocMobile extends Public_Controller {
             $d_order_doc = $d_order_doc->toArray();
             foreach ($d_order_doc as $k_order_doc => $v_order_doc) {
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-                $d_terima_doc = $m_terima_doc->where('no_order', $v_order_doc['no_order'])->orderBy('id', 'desc')->get();
+                $d_terima_doc = $m_terima_doc->where('no_order', $v_order_doc['no_order'])->orderBy('id', 'desc')->first();
+
+                $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+                $d_terima_doc = $m_terima_doc->where('no_order', $v_order_doc['no_order'])->where('version', $d_terima_doc->version)->orderBy('id', 'desc')->get();
 
                 if ( $d_terima_doc->count() > 0 ) {
                     $d_terima_doc = $d_terima_doc->toArray();

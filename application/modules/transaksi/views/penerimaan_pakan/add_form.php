@@ -99,7 +99,7 @@
     <div class="col-lg-6 d-flex align-items-center no-padding">
         <div class="col-lg-2 text-left">Tgl Tiba</div>
         <div class="col-lg-4">
-            <div class="input-group date datetimepicker" name="tgl_terima" id="tgl_terima">
+            <div class="input-group date datetimepicker lock_date_fiskal" name="tgl_terima" id="tgl_terima">
 		        <input type="text" class="form-control text-center" placeholder="Tanggal Terima" data-required="1" />
 		        <span class="input-group-addon">
 		            <span class="glyphicon glyphicon-calendar"></span>

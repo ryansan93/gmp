@@ -66,7 +66,7 @@
                 </div>
             </form>
         </div>
-        <div class="col-md-12 no-padding">
+        <div class="col-md-12 no-padding lock_btn_fiskal" data-date="">
     		<button type="button" class="btn btn-primary pull-right" onclick="rpah.save();"><i class="fa fa-save"></i> Simpan</button>
     	</div>
     </div>

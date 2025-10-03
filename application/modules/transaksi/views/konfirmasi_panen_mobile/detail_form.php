@@ -110,7 +110,7 @@
 	</div>
 	<div class="col-xs-12 detailed"><hr></div>
 	<?php if ( $data['edit'] == 1 ): ?>
-		<div class="col-xs-12 detailed">
+		<div class="col-xs-12 detailed lock_btn_fiskal" data-date="<?php echo substr($data['tgl_panen'], 0, 10); ?>">
 			<form role="form" class="form-horizontal">
 				<div class="col-xs-6 no-padding" style="padding-right: 5px">
 					<button type="button" class="btn btn-primary pull-right col-xs-12" onclick="kpm.change_tab(this)" style="width: 100%;" data-id="<?php echo $data['id']; ?>" data-edit="edit" data-href="transaksi"><i class="fa fa-edit"></i> Edit</button>

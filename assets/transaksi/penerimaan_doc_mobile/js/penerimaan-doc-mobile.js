@@ -114,6 +114,8 @@ var pdm = {
                 $(ipt).data("DateTimePicker").maxDate(moment(tgl).add(3, 'days').endOf('day'));
             }
         });
+
+		App.setTutupBulan();
 	}, // end - setting_up
 
 	showNameFile : function(elm, isLable = 1) {

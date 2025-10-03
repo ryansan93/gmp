@@ -135,7 +135,7 @@
 	<div class="col-lg-12 d-flex align-items-center no-padding">
 		<div class="col-lg-2">Rencana Kirim</div>
 		<div class="col-lg-2">
-			<div class="input-group date datetimepicker" name="rcn_kirim" id="rcn_kirim">
+			<div class="input-group date datetimepicker lock_date_fiskal" name="rcn_kirim" id="rcn_kirim">
 		        <input type="text" class="form-control text-center" placeholder="Rencana Kirim" data-required="1" />
 		        <span class="input-group-addon">
 		            <span class="glyphicon glyphicon-calendar"></span>
@@ -159,7 +159,7 @@
 	<div class="col-lg-12 d-flex align-items-center no-padding">
 		<div class="col-lg-2">Tgl Kirim</div>
 		<div class="col-lg-2">
-			<div class="input-group date datetimepicker" name="tgl_kirim" id="tgl_kirim">
+			<div class="input-group date datetimepicker lock_date_fiskal" name="tgl_kirim" id="tgl_kirim">
 		        <input type="text" class="form-control text-center" placeholder="Tanggal Kirim" data-required="1" />
 		        <span class="input-group-addon">
 		            <span class="glyphicon glyphicon-calendar"></span>

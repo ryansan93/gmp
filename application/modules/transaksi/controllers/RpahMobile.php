@@ -653,18 +653,50 @@ class RpahMobile extends Public_Controller {
     {
         $noreg = $this->input->post('params');
 
-        $m_konfir = new \Model\Storage\Konfir_model();
-        $d_konfir = $m_konfir->where('noreg', $noreg)->get();
+        $start_date_fiskal = null;
+        $end_date_fiskal = null;
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from periode_fiskal pf
+            where
+                pf.status = 1
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
         $_data = null;
-        if ( $d_konfir->count() > 0 ) {
-            $d_konfir = $d_konfir->toArray();
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray()[0];
 
-            foreach ($d_konfir as $k_konfir => $v_konfir) {
-                $_data[ $v_konfir['tgl_panen'] ] = array(
-                    'tgl_panen' => $v_konfir['tgl_panen'],
-                    'tgl_panen_after_format' => strtoupper(tglIndonesia($v_konfir['tgl_panen'], '-', ' ', true))
-                );
+            $start_date_fiskal = $d_conf['start_date'];
+            $end_date_fiskal = $d_conf['end_date'];
+
+            $m_konfir = new \Model\Storage\Konfir_model();
+            $d_konfir = $m_konfir->where('noreg', $noreg)->whereBetween('tgl_panen', [$start_date_fiskal, $end_date_fiskal])->get();
+
+            if ( $d_konfir->count() > 0 ) {
+                $d_konfir = $d_konfir->toArray();
+
+                foreach ($d_konfir as $k_konfir => $v_konfir) {
+                    $_data[ $v_konfir['tgl_panen'] ] = array(
+                        'tgl_panen' => $v_konfir['tgl_panen'],
+                        'tgl_panen_after_format' => strtoupper(tglIndonesia($v_konfir['tgl_panen'], '-', ' ', true))
+                    );
+                }
+            }
+        } else {
+            $m_konfir = new \Model\Storage\Konfir_model();
+            $d_konfir = $m_konfir->where('noreg', $noreg)->get();
+
+            if ( $d_konfir->count() > 0 ) {
+                $d_konfir = $d_konfir->toArray();
+
+                foreach ($d_konfir as $k_konfir => $v_konfir) {
+                    $_data[ $v_konfir['tgl_panen'] ] = array(
+                        'tgl_panen' => $v_konfir['tgl_panen'],
+                        'tgl_panen_after_format' => strtoupper(tglIndonesia($v_konfir['tgl_panen'], '-', ' ', true))
+                    );
+                }
             }
         }
 

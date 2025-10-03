@@ -107,6 +107,8 @@ var kpm = {
         $("#tanggal").on("dp.change", function (e) {
 			kpm.set_umur_populasi(this);
 		});
+
+		App.setTutupBulan();
 	}, // end - setting_up
 
 	add_row: function(elm) {

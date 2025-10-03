@@ -41,6 +41,8 @@ var pp = {
         $('select.peternak').select2();
         $('select.gudang').select2();
         $('select.ekspedisi').select2();
+
+		App.setTutupBulan();
 	}, // end - setting_up
 
 	addRowChild: function(elm) {
