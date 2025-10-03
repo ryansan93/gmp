@@ -170,7 +170,7 @@
 	<div class="col-xs-12"><hr></div>
 
 	<?php if ( $data['status'] <> 2 ) { ?>
-		<div class="col-xs-12">
+		<div class="col-xs-12 lock_btn_fiskal" data-date="<?php echo substr($data['tanggal'], 0, 10); ?>">
 			<div class="col-xs-12" style="padding: 0px 0px 5px 0px;">
 				<?php if ( $akses['a_edit'] == 1 ) { ?>
 					<button type="button" class="btn btn-primary pull-right" onclick="lhk.change_tab(this)" style="width: 100%;" data-id="<?php echo $data['id']; ?>" data-edit="edit" data-href="transaksi"><i class="fa fa-edit"></i> Edit</button>

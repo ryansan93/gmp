@@ -115,6 +115,8 @@ var lhk = {
         $("#tanggal").on("dp.change", function (e) {
 			lhk.set_umur(this);
 		});
+
+		App.setTutupBulan();
 	}, // end - setting_lhk
 
 	add_row: function(elm) {
