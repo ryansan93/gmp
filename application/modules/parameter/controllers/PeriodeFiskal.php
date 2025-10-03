@@ -85,7 +85,7 @@ class PeriodeFiskal extends Public_Controller
             Modules::run( 'base/event/save', $m_bo, $deskripsi_log );
 
 			$this->result['status'] = 1;
-            $this->result['message'] = 'Data biaya periode fiskal berhasil disimpan';
+            $this->result['message'] = 'Data periode fiskal berhasil disimpan';
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
@@ -98,12 +98,13 @@ class PeriodeFiskal extends Public_Controller
 		$params = $this->input->post('params');
 
 		try {
-			$m_bo = new \Model\Storage\BiayaOperasional_model();
-
+			$m_bo = new \Model\Storage\PeriodeFiskal_model();
 			$m_bo->where('id', $params['id'])->update(
 					array(
-						'tgl_berlaku' => $params['tgl_berlaku'],
-						'biaya_opr' => $params['biaya_opr']
+						'periode' => substr($params['periode'], 0, 7),
+						'start_date' => $params['start_date'],
+						'end_date' => $params['end_date'],
+						'status' => $params['status']
 					)
 				);
 
@@ -113,7 +114,7 @@ class PeriodeFiskal extends Public_Controller
             Modules::run( 'base/event/update', $d_bo, $deskripsi_log );
 
 			$this->result['status'] = 1;
-            $this->result['message'] = 'Data biaya operasional berhasil di update';
+            $this->result['message'] = 'Data periode fiskal berhasil di update';
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }

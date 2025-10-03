@@ -57,8 +57,8 @@ class TutupBulan extends Public_Controller
             $sql = "
                 select
                     d_jurnal.coa,
-                    d_jurnal.kode_trans,
-                    d_jurnal.kode_jurnal,
+                    -- d_jurnal.kode_trans,
+                    -- d_jurnal.kode_jurnal,
                     sum(d_jurnal.debet) as debet,
                     sum(d_jurnal.kredit) as kredit
                 from
@@ -106,106 +106,123 @@ class TutupBulan extends Public_Controller
                         dj.kode_jurnal
                 ) d_jurnal
                 group by
-                    d_jurnal.coa,
-                    d_jurnal.kode_trans,
-                    d_jurnal.kode_jurnal
+                    d_jurnal.coa
+                    -- ,
+                    -- d_jurnal.kode_trans,
+                    -- d_jurnal.kode_jurnal
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             if ( $d_conf->count() > 0 ) {
                 $d_conf = $d_conf->toArray();
 
+                // cetak_r( $d_conf, 1 );
+
+                $m_sb = new \Model\Storage\SaldoBulanan_model();
+                $m_sb->where('periode_fiskal', $start_date)->delete();
+
                 foreach ($d_conf as $k_conf => $v_conf) {
-                    $m_conf = new \Model\Storage\Conf();
-                    $sql = "select * from saldo_bulanan where tanggal = '".$start_date."' and coa = '".$v_conf['coa']."' and kode_trans = '".$v_conf['kode_trans']."'";
-                    $d_sb_now = $m_conf->hydrateRaw( $sql );
+                    $m_sb = new \Model\Storage\SaldoBulanan_model();
+                    $now = $m_conf->getDate();
 
-                    $m_conf = new \Model\Storage\Conf();
-                    $sql = "select * from saldo_bulanan where tanggal = '".$tgl_next_saldo."' and coa = '".$v_conf['coa']."' and kode_trans = '".$v_conf['kode_trans']."'";
-                    $d_sb_next = $m_conf->hydrateRaw( $sql );
+                    $m_sb->tgl_trans = $now['waktu'];
+                    $m_sb->coa = $v_conf['coa'];
+                    $m_sb->tanggal = $tgl_next_saldo;
+                    $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
+                    $m_sb->saldo_akhir = 0;
+                    // $m_sb->kode_trans = $v_conf['kode_trans'];
+                    // $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
+                    $m_sb->periode_fiskal = $start_date;
+                    $m_sb->save();
 
-                    if ( $d_sb_now->count() > 0 ) {
-                        $d_sb_now = $d_sb_now->toArray()[0];
+                    // $m_conf = new \Model\Storage\Conf();
+                    // $sql = "select * from saldo_bulanan where tanggal = '".$start_date."' and coa = '".$v_conf['coa']."' and kode_trans = '".$v_conf['kode_trans']."'";
+                    // $d_sb_now = $m_conf->hydrateRaw( $sql );
 
-                        $m_sb = new \Model\Storage\SaldoBulanan_model();
-                        $m_sb->where('id', $d_sb_now['id'])->where('coa', $v_conf['coa'])->update(
-                            array(
-                                'saldo_akhir' => $v_conf['debet']-$v_conf['kredit'],
-                                'kode_trans' => $v_conf['kode_trans'],
-                                'kode_jurnal' => $v_conf['kode_jurnal']
-                            )
-                        );
+                    // $m_conf = new \Model\Storage\Conf();
+                    // $sql = "select * from saldo_bulanan where tanggal = '".$tgl_next_saldo."' and coa = '".$v_conf['coa']."' and kode_trans = '".$v_conf['kode_trans']."'";
+                    // $d_sb_next = $m_conf->hydrateRaw( $sql );
+
+                    // if ( $d_sb_now->count() > 0 ) {
+                    //     $d_sb_now = $d_sb_now->toArray()[0];
+
+                    //     $m_sb = new \Model\Storage\SaldoBulanan_model();
+                    //     $m_sb->where('id', $d_sb_now['id'])->where('coa', $v_conf['coa'])->update(
+                    //         array(
+                    //             'saldo_akhir' => $v_conf['debet']-$v_conf['kredit'],
+                    //             'kode_trans' => $v_conf['kode_trans'],
+                    //             'kode_jurnal' => $v_conf['kode_jurnal'],
+                    //             'periode_fiskal' => $tgl_next_saldo
+                    //         )
+                    //     );
     
-                        if ( $d_sb_next->count() > 0 ) {
-                            $d_sb_next = $d_sb_next->toArray()[0];
+                    //     if ( $d_sb_next->count() > 0 ) {
+                    //         $d_sb_next = $d_sb_next->toArray()[0];
 
-                            $m_sb = new \Model\Storage\SaldoBulanan_model();
-                            $m_sb->where('id', $d_sb_next['id'])->update(
-                                array(
-                                    'saldo_awal' => $v_conf['debet']-$v_conf['kredit'],
-                                    'kode_trans' => $v_conf['kode_trans'],
-                                    'kode_jurnal' => $v_conf['kode_jurnal']
-                                )
-                            );
-                        } else {
-                            $m_sb = new \Model\Storage\SaldoBulanan_model();
-                            $now = $m_conf->getDate();
+                    //         $m_sb = new \Model\Storage\SaldoBulanan_model();
+                    //         $m_sb->where('id', $d_sb_next['id'])->update(
+                    //             array(
+                    //                 'saldo_awal' => $v_conf['debet']-$v_conf['kredit'],
+                    //                 'kode_trans' => $v_conf['kode_trans'],
+                    //                 'kode_jurnal' => $v_conf['kode_jurnal']
+                    //             )
+                    //         );
+                    //     } else {
+                    //         $m_sb = new \Model\Storage\SaldoBulanan_model();
+                    //         $now = $m_conf->getDate();
 
-                            $m_sb->tgl_trans = $now['waktu'];
-                            $m_sb->coa = $v_conf['coa'];
-                            $m_sb->tanggal = $tgl_next_saldo;
-                            $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
-                            $m_sb->saldo_akhir = 0;
-                            $m_sb->kode_trans = $v_conf['kode_trans'];
-                            $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
-                            $m_sb->save();
-                        }
-                    } else {
-                        $m_sb = new \Model\Storage\SaldoBulanan_model();
-                        $now = $m_conf->getDate();
+                    //         $m_sb->tgl_trans = $now['waktu'];
+                    //         $m_sb->coa = $v_conf['coa'];
+                    //         $m_sb->tanggal = $tgl_next_saldo;
+                    //         $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
+                    //         $m_sb->saldo_akhir = 0;
+                    //         $m_sb->kode_trans = $v_conf['kode_trans'];
+                    //         $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
+                    //         $m_sb->save();
+                    //     }
+                    // } else {
+                    //     $m_sb = new \Model\Storage\SaldoBulanan_model();
+                    //     $now = $m_conf->getDate();
     
-                        $m_sb->tgl_trans = $now['waktu'];
-                        $m_sb->coa = $v_conf['coa'];
-                        $m_sb->tanggal = $start_date;
-                        $m_sb->saldo_awal = 0;
-                        $m_sb->saldo_akhir = $v_conf['debet']-$v_conf['kredit'];
-                        $m_sb->kode_trans = $v_conf['kode_trans'];
-                        $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
-                        $m_sb->save();
+                    //     $m_sb->tgl_trans = $now['waktu'];
+                    //     $m_sb->coa = $v_conf['coa'];
+                    //     $m_sb->tanggal = $start_date;
+                    //     $m_sb->saldo_awal = 0;
+                    //     $m_sb->saldo_akhir = $v_conf['debet']-$v_conf['kredit'];
+                    //     $m_sb->kode_trans = $v_conf['kode_trans'];
+                    //     $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
+                    //     $m_sb->periode_fiskal = $tgl_next_saldo;
+                    //     $m_sb->save();
 
-                        if ( $d_sb_next->count() > 0 ) {
-                            $d_sb_next = $d_sb_next->toArray()[0];
+                    //     if ( $d_sb_next->count() > 0 ) {
+                    //         $d_sb_next = $d_sb_next->toArray()[0];
 
-                            $m_sb = new \Model\Storage\SaldoBulanan_model();
-                            $m_sb->where('id', $d_sb_next['id'])->update(
-                                array(
-                                    'saldo_awal' => $v_conf['debet']-$v_conf['kredit'],
-                                    'kode_trans' => $v_conf['kode_trans'],
-                                    'kode_jurnal' => $v_conf['kode_jurnal']
-                                )
-                            );
-                        } else {
-                            $m_sb = new \Model\Storage\SaldoBulanan_model();
-                            $now = $m_conf->getDate();
+                    //         $m_sb = new \Model\Storage\SaldoBulanan_model();
+                    //         $m_sb->where('id', $d_sb_next['id'])->update(
+                    //             array(
+                    //                 'saldo_awal' => $v_conf['debet']-$v_conf['kredit'],
+                    //                 'kode_trans' => $v_conf['kode_trans'],
+                    //                 'kode_jurnal' => $v_conf['kode_jurnal']
+                    //             )
+                    //         );
+                    //     } else {
+                    //         $m_sb = new \Model\Storage\SaldoBulanan_model();
+                    //         $now = $m_conf->getDate();
 
-                            $m_sb->tgl_trans = $now['waktu'];
-                            $m_sb->coa = $v_conf['coa'];
-                            $m_sb->tanggal = $tgl_next_saldo;
-                            $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
-                            $m_sb->saldo_akhir = 0;
-                            $m_sb->kode_trans = $v_conf['kode_trans'];
-                            $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
-                            $m_sb->save();
-                        }
-                    }
+                    //         $m_sb->tgl_trans = $now['waktu'];
+                    //         $m_sb->coa = $v_conf['coa'];
+                    //         $m_sb->tanggal = $tgl_next_saldo;
+                    //         $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
+                    //         $m_sb->saldo_akhir = 0;
+                    //         $m_sb->kode_trans = $v_conf['kode_trans'];
+                    //         $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
+                    //         $m_sb->save();
+                    //     }
+                    // }
                 }
             }
 
             /* PERIODE FISKAL */
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "select * from periode_fiskal where start_date = '".$tgl_next_saldo."'";
-            $d_pf_next = $m_conf->hydrateRaw( $sql );
-
             $m_bo = new \Model\Storage\PeriodeFiskal_model();
             $m_bo->where('start_date', $start_date)->update(
                 array(
@@ -213,12 +230,16 @@ class TutupBulan extends Public_Controller
                 )
             );
 
-            $d_bo = $m_bo->where('id', $d_pf_next['id'])->first();
+            $d_bo = $m_bo->where('start_date', $start_date)->first();
 
             $deskripsi_log = 'di-tutup oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/edit', $d_bo, $deskripsi_log );
 
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "select * from periode_fiskal where start_date = '".$tgl_next_saldo."'";
+            $d_pf_next = $m_conf->hydrateRaw( $sql );
             if ( $d_pf_next->count() > 0 ) {
+
                 $d_pf_next = $d_pf_next->toArray()[0];
 
                 $m_bo = new \Model\Storage\PeriodeFiskal_model();
@@ -227,7 +248,6 @@ class TutupBulan extends Public_Controller
                         'status' => 1
                     )
                 );
-
                 $d_bo = $m_bo->where('id', $d_pf_next['id'])->first();
 
                 $deskripsi_log = 'di-aktifkan kembali oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -283,6 +303,23 @@ class TutupBulan extends Public_Controller
             $m_sb->where('tanggal', $start_date)->update(
                 array('saldo_akhir' => null)
             );
+
+            $m_bo = new \Model\Storage\PeriodeFiskal_model();
+            $m_bo->where('start_date', $tgl_next_saldo)->update(
+                array(
+                    'status' => 0
+                )
+            );
+
+            $m_bo->where('start_date', $start_date)->update(
+                array(
+                    'status' => 1
+                )
+            );
+            $d_bo = $m_bo->where('start_date', $start_date)->first();
+
+            $deskripsi_log = 'di-buka oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/edit', $d_bo, $deskripsi_log );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di hapus.';
