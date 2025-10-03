@@ -1678,10 +1678,9 @@ class RhppGroup extends Public_Controller {
                 Modules::run( 'base/event/save', $m_rhpp, $deskripsi_log);
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', ".$id_header.", NULL, 1";
-
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', ".$id_header.", NULL, 1";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil disimpan';
@@ -1790,10 +1789,10 @@ class RhppGroup extends Public_Controller {
                 $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/delete', $d_rgh, $deskripsi_log);
     
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', NULL, ".$id.", 3";
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', NULL, ".$id.", 3";
     
-                $d_conf = $m_conf->hydrateRaw( $sql );
+                // $d_conf = $m_conf->hydrateRaw( $sql );
                 
                 $this->result['status'] = 1;
                 $this->result['message'] = 'Data berhasil dihapus';

@@ -206,6 +206,18 @@ class TutupBulan extends Public_Controller
             $sql = "select * from periode_fiskal where start_date = '".$tgl_next_saldo."'";
             $d_pf_next = $m_conf->hydrateRaw( $sql );
 
+            $m_bo = new \Model\Storage\PeriodeFiskal_model();
+            $m_bo->where('start_date', $start_date)->update(
+                array(
+                    'status' => 0
+                )
+            );
+
+            $d_bo = $m_bo->where('id', $d_pf_next['id'])->first();
+
+            $deskripsi_log = 'di-tutup oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/edit', $d_bo, $deskripsi_log );
+
             if ( $d_pf_next->count() > 0 ) {
                 $d_pf_next = $d_pf_next->toArray()[0];
 
