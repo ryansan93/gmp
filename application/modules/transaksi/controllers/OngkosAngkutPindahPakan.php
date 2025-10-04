@@ -285,6 +285,14 @@ class OngkosAngkutPindahPakan extends Public_Controller
         $params = $this->input->post('params');
 
         try {
+            $m_pf = new \Model\Storage\PeriodeFiskal_model();
+            $d_pf = $m_pf->where('status', 1)->orderBy('start_date', 'asc')->first();
+
+            $date = null;
+            if ( $d_pf ) {
+                $date = $d_pf->start_date;
+            }
+
             $m_kp = new \Model\Storage\KirimPakan_model();
             $sql = "
                 select * from
@@ -359,7 +367,7 @@ class OngkosAngkutPindahPakan extends Public_Controller
                     where
                         w.kode like '%".$params['unit']."%' and
                         (kp.jenis_kirim = 'opkp' or kp.jenis_kirim = 'opkg') and
-                        tp.tgl_terima > '2022-08-31' and
+                        tp.tgl_terima > '".$date."' and
                         not exists (select * from oa_pindah_pakan where no_sj = kp.no_sj)
                     group by
                         tp.tgl_terima,
@@ -423,7 +431,7 @@ class OngkosAngkutPindahPakan extends Public_Controller
                         rp.id_tujuan = rs_tujuan.id_tujuan
                 where
                     rp.no_order like '%".$params['unit']."%' and
-                    rp.tgl_retur > '2022-08-31' and
+                    rp.tgl_retur >= '".$date."' and
                     not exists (select * from oa_pindah_pakan where no_sj = rp.no_retur)
                 group by
                     rp.tgl_retur,

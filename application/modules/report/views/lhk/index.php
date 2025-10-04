@@ -2,6 +2,33 @@
 	<div class="col-xs-12">
 		<hr style="padding-top: 0px; margin-top: 0px;">
 		<div class="col-xs-12 no-padding">
+			<div class="col-xs-6 no-padding" style="padding-right: 5px; margin-bottom: 10px;">
+				<div class="col-xs-12 no-padding">
+					<label>Periode Awal</label>
+				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="input-group date datetimepicker" name="startDate" id="StartDate">
+							<input type="text" class="form-control text-center" placeholder="Start Date" />
+							<span class="input-group-addon">
+								<span class="glyphicon glyphicon-calendar"></span>
+							</span>
+						</div>
+				</div>
+			</div>
+			<div class="col-xs-6 no-padding" style="padding-left: 5px; margin-bottom: 10px;">
+				<div class="col-xs-12 no-padding">
+					<label>Periode Akhir</label>
+				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="input-group date datetimepicker" name="endDate" id="EndDate">
+						<input type="text" class="form-control text-center" placeholder="End Date" />
+						<span class="input-group-addon">
+							<span class="glyphicon glyphicon-calendar"></span>
+						</span>
+					</div>
+				</div>
+			</div>
+
 			<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 				<div class="col-xs-12 no-padding">
 					<label class="control-label">Nama Mitra</label>
@@ -9,6 +36,7 @@
 				<div class="col-xs-12 no-padding">
 					<select id="select_mitra" class="form-control selectpicker" data-live-search="true" type="text" data-required="1">
 						<option value="">Pilih Mitra</option>
+						<option value="all">All</option>
 						<?php foreach ($data_mitra as $k_dm => $v_dm): ?>
 							<option data-tokens="<?php echo $v_dm['nama']; ?>" value="<?php echo $v_dm['nomor']; ?>"><?php echo strtoupper($v_dm['unit'].' | '.$v_dm['nama']); ?></option>
 						<?php endforeach ?>
@@ -63,7 +91,7 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td colspan="14">Data tidak ditemukan.</td>
+							<td colspan="15">Data tidak ditemukan.</td>
 						</tr>
 					</tbody>
 				</table>

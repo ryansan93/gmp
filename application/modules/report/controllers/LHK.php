@@ -192,82 +192,96 @@ class LHK extends Public_Controller {
     {
         $nomor_mitra = $this->input->post('params');
 
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select
-                data.noreg,
-                REPLACE(cast(cast(data.real_tgl_docin as date) as varchar(10)), '-', '/') as real_tgl_docin,
-                REPLACE(cast(cast(data.tgl_docin as date) as varchar(10)), '-', '/') as tgl_docin,
-                data.kandang
-            from
-            (
-                select
-                    rs.noreg,
-                    case
-                        when td.datang is not null then
-                            td.datang
-                        else
-                            rs.tgl_docin
-                    end as real_tgl_docin,
-                    rs.tgl_docin as tgl_docin,
-                    'KD - '+cast(cast(k.kandang as int) as varchar(2)) as kandang
-                from rdim_submit rs
-                right join
-                    kandang k
-                    on
-                        rs.kandang = k.id
-                right join
-                    (
-                        select mm1.* from mitra_mapping mm1
-                        right join
-                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                            on
-                                mm1.id = mm2.id
-                    ) mm
-                    on
-                        rs.nim = mm.nim
-                right join
-                    mitra m
-                    on
-                        m.id = mm.mitra
-                left join
-                    order_doc od
-                    on
-                        od.noreg = rs.noreg
-                left join
-                    (
-                        select td1.* from terima_doc td1
-                        right join
-                            (select max(id) as id, no_order from terima_doc group by no_order) td2
-                            on
-                                td1.id = td2.id
-                    ) td
-                    on
-                        td.no_order = od.no_order
-                where
-                    m.nomor = '".$nomor_mitra."' and
-                    m.mstatus = 1 and
-                    rs.noreg is not null
-                group by
-                    rs.noreg,
-                    td.datang,
-                    rs.tgl_docin,
-                    k.kandang
-            ) data
-            group by
-                data.noreg,
-                data.real_tgl_docin,
-                data.tgl_docin,
-                data.kandang
-            order by
-                data.real_tgl_docin desc
-        ";
-
-        $d_conf = $m_conf->hydrateRaw( $sql );
-
+        $sql_mitra = null;
         $data = null;
-        if ( $d_conf->count() > 0 ) {
-            $data = $d_conf->toArray();
+
+        if ( $nomor_mitra != 'all' ) {
+            $sql_mitra = "and m.nomor = '".$nomor_mitra."'";
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    data.noreg,
+                    REPLACE(cast(cast(data.real_tgl_docin as date) as varchar(10)), '-', '/') as real_tgl_docin,
+                    REPLACE(cast(cast(data.tgl_docin as date) as varchar(10)), '-', '/') as tgl_docin,
+                    data.kandang,
+                    data.nama_mitra,
+                    data.kode_mitra
+                from
+                (
+                    select
+                        rs.noreg,
+                        case
+                            when td.datang is not null then
+                                td.datang
+                            else
+                                rs.tgl_docin
+                        end as real_tgl_docin,
+                        rs.tgl_docin as tgl_docin,
+                        'KD - '+cast(cast(k.kandang as int) as varchar(2)) as kandang,
+                        m.nama as nama_mitra,
+                        m.nomor as kode_mitra
+                    from rdim_submit rs
+                    left join
+                        kandang k
+                        on
+                            rs.kandang = k.id
+                    left join
+                        (
+                            select mm1.* from mitra_mapping mm1
+                            right join
+                                (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                on
+                                    mm1.id = mm2.id
+                        ) mm
+                        on
+                            rs.nim = mm.nim
+                    left join
+                        mitra m
+                        on
+                            m.id = mm.mitra
+                    left join
+                        order_doc od
+                        on
+                            od.noreg = rs.noreg
+                    left join
+                        (
+                            select td1.* from terima_doc td1
+                            right join
+                                (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                on
+                                    td1.id = td2.id
+                        ) td
+                        on
+                            td.no_order = od.no_order
+                    where
+                        m.mstatus = 1 and
+                        rs.noreg is not null
+                        ".$sql_mitra."
+                    group by
+                        rs.noreg,
+                        td.datang,
+                        rs.tgl_docin,
+                        k.kandang,
+                        m.nama,
+                        m.nomor
+                ) data
+                group by
+                    data.noreg,
+                    data.real_tgl_docin,
+                    data.tgl_docin,
+                    data.kandang,
+                    data.nama_mitra,
+                    data.kode_mitra
+                order by
+                    data.nama_mitra asc,
+                    data.real_tgl_docin desc
+            ";
+    
+            $d_conf = $m_conf->hydrateRaw( $sql );
+    
+            if ( $d_conf->count() > 0 ) {
+                $data = $d_conf->toArray();
+            }
         }
 
         // $m_mm = new \Model\Storage\MitraMapping_model();
@@ -325,9 +339,12 @@ class LHK extends Public_Controller {
 
         $params = $this->input->post('params');
 
-        $noreg = $params['noreg'];
+        $start_date = (isset($params['start_date']) && !empty($params['start_date']) ) ? $params['start_date'] : null;
+        $end_date = (isset($params['end_date']) && !empty($params['end_date']) ) ? $params['end_date'] : null;
+        $mitra = (isset($params['mitra']) && !empty($params['mitra']) ) ? $params['mitra'] : null;
+        $noreg = (isset($params['noreg']) && !empty($params['noreg']) ) ? $params['noreg'] : null;
 
-        $data = $this->mapping_data($noreg);
+        $data = $this->mapping_data($start_date, $end_date, $mitra, $noreg);
 
         $content['akses'] = $akses;
         $content['data'] = $data;
@@ -339,59 +356,123 @@ class LHK extends Public_Controller {
         display_json($this->result);
     }
 
-    public function mapping_data($noreg)
+    public function mapping_data($start_date, $end_date, $mitra, $noreg)
     {
         $data = array();
 
-        $m_lhk = new \Model\Storage\Lhk_model();
-        $d_lhk = $m_lhk->where('noreg', $noreg)->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi', 'foto_sisa_pakan', 'foto_ekor_mati'])->get();
+        // $m_lhk = new \Model\Storage\Lhk_model();
+        // $d_lhk = $m_lhk->where('noreg', $noreg)->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi', 'foto_sisa_pakan', 'foto_ekor_mati'])->get();
+
+        $sql = null;
+
+        $sql_date = null;
+        if ( !empty($start_date) && !empty($end_date) ) {
+            $sql_date = "l.tanggal between '".$start_date."' and '".$end_date."'";
+            if ( empty($sql) ) {
+                $sql = 'where '.$sql_date;
+            } else {
+                $sql .= ' and '.$sql_date;
+            }
+        }
+
+        $sql_mitra = null;
+        if ( !empty($mitra) && $mitra != 'all' ) {
+            $sql_mitra = "m.nomor = '".$mitra."'";
+            if ( empty($sql) ) {
+                $sql = 'where '.$sql_mitra;
+            } else {
+                $sql .= ' and '.$sql_mitra;
+            }
+        }
+
+        $sql_noreg = null;
+        if ( !empty($noreg) && $noreg != 'all' ) {
+            $sql_noreg = "l.noreg = '".$noreg."'";
+            if ( empty($sql) ) {
+                $sql = 'where '.$sql_noreg;
+            } else {
+                $sql .= ' and '.$sql_noreg;
+            }
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                l.*, 
+                rs.populasi, 
+                mp.lat_long as lat_long_mitra, 
+                m.nama as nama_mitra,
+                lt.waktu,
+                lt.deskripsi
+            from lhk l
+            left join
+                (
+                    select lt1.* from log_tables lt1
+                    right join
+                        (select max(id) as id, tbl_id, tbl_name from log_tables where tbl_name = 'lhk' group by tbl_id, tbl_name) lt2
+                        on
+                            lt1.id = lt2.id
+                ) lt
+                on
+                    lt.tbl_id = l.id
+            left join
+                rdim_submit rs
+                on
+                    l.noreg = rs.noreg
+            left join
+                (
+                    select mm1.* from mitra_mapping mm1
+                    right join
+                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        on
+                            mm1.id = mm2.id
+                ) mm
+                on
+                    rs.nim = mm.nim
+            left join
+                mitra m
+                on
+                    m.id = mm.mitra
+            left join
+                (
+                    select mp1.* from mitra_posisi mp1
+                    right join
+                        ( select max(id) as id, nomor, kandang from mitra_posisi group by nomor, kandang ) mp2
+                        on
+                            mp1.id = mp2.id
+                ) mp
+                on
+                    mp.nomor = m.nomor and
+                    mp.kandang = cast(SUBSTRING(rs.noreg, 10, 2) as int)
+            ".$sql."
+            order by
+                m.nama asc,
+                l.noreg desc,
+                l.umur asc
+        ";
+        $d_lhk = $m_conf->hydrateRaw( $sql );
 
         if ( $d_lhk->count() > 0 ) {
             $d_lhk = $d_lhk->toArray();
 
-            $m_rs = new \Model\Storage\RdimSubmit_model();
-            $d_rs = $m_rs->where('noreg', $noreg)->first();
-
-            $sql_mp = "
-                select mp.lat_long as lat_long_mitra from rdim_submit rs
-                left join
-                    (
-                        select mm1.* from mitra_mapping mm1
-                        right join
-                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                            on
-                                mm1.id = mm2.id
-                    ) mm
-                    on
-                        rs.nim = mm.nim
-                left join
-					(
-						select mp1.* from mitra_posisi mp1
-						right join
-							( select max(id) as id, nomor, kandang from mitra_posisi group by nomor, kandang ) mp2
-							on
-								mp1.id = mp2.id
-					) mp
-					on
-						mp.nomor = mm.nomor and
-                        mp.kandang = cast(SUBSTRING(rs.noreg, 10, 2) as int)
-                where
-                    rs.noreg = '".$noreg."'
-            ";
-            $d_mp = $m_rs->hydrateRaw( $sql_mp );
-            $lat_long_mitra = null;
-            if ( $d_mp->count() > 0 ) {
-                $lat_long_mitra = $d_mp->toArray()[0]['lat_long_mitra'];
-            }
-
-            $pakai_pakan = 0;
-            $populasi = $d_rs->populasi;
-            $total_ekor = $populasi;
-            
+            $noreg = null;
             $tgl_lhk = null;
+            $pakai_pakan = 0;
+            $populasi = 0;
+            $total_ekor = 0;
+            $tot_kirim_pakan = 0;
             foreach ($d_lhk as $k_lhk => $v_lhk) {
-                $tot_kirim_pakan = 0;
+                $lat_long_mitra = $v_lhk['lat_long_mitra'];
                 
+                if ( $noreg != $v_lhk['noreg'] ) {
+                    $tgl_lhk = null;
+                    $pakai_pakan = 0;
+                    $populasi = $v_lhk['populasi'];
+                    $total_ekor = $populasi;
+                    $tot_kirim_pakan = 0;
+                }
+                $noreg = $v_lhk['noreg'];
+
                 $pakai_pakan = $v_lhk['pakai_pakan'];
                 $total_ekor -= $v_lhk['ekor_mati'];
 
@@ -405,9 +486,9 @@ class LHK extends Public_Controller {
 
                 $d_kp = null;
                 if ( !empty($tgl_lhk) ) {
-                    $d_kp = $m_kp->where('tujuan', $noreg)->where('tgl_kirim', '<=', $v_lhk['tanggal'])->get();
+                    $d_kp = $m_kp->where('tujuan', $v_lhk['noreg'])->where('tgl_kirim', '<=', $v_lhk['tanggal'])->get();
                 } else {
-                    $d_kp = $m_kp->where('tujuan', $noreg)->whereBetween('tgl_kirim', [next_date($tgl_lhk), $v_lhk['tanggal']])->get();
+                    $d_kp = $m_kp->where('tujuan', $v_lhk['noreg'])->whereBetween('tgl_kirim', [next_date($tgl_lhk), $v_lhk['tanggal']])->get();
                 }
                 $tgl_lhk = $v_lhk['tanggal'];
 
@@ -417,22 +498,29 @@ class LHK extends Public_Controller {
                     foreach ($d_kp as $k_kp => $v_kp) {
                         $m_tp = new \Model\Storage\TerimaPakan_model();
                         $d_tp = $m_tp->where('id_kirim_pakan', $v_kp['id'])->with(['detail'])->first();
-
+                        
                         if ( $d_tp ) {
                             $d_tp = $d_tp->toArray();
-
+                            
                             foreach ($d_tp['detail'] as $k_tpd => $v_tpd) {
                                 $kirim_pakan += $v_tpd['jumlah'];
                             }
                         }
                     }
                 }
-
+                
                 $tot_kirim_pakan += $kirim_pakan;
+                
+                $m_foto_sisa_pakan = new \Model\Storage\LhkFotoSisaPakan_model();
+                $d_foto_sisa_pakan = $m_foto_sisa_pakan->where('id_header', $v_lhk['id'])->get();
 
-                $key = $v_lhk['noreg'].' - '.$v_lhk['umur'];
-                $data[ $key ] = array(
+                $m_foto_ekor_mati = new \Model\Storage\LhkFotoEkorMati_model();
+                $d_foto_ekor_mati = $m_foto_ekor_mati->where('id_header', $v_lhk['id'])->get();
+                
+                // $key = $v_lhk['noreg'].' - '.$v_lhk['umur'];
+                $data[] = array(
                     'id' => $v_lhk['id'],
+                    'noreg' => $v_lhk['noreg'],
                     'umur' => $v_lhk['umur'],
                     'tgl_lhk' => $v_lhk['tanggal'],
                     'kons' => $kons,
@@ -442,14 +530,20 @@ class LHK extends Public_Controller {
                     'fcr' => $v_lhk['fcr'],
                     'ip' => $v_lhk['ip'],
                     'mati' => $v_lhk['ekor_mati'],
-                    'foto_sisa_pakan' => $v_lhk['foto_sisa_pakan'],
-                    'foto_ekor_mati' => $v_lhk['foto_ekor_mati'],
+                    'foto_sisa_pakan' => ($d_foto_sisa_pakan->count() > 0) ? $d_foto_sisa_pakan->toArray() : null,
+                    'foto_ekor_mati' => ($d_foto_ekor_mati->count() > 0) ? $d_foto_ekor_mati->toArray() : null,
                     'kirim_pakan' => $kirim_pakan / 50,
                     'sisa_pakan' => ($tot_kirim_pakan - ($v_lhk['pakai_pakan'] * 50)) / 50,
                     'pakai_pakan' => $pakai_pakan,
                     'keterangan' => $v_lhk['keterangan'],
                     'posisi' => $v_lhk['lat_long'],
-                    'lat_long_mitra' => $lat_long_mitra
+                    'lat_long_mitra' => $lat_long_mitra,
+                    'nama_mitra' => $v_lhk['nama_mitra'],
+                    'posisi' => $v_lhk['lat_long'],
+                    'log' => array(
+                        'waktu' => $v_lhk['waktu'],
+                        'deskripsi' => $v_lhk['deskripsi'],
+                    )
                 );
             }
         }
@@ -577,6 +671,19 @@ class LHK extends Public_Controller {
 
         $content['data'] = $data;
         $html = $this->load->view($this->pathView . 'peralatan', $content, TRUE);
+
+        echo $html;
+    }
+
+    public function previewKeterangan()
+    {
+        $id = $this->input->get('id');
+
+        $m_lhk = new \Model\Storage\Lhk_model();
+        $d_lhk = $m_lhk->where('id', $id)->first();
+
+        $content['data'] = ($d_lhk) ? $d_lhk->toArray() : null;
+        $html = $this->load->view($this->pathView . 'preview_keterangan', $content, TRUE);
 
         echo $html;
     }

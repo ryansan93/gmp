@@ -31,6 +31,8 @@ var rp = {
                 $(ipt).data("DateTimePicker").date(new Date(tgl));
             }
         });
+
+        App.setTutupBulan();
     }, // end - setting
 
     changeTabActive: function(elm) {

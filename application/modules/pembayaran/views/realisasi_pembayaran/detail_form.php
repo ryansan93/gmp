@@ -259,7 +259,7 @@
 		</tbody>
 	</table>
 </small>
-<div class="col-xs-12 no-padding" style="margin-top: 5px;">
+<div class="col-xs-12 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_bayar'], 0, 10); ?>" style="margin-top: 5px;">
 	<?php if ( $akses['a_edit'] == 1 ): ?>
 		<button type="button" class="btn btn-primary pull-right" onclick="rp.changeTabActive(this)" data-id="<?php echo $data['id']; ?>" data-href="transaksi" data-edit="edit" style="margin-left: 5px;"><i class="fa fa-edit"></i> Edit</button>
 	<?php endif ?>

@@ -117,7 +117,7 @@
 <div class="col-xs-12 no-padding">
     <hr style="margin-top: 10px; margin-bottom: 10px;">
 </div>
-<div class="col-xs-12 no-padding">
+<div class="col-xs-12 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_retur'], 0, 10); ?>">
     <?php if ( $akses['a_edit'] == 1 ): ?>
         <button type="button" class="btn btn-primary pull-right" onclick="rp.changeTabActive(this)" data-href="rp" data-resubmit="edit" data-id="<?php echo $data['id']; ?>"><i class="fa fa-edit"></i> Edit</button>
     <?php endif ?>

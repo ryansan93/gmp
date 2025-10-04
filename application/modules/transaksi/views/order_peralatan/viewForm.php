@@ -80,7 +80,7 @@
 		</small>
 	</div>
 	<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
-	<div class="col-xs-12 no-padding">
+	<div class="col-xs-12 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_order'], 0, 10); ?>">
 		<div class="col-xs-12 no-padding">
 			<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 				<button type="button" class="col-xs-12 btn btn-primary" onclick="op.changeTabActive(this)" data-id="<?php echo $data['id']; ?>" data-href="action" data-edit="edit"><i class="fa fa-edit"></i> Edit</button>

@@ -564,6 +564,8 @@ var rp = {
 
                         rp.hit_jml_bayar();
                     }
+
+                    App.setTutupBulan();
                 });
             },'html');
         }

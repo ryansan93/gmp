@@ -49,7 +49,7 @@
                 <label class="control-label">Tgl Retur</label>
             </div>
             <div class="col-sm-2">
-                <div class="input-group date" id="tgl_retur" name="tgl_retur">
+                <div class="input-group date lock_date_fiskal" id="tgl_retur" name="tgl_retur">
                     <input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" disabled />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>

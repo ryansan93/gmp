@@ -17,6 +17,15 @@ var lhk = {
   //   }, // end - set_table_page
 
 	setting_up: function() {
+		$("#StartDate").datetimepicker({
+			locale: 'id',
+			format: 'DD MMM Y'
+		});
+		$("#EndDate").datetimepicker({
+			locale: 'id',
+			format: 'DD MMM Y'
+		});
+
 		$('#select_mitra').selectpicker();
 		$('#select_mitra').on('changed.bs.select', function (e, clickedIndex, newValue, oldValue) {
 		    lhk.get_noreg();
@@ -88,6 +97,9 @@ var lhk = {
 			bootbox.alert('Data belum lengkap, mohon cek kembali data yang anda masukkan.');
 		} else {
 			var params = {
+				'start_date': !empty($('#StartDate').find('input').val()) ? dateSQL($('#StartDate').data('DateTimePicker').date()) : null,
+				'end_date': !empty($('#EndDate').find('input').val()) ? dateSQL($('#EndDate').data('DateTimePicker').date()) : null,
+				'mitra' : $('#select_mitra').val(),
 				'noreg' : $('#select_noreg').val()
 			};
 
@@ -252,6 +264,37 @@ var lhk = {
     	var id = $(elm).data('id');
 
 		$.get('report/LHK/peralatan',{
+				'id': id
+			},function(data){
+			var _options = {
+				className : 'veryWidth',
+				message : data,
+				size : 'large',
+			};
+			bootbox.dialog(_options).bind('shown.bs.modal', function(){
+				var modal_body = $(this).find('.modal-body');
+				var modal_content = $(modal_body).closest('.modal-content');
+				var modal_dialog = $(modal_content).closest('.modal-dialog');
+
+				$(modal_dialog).css({'width': '30%'})
+
+				var table = $(modal_body).find('table');
+				var tbody = $(table).find('tbody');
+				if ( $(tbody).find('.modal-body tr').length <= 1 ) {
+			        $(this).find('tr #btn-remove').addClass('hide');
+			    };
+
+			    $(this).find('button.close').click(function() {
+			    	$('div.modal.show').css({'overflow': 'auto'});
+			    });
+			});
+		},'html');
+	}, // end - peralatan
+
+	previewKeterangan: function(elm) {
+    	var id = $(elm).data('id');
+
+		$.get('report/LHK/previewKeterangan',{
 				'id': id
 			},function(data){
 			var _options = {

@@ -81,7 +81,7 @@
 					<div class="col-xs-4 no-padding">Tgl Bayar</div>
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
-						<div class="input-group date" id="tgl_bayar" data-val="<?php echo $data['tgl_bayar']; ?>">
+						<div class="input-group date lock_date_fiskal" id="tgl_bayar" data-val="<?php echo $data['tgl_bayar']; ?>">
 					        <input type="text" class="form-control text-center" data-required="1" placeholder="Start Date" />
 					        <span class="input-group-addon">
 					            <span class="glyphicon glyphicon-calendar"></span>

@@ -119,10 +119,10 @@ table.tbl_pakan tbody tr td table.tbl_list_pakan tbody tr td {
 	min-width: 100%;
 }
 
-a.nekropsi:not([href]):not([tabindex]), a.solusi:not([href]):not([tabindex]) {
+a.nekropsi:not([href]):not([tabindex]), a.solusi:not([href]):not([tabindex]), a.keterangan:not([href]):not([tabindex]) {
 	color: #337ab7;
 }
-a.nekropsi:not([href]):not([tabindex]):hover, a.solusi:not([href]):not([tabindex]):hover {
+a.nekropsi:not([href]):not([tabindex]):hover, a.solusi:not([href]):not([tabindex]):hover, a.keterangan:not([href]):not([tabindex]):hover {
 	color: #337ab7;
 	text-decoration: underline;
 }
@@ -145,4 +145,8 @@ tr.header:hover {
 
 .red {
 	color: red!important;
+}
+
+tr.abu td {
+	background-color: #ededed;
 }
