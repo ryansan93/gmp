@@ -60,7 +60,8 @@ class TutupBulan extends Public_Controller
                     -- d_jurnal.kode_trans,
                     -- d_jurnal.kode_jurnal,
                     sum(d_jurnal.debet) as debet,
-                    sum(d_jurnal.kredit) as kredit
+                    sum(d_jurnal.kredit) as kredit,
+                    d_jurnal.unit
                 from
                 (
                     select
@@ -68,7 +69,8 @@ class TutupBulan extends Public_Controller
                         sb.kode_trans,
                         sb.kode_jurnal,
                         sb.saldo_awal as debet,
-                        0 as kredit
+                        0 as kredit,
+                        sb.unit
                     from saldo_bulanan sb
                     where
                         sb.tanggal between '".$start_date."' and '".$end_date."'
@@ -80,14 +82,16 @@ class TutupBulan extends Public_Controller
                         dj.kode_trans,
                         dj.kode_jurnal,
                         0 as debet,
-                        sum(dj.nominal) as kredit
+                        sum(dj.nominal) as kredit,
+                        dj.unit
                     from det_jurnal dj
                     where
                         dj.tanggal between '".$start_date."' and '".$end_date."'
                     group by
                         dj.coa_asal,
                         dj.kode_trans,
-                        dj.kode_jurnal
+                        dj.kode_jurnal,
+                        dj.unit
 
                     union all
 
@@ -96,17 +100,26 @@ class TutupBulan extends Public_Controller
                         dj.kode_trans,
                         dj.kode_jurnal,
                         sum(dj.nominal) as debet,
-                        0 as kredit
+                        0 as kredit,
+                        case
+                            when dj.unit_tujuan is not null then
+                                dj.unit_tujuan
+                            else
+                                dj.unit
+                        end as unit
                     from det_jurnal dj
                     where
                         dj.tanggal between '".$start_date."' and '".$end_date."'
                     group by
                         dj.coa_tujuan,
                         dj.kode_trans,
-                        dj.kode_jurnal
+                        dj.kode_jurnal,
+                        dj.unit_tujuan,
+                        dj.unit
                 ) d_jurnal
                 group by
-                    d_jurnal.coa
+                    d_jurnal.coa,
+                    d_jurnal.unit
                     -- ,
                     -- d_jurnal.kode_trans,
                     -- d_jurnal.kode_jurnal
@@ -133,6 +146,7 @@ class TutupBulan extends Public_Controller
                     // $m_sb->kode_trans = $v_conf['kode_trans'];
                     // $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
                     $m_sb->periode_fiskal = $start_date;
+                    $m_sb->unit = $v_conf['unit'];
                     $m_sb->save();
 
                     // $m_conf = new \Model\Storage\Conf();
