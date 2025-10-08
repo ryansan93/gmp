@@ -275,18 +275,49 @@ class UpdateHargaPakan extends Public_Controller {
                 -- END - UPDATE HARGA STOK
 
                 -- UPDATE HARGA STOK SIKLUS
+                /*
                 update ds
                 set
                 	ds.hrg_beli = cast(".$harga_baru." as decimal(10, 2))
-                from det_stok ds 
-                left join
-                    order_pakan op 
-                    on
-                        ds.kode_trans = op.no_order 
+                from det_stok_siklus dss
                 where
                     op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
                     op.supplier = '".$supplier."' and
                     ds.kode_barang = '".$pakan."'
+                */
+
+                -- select dss.* from det_stok_siklus dss
+                update dss
+                set
+                    dss.hrg_beli = cast(".$harga_baru." as decimal(10, 2)),
+                    dss.hrg_jual = cast(".$harga_baru." as decimal(10, 2)),
+                from det_stok_siklus dss
+                left join
+                    (
+                        select dst.*, ds.hrg_beli from det_stok_trans dst
+                        left join
+                            det_stok ds
+                            on
+                                dst.id_header = ds.id
+                        where
+                            dst.id_header in (
+                                select ds.id
+                                from det_stok ds 
+                                left join
+                                    order_pakan op 
+                                    on
+                                        ds.kode_trans = op.no_order 
+                                where
+                                    op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
+                                    op.supplier = '".$supplier."' and
+                                    ds.kode_barang = '".$pakan."'
+                            )
+                    ) dst
+                    on	
+                        dss.kode_trans = dst.kode_trans and
+                        dss.kode_barang = dst.kode_barang
+                where
+                    dst.id is not null
                 -- END - UPDATE HARGA STOK SIKLUS
 
                 select 
@@ -302,14 +333,72 @@ class UpdateHargaPakan extends Public_Controller {
                     op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
                     op.supplier = '".$supplier."'
             ";
-            // cetak_r( $sql, 1 );
             $d_conf = $m_conf->hydrateRaw( $sql );
 
-            // if ( $d_conf->count() > 0 ) {
-            //     $d_conf = $d_conf->toArray();
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select tp.id from (
+                    select ds.kode_trans from det_stok ds 
+                    left join
+                        order_pakan op 
+                        on
+                            ds.kode_trans = op.no_order 
+                    where
+                        op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
+                        op.supplier = '".$supplier."' and
+                        ds.kode_barang = '".$pakan."'
+                        
+                    union all
+                        
+                    select dss.kode_trans from det_stok_siklus dss
+                    left join
+                        (
+                            select dst.*, ds.hrg_beli from det_stok_trans dst
+                            left join
+                                det_stok ds
+                                on
+                                    dst.id_header = ds.id
+                            where
+                                dst.id_header in (
+                                    select ds.id
+                                    from det_stok ds 
+                                    left join
+                                        order_pakan op 
+                                        on
+                                            ds.kode_trans = op.no_order 
+                                    where
+                                        op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
+                                        op.supplier = '".$supplier."' and
+                                        ds.kode_barang = '".$pakan."'
+                                )
+                        ) dst
+                        on	
+                            dss.kode_trans = dst.kode_trans and
+                            dss.kode_barang = dst.kode_barang
+                    where
+                        dst.id is not null
+                ) data
+                left join
+                    kirim_pakan kp 
+                    on
+                        data.kode_trans = kp.no_order
+                left join
+                    terima_pakan tp 
+                    on
+                        kp.id = tp.id_kirim_pakan
+                where
+                    tp.id is not null
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
 
-            //     // cetak_r( $d_conf, 1 );
-            // }
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray();
+
+                foreach ($d_conf as $key => $value) {
+                    // $this->insertKonfirmasi($value['id']);
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+                }
+            }
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', null, $deskripsi_log, 'update_harga_pakan', null, json_encode($params));
