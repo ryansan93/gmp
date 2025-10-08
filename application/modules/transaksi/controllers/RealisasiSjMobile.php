@@ -773,9 +773,9 @@ class RealisasiSjMobile extends Public_Controller {
                     }
                 }
 
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", NULL, 1";
-                $d_conf = $m_conf->hydrateRaw( $sql );
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", NULL, 1";
+                // $d_conf = $m_conf->hydrateRaw( $sql );
 
                 $d_real_sj = $m_real_sj->where('id', $id_real_sj)->first();
 
@@ -928,9 +928,9 @@ class RealisasiSjMobile extends Public_Controller {
                 }
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", ".$id_real_sj.", 2";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", ".$id_real_sj.", 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $d_real_sj = $m_real_sj->where('id', $id_real_sj)->with(['det_real_sj'])->first();
 
