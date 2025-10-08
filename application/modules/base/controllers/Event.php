@@ -16,7 +16,9 @@ class Event extends Public_Controller {
     }
 
     if ( empty($tbl_id) ) {
-      $tbl_id = $model->id;
+      if ( isset($model->id) && !empty($model->id) ) {
+        $tbl_id = $model->id;
+      }
     }
 
     $m_log = new \Model\Storage\LogTables_model();

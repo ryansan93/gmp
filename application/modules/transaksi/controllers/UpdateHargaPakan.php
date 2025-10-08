@@ -274,6 +274,21 @@ class UpdateHargaPakan extends Public_Controller {
                     ds.kode_barang = '".$pakan."'
                 -- END - UPDATE HARGA STOK
 
+                -- UPDATE HARGA STOK SIKLUS
+                update ds
+                set
+                	ds.hrg_beli = cast(".$harga_baru." as decimal(10, 2))
+                from det_stok ds 
+                left join
+                    order_pakan op 
+                    on
+                        ds.kode_trans = op.no_order 
+                where
+                    op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
+                    op.supplier = '".$supplier."' and
+                    ds.kode_barang = '".$pakan."'
+                -- END - UPDATE HARGA STOK SIKLUS
+
                 select 
                     op.no_order, 
                     opd.*

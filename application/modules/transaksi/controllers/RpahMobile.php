@@ -1015,8 +1015,12 @@ class RpahMobile extends Public_Controller {
                     select 
                         drs.no_pelanggan, 
                         rs.tgl_panen
-                    from det_real_sj drs
-                    right join	
+                    from det_real_sj_inv drsi
+                    left join
+                        det_real_sj drs
+                        on
+                            drsi.no_sj = drs.no_sj
+                    left join	
                         (
                             select rs1.* from real_sj rs1
                             right join
@@ -1030,12 +1034,12 @@ class RpahMobile extends Public_Controller {
                         (
                             select dpp1.* from det_pembayaran_pelanggan dpp1
                             right join
-                                (select max(id) as id, id_do from det_pembayaran_pelanggan group by id_do) dpp2
+                                (select max(id) as id, no_inv from det_pembayaran_pelanggan group by no_inv) dpp2
                                 on
                                     dpp1.id = dpp2.id
                         ) dpp
                         on
-                            dpp.id_do =  drs.id
+                            dpp.no_inv =  drsi.no_inv
                     left join
                         (
                             select no_pelanggan, max(tgl_min) as tgl_min from (
@@ -1043,19 +1047,27 @@ class RpahMobile extends Public_Controller {
                                 
                                 union all
                                 
-                                select drs.no_pelanggan, max(rs.tgl_panen) as tgl_min from det_real_sj drs 
+                                select drs.no_pelanggan, max(rs.tgl_panen) as tgl_min from (
+                                	select drs.id_header, drs.no_pelanggan, drsi.no_inv from det_real_sj_inv drsi
+                                	left join
+                                		det_real_sj drs 
+                                		on
+                                			drsi.no_sj = drs.no_sj
+                                	group by
+                                		drs.id_header, drs.no_pelanggan, drsi.no_inv
+                                ) drs
                                 right join
                                     (
                                         select dpp1.* from det_pembayaran_pelanggan dpp1
                                         right join
-                                            (select max(id) as id, id_do from det_pembayaran_pelanggan group by id_do) dpp2
+                                            (select max(id) as id, no_inv from det_pembayaran_pelanggan group by no_inv) dpp2
                                             on
                                                 dpp1.id = dpp2.id
                                         where
                                             dpp1.status = 'LUNAS'
                                     ) dpp
                                     on
-                                        drs.id = dpp.id_do
+                                        drs.no_inv = dpp.no_inv
                                 right join
                                     real_sj rs 
                                     on
@@ -1090,6 +1102,7 @@ class RpahMobile extends Public_Controller {
                     on
                         plg.nomor = d_rs.no_pelanggan
                 where
+--                    ".$no_pelanggan." is not null and
                     d_rs.no_pelanggan = '".$no_pelanggan."'
                 group by
                     plg.nama,
