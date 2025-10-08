@@ -223,18 +223,25 @@ class RealisasiSjMobile extends Public_Controller {
                 $d_dreal_sj = $d_dreal_sj->toArray();
 
                 foreach ($d_dreal_sj as $k_dreal_sj => $v_dreal_sj) {
-                    $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
-                    $d_dpp = $m_dpp->where('id_do', $v_dreal_sj['id'])->where('jumlah_bayar', '>', 0)->first();
+                    $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                    $d_drsi = $m_drsi->where('no_sj', $v_dreal_sj['no_sj'])->first();
 
-                    if ( !$d_dpp ) {
-                        $edit_data = 1;
+                    if ( $d_drsi ) {
+                        $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
+                        $d_dpp = $m_dpp->where('no_inv', $d_drsi->no_inv)->where('jumlah_bayar', '>', 0)->first();
+    
+                        if ( !$d_dpp ) {
+                            $edit_data = 1;
+                        } else {
+                            $hapus_data = 0;
+                        }
+                        // else {
+                        //     $hapus_data = 0;
+                        //     $edit_data = 0;
+                        // }
                     } else {
-                        $hapus_data = 0;
+                        $edit_data = 1;
                     }
-                    // else {
-                    //     $hapus_data = 0;
-                    //     $edit_data = 0;
-                    // }
 
                     $detail[ $v_dreal_sj['no_do'] ]['pelanggan'] = $v_dreal_sj['pelanggan'];
                     $detail[ $v_dreal_sj['no_do'] ]['no_pelanggan'] = $v_dreal_sj['no_pelanggan'];
@@ -319,13 +326,19 @@ class RealisasiSjMobile extends Public_Controller {
                         if ( $d_dreal_sj->count() > 0 ) {
                             $d_dreal_sj = $d_dreal_sj->toArray();
                             foreach ($d_dreal_sj as $k_dreal_sj => $v_dreal_sj) {
-                                $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
-                                $d_dpp = $m_dpp->where('id_do', $v_dreal_sj['id'])->sum('jumlah_bayar');
+                                $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                                $d_drsi = $m_drsi->where('no_sj', $v_dreal_sj['no_sj'])->first();
 
                                 $edit_data = 1;
-                                if ( $d_dpp > 0 ) {
-                                    $edit_data = 0;
+                                if ( $d_drsi ) {
+                                    $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
+                                    $d_dpp = $m_dpp->where('no_inv', $d_drsi->no_inv)->sum('jumlah_bayar');
+    
+                                    if ( $d_dpp > 0 ) {
+                                        $edit_data = 0;
+                                    }
                                 }
+
 
                                 $detail[ $v_dreal_sj['no_do'] ]['pelanggan'] = $v_dreal_sj['pelanggan'];
                                 $detail[ $v_dreal_sj['no_do'] ]['no_pelanggan'] = $v_dreal_sj['no_pelanggan'];
