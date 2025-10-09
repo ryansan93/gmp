@@ -1,0 +1,287 @@
+var vp = {
+    startUp: function () {
+        vp.settingUp();
+        vp.getDataOutstanding();
+    }, // end - startUp
+
+    settingUp: function() {
+        $('.date').datetimepicker({
+            locale: 'id',
+            format: 'DD MMM Y',
+            useCurrent: false, //Important! See issue #1075
+            widgetPositioning: {
+                horizontal: "auto",
+                vertical: "auto"
+            }
+        });
+
+        $("#startDate").on("dp.change", function (e) {
+            $("#startDate").data("DateTimePicker").minDate(e.date);
+        });
+        $("#endDate").on("dp.change", function (e) {
+            $('#endDate').data("DateTimePicker").maxDate(e.date);
+        });
+
+        $('select.jenis_transaksi').select2({placeholder: 'Pilih Jenis Transaksi'}).on("select2:select", function (e) {
+            var jt = $('select.jenis_transaksi').select2().val();
+	
+            for (var i = 0; i < jt.length; i++) {
+                if ( jt[i] == 'all' ) {
+                    $('select.jenis_transaksi').select2().val('all').trigger('change');
+
+                    i = jt.length;
+                }
+            }
+
+            $('select.jenis_transaksi').next('span.select2').css('width', '100%');
+        });
+        $('select.jenis_transaksi').next('span.select2').css('width', '100%');
+    }, // end - settingUp
+
+    getDataOutstanding: function() {
+        var dcontent = $('#outstanding').find('table tbody');
+
+        $.ajax({
+            url : 'pembayaran/VerifikasiPembayaran/getDataOutstanding',
+            data : {},
+            type : 'GET',
+            dataType : 'HTML',
+            beforeSend : function(){ App.showLoaderInContent(dcontent); },
+            success : function(html){
+                App.hideLoaderInContent(dcontent, html);
+            },
+        });
+    }, // end - getDataOutstanding
+
+    getLists: function() {
+        let dcontent = $('table.tbl_riwayat tbody');
+
+        var err = 0;
+        $.map( $('[data-required=1]'), function(ipt) {
+            if ( empty( $(ipt).val() ) ) {
+                $(ipt).parent().addClass('has-error');
+                err++;
+            } else {
+                $(ipt).parent().removeClass('has-error');
+            }
+        });
+
+        if ( err > 0 ) {
+            bootbox.alert('Harap lengkapi data terlebih dahulu.');
+        } else {
+            var params = {
+                'start_date': dateSQL($('#startDate').data('DateTimePicker').date()),
+                'end_date': dateSQL($('#endDate').data('DateTimePicker').date()),
+                'jenis': $('.jenis_transaksi').select2().val()
+            };
+
+            $.ajax({
+                url : 'pembayaran/VerifikasiPembayaran/getLists',
+                data : { 'params': params },
+                type : 'get',
+                dataType : 'html',
+                beforeSend : function(){ App.showLoaderInContent(dcontent); },
+                success : function(html){
+                    App.hideLoaderInContent(dcontent, html);
+                },
+            });
+        }
+    }, // end - get_lists
+
+    formRealisasiBayar: function(elm) {
+        var params = {
+            'id': $(elm).attr('data-id')
+        };
+
+        $.get('pembayaran/VerifikasiPembayaran/formRealisasiBayar',{
+            'params': params
+        },function(data){
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                var modal_dialog = $(this).find('.modal-dialog');
+                var modal_body = $(this).find('.modal-body');
+
+                $(modal_dialog).css({'max-width' : '50%'});
+                $(modal_dialog).css({'width' : '50%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+
+                $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+                    $(this).priceFormat(Config[$(this).data('tipe')]);
+                });
+
+                var tglBayar = $(modal_body).find('#tglBayar').data('val');
+                $(modal_body).find('#tglBayar').datetimepicker({
+                    locale: 'id',
+                    format: 'DD MMM Y'
+                });
+
+                if ( !empty(tglBayar) ) {
+                    $(modal_body).find('#tglBayar').data("DateTimePicker").date(new Date(tgl_bayar));
+                }
+
+                App.setTutupBulan();
+            });
+        },'html');
+    }, // end - formRealisasiBayar
+
+    formRealisasiBayarDetail: function(elm) {
+        var params = {
+            'id': $(elm).attr('data-id')
+        };
+
+        $.get('pembayaran/VerifikasiPembayaran/formRealisasiBayarDetail',{
+            'params': params
+        },function(data){
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                var modal_dialog = $(this).find('.modal-dialog');
+                var modal_body = $(this).find('.modal-body');
+
+                $(modal_dialog).css({'max-width' : '50%'});
+                $(modal_dialog).css({'width' : '50%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+
+                $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+                    $(this).priceFormat(Config[$(this).data('tipe')]);
+                });
+
+                var tglBayar = $(modal_body).find('#tglBayar').data('val');
+                $(modal_body).find('#tglBayar').datetimepicker({
+                    locale: 'id',
+                    format: 'DD MMM Y'
+                });
+
+                if ( !empty(tglBayar) ) {
+                    $(modal_body).find('#tglBayar').data("DateTimePicker").date(new Date(tgl_bayar));
+                }
+
+                App.setTutupBulan();
+            });
+        },'html');
+    }, // end - formRealisasiBayarDetail
+
+    formRealisasiBayarEdit: function(elm) {
+        var params = {
+            'id': $(elm).attr('data-id')
+        };
+
+        $.get('pembayaran/VerifikasiPembayaran/formRealisasiBayarEdit',{
+            'params': params
+        },function(data){
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                var modal_dialog = $(this).find('.modal-dialog');
+                var modal_body = $(this).find('.modal-body');
+
+                $(modal_dialog).css({'max-width' : '50%'});
+                $(modal_dialog).css({'width' : '50%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+
+                $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+                    $(this).priceFormat(Config[$(this).data('tipe')]);
+                });
+
+                var tglBayar = $(modal_body).find('#tglBayar').data('val');
+                $(modal_body).find('#tglBayar').datetimepicker({
+                    locale: 'id',
+                    format: 'DD MMM Y'
+                });
+
+                if ( !empty(tglBayar) ) {
+                    $(modal_body).find('#tglBayar').data("DateTimePicker").date(new Date(tgl_bayar));
+                }
+
+                App.setTutupBulan();
+            });
+        },'html');
+    }, // end - formRealisasiBayarEdit
+
+    save: function(elm) {
+        var modal_body = $('.modal-body');
+
+        var err = 0;
+        $.map( $(modal_body).find('[data-required=1]'), function(ipt) {
+            if ( empty($(ipt).val()) ) {
+                if ( $(ipt).hasClass('file_lampiran') ) {
+                    var label = $(ipt).closest('label');
+                    $(label).find('i').css({'color': '#a94442'});
+                } else {
+                    $(ipt).parent().addClass('has-error');
+                }
+                err++;
+            } else {
+                if ( $(ipt).hasClass('file_lampiran') ) {
+                    var label = $(ipt).closest('label');
+                    $(label).find('i').css({'color': '#000000'});
+                } else {
+                    $(ipt).parent().removeClass('has-error');
+                }
+            }
+        });
+
+        if ( err > 0 ) {
+            bootbox.alert('Harap lengkapi data terlebih dahulu.');
+        } else {
+            $(elm).attr('disabled', 'disabled')
+            bootbox.confirm('Apakah anda yakin ingin menyimpan data pembayaran ?', function(result) {
+                if ( result ) {
+                    var data = {
+                        'id': $(elm).attr('data-id'),
+                        'tgl_bayar': dateSQL($(modal_body).find('#tglBayar').data('DateTimePicker').date()),
+                        'no_bukti': $(modal_body).find('.no_bukti').val(),
+                        'ket_bayar': $(modal_body).find('.ket_bayar').val()
+                    };
+        
+                    var formData = new FormData();
+        
+                    var _file = $('.file_lampiran').get(0).files[0];
+                    formData.append('files', _file);
+                    formData.append('data', JSON.stringify(data));
+        
+                    $.ajax({
+                        url : 'pembayaran/VerifikasiPembayaran/save',
+                        type : 'post',
+                        data : formData,
+                        beforeSend : function(){ showLoading() },
+                        success : function(data){
+                            hideLoading();
+                            if ( data.status == 1 ) {
+                                bootbox.alert(data.message, function() {
+                                    $('.modal').modal('hide');
+        
+                                    vp.getDataOutstanding();
+                                });
+                            } else {
+                                bootbox.alert(data.message);
+                            }
+                        },
+                        contentType : false,
+                        processData : false,
+                    });
+                } else {
+                    $(elm).removeAttr('disabled', 'disabled')
+                }
+            });
+        }
+    }, // end - save
+};
+
+vp.startUp();

@@ -22,15 +22,29 @@
 					echo strtoupper($ket); 
 				?>
 			</td>
-			<td class="text-right"><?php echo angkaDecimal($v_data['dn']); ?></td>
-			<td class="text-right"><?php echo angkaDecimal($v_data['cn']); ?></td>
+			<td class="text-right hide"><?php echo angkaDecimal($v_data['dn']); ?></td>
+			<td class="text-right hide"><?php echo angkaDecimal($v_data['cn']); ?></td>
 			<td class="text-right"><?php echo angkaDecimal($v_data['jml_transfer']); ?></td>
 			<td class="text-right"><?php echo angkaDecimal($v_data['uang_muka']); ?></td>
-			<td class="text-center"><a href="uploads/<?php echo $v_data['lampiran']; ?>" target="_blank"><?php echo $v_data['no_bukti']; ?></a></td>
+			<td class="text-center">
+				<?php if ( !empty($v_data['lampiran']) ) { ?>
+					<a href="uploads/<?php echo $v_data['lampiran']; ?>" target="_blank"><?php echo $v_data['lampiran']; ?></a>
+				<?php } else { ?>
+					-
+				<?php } ?>
+			</td>
+			<td class="text-center">
+				<?php if ( empty($v_data['status']) || $v_data['status'] == 2 ) { ?>
+					SUDAH REALISASI
+				<?php } else { ?>
+					BELUM REALISASI
+				<?php } ?>
+			</td>
+			<!-- <td class="text-center"><a href="uploads/<?php echo $v_data['lampiran']; ?>" target="_blank"><?php echo $v_data['no_bukti']; ?></a></td> -->
 		</tr>
 	<?php endforeach ?>
 <?php else: ?>
 	<tr>
-		<td colspan="8">Data tidak ditemukan.</td>
+		<td colspan="11">Data tidak ditemukan.</td>
 	</tr>
 <?php endif ?>

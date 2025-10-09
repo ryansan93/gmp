@@ -413,8 +413,8 @@ class UpdateHargaPakan extends Public_Controller {
     }
 
     public function tes() {
-        $tgl_order = '2025-10-04';
-        $tgl_order = '2025-10-04';
+        $tgl_order = '2025-10-06';
+        $supplier = '19B005';
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
@@ -426,8 +426,7 @@ class UpdateHargaPakan extends Public_Controller {
                         ds.kode_trans = op.no_order 
                 where
                     op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
-                    op.supplier = '".$supplier."' and
-                    ds.kode_barang = '".$pakan."'
+                    op.supplier = '".$supplier."'
                     
                 union all
                     
@@ -449,8 +448,7 @@ class UpdateHargaPakan extends Public_Controller {
                                         ds.kode_trans = op.no_order 
                                 where
                                     op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
-                                    op.supplier = '".$supplier."' and
-                                    ds.kode_barang = '".$pakan."'
+                                    op.supplier = '".$supplier."'
                             )
                     ) dst
                     on	

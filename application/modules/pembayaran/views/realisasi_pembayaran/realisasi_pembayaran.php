@@ -10,7 +10,7 @@
 					<div class="col-xs-4 no-padding"><h4><b>Tagihan</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total" data-val="<?php echo $data['total']; ?>"><h4><b><?php echo angkaDecimal($data['total']); ?></b></h4></div>
 				</div>
-				<div class="col-xs-12 no-padding">
+				<div class="col-xs-12 no-padding hide">
 					<div class="col-xs-4 no-padding"><h4><b>Debit Note</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total_dn" data-val="<?php echo $data['total_dn']; ?>"><h4><b><?php echo angkaDecimal($data['total_dn']); ?></b></h4></div>
 					<span class="d_dn hide"><?php echo $d_dn; ?></span>
@@ -21,14 +21,14 @@
 						<hr style="margin-top: 10px; margin-bottom: 10px;">
 					</div>
 				</div>
-				<div class="col-xs-12 no-padding">
+				<div class="col-xs-12 no-padding hide">
 					<div class="col-xs-4 no-padding"><h4><b>Credit Note</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total_cn" data-val="<?php echo $data['total_cn']; ?>"><h4><b><?php echo angkaDecimal($data['total_cn']); ?></b></h4></div>
 					<span class="d_cn hide"><?php echo $d_cn; ?></span>
 				</div>
 				<!-- <?php if ( $data['jenis_pembayaran'] == 'supplier' ): ?>
 				<?php endif ?> -->
-				<div class="col-xs-12 no-padding">
+				<div class="col-xs-12 no-padding hide">
 					<div class="col-xs-4 no-padding"><h4><b>Potongan</b></h4></div>
 					<div class="col-xs-8 text-right no-padding total_potongan" data-val="<?php echo $data['total_potongan']; ?>"><h4><b><?php echo angkaDecimal($data['total_potongan']); ?></b></h4></div>
 				</div>
@@ -48,7 +48,7 @@
 				</div>
 				<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<div class="col-xs-4 no-padding">No. Pembayaran</div>
+					<div class="col-xs-4 no-padding">No. Pengajuan</div>
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
 						<input type="text" class="form-control" placeholder="Nomor" value="<?php echo $data['nomor']; ?>" readonly />
@@ -182,14 +182,14 @@
 					</div>
 				</div>
 				<?php if ( $data['jenis_pembayaran'] == 'supplier' ): ?>
-					<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+					<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 						<div class="col-xs-4 no-padding">Debit Note</div>
 						<div class="col-xs-1 no-padding text-center">:</div>
 						<div class="col-xs-7 no-padding">
 							<button type="button" class="btn btn-default" onclick="rp.modalPilihDN(this)" data-id="<?php echo $data['id'] ?>">Pilih DN yang akan di gunakan</button>
 						</div>
 					</div>
-					<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+					<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 						<div class="col-xs-4 no-padding">Credit Note</div>
 						<div class="col-xs-1 no-padding text-center">:</div>
 						<div class="col-xs-7 no-padding">
@@ -197,7 +197,7 @@
 						</div>
 					</div>
 				<?php endif ?>
-				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+				<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 					<div class="col-xs-4 no-padding">Potongan</div>
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
@@ -218,15 +218,15 @@
 						<input type="text" class="form-control text-right jml_transfer" data-tipe="decimal" data-required="1" value="<?php echo $data['jml_transfer']; ?>" onblur="rp.hit_jml_bayar()">
 					</div>
 				</div>
-				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+				<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 					<div class="col-xs-4 no-padding">No. Bukti</div>
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
-						<input type="text" class="form-control no_bukti" placeholder="Nomor" data-required="1" value="<?php echo $data['no_bukti']; ?>" />
+						<input type="text" class="form-control no_bukti" placeholder="Nomor" value="<?php echo $data['no_bukti']; ?>" />
 					</div>
 				</div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<div class="col-xs-4 no-padding">Lampiran Bukti</div>
+					<div class="col-xs-4 no-padding">Lampiran Pengajuan</div>
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
 						<div class="col-lg-12" style="padding: 7px 0px 0px 0px;">
@@ -238,7 +238,7 @@
 										$data_required = null;
 									}
 								?>
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran" <?php echo $data_required; ?> name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran" <?php // echo $data_required; ?> name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
 								<i class="glyphicon glyphicon-paperclip cursor-p"></i>
 							</label>
 						</div>
@@ -253,8 +253,8 @@
 									<th class="col-xs-1 text-center">Transaksi</th>
 									<th class="col-xs-1 text-center">No. Bayar</th>
 									<th class="col-xs-2 text-center">Tagihan</th>
-									<th class="col-xs-2 text-center">DN</th>
-									<th class="col-xs-2 text-center">CN</th>
+									<th class="col-xs-2 text-center hide">DN</th>
+									<th class="col-xs-2 text-center hide">CN</th>
 									<th class="col-xs-2 text-center">Transfer</th>
 									<th class="col-xs-2 text-center">Bayar</th>
 								</tr>
@@ -265,8 +265,8 @@
 										<td class="text-center transaksi" data-val="<?php echo $v_det['transaksi']; ?>"><?php echo $v_det['transaksi']; ?></td>
 										<td class="text-center no_bayar" data-val="<?php echo $v_det['no_bayar']; ?>"><?php echo $v_det['no_bayar']; ?></td>
 										<td class="text-right tagihan" data-val="<?php echo $v_det['tagihan']; ?>"><?php echo angkaDecimal($v_det['tagihan']); ?></td>
-										<td class="text-right dn" data-val="<?php echo $v_det['dn']; ?>"><?php echo angkaDecimal($v_det['dn']); ?></td>
-										<td class="text-right cn" data-val="<?php echo $v_det['cn']; ?>"><?php echo angkaDecimal($v_det['cn']); ?></td>
+										<td class="text-right dn hide" data-val="<?php echo $v_det['dn']; ?>"><?php echo angkaDecimal($v_det['dn']); ?></td>
+										<td class="text-right cn hide" data-val="<?php echo $v_det['cn']; ?>"><?php echo angkaDecimal($v_det['cn']); ?></td>
 										<td class="text-right transfer" data-val="<?php echo $v_det['transfer']; ?>"><?php echo angkaDecimal($v_det['transfer']); ?></td>
 										<td class="text-right bayar" data-val="<?php echo $v_det['bayar']; ?>">
 											<?php echo angkaDecimal($v_det['bayar']); ?>

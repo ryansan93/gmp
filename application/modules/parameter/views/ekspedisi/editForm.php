@@ -224,7 +224,7 @@
 					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-2 text-right no-padding">NPWP</span>
 						<div class="col-sm-2" style="margin-left: 11px;">
-							<input required="required" class="form-control" type="text" name="npwp_ekspedisi" placeholder="Nomer NPWP" data-val="<?php echo $data['npwp']; ?>">
+							<input required="required" class="form-control" type="text" name="npwp_ekspedisi" placeholder="Nomer NPWP" data-val="<?php echo $data['npwp']; ?>" value="<?php echo $data['npwp']; ?>">
 						</div>
 						<div class="col-sm-8 no-padding">
 							<!-- <span class="file"><?php echo $l_npwp['filename']; ?></span> -->

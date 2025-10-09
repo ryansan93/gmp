@@ -9,7 +9,7 @@ var ekspedisi = {
 		$('[data-tipe=rt]').mask("999");
 		$('[data-tipe=rw]').mask("999");
 		$('[name=ktp_ekspedisi]').mask("9999999999999999");
-		$('[name=npwp_ekspedisi]').mask("999.999.999.9-999.999");
+		// $('[name=npwp_ekspedisi]').mask("999.999.999.9-999.999");
 
 		$('#tglHbsBerlaku').datetimepicker({
             locale: 'id',
@@ -100,8 +100,8 @@ var ekspedisi = {
 				$('[data-tipe=rt]').mask("999");
 				$('[data-tipe=rw]').mask("999");
 				$('[name=ktp_ekspedisi]').mask("9999999999999999");
-				$('[name=npwp_ekspedisi]').mask("999.999.999.9-999.999");
-				$('[name=npwp_ekspedisi]').val( $('[name=npwp_ekspedisi]').attr('data-val') ).trigger('input');
+				// $('[name=npwp_ekspedisi]').mask("999.999.999.9-999.999");
+				// $('[name=npwp_ekspedisi]').val( $('[name=npwp_ekspedisi]').attr('data-val') ).trigger('input');
 
 				$('#tglHbsBerlaku').datetimepicker({
 					locale: 'id',
@@ -366,7 +366,8 @@ var ekspedisi = {
 						'rt' :  $(div_ekspedisi).find('input[name=rt_ekspedisi]').val().trim(),
 						'rw' :  $(div_ekspedisi).find('input[name=rw_ekspedisi]').val().trim(),
 					};
-					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
+					// var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
+					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val();
 					var skb = $(div_ekspedisi).find('input[name=skb_ekspedisi]').val().trim();
 					var tgl_habis_skb = !empty($(div_ekspedisi).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_ekspedisi).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
@@ -479,7 +480,8 @@ var ekspedisi = {
 						'rt' :  $(div_ekspedisi).find('input[name=rt_ekspedisi]').val().trim(),
 						'rw' :  $(div_ekspedisi).find('input[name=rw_ekspedisi]').val().trim(),
 					};
-					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
+					// var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
+					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val();
 					var skb = $(div_ekspedisi).find('input[name=skb_ekspedisi]').val().trim();
 					var tgl_habis_skb = !empty($(div_ekspedisi).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_ekspedisi).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {

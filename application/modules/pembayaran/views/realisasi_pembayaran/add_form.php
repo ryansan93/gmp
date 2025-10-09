@@ -143,8 +143,8 @@
 			<tr>
 				<td colspan="6"><b>Total</b></td>
 				<td class="text-right total_tagihan"><b>0</b></td>
-				<td class="text-right total_dn"><b>0</b></td>
-				<td class="text-right total_cn"><b>0</b></td>
+				<td class="text-right total_dn hide"><b>0</b></td>
+				<td class="text-right total_cn hide"><b>0</b></td>
 				<td class="text-right total_transfer"><b>0</b></td>
 				<td class="text-right total_bayar"><b>0</b></td>
 				<td class="text-right total_sisa"><b>0</b></td>
@@ -158,8 +158,8 @@
 				<th style="width: 6%;">Periode</th>
 				<th class="col-xs-2">Nama Penerima</th>
 				<th class="col-xs-1">Tagihan</th>
-				<th class="col-xs-1">DN</th>
-				<th class="col-xs-1">CN</th>
+				<th class="col-xs-1 hide">DN</th>
+				<th class="col-xs-1 hide">CN</th>
 				<th class="col-xs-1">Transfer</th>
 				<th class="col-xs-1">Bayar</th>
 				<th class="col-xs-1">Sisa</th>
@@ -177,6 +177,6 @@
 </small>
 <div class="col-xs-12 no-padding" style="margin-top: 5px;">
 	<button id="btn-add" type="button" data-href="transaksi" class="btn btn-primary cursor-p col-xs-12" title="ADD" onclick="rp.submit(this)"> 
-		<i class="fa fa-check" aria-hidden="true"></i> Submit Realisasi
+		<i class="fa fa-check" aria-hidden="true"></i> Submit Pengajuan
 	</button>
 </div>

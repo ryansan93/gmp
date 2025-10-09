@@ -70,16 +70,17 @@
 				<th class="col-xs-1">Transaksi</th>
 				<th class="col-xs-2">Perusahaan</th>
 				<th class="col-xs-2">Nama Penerima</th>
-				<th class="col-xs-1">DN</th>
-				<th class="col-xs-1">CN</th>
+				<th class="col-xs-1 hide">DN</th>
+				<th class="col-xs-1 hide">CN</th>
 				<th class="col-xs-1">Transfer</th>
 				<th class="col-xs-1">Uang Muka</th>
-				<th class="col-xs-1">No. Bukti</th>
+				<th class="col-xs-1">Lampiran</th>
+				<th class="col-xs-1">Status</th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr>
-				<td colspan="10">Data tidak ditemukan.</td>
+				<td colspan="11">Data tidak ditemukan.</td>
 			</tr>
 		</tbody>
 	</table>
