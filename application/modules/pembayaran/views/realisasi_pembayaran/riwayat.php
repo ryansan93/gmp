@@ -7,7 +7,7 @@
 	<div class="col-xs-12 search left-inner-addon no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
 	<div class="col-xs-12 no-padding">
 		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-			<div class="col-xs-12 no-padding"><label class="control-label text-left">Tanggal Bayar</label></div>
+			<div class="col-xs-12 no-padding"><label class="control-label text-left">Tgl Rcn Bayar</label></div>
 			<div class="col-xs-5 no-padding">
 				<div class="input-group date" id="start_date_bayar">
 			        <input type="text" class="form-control text-center" data-required="1" placeholder="Start Date" />

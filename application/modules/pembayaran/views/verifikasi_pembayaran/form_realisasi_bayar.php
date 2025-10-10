@@ -20,7 +20,7 @@
 				</div>
                 <div class="col-xs-12 no-padding">
 					<div class="col-xs-3 no-padding">JML PENGAJUAN TF</div>
-					<div class="col-xs-9 no-padding">: <?php echo strtoupper(angkaDecimal($data['jml_transfer'])); ?></div>
+					<div class="col-xs-9 no-padding">: <b><?php echo strtoupper(angkaDecimal($data['jml_transfer'])); ?></b></div>
 				</div>
                 <div class="col-xs-12 no-padding">
 					<div class="col-xs-3 no-padding">LAMPIRAN PENGAJUAN</div>

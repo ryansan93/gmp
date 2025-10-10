@@ -7,7 +7,7 @@
 						<a class="nav-link active" data-toggle="tab" href="#riwayat" data-tab="riwayat">Riwayat</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" data-toggle="tab" href="#transaksi" data-tab="transaksi">Realisasi Pembayaran</a>
+						<a class="nav-link" data-toggle="tab" href="#transaksi" data-tab="transaksi">Pengajuan Pembayaran</a>
 					</li>
 				</ul>
 			</div>

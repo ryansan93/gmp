@@ -20,7 +20,7 @@
 				</div>
                 <div class="col-xs-12 no-padding">
 					<div class="col-xs-3 no-padding">JML PENGAJUAN TF</div>
-					<div class="col-xs-9 no-padding">: <?php echo strtoupper(angkaDecimal($data['jml_transfer'])); ?></div>
+					<div class="col-xs-9 no-padding">: <b><?php echo strtoupper(angkaDecimal($data['jml_transfer'])); ?></b></div>
 				</div>
                 <div class="col-xs-12 no-padding">
 					<div class="col-xs-3 no-padding">LAMPIRAN PENGAJUAN</div>
@@ -32,6 +32,10 @@
 				</div>
 				<div class="col-xs-12 no-padding">
                     <hr style="margin-top: 10px; margin-bottom: 10px;">
+				</div>
+                <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+					<div class="col-xs-3 no-padding"><b>KODE TRANSAKSI</b></div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['kode_trans']); ?></div>
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-3 no-padding"><b>TGL PEMBAYARAN</b></div>
@@ -51,6 +55,9 @@
 				</div>
 				<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 				<div class="col-xs-12 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_bayar'], 0, 10); ?>" style="margin-top: 5px;">
+                    <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+                        <button type="button" class="col-xs-12 btn btn-default" onclick="vp.printPreview(this)" data-id="<?php echo exEncrypt($data['id']); ?>"><i class="fa fa-print"></i> Cetak</button>
+                    </div>
                     <div class="col-xs-6 no-padding" style="padding-right: 5px;">
                         <button type="button" class="col-xs-12 btn btn-danger" onclick="vp.delete(this)" data-id="<?php echo $data['id']; ?>"><i class="fa fa-trash"></i> Hapus</button>
                     </div>

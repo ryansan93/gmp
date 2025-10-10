@@ -418,32 +418,41 @@ var rp = {
         var thead = $(table).find('thead');
 
         var total_tagihan = 0;
+        var total_pph = 0;
+        var total_netto = 0;
         var total_dn = 0;
         var total_cn = 0;
         var total_transfer = 0;
         var total_bayar = 0;
         var total_sisa = 0;
         $.map( $(tbody).find('tr'), function(tr) {
-            var _tagihan = parseFloat($(tr).find('td._tagihan').attr('data-val'));
-            var _dn = parseFloat($(tr).find('td._dn').attr('data-val'));
-            var _cn = parseFloat($(tr).find('td._cn').attr('data-val'));
-            var _transfer = parseFloat($(tr).find('td._transfer').attr('data-val'));
-            var _bayar = parseFloat($(tr).find('td._bayar').attr('data-val'));
-            total_tagihan += _tagihan;
-            total_dn += _dn;
-            total_cn += _cn;
-            total_transfer += _transfer;
-            total_bayar += _bayar;
             
             var checkbox = $(tr).find('input[type=checkbox]');
             if ( $(checkbox).prop('checked') ) {
-                var _sisa = parseFloat($(tr).find('td._sisa').attr('data-val'));
+                var _tagihan = parseFloat($(tr).find('td._tagihan').attr('data-val'));
+                var _pph = parseFloat($(tr).find('td._potongan_pph').attr('data-val'));
+                var _netto = parseFloat($(tr).find('td._netto').attr('data-val'));
+                var _dn = parseFloat($(tr).find('td._dn').attr('data-val'));
+                var _cn = parseFloat($(tr).find('td._cn').attr('data-val'));
+                var _transfer = !empty($(tr).find('td._transfer').attr('data-val')) ? parseFloat($(tr).find('td._transfer').attr('data-val')) : 0;
+                var _bayar = !empty($(tr).find('td._bayar').attr('data-val')) ? parseFloat($(tr).find('td._bayar').attr('data-val')) : 0;
 
+                total_tagihan += _tagihan;
+                total_pph += _pph;
+                total_netto += _netto;
+                total_dn += _dn;
+                total_cn += _cn;
+                total_transfer += _transfer;
+                total_bayar += _bayar;
+                
+                var _sisa = parseFloat($(tr).find('td._sisa').attr('data-val'));
                 total_sisa += _sisa;
             }
         });
 
         $(thead).find('td.total_tagihan b').html( numeral.formatDec(total_tagihan) );
+        $(thead).find('td.total_potongan_pph b').html( numeral.formatDec(total_pph) );
+        $(thead).find('td.total_netto b').html( numeral.formatDec(total_netto) );
         $(thead).find('td.total_dn b').html( numeral.formatDec(total_dn) );
         $(thead).find('td.total_cn b').html( numeral.formatDec(total_cn) );
         $(thead).find('td.total_transfer b').html( numeral.formatDec(total_transfer) );
@@ -1140,6 +1149,7 @@ var rp = {
             'ekspedisi': $(modal_body).find('.ekspedisi').attr('data-val'),
             'no_rek': $(modal_body).find('.rekening').val(),
             'no_bukti': $(modal_body).find('.no_bukti').val(),
+            'no_invoice': $(modal_body).find('.no_invoice').val(),
             'dn': !empty(dn) ? dn : null,
             'cn': !empty(cn) ? cn : null,
             'potongan': !empty(potongan) ? potongan : null,
@@ -1285,6 +1295,7 @@ var rp = {
             'ekspedisi': $(modal_body).find('.ekspedisi').attr('data-val'),
             'no_rek': $(modal_body).find('.rekening').val(),
             'no_bukti': $(modal_body).find('.no_bukti').val(),
+            'no_invoice': $(modal_body).find('.no_invoice').val(),
             'dn': !empty(dn) ? dn : null,
             'cn': !empty(cn) ? cn : null,
             'potongan': !empty(potongan) ? potongan : null,

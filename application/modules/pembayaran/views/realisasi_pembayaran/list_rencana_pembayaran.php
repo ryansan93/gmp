@@ -8,6 +8,10 @@
 			<td><?php echo $v_data['periode']; ?></td>
 			<td><?php echo $v_data['nama_penerima']; ?></td>
 			<td class="text-right _tagihan" data-val="<?php echo $v_data['tagihan']; ?>"><?php echo angkaDecimal($v_data['tagihan']); ?></td>
+			<?php $pph = isset($v_data['pph']) ? $v_data['pph'] : 0; ?>
+			<td class="text-right _potongan_pph" data-val="<?php echo $pph; ?>"><?php echo angkaDecimal($pph); ?></td>
+			<?php $netto = isset($v_data['netto']) ? $v_data['netto'] : $v_data['tagihan']; ?>
+			<td class="text-right _netto" data-val="<?php echo $netto; ?>"><?php echo angkaDecimal($netto); ?></td>
 			<td class="text-right _dn hide" data-val="<?php echo $v_data['dn']; ?>"><?php echo angkaDecimal($v_data['dn']); ?></td>
 			<td class="text-right _cn hide" data-val="<?php echo $v_data['cn']; ?>"><?php echo angkaDecimal($v_data['cn']); ?></td>
 			<td class="text-right _transfer" data-val="<?php echo $v_data['transfer']; ?>"><?php echo angkaDecimal($v_data['transfer']); ?></td>

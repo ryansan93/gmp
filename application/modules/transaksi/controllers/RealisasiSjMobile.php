@@ -228,12 +228,19 @@ class RealisasiSjMobile extends Public_Controller {
 
                     if ( $d_drsi ) {
                         $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
-                        $d_dpp = $m_dpp->where('no_inv', $d_drsi->no_inv)->where('jumlah_bayar', '>', 0)->first();
-    
-                        if ( !$d_dpp ) {
-                            $edit_data = 1;
-                        } else {
+                        $sql = "
+                            select * from det_pembayaran_pelanggan dpp
+                            where
+                                dpp.no_inv = '".$d_drsi->no_inv."' and
+                                (dpp.tagihan - (dpp.penyesuaian+dpp.sisa_tagihan)) > 0
+                        ";
+                        $d_dpp = $m_dpp->hydrateRaw( $sql );
+                        // $d_dpp = $m_dpp->where('no_inv', $d_drsi->no_inv)->where('jumlah_bayar', '>', 0)->first();
+
+                        if ( $d_dpp->count() > 0 ) {
                             $hapus_data = 0;
+                        } else {
+                            $edit_data = 1;
                         }
                         // else {
                         //     $hapus_data = 0;

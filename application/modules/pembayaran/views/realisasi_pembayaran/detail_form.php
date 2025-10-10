@@ -1,7 +1,7 @@
 <form class="form-horizontal">
 	<div class="col-xs-12 no-padding">
 		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-			<div class="col-xs-2 no-padding"><label class="control-label text-left">Tanggal Bayar</label></div>
+			<div class="col-xs-2 no-padding"><label class="control-label text-left">Tgl Rcn Bayar</label></div>
 			<div class="col-xs-10 no-padding">
 				<label class="control-label text-left"><?php echo ': '.strtoupper(tglIndonesia($data['tgl_bayar'], '-', ' ', 'true')); ?></label>
 			</div>
@@ -12,6 +12,14 @@
 			<div class="col-xs-2 no-padding"><label class="control-label text-left">No. Bayar</label></div>
 			<div class="col-xs-10 no-padding">
 				<label class="control-label text-left"><?php echo ': '.$data['no_bayar']; ?></label>
+			</div>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding">
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+			<div class="col-xs-2 no-padding"><label class="control-label text-left">No. Invoice</label></div>
+			<div class="col-xs-10 no-padding">
+				<label class="control-label text-left"><?php echo ': '.$data['no_invoice']; ?></label>
 			</div>
 		</div>
 	</div>

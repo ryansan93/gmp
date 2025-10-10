@@ -60,7 +60,7 @@
 					<div class="col-xs-7 no-padding">
 						<!-- <input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" data-required="1"> -->
 						<select class="form-control bank">
-							<option value="">Pilih Bank</option>
+							<!-- <option value="">Pilih Bank</option> -->
 							<?php if ( !empty($bank) ): ?>
 								<?php foreach ($bank as $k_bank => $v_bank): ?>
 									<?php
@@ -78,7 +78,7 @@
 					</div>
 				</div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<div class="col-xs-4 no-padding">Tgl Bayar</div>
+					<div class="col-xs-4 no-padding">Tgl Rcn Bayar</div>
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
 						<div class="input-group date lock_date_fiskal" id="tgl_bayar" data-val="<?php echo $data['tgl_bayar']; ?>">
@@ -223,6 +223,13 @@
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-7 no-padding">
 						<input type="text" class="form-control no_bukti" placeholder="Nomor" value="<?php echo $data['no_bukti']; ?>" />
+					</div>
+				</div>
+				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+					<div class="col-xs-4 no-padding">No. Invoice</div>
+					<div class="col-xs-1 no-padding text-center">:</div>
+					<div class="col-xs-7 no-padding">
+						<input type="text" class="form-control no_invoice" placeholder="Nomor" value="<?php echo $data['no_invoice']; ?>" />
 					</div>
 				</div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

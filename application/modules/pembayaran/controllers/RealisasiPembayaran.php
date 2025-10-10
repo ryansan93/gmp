@@ -106,6 +106,7 @@ class RealisasiPembayaran extends Public_Controller
                 data.uang_muka,
                 data.cn,
                 data.dn,
+                data.status,
                 data.jenis_transaksi,
                 sum(data.jumlah) as jumlah
             from
@@ -128,6 +129,7 @@ class RealisasiPembayaran extends Public_Controller
                     rp.uang_muka,
                     rp.cn,
                     rp.dn,
+                    rp.status,
                     rpd.transaksi as jenis_transaksi,
                     rpd.bayar as jumlah
                 from realisasi_pembayaran_det rpd
@@ -200,6 +202,7 @@ class RealisasiPembayaran extends Public_Controller
                 data.uang_muka,
                 data.cn,
                 data.dn,
+                data.status,
                 data.jenis_transaksi
             order by
                 data.tgl_bayar desc,
@@ -558,16 +561,48 @@ class RealisasiPembayaran extends Public_Controller
                 foreach ($d_kpp as $k_kpp => $v_kpp) {
                     $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
                     $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpp['nomor'])->first();
+                    // if ( !empty($id) ) {
+                    //     $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                    //     $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('dn');
+                    //     $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('cn');
+                    //     $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                    // } else {
+                    //     $bayar = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                    //     $dn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('dn');
+                    //     $cn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('cn');
+                    //     $transfer = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                    // }
+
+                    $sql_id = null;
                     if ( !empty($id) ) {
-                        $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
-                        $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('dn');
-                        $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('cn');
-                        $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
-                    } else {
-                        $bayar = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
-                        $dn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('dn');
-                        $cn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('cn');
-                        $transfer = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                        $sql_id = "and rp.id <> ".$id."";
+                    }
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select
+                            sum(rpd.bayar) as bayar,
+                            sum(rpd.bayar) as dn,
+                            sum(rpd.bayar) as cn,
+                            sum(rpd.bayar) as transfer
+                        from realisasi_pembayaran_det rpd
+                        left join
+                            realisasi_pembayaran rp
+                            on
+                                rpd.id_header = rp.id
+                        where
+                            (rp.status = 2 or rp.status is null)
+                            ".$sql_id."
+                            and rpd.no_bayar = '".$v_kpp['nomor']."'
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+
+                    $bayar = $dn = $cn = $transfer = 0;
+                    if ( $d_conf->count() > 0 ) {
+                        $d_conf = $d_conf->toArray()[0];
+                        $bayar = $d_conf['bayar'];
+                        $dn = $d_conf['dn'];
+                        $cn = $d_conf['cn'];
+                        $transfer = $d_conf['transfer'];
                     }
 
                     $data[] = array(
@@ -578,6 +613,8 @@ class RealisasiPembayaran extends Public_Controller
                         'periode' => $v_kpp['periode'],
                         'nama_penerima' => $v_kpp['nama_mitra'],
                         'tagihan' => $v_kpp['total'],
+                        'pph' => 0,
+                        'netto' => $v_kpp['total'],
                         'dn' => $dn,
                         'cn' => $cn,
                         'transfer' => $transfer,
@@ -709,17 +746,52 @@ class RealisasiPembayaran extends Public_Controller
             foreach ($d_kpd as $k_kpd => $v_kpd) {
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
                 $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpd['nomor'])->first();
+                // if ( !empty($id) ) {
+                //     $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('bayar');
+                //     $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('dn');
+                //     $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('cn');
+                //     $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('transfer');
+                // } else {
+                //     $bayar = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('bayar');
+                //     $dn = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('dn');
+                //     $cn = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('cn');
+                //     $transfer = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('transfer');
+                // }
+
+                $sql_id = null;
                 if ( !empty($id) ) {
-                    $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('bayar');
-                    $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('dn');
-                    $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('cn');
-                    $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpd['nomor'])->sum('transfer');
-                } else {
-                    $bayar = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('bayar');
-                    $dn = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('dn');
-                    $cn = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('cn');
-                    $transfer = $m_rpd->where('no_bayar', $v_kpd['nomor'])->sum('transfer');
+                    $sql_id = "and rp.id <> ".$id."";
                 }
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        sum(rpd.bayar) as bayar,
+                        sum(rpd.bayar) as dn,
+                        sum(rpd.bayar) as cn,
+                        sum(rpd.bayar) as transfer
+                    from realisasi_pembayaran_det rpd
+                    left join
+                        realisasi_pembayaran rp
+                        on
+                            rpd.id_header = rp.id
+                    where
+                        (rp.status = 2 or rp.status is null)
+                        ".$sql_id."
+                        and rpd.no_bayar = '".$v_kpd['nomor']."'
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+
+                $bayar = $dn = $cn = $transfer = 0;
+                if ( $d_conf->count() > 0 ) {
+                    $d_conf = $d_conf->toArray()[0];
+                    $bayar = $d_conf['bayar'];
+                    $dn = $d_conf['dn'];
+                    $cn = $d_conf['cn'];
+                    $transfer = $d_conf['transfer'];
+                }
+
+                $pph = ($v_kpd['total'] * (0.25/100));
+                $netto = $v_kpd['total'] - $pph;
 
                 $data[] = array(
                     'tgl_bayar' => $v_kpd['tgl_bayar'],
@@ -728,12 +800,14 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpd['periode'],
                     'nama_penerima' => $v_kpd['nama_supplier'],
                     'tagihan' => $v_kpd['total'],
-                    'lampiran' => $v_kpd['total'],
+                    'pph' => $pph,
+                    'netto' => $netto,
+                    'lampiran' => $v_kpd['lampiran'],
                     'dn' => $dn,
                     'cn' => $cn,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
-                    'jumlah' => ($v_kpd['total'] > $bayar) ? $v_kpd['total'] - $bayar : 0,
+                    'jumlah' => ($netto > $bayar) ? $netto - $bayar : 0,
                     'kode_unit' => $v_kpd['kode_unit'],
                     'checked' => ($d_rpd) ? true : false
                 );
@@ -795,16 +869,48 @@ class RealisasiPembayaran extends Public_Controller
             foreach ($d_kpp as $k_kpp => $v_kpp) {
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
                 $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpp['nomor'])->first();
+                // if ( !empty($id) ) {
+                //     $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                //     $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('dn');
+                //     $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('cn');
+                //     $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                // } else {
+                //     $bayar = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
+                //     $dn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('dn');
+                //     $cn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('cn');
+                //     $transfer = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                // }
+
+                $sql_id = null;
                 if ( !empty($id) ) {
-                    $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
-                    $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('dn');
-                    $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('cn');
-                    $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
-                } else {
-                    $bayar = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('bayar');
-                    $dn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('dn');
-                    $cn = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('cn');
-                    $transfer = $m_rpd->where('no_bayar', $v_kpp['nomor'])->sum('transfer');
+                    $sql_id = "and rp.id <> ".$id."";
+                }
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        sum(rpd.bayar) as bayar,
+                        sum(rpd.bayar) as dn,
+                        sum(rpd.bayar) as cn,
+                        sum(rpd.bayar) as transfer
+                    from realisasi_pembayaran_det rpd
+                    left join
+                        realisasi_pembayaran rp
+                        on
+                            rpd.id_header = rp.id
+                    where
+                        (rp.status = 2 or rp.status is null)
+                        ".$sql_id."
+                        and rpd.no_bayar = '".$v_kpp['nomor']."'
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+
+                $bayar = $dn = $cn = $transfer = 0;
+                if ( $d_conf->count() > 0 ) {
+                    $d_conf = $d_conf->toArray()[0];
+                    $bayar = $d_conf['bayar'];
+                    $dn = $d_conf['dn'];
+                    $cn = $d_conf['cn'];
+                    $transfer = $d_conf['transfer'];
                 }
 
                 $data[] = array(
@@ -814,7 +920,9 @@ class RealisasiPembayaran extends Public_Controller
                     'no_invoice' => $v_kpp['invoice'],
                     'periode' => $v_kpp['periode'],
                     'nama_penerima' => $v_kpp['nama_supplier'],
-                    'lampiran' => $v_kpp['lampiran'],
+                    'tagihan' => $v_kpp['total'],
+                    'pph' => 0,
+                    'netto' => $v_kpp['total'],
                     'dn' => $dn,
                     'cn' => $cn,
                     'transfer' => $transfer,
@@ -883,16 +991,48 @@ class RealisasiPembayaran extends Public_Controller
             foreach ($d_kpv as $k_kpv => $v_kpv) {
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
                 $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpv['nomor'])->first();
+                // if ( !empty($id) ) {
+                //     $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('bayar');
+                //     $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('dn');
+                //     $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('cn');
+                //     $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('transfer');
+                // } else {
+                //     $bayar = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('bayar');
+                //     $dn = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('dn');
+                //     $cn = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('cn');
+                //     $transfer = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('transfer');
+                // }
+
+                $sql_id = null;
                 if ( !empty($id) ) {
-                    $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('bayar');
-                    $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('dn');
-                    $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('cn');
-                    $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpv['nomor'])->sum('transfer');
-                } else {
-                    $bayar = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('bayar');
-                    $dn = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('dn');
-                    $cn = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('cn');
-                    $transfer = $m_rpd->where('no_bayar', $v_kpv['nomor'])->sum('transfer');
+                    $sql_id = "and rp.id <> ".$id."";
+                }
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        sum(rpd.bayar) as bayar,
+                        sum(rpd.bayar) as dn,
+                        sum(rpd.bayar) as cn,
+                        sum(rpd.bayar) as transfer
+                    from realisasi_pembayaran_det rpd
+                    left join
+                        realisasi_pembayaran rp
+                        on
+                            rpd.id_header = rp.id
+                    where
+                        (rp.status = 2 or rp.status is null)
+                        ".$sql_id."
+                        and rpd.no_bayar = '".$v_kpv['nomor']."'
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+
+                $bayar = $dn = $cn = $transfer = 0;
+                if ( $d_conf->count() > 0 ) {
+                    $d_conf = $d_conf->toArray()[0];
+                    $bayar = $d_conf['bayar'];
+                    $dn = $d_conf['dn'];
+                    $cn = $d_conf['cn'];
+                    $transfer = $d_conf['transfer'];
                 }
 
                 $data[] = array(
@@ -902,6 +1042,8 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpv['periode'],
                     'nama_penerima' => $v_kpv['nama_supplier'],
                     'tagihan' => $v_kpv['total'],
+                    'pph' => 0,
+                    'netto' => $v_kpv['total'],
                     'bayar' => $bayar,
                     'cn' => $cn,
                     'dn' => $bayar,
@@ -956,16 +1098,48 @@ class RealisasiPembayaran extends Public_Controller
 
                 $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
                 $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_kpoap['nomor'])->first();
+                // if ( !empty($id) ) {
+                //     $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('bayar');
+                //     $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('dn');
+                //     $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('cn');
+                //     $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('transfer');
+                // } else {
+                //     $bayar = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('bayar');
+                //     $dn = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('dn');
+                //     $cn = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('cn');
+                //     $transfer = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('transfer');
+                // }
+
+                $sql_id = null;
                 if ( !empty($id) ) {
-                    $bayar = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('bayar');
-                    $dn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('dn');
-                    $cn = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('cn');
-                    $transfer = $m_rpd->where('id_header', '<>', $id)->where('no_bayar', $v_kpoap['nomor'])->sum('transfer');
-                } else {
-                    $bayar = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('bayar');
-                    $dn = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('dn');
-                    $cn = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('cn');
-                    $transfer = $m_rpd->where('no_bayar', $v_kpoap['nomor'])->sum('transfer');
+                    $sql_id = "and rp.id <> ".$id."";
+                }
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        sum(rpd.bayar) as bayar,
+                        sum(rpd.bayar) as dn,
+                        sum(rpd.bayar) as cn,
+                        sum(rpd.bayar) as transfer
+                    from realisasi_pembayaran_det rpd
+                    left join
+                        realisasi_pembayaran rp
+                        on
+                            rpd.id_header = rp.id
+                    where
+                        (rp.status = 2 or rp.status is null)
+                        ".$sql_id."
+                        and rpd.no_bayar = '".$v_kpoap['nomor']."'
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+
+                $bayar = $dn = $cn = $transfer = 0;
+                if ( $d_conf->count() > 0 ) {
+                    $d_conf = $d_conf->toArray()[0];
+                    $bayar = $d_conf['bayar'];
+                    $dn = $d_conf['dn'];
+                    $cn = $d_conf['cn'];
+                    $transfer = $d_conf['transfer'];
                 }
 
                 $data[] = array(
@@ -974,7 +1148,9 @@ class RealisasiPembayaran extends Public_Controller
                     'no_bayar' => $v_kpoap['nomor'],
                     'periode' => $v_kpoap['periode'],
                     'nama_penerima' => $d_ekspedisi[0]['nama'],
-                    'tagihan' => $v_kpoap['total'],
+                    'tagihan' => ($v_kpoap['total']+$v_kpoap['potongan_pph_23']),
+                    'pph' => $v_kpoap['potongan_pph_23'],
+                    'netto' => $v_kpoap['total'],
                     'dn' => $dn,
                     'cn' => $cn,
                     'transfer' => $transfer,
@@ -1160,7 +1336,7 @@ class RealisasiPembayaran extends Public_Controller
                     $detail[] = array(
                         'id_header' => $v_det['id_header'],
                         'transaksi' => $v_det['transaksi'],
-                        'no_bayar' => $v_det['no_bayar'],
+                        'no_bayar' => (isset($v_det['no_sj']) && !empty($v_det['no_sj'])) ? $v_det['no_sj'] : $v_det['no_bayar'],
                         'tagihan' => $v_det['tagihan'],
                         'dn' => $v_det['dn'],
                         'cn' => $v_det['cn'],
@@ -1175,6 +1351,7 @@ class RealisasiPembayaran extends Public_Controller
                 'id' => $d_rp['id'],
                 'tgl_bayar' => $d_rp['tgl_bayar'],
                 'no_bayar' => $d_rp['nomor'],
+                'no_invoice' => $d_rp['no_invoice'],
                 'jml_transfer' => $d_rp['jml_transfer'],
                 'total_potongan' => $d_rp['potongan'],
                 'dn' => $d_rp['dn'],
@@ -1491,6 +1668,7 @@ class RealisasiPembayaran extends Public_Controller
         $tgl_bayar = null;
         $rekening = null;
         $no_bukti = null;
+        $no_invoice = null;
         $lampiran = null;
         $jml_transfer = 0;
         $uang_muka = 0;
@@ -1509,6 +1687,7 @@ class RealisasiPembayaran extends Public_Controller
             $tgl_bayar = $d_rp->tgl_bayar;
             $rekening = $d_rp->no_rek;
             $no_bukti = $d_rp->no_bukti;
+            $no_invoice = $d_rp->no_invoice;
             $lampiran = $d_rp->lampiran;
             $jml_transfer = $d_rp->jml_transfer;
             $uang_muka = $d_rp->uang_muka;
@@ -1605,6 +1784,7 @@ class RealisasiPembayaran extends Public_Controller
             'tgl_bayar' => $tgl_bayar,
             'rekening' => $rekening,
             'no_bukti' => $no_bukti,
+            'no_invoice' => $no_invoice,
             'lampiran' => $lampiran,
             'no_perusahaan' => $d_perusahaan->kode,
             'perusahaan' => $d_perusahaan->perusahaan,
@@ -1704,6 +1884,7 @@ class RealisasiPembayaran extends Public_Controller
                 $m_rp->uang_muka = $data['uang_muka'];
                 $m_rp->coa_bank = $data['coa_bank'];
                 $m_rp->nama_bank = $data['nama_bank'];
+                $m_rp->no_invoice = $data['no_invoice'];
                 $m_rp->status = 1;
                 $m_rp->save();
 
@@ -1850,8 +2031,8 @@ class RealisasiPembayaran extends Public_Controller
                 // $sql = "exec insert_jurnal '".$jenis_transaksi."', '".$nomor."', NULL, NULL, 'realisasi_pembayaran', ".$id.", NULL, 1";
                 // $d_conf = $m_conf->hydrateRaw( $sql );
 
-                $id_old = null;
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1, null, $data['tgl_bayar']);
+                // $id_old = null;
+                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1, null, $data['tgl_bayar']);
 
                 $d_rp = $m_rp->where('id', $id)->first();
 
@@ -1947,7 +2128,8 @@ class RealisasiPembayaran extends Public_Controller
                     'potongan' => $data['total_potongan'],
                     'uang_muka' => $data['uang_muka'],
                     'coa_bank' => $data['coa_bank'],
-                    'nama_bank' => $data['nama_bank']
+                    'nama_bank' => $data['nama_bank'],
+                    'no_invoice' => $data['no_invoice'],
                 )
             );
 
@@ -2096,7 +2278,7 @@ class RealisasiPembayaran extends Public_Controller
             // $d_conf = $m_conf->hydrateRaw( $sql );
 
             // $id_old = null;
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2, null, $data['tgl_bayar']);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2, null, $data['tgl_bayar']);
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
@@ -2688,29 +2870,27 @@ class RealisasiPembayaran extends Public_Controller
 
     public function tes()
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select rp.id, rp.tgl_bayar from realisasi_pembayaran_det rpd
-            left join
-                realisasi_pembayaran rp 
-                on
-                    rpd.id_header = rp.id
-            where
-                rpd.transaksi like 'oa pakan'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        $to      = 'afinda.rahma@gmail.com';
+        $subject = 'TEST EMAIL';
+        $message = 'TEST';
+        $headers = 'From: ryansantoso93@gmail.com'       . "\r\n" .
+                    'X-Mailer: PHP/' . phpversion();
 
-        if ($d_conf->count() > 0) {
-            $d_conf = $d_conf->toArray();
+        mail($to, $subject, $message, $headers);
 
-            foreach ($d_conf as $key => $value) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, null, $value['tgl_bayar']);
-            }
+        // ini_set('SMTP', 'smtp.gmail.com');
+        // ini_set('smtp_port', 587);
+        // ini_set('sendmail_from', 'ryansantoso93@gmail.com');
+
+        // $to = 'ryansantoso93@gmail.com';
+        // $subject = 'Test Email';
+        // $message = 'This is a test email.';
+        // $headers = 'From: ryansantoso93@gmail.com';
+
+        if (mail($to, $subject, $message, $headers)) {
+            echo 'Email sent successfully!';
+        } else {
+            echo 'Email sending failed.';
         }
-
-        // $id = 3;
-        // $id_old = null;
-        // // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
     }
 }

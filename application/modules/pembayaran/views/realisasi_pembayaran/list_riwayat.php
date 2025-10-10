@@ -34,10 +34,10 @@
 				<?php } ?>
 			</td>
 			<td class="text-center">
-				<?php if ( empty($v_data['status']) || $v_data['status'] == 2 ) { ?>
-					SUDAH REALISASI
-				<?php } else { ?>
+				<?php if ( $v_data['status'] == 1 ) { ?>
 					BELUM REALISASI
+				<?php } else { ?>
+					SUDAH REALISASI
 				<?php } ?>
 			</td>
 			<!-- <td class="text-center"><a href="uploads/<?php echo $v_data['lampiran']; ?>" target="_blank"><?php echo $v_data['no_bukti']; ?></a></td> -->

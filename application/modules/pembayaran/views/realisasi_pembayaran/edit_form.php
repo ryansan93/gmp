@@ -199,6 +199,8 @@
 			<tr>
 				<td colspan="6"><b>Total</b></td>
 				<td class="text-right total_tagihan"><b>0</b></td>
+				<td class="text-right total_potongan_pph"><b>0</b></td>
+				<td class="text-right total_netto"><b>0</b></td>
 				<td class="text-right total_dn hide"><b>0</b></td>
 				<td class="text-right total_cn hide"><b>0</b></td>
 				<td class="text-right total_transfer"><b>0</b></td>
@@ -213,7 +215,9 @@
 				<th style="width: 3%;">Unit</th>
 				<th style="width: 6%;">Periode</th>
 				<th class="col-xs-2">Nama Penerima</th>
-				<th class="col-xs-1">Tagihan</th>
+				<th class="col-xs-1">Bruto</th>
+				<th class="col-xs-1">Potongan PPH</th>
+				<th class="col-xs-1">Netto</th>
 				<th class="col-xs-1 hide">DN</th>
 				<th class="col-xs-1 hide">CN</th>
 				<th class="col-xs-1">Transfer</th>

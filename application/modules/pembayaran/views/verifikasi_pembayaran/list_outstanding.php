@@ -5,8 +5,17 @@
             <td><?php echo strtoupper($value['nama_supl']); ?></td>
             <td class="text-center"><?php echo strtoupper(tglIndonesia($value['tgl_pengajuan'], '-', ' ')); ?></td>
             <td class="text-right"><?php echo strtoupper(angkaDecimal($value['jml_transfer'])); ?></td>
-            <td><a href="uploads/<?php echo $value['lampiran']; ?>" target="_blank"><?php echo $value['lampiran']; ?></a></td>
+            <td>
+                <?php if ( !empty($value['lampiran']) ) { ?>
+                    <a href="uploads/<?php echo $value['lampiran']; ?>" target="_blank"><?php echo $value['lampiran']; ?></a>
+                <?php } else { ?>
+                    -
+                <?php } ?>
+            </td>
             <td><?php echo strtoupper($value['deskripsi'].' '.$value['waktu']); ?></td>
+            <td>
+                <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>
+            </td>
             <td>
                 <button type="button" class="col-xs-12 btn btn-primary" data-id="<?php echo $value['id']; ?>" onclick="vp.formRealisasiBayar(this)"><i class="fa fa-check"></i> BAYAR</button>
             </td>
