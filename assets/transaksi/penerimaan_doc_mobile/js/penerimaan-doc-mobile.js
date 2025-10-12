@@ -365,6 +365,8 @@ var pdm = {
 			                    bootbox.alert( data.message, function() {
 			                        pdm.load_form(data.content.id, null, 'transaksi');
 			                        // location.reload();
+									var btn = $('div#riwayat').find('button.tampilkan_riwayat');
+									pdm.list_riwayat( $(btn) );
 			                    });
 			                } else {
 			                    bootbox.alert( data.message );
@@ -459,6 +461,8 @@ var pdm = {
 			                    bootbox.alert( data.message, function() {
 			                        pdm.load_form($(elm).attr('data-id'), null, 'transaksi');
 			                        // location.reload();
+									var btn = $('div#riwayat').find('button.tampilkan_riwayat');
+									pdm.list_riwayat( $(btn) );
 			                    });
 			                } else {
 			                    bootbox.alert( data.message );

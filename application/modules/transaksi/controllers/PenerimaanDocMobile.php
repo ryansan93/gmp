@@ -80,21 +80,23 @@ class PenerimaanDocMobile extends Public_Controller {
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
                 $d_terima_doc = $m_terima_doc->where('no_order', $v_order_doc['no_order'])->orderBy('id', 'desc')->first();
 
-                $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-                $d_terima_doc = $m_terima_doc->where('no_order', $v_order_doc['no_order'])->where('version', $d_terima_doc->version)->orderBy('id', 'desc')->get();
-
-                if ( $d_terima_doc->count() > 0 ) {
-                    $d_terima_doc = $d_terima_doc->toArray();
-                    foreach ($d_terima_doc as $key => $value) {
-                        $data[ $value['id'].' | '.$v_order_doc['no_order'] ] = array(
-                            'id' => $value['id'],
-                            'no_order' => $v_order_doc['no_order'],
-                            'tiba' => $value['datang'],
-                            'ekor' => $value['jml_ekor'],
-                            'bb' => $value['bb'],
-                        );
+                if ( $d_terima_doc ) {
+                    $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+                    $d_terima_doc = $m_terima_doc->where('no_order', $v_order_doc['no_order'])->where('version', $d_terima_doc->version)->orderBy('id', 'desc')->get();
     
-                        krsort($data);
+                    if ( $d_terima_doc->count() > 0 ) {
+                        $d_terima_doc = $d_terima_doc->toArray();
+                        foreach ($d_terima_doc as $key => $value) {
+                            $data[ $value['id'].' | '.$v_order_doc['no_order'] ] = array(
+                                'id' => $value['id'],
+                                'no_order' => $v_order_doc['no_order'],
+                                'tiba' => $value['datang'],
+                                'ekor' => $value['jml_ekor'],
+                                'bb' => $value['bb'],
+                            );
+        
+                            krsort($data);
+                        }
                     }
                 }
             }
