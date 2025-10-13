@@ -74,8 +74,8 @@
                             <td><input type="text" class="form-control nama_coa" value="<?php echo $v_coa['nama_coa']; ?>" disabled></td>
                             <td>
                                 <?php $edit = ( empty($v_coa['unit']) ) ? 'edit' : null; ?>
-                                <?php $disabled = ( !empty($v_coa['unit']) ) ? 'disabled' : null; ?>
-                                <select class="form-control unit <?php echo $edit; ?>" <?php echo $disabled; ?>>
+                                <?php $sel_disabled = ( !empty($v_coa['unit']) ) ? 'disabled' : null; ?>
+                                <select class="form-control unit <?php echo $edit; ?>" <?php echo $sel_disabled; ?>>
                                     <?php foreach ($unit as $k_unit => $v_unit) { ?>
                                         <?php
                                             $selected = '';
