@@ -28,7 +28,7 @@ class Coa_model extends Conf{
 			where
 				c.status = 1
 			order by
-				c.coa
+				c.coa asc
 		";
 		$d_coa = $this->hydrateRaw( $sql );
 

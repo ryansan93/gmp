@@ -130,16 +130,60 @@ class BankStart extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql_sa = "
+            /* SALDO AWAL */
             select
                 '' as tanggal,
                 '' as kode,
-                'Saldo Awal' as keterangan,
-                sb.saldo_awal as debet,
+                case
+                    when sa.debet2 > 0 then
+                        'Saldo Awal (Initial Balance)'
+                    else
+                        'Saldo Awal'
+                end as keterangan,
+                case
+                    when sa.debet2 > 0 then
+                        sa.debet2
+                    else
+                        sa.debet1
+                end as debet,
                 0 as kredit,
-                sb.coa as kas
-            from saldo_bulanan sb 
-            where
-                sb.tgl_trans = '".$start_date."'
+                sa.kas
+            from
+            (
+                select
+                    sum(sa.debet1) as debet1,
+                    sum(sa.kredit1) as kredit1,
+                    sum(sa.debet2) as debet2,
+                    sum(sa.kredit2) as kredit2,
+                    sa.kas
+                from
+                (
+                    select
+                        sb.saldo_awal as debet1,
+                        0 as kredit1,
+                        0 as debet2,
+                        0 as kredit2,
+                        sb.coa as kas
+                    from saldo_bulanan sb 
+                    where
+                        sb.tanggal = '".$start_date."'
+
+                    union all
+
+                    select
+                        0 as debet1,
+                        0 as kredit1,
+                        sc.debet as debet2,
+                        0 as kredit2,
+                        sc.no_coa as kas
+                    from sacoa sc
+                    where
+                        sc.periode = '".substr($start_date, 0, 7)."'
+                ) sa
+                group by
+                    sa.kas
+            ) sa
+            /* END - SALDO AWAL */
         ";
         $d_conf = $m_conf->hydrateRaw( $sql_sa );
         if ( $d_conf->count() <= 0 ) {
@@ -161,12 +205,49 @@ class BankStart extends Public_Controller {
                         '' as tanggal,
                         '' as kode,
                         'Saldo Awal' as keterangan,
-                        sb.saldo_awal as debet,
+                        case
+                            when sa.debet2 > 0 then
+                                sa.debet2
+                            else
+                                sa.debet1
+                        end as debet,
                         0 as kredit,
-                        sb.coa as kas
-                    from saldo_bulanan sb 
-                    where
-                        sb.tgl_trans = '".$start_date_new."'
+                        sa.kas
+                    from
+                    (
+                        select
+                            sum(sa.debet1) as debet1,
+                            sum(sa.kredit1) as kredit1,
+                            sum(sa.debet2) as debet2,
+                            sum(sa.kredit2) as kredit2,
+                            sa.kas
+                        from
+                        (
+                            select
+                                sb.saldo_awal as debet1,
+                                0 as kredit1,
+                                0 as debet2,
+                                0 as kredit2,
+                                sb.coa as kas
+                            from saldo_bulanan sb 
+                            where
+                                sb.tgl_trans = '".$start_date_new."'
+        
+                            union all
+        
+                            select
+                                0 as debet1,
+                                0 as kredit1,
+                                sc.debet as debet2,
+                                0 as kredit2,
+                                sc.no_coa as kas
+                            from sacoa sc
+                            where
+                                sc.periode = '".substr($start_date_new, 0, 7)."'
+                        ) sa
+                        group by
+                            sa.kas
+                    ) sa
                     /* END - SALDO AWAL */
 
                     union all
@@ -208,7 +289,7 @@ class BankStart extends Public_Controller {
                             union all
 
                             select 
-                                'kk' as tbl_name,
+                                'km' as tbl_name,
                                 ki.no_km as tbl_id,
                                 ki.tgl_km as tanggal,
                                 ki.keterangan,
@@ -223,6 +304,93 @@ class BankStart extends Public_Controller {
                             where 
                                 ki.no_km like '%BCA%' and 
                                 ki.tgl_km between '".$start_date_new."' and '".$end_date_new."'
+                                
+                            union all
+                            
+                            select 
+                                'realisasi_pembayaran' as tbl_name,
+                                rp.nomor as tbl_id,
+                                rp.tgl_bayar as tanggal,
+                                -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
+                                cast(rp.ket_realisasi as varchar(max)) as keterangan,
+                                0 as debet,
+                                rp.jml_transfer as kredit,
+                                rp.coa_bank as kas
+                            from realisasi_pembayaran_det rpd 
+                            left join
+                                (
+                                    select 'DOC' as jenis, kpd.periode, kpd.nomor, supl.nama as tujuan from konfirmasi_pembayaran_doc kpd 
+                                    left join
+                                        (
+                                            select plg1.* from pelanggan plg1
+                                            right join
+                                                (select max(id) as id, nomor from pelanggan where tipe = 'supplier' group by nomor) plg2
+                                                on
+                                                    plg1.id = plg2.id
+                                        ) supl
+                                        on
+                                            supl.nomor = kpd.supplier
+                                    
+                                    union all
+                                    
+                                    select 'PAKAN' as jenis, kpp.periode, kpp.nomor, supl.nama as tujuan from konfirmasi_pembayaran_pakan kpp 
+                                    left join
+                                        (
+                                            select plg1.* from pelanggan plg1
+                                            right join
+                                                (select max(id) as id, nomor from pelanggan where tipe = 'supplier' group by nomor) plg2
+                                                on
+                                                    plg1.id = plg2.id
+                                        ) supl
+                                        on
+                                            supl.nomor = kpp.supplier
+                                    
+                                    union all
+                                    
+                                    select 'OVK' as jenis, kpv.periode, kpv.nomor, supl.nama as tujuan from konfirmasi_pembayaran_voadip kpv
+                                    left join
+                                        (
+                                            select plg1.* from pelanggan plg1
+                                            right join
+                                                (select max(id) as id, nomor from pelanggan where tipe = 'supplier' group by nomor) plg2
+                                                on
+                                                    plg1.id = plg2.id
+                                        ) supl
+                                        on
+                                            supl.nomor = kpv.supplier
+                                    
+                                    union all
+                                    
+                                    select 'ONGKOS ANGKUT' as jenis, kpop.periode, kpop.nomor, kpop.ekspedisi as tujuan from konfirmasi_pembayaran_oa_pakan kpop
+                                    
+                                    union all
+                                    
+                                    select 'PLASMA' as jenis, kpp.periode, kpp.nomor, mtr.nama as tujuan from konfirmasi_pembayaran_peternak kpp
+                                    left join
+                                        (
+                                            select mtr1.* from mitra mtr1
+                                            right join
+                                                (select max(id) as id, nomor from mitra group by nomor) mtr2
+                                                on
+                                                    mtr1.id = mtr2.id
+                                        ) mtr
+                                        on
+                                            mtr.nomor = kpp.mitra
+                                ) pengajuan
+                                on
+                                    rpd.no_bayar = pengajuan.nomor
+                            left join
+                                realisasi_pembayaran rp 
+                                on
+                                    rpd.id_header = rp.id
+                            where 
+                                rp.tgl_bayar between '".$start_date_new."' and '".$end_date_new."'
+                            group by
+                                rp.nomor,
+                                rp.tgl_bayar,
+                                cast(rp.ket_realisasi as varchar(max)),
+                                rp.jml_transfer,
+                                rp.coa_bank
                         ) data
                         on
                             nb.tbl_id = data.tbl_id
@@ -244,16 +412,56 @@ class BankStart extends Public_Controller {
             from
             (
                 /* SALDO AWAL */
+                /*
                 select
                     '' as tanggal,
                     '' as kode,
                     'Saldo Awal' as keterangan,
-                    sb.saldo_awal as debet,
+                    case
+                        when sa.debet2 > 0 then
+                            sa.debet2
+                        else
+                            sa.debet1
+                    end as debet,
                     0 as kredit,
-                    sb.coa as kas
-                from saldo_bulanan sb 
-                where
-                    sb.tgl_trans = '".$start_date."'
+                    sa.kas
+                from
+                (
+                    select
+                        sum(sa.debet1) as debet1,
+                        sum(sa.kredit1) as kredit1,
+                        sum(sa.debet2) as debet2,
+                        sum(sa.kredit2) as kredit2,
+                        sa.kas
+                    from
+                    (
+                        select
+                            sb.saldo_awal as debet1,
+                            0 as kredit1,
+                            0 as debet2,
+                            0 as kredit2,
+                            sb.coa as kas
+                        from saldo_bulanan sb 
+                        where
+                            sb.tgl_trans = '".$start_date."'
+    
+                        union all
+    
+                        select
+                            0 as debet1,
+                            0 as kredit1,
+                            sc.debet as debet2,
+                            0 as kredit2,
+                            sc.no_coa as kas
+                        from sacoa sc
+                        where
+                            sc.periode = '".substr($start_date, 0, 7)."'
+                    ) sa
+                    group by
+                        sa.kas
+                ) sa
+                */
+                ".$sql_sa."
                 /* END - SALDO AWAL */
 
                 union all
@@ -414,7 +622,6 @@ class BankStart extends Public_Controller {
                 data.tanggal asc,
                 data.kode asc
         ";
-        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

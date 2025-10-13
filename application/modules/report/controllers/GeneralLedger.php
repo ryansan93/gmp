@@ -230,19 +230,60 @@ class GeneralLedger extends Public_Controller {
             from
             (
                 select
-                    sb.coa as no_coa,
+                    sb.no_coa as no_coa,
                     sb.unit,
                     c.nama_coa,
-                    sb.saldo_awal,
+                    case
+                        when sb.debet2 > 0 then
+                            sb.debet2
+                        else
+                            sb.debet1
+                    end as saldo_awal,
+                    -- sb.saldo_awal,
                     0 as kredit,
                     0 as debet
-                from saldo_bulanan sb 
+                from (
+                    select
+                        sa.no_coa,
+                        sa.unit,
+                        sum(sa.debet1) as debet1,
+                        sum(sa.kredit1) as kredit1,
+                        sum(sa.debet2) as debet2,
+                        sum(sa.kredit2) as kredit2
+                    from
+                    (
+                        select
+                            sb.coa as no_coa,
+                            sb.unit,
+                            sb.saldo_awal as debet1,
+                            0 as kredit1,
+                            0 as debet2,
+                            0 as kredit2
+                        from saldo_bulanan sb 
+                        where 
+                            sb.tanggal between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        select
+                            sc.no_coa,
+                            sc.unit,
+                            0 as debet1,
+                            0 as kredit1,
+                            sc.debet as debet2,
+                            0 as kredit2
+                        from sacoa sc
+                        where
+                            sc.periode = '".substr($start_date, 0, 7)."'
+                    ) sa
+                    group by
+                        sa.no_coa,
+                        sa.unit
+                ) sb 
                 left join
                     coa c
                     on
-                        sb.coa = c.coa
-                where 
-                    sb.tanggal between '".$start_date."' and '".$end_date."'
+                        sb.no_coa = c.coa
 
                 union all
 

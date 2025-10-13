@@ -58,7 +58,7 @@
             $gt_kredit += $kredit;
         ?>
         <?php if ( $idx_kas == 0 ) { ?>
-            <?php if ( stristr($value['keterangan'], 'saldo_awal') === false ) { ?>
+            <?php if ( stristr($value['keterangan'], 'saldo awal') === false ) { ?>
                 <tr>
                     <td></td>
                     <td></td>

@@ -130,16 +130,60 @@ class KasStart extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql_sa = "
+            /* SALDO AWAL */
             select
                 '' as tanggal,
                 '' as kode,
-                'Saldo Awal' as keterangan,
-                sb.saldo_awal as debet,
+                case
+                    when sa.debet2 > 0 then
+                        'Saldo Awal (Initial Balance)'
+                    else
+                        'Saldo Awal'
+                end as keterangan,
+                case
+                    when sa.debet2 > 0 then
+                        sa.debet2
+                    else
+                        sa.debet1
+                end as debet,
                 0 as kredit,
-                sb.coa as kas
-            from saldo_bulanan sb 
-            where
-                sb.tgl_trans = '".$start_date."'
+                sa.kas
+            from
+            (
+                select
+                    sum(sa.debet1) as debet1,
+                    sum(sa.kredit1) as kredit1,
+                    sum(sa.debet2) as debet2,
+                    sum(sa.kredit2) as kredit2,
+                    sa.kas
+                from
+                (
+                    select
+                        sb.saldo_awal as debet1,
+                        0 as kredit1,
+                        0 as debet2,
+                        0 as kredit2,
+                        sb.coa as kas
+                    from saldo_bulanan sb 
+                    where
+                        sb.tanggal = '".$start_date."'
+
+                    union all
+
+                    select
+                        0 as debet1,
+                        0 as kredit1,
+                        sc.debet as debet2,
+                        0 as kredit2,
+                        sc.no_coa as kas
+                    from sacoa sc
+                    where
+                        sc.periode = '".substr($start_date, 0, 7)."'
+                ) sa
+                group by
+                    sa.kas
+            ) sa
+            /* END - SALDO AWAL */
         ";
         $d_conf = $m_conf->hydrateRaw( $sql_sa );
         if ( $d_conf->count() <= 0 ) {
@@ -161,12 +205,49 @@ class KasStart extends Public_Controller {
                         '' as tanggal,
                         '' as kode,
                         'Saldo Awal' as keterangan,
-                        sb.saldo_awal as debet,
+                        case
+                            when sa.debet2 > 0 then
+                                sa.debet2
+                            else
+                                sa.debet1
+                        end as debet,
                         0 as kredit,
-                        sb.coa as kas
-                    from saldo_bulanan sb 
-                    where
-                        sb.tgl_trans = '".$start_date_new."'
+                        sa.kas
+                    from
+                    (
+                        select
+                            sum(sa.debet1) as debet1,
+                            sum(sa.kredit1) as kredit1,
+                            sum(sa.debet2) as debet2,
+                            sum(sa.kredit2) as kredit2,
+                            sa.kas
+                        from
+                        (
+                            select
+                                sb.saldo_awal as debet1,
+                                0 as kredit1,
+                                0 as debet2,
+                                0 as kredit2,
+                                sb.coa as kas
+                            from saldo_bulanan sb 
+                            where
+                                sb.tgl_trans = '".$start_date_new."'
+        
+                            union all
+        
+                            select
+                                0 as debet1,
+                                0 as kredit1,
+                                sc.debet as debet2,
+                                0 as kredit2,
+                                sc.no_coa as kas
+                            from sacoa sc
+                            where
+                                sc.periode = '".substr($start_date_new, 0, 7)."'
+                        ) sa
+                        group by
+                            sa.kas
+                    ) sa
                     /* END - SALDO AWAL */
 
                     union all
