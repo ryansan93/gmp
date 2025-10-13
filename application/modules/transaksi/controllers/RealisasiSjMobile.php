@@ -789,9 +789,7 @@ class RealisasiSjMobile extends Public_Controller {
                     }
                 }
 
-                // $m_conf = new \Model\Storage\Conf();
-                // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", NULL, 1";
-                // $d_conf = $m_conf->hydrateRaw( $sql );
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_real_sj, null, 1);
 
                 $d_real_sj = $m_real_sj->where('id', $id_real_sj)->first();
 
@@ -944,9 +942,7 @@ class RealisasiSjMobile extends Public_Controller {
                 }
             }
 
-            // $m_conf = new \Model\Storage\Conf();
-            // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$id_real_sj.", ".$id_real_sj.", 2";
-            // $d_conf = $m_conf->hydrateRaw( $sql );
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id_real_sj, $id_real_sj, 2);
 
             $d_real_sj = $m_real_sj->where('id', $id_real_sj)->with(['det_real_sj'])->first();
 
@@ -984,12 +980,14 @@ class RealisasiSjMobile extends Public_Controller {
                 }
             }
 
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $d_real_sj->id, $d_real_sj->id, 3);
+
             $m_real_sj = new \Model\Storage\RealSJ_model();
             $m_real_sj->where('id', $d_real_sj->id)->delete();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$d_real_sj->id.", ".$d_real_sj->id.", 3";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'real_sj', ".$d_real_sj->id.", ".$d_real_sj->id.", 3";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'hapus data realisasi sj noreg '+$params['noreg']+' oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_real_sj, $deskripsi_log);
@@ -1053,13 +1051,19 @@ class RealisasiSjMobile extends Public_Controller {
     }
 
     public function tes()
-    {
-        // $m_drpah = new \Model\Storage\DetRpah_model();
-        // $kode_unit = 'JBR';
-        // $no_do = $m_drpah->getNextNo('no_do','DO/'.$kode_unit);
+    {        
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select id from real_sj rs
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        $m_det_real_sj = new \Model\Storage\DetRealSJ_model();
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-        cetak_r($m_det_real_sj->getNextIdentity());
+            foreach ($d_conf as $k_rs => $v_rs) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
+            }
+        }
     }
 }
