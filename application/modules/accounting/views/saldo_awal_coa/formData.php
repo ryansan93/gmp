@@ -42,7 +42,7 @@
                             <td><input type="text" class="form-control nama_coa" value="<?php echo $v_data['nama_coa']; ?>" disabled></td>
                             <td>
                                 <?php // cetak_r( $_unit ); ?>
-                                <select class="form-control unit <?php echo $edit; ?>" disabled>
+                                <select class="form-control unit <?php echo $edit; ?>" <?php echo (!empty($_unit)) ? 'disabled' : null; ?> >
                                     <?php foreach ($unit as $k_unit => $v_unit) { ?>
                                         <?php
                                             $selected = '';
@@ -74,7 +74,8 @@
                             <td><input type="text" class="form-control nama_coa" value="<?php echo $v_coa['nama_coa']; ?>" disabled></td>
                             <td>
                                 <?php $edit = ( empty($v_coa['unit']) ) ? 'edit' : null; ?>
-                                <select class="form-control unit <?php echo $edit; ?>" disabled>
+                                <?php $disabled = ( !empty($v_coa['unit']) ) ? 'disabled' : null; ?>
+                                <select class="form-control unit <?php echo $edit; ?>" <?php echo $disabled; ?>>
                                     <?php foreach ($unit as $k_unit => $v_unit) { ?>
                                         <?php
                                             $selected = '';
