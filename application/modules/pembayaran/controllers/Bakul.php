@@ -47,7 +47,7 @@ class Bakul extends Public_Controller
         $sql = "
             select rm.* from rekening_masuk rm
             where
-                rm.kode = '".exDecrypt($key)."'
+                rm.no_bukti = '".exDecrypt($key)."'
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -823,15 +823,15 @@ class Bakul extends Public_Controller
                 ";
                 $d_conf = $m_conf->hydrateRaw( $sql );
 
-                $no_bukti_auto = null;
-                if ( $d_conf->count() > 0 ) {
-                    $d_conf = $d_conf->toArray()[0];
+                // $no_bukti_auto = null;
+                // if ( $d_conf->count() > 0 ) {
+                //     $d_conf = $d_conf->toArray()[0];
 
-                    $kode = $d_conf['kode_auto'].'-'.substr($d_conf['rekening'], 1, 3).'/BBK';
+                //     $kode = $d_conf['kode_auto'].'-'.substr($d_conf['rekening'], 1, 3).'/BBK';
 
-                    $m_pp = new \Model\Storage\PembayaranPelanggan_model();
-                    $no_bukti_auto = $m_pp->getNextNomorAuto( $kode, $data['tgl_bayar'] );
-                }
+                //     $m_pp = new \Model\Storage\PembayaranPelanggan_model();
+                //     $no_bukti_auto = $m_pp->getNextNomorAuto( $kode, $data['tgl_bayar'] );
+                // }
 
                 $m_pp = new \Model\Storage\PembayaranPelanggan_model();
                 $nomor = $m_pp->getNextNomor('BYR/BKL');
@@ -1357,38 +1357,18 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-		$m_p = new \Model\Storage\Pelanggan_model();
-		// $d_sp = $m_sp->select('nomor', 'tipe')->where('tipe', 'pelanggan')->groupBy('nomor', 'tipe')->get()->toArray();
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select id from pembayaran_pelanggan pp
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-		// foreach ($d_sp as $k_sp => $v_sp) {
-		// 	$m_sp = new \Model\Storage\SaldoPelanggan_model();
-		// 	$d_sp = $m_sp->where('no_pelanggan', $v_sp['nomor'])->first();
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-		// 	if ( $d_sp ) {
-		// 		$m_sp->where('no_pelanggan', $v_sp['nomor'])->where('id', $d_sp->id)->update(
-		// 			array(
-		// 				'saldo' => 0
-		// 			)
-		// 		);
-		// 	} else {
-		// 		$m_sp->jenis_saldo = 'D';
-		// 		$m_sp->no_pelanggan = $v_sp['nomor'];
-		// 		$m_sp->id_trans = NULL;
-		// 		$m_sp->tgl_trans = '2021-11-01';
-		// 		$m_sp->jenis_trans = 'pembayaran_pelanggan';
-		// 		$m_sp->nominal = 0;
-		// 		$m_sp->saldo = 0;
-		// 		$m_sp->save();
-		// 	}
-		// }
-
-		$data_pelanggan = array(
-			'Ali Zainal Mustofa', 'Bambang Brontoyono', 'Edy Santoso', 'Fitrah Hari Mukti', 'Imam Safii', 'Imawan Agus Mulyono', 'Lilik Soegiwati', 'Moh. Abdul Rohim', 'Muhammad Fadloli', 'Muslinin', 'Ngateno', 'Rani Sanjaya', 'Sahid', 'Siti Aisah', 'Supriyono'
-			// 'Sugiarto',
-		);
-
-		$d_p = $m_p->whereIn('nama', $data_pelanggan)->get()->toArray();
-
-		cetak_r( $d_p );
+            foreach ($d_conf as $k_rs => $v_rs) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
+            }
+        }
 	}
 }

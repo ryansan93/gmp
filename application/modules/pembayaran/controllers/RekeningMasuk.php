@@ -358,6 +358,9 @@ class RekeningMasuk extends Public_Controller
 
             $d_rm = $m_rm->where('kode', $data['kode'])->first();
 
+            $m_nbbm = new \Model\Storage\NoBbm_model();
+            $m_nbbm->where('tbl_name', $m_rm->getTable())->where('tbl_id', $data['kode'])->delete();
+
             $m_rm->where('kode', $data['kode'])->delete();
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -374,8 +377,11 @@ class RekeningMasuk extends Public_Controller
 
     public function importForm()
     {
+        $m_coa = new \Model\Storage\Coa_model();
+
         $d_content['akses'] = $this->hakAkses;
     	$d_content['perusahaan'] = $this->getPerusahaan();
+    	$d_content['bank'] = $m_coa->getDataBank(0, null, 'BCA3');
 		$html = $this->load->view($this->url.'/importForm', $d_content, true);
 
 		echo $html;
@@ -395,6 +401,10 @@ class RekeningMasuk extends Public_Controller
                     $data = $this->getDataExcelUsingSpreadSheet( $path_name );
 
                     if ( !empty($data) && count($data) > 0 ) {
+                        $perusahaan = $params['perusahaan'];
+                        $bank = $params['bank'];
+                        $kode_bank = $params['kode_bank'];
+
                         foreach ($data as $key => $value) {
                             if ( stristr($key, 'CR') !== false ) {
                                 // cetak_r( $value['tanggal'], 1 );
@@ -422,37 +432,22 @@ class RekeningMasuk extends Public_Controller
                                 $m_rm = new \Model\Storage\RekeningMasuk_model();
                                 $kode = $m_rm->getNextIdRibuan();
 
-                                $m_conf = new \Model\Storage\Conf();
-                                $sql = "
-                                    DECLARE @no_bukti varchar(50)
+                                $m_nbbm = new \Model\Storage\NoBbm_model();
+                                $no_km = $m_nbbm->getKodeMasukWithDate($kode_bank, $tanggal);
 
-                                    EXECUTE generate_no_bukti_bank_jurnal '".$params['perusahaan']."', '".$tanggal."', 'BBM', @no_bukti = @no_bukti OUTPUT;
-
-                                    select @no_bukti;
-                                ";
-                                $d_conf = $m_conf->hydrateRaw( $sql );
-
-                                $no_bukti = null;
-                                if ( $d_conf->count() > 0 ) {
-                                    $no_bukti = $d_conf->toArray()[0][''];
-                                }
-
-                                // cetak_r( $kode );
-                                // cetak_r( $tanggal );
-                                // cetak_r( $params['perusahaan'] );
-                                // cetak_r( $value['nominal'] );
-                                // cetak_r( $value['keterangan'] );
-                                // cetak_r( $no_bukti );
-
-                                // cetak_r( $tanggal, 1 );
+                                $m_nbbm->tbl_name = $m_rm->getTable();
+                                $m_nbbm->tbl_id = $kode;
+                                $m_nbbm->kode = $no_km;
+                                $m_nbbm->save();
                                 
                                 $m_rm = new \Model\Storage\RekeningMasuk_model();
                                 $m_rm->kode = $kode;
                                 $m_rm->tanggal = $tanggal;
-                                $m_rm->perusahaan = $params['perusahaan'];
+                                $m_rm->perusahaan = $perusahaan;
                                 $m_rm->jml_transfer = $value['nominal'];
                                 $m_rm->ket = $value['keterangan'];
-                                $m_rm->no_bukti = $no_bukti;
+                                $m_rm->no_bukti = $no_km;
+                                $m_rm->bank = $bank;
                                 $m_rm->save();
 
                                 $deskripsi_log = 'di-import oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -516,5 +511,12 @@ class RekeningMasuk extends Public_Controller
         }
 
         return $data;
+    }
+
+    public function tes () {
+        $m_nbbm = new \Model\Storage\NoBbm_model();
+        $no_km = $m_nbbm->getKodeMasukWithDate('BCA3', '2025-10-10');
+
+        cetak_r( $no_km );
     }
 }

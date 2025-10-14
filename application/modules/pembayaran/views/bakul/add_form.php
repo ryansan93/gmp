@@ -75,12 +75,12 @@
 	</div>
 	<div class="col-lg-12"></div>
 	<div class="col-lg-12 no-padding">
-		<div class="col-lg-2 no-padding"><label class="control-label text-left">Urut Ke / Jumlah Transfer</label></div>
-		<!-- <div class="col-lg-2 no-padding"><label class="control-label text-left">Kode Pembayaran</label></div> -->
+		<!-- <div class="col-lg-2 no-padding"><label class="control-label text-left">Urut Ke / Jumlah Transfer</label></div> -->
+		<div class="col-lg-2 no-padding"><label class="control-label text-left">Kode Pembayaran</label></div>
 		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 		<div class="col-lg-1" style="padding: 0px 1px 0px 0px;">
 			<!-- <input type="text" class="form-control text-right jml_transfer" data-tipe="integer" placeholder="Urut" onblur="bakul.hit_total_uang()" data-required="1"> -->
-			<select class="form-control urut_tf" data-required="1">
+			<!-- <select class="form-control urut_tf" data-required="1">
 				<option value="1">1</option>
 				<option value="2">2</option>
 				<option value="3">3</option>
@@ -96,8 +96,8 @@
 				<option value="13">13</option>
 				<option value="14">14</option>
 				<option value="15">15</option>
-			</select>
-			<!-- <input type="text" class="form-control text-center kode_umb" style="padding: 0px 1px 0px 0px;" placeholder="Kode" readonly value="<?php echo !empty($data_umb) ? strtoupper($data_umb['kode']) : ''; ?>"> -->
+			</select> -->
+			<input type="text" class="form-control text-center kode_umb" style="padding: 0px 1px 0px 0px;" placeholder="Kode" readonly value="<?php echo !empty($data_umb) ? strtoupper($data_umb['no_bukti']) : ''; ?>">
 		</div>
 		<div class="col-lg-2" style="padding: 0px 30px 0px 0px;">
 			<input type="text" class="form-control text-right jml_transfer" data-tipe="integer" placeholder="Jumlah" onblur="bakul.hit_total_uang()" data-required="1">

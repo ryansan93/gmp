@@ -20,20 +20,20 @@
 	</div>
 </div>
 <div class="col-lg-12"></div>
-<div class="col-lg-12 no-padding" style="height: 34px;">
+<!-- <div class="col-lg-12 no-padding" style="height: 34px;">
 	<div class="col-lg-2 no-padding"><label class="control-label text-left">Urut Ke</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 	<div class="col-lg-6 text-left" style="padding: 0px 30px 0px 0px;">
 		<label class="control-label"><?php echo !empty($data['urut_tf']) ? $data['urut_tf'] : 1; ?></label>
 	</div>
-</div>
-<!-- <div class="col-lg-12 no-padding" style="height: 34px;">
+</div> -->
+<div class="col-lg-12 no-padding" style="height: 34px;">
 	<div class="col-lg-2 no-padding"><label class="control-label text-left">Kode Pembayaran</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 	<div class="col-lg-6 text-left" style="padding: 0px 30px 0px 0px;">
 		<label class="control-label"><?php echo !empty($data['kode_umb']) ? $data['kode_umb'] : 1; ?></label>
 	</div>
-</div> -->
+</div>
 <div class="col-lg-12"></div>
 <div class="col-lg-12 no-padding">
 	<div class="col-lg-2 no-padding"><label class="control-label text-left">Jumlah Transfer</label></div>

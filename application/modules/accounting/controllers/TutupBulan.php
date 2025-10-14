@@ -76,7 +76,7 @@ class TutupBulan extends Public_Controller
                     where
                         sb.tanggal between '".$start_date."' and '".$end_date."'
                     */
-                    
+
                     select
                         sb.no_coa as coa,
                         sb.unit,
@@ -92,7 +92,7 @@ class TutupBulan extends Public_Controller
                         0 as debet
                     from (
                         select
-                            sa.no_coa,
+                            sa.coa as no_coa,
                             sa.unit,
                             sum(sa.debet1) as debet1,
                             sum(sa.kredit1) as kredit1,
@@ -116,18 +116,20 @@ class TutupBulan extends Public_Controller
                             union all
 
                             select
-                                sc.no_coa,
-                                sc.unit,
+                                sc.no_coa as coa,
+                                null as kode_trans,
+                                null as kode_jurnal,
                                 0 as debet1,
                                 0 as kredit1,
                                 sc.debet as debet2,
-                                0 as kredit2
+                                0 as kredit2,
+                                sc.unit
                             from sacoa sc
                             where
                                 sc.periode = '".substr($start_date, 0, 7)."'
                         ) sa
                         group by
-                            sa.no_coa,
+                            sa.coa,
                             sa.unit
                     ) sb 
                     left join

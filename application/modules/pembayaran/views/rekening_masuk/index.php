@@ -30,12 +30,12 @@
                             <i class="fa fa-search"></i> Tampilkan
                         </button>
                     </div>
-                    <div class="col-xs-5">
+                    <div class="col-xs-5 no-padding">
                         <?php if ( $akses['a_submit'] == 1 ) { ?>
-                            <button id="btn-tampil" type="button" data-href="action" class="btn btn-success cursor-p pull-right" title="Tambah" onclick="rm.addForm()">
+                            <button id="btn-tampil" type="button" data-href="action" class="btn btn-success cursor-p pull-right hide" title="Tambah" onclick="rm.addForm()">
                                 <i class="fa fa-plus"></i> Tambah
                             </button>
-                            <button id="btn-tampil" type="button" data-href="action" class="btn btn-default cursor-p pull-right" title="Import" onclick="rm.importForm()" style="margin-right: 10px;">
+                            <button id="btn-tampil" type="button" data-href="action" class="btn btn-default cursor-p pull-right" title="Import" onclick="rm.importForm()">
                                 <i class="fa fa-upload"></i> Import Data
                             </button>
                         <?php } ?>
@@ -53,10 +53,10 @@
                             <thead>
                                 <tr>
                                     <th class="text-center col-xs-1">Kode</th>
-                                    <th class="text-center col-xs-2">No Bukti</th>
+                                    <th class="text-center col-xs-1">No Bukti</th>
                                     <th class="text-center col-xs-1">Tanggal</th>
-                                    <th class="text-center col-xs-2">Perusahaan</th>
-                                    <th class="text-center col-xs-1">Bakul</th>
+                                    <!-- <th class="text-center col-xs-2">Perusahaan</th> -->
+                                    <th class="text-center col-xs-2">Bakul</th>
                                     <th class="text-center col-xs-2">Keterangan</th>
                                     <th class="text-center col-xs-1">Jml Transfer</th>
                                     <th class="text-center col-xs-1">Terpakai</th>

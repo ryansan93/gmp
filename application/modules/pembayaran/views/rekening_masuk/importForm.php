@@ -11,9 +11,19 @@
 					<div class="col-xs-1 no-padding text-center">:</div>
 					<div class="col-xs-9 no-padding">
 						<select class="form-control perusahaan" data-required="1">
-                            <option value="">-- Pilih Perusahaan --</option>
                             <?php foreach ($perusahaan as $key => $value) { ?>
                                 <option value="<?php echo $value['kode']; ?>"><?php echo strtoupper($value['nama']); ?></option>
+                            <?php } ?>
+                        </select>
+					</div>
+				</div>
+                <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+					<div class="col-xs-2 no-padding">Bank</div>
+					<div class="col-xs-1 no-padding text-center">:</div>
+					<div class="col-xs-9 no-padding">
+						<select class="form-control bank" data-required="1">
+                            <?php foreach ($bank as $key => $value) { ?>
+                                <option value="<?php echo $value['no_coa']; ?>" data-kode="<?php echo $value['kode']; ?>"><?php echo strtoupper($value['nama_coa']); ?></option>
                             <?php } ?>
                         </select>
 					</div>

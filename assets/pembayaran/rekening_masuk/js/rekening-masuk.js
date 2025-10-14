@@ -382,6 +382,7 @@ var rm = {
                 $(modal_header).css({'padding-top' : '0px'});
 
                 $(modal_body).find('select.perusahaan').select2();
+                $(modal_body).find('select.bank').select2();
 
                 rm.setBindSHA1();
                 
@@ -397,7 +398,9 @@ var rm = {
             $('.modal').modal('hide');
 
             var params = {
-                'perusahaan': $('select.perusahaan').select2().val()
+                'perusahaan': $('select.perusahaan').select2().val(),
+                'bank': $('select.bank').select2().val(),
+                'kode_bank': $('select.bank').find('option:selected').attr('data-kode')
             };
             
 			var formData = new FormData();

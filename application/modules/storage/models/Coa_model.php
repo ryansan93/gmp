@@ -40,7 +40,7 @@ class Coa_model extends Conf{
 		return $data;
 	}
 
-	public function getDataBank($byUser = 0, $userId = null) {
+	public function getDataBank($byUser = 0, $userId = null, $kodeBank = null) {
 		$sql_unit = null;
 
 		if ( $byUser == 1 ) {
@@ -107,6 +107,11 @@ class Coa_model extends Conf{
 			}
 		}
 
+		$sql_kode_bank = null;
+		if ( !empty($kodeBank) ) {
+			$sql_kode_bank = "and c.kode = '".$kodeBank."'";
+		}
+
 		$sql = "
 			select 
 				c.coa as no_coa,
@@ -118,6 +123,7 @@ class Coa_model extends Conf{
 				c.bank = 1 and
 				c.status = 1
 				".$sql_unit."
+				".$sql_kode_bank."
 			order by
 				c.coa
 		";
