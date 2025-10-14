@@ -598,13 +598,48 @@ class BankStart extends Public_Controller {
                             on
                                 rpd.id_header = rp.id
                         where 
-                            rp.tgl_bayar between '".$start_date."' and '".$end_date."'
+                            rp.tgl_bayar between '".$start_date."' and '".$end_date."' and
+                            rp.status = 2
                         group by
                             rp.nomor,
                             rp.tgl_bayar,
                             cast(rp.ket_realisasi as varchar(max)),
                             rp.jml_transfer,
                             rp.coa_bank
+
+                        union all
+
+                        select
+                            'rekening_masuk' as tbl_name,
+                            rm.kode as tbl_id,
+                            rm.tanggal as tanggal,
+                            -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
+                            'Pembayaran Piutang Bakul '+UPPER(plg.nama) as keterangan,
+                            sum(pp.jml_transfer) as debet,
+                            0 as kredit,
+                            rm.bank as kas
+                        from pembayaran_pelanggan pp
+                        left join
+                            rekening_masuk rm
+                            on
+                                pp.kode_umb = rm.no_bukti
+                        left join
+                            (
+                                select plg1.* from pelanggan plg1
+                                right join
+                                    (select max(id) as id, nomor from pelanggan group by nomor) plg2
+                                    on
+                                        plg1.id = plg2.id
+                            ) plg
+                            on
+                                pp.no_pelanggan = plg.nomor
+                        where
+                            pp.tgl_bayar between '".$start_date."' and '".$end_date."'
+                        group by
+                            rm.kode,
+                            rm.tanggal,
+                            plg.nama,
+                            rm.bank
                     ) data
                     on
                         nb.tbl_id = data.tbl_id

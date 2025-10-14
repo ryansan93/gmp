@@ -1022,6 +1022,8 @@ class Bakul extends Public_Controller
                 // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'pembayaran_pelanggan', ".$id.", NULL, 1";
                 // $d_conf = $m_conf->hydrateRaw( $sql );
 
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, null, 1);
+
 	        	$this->result['status'] = 1;
 	        	$this->result['content'] = array('id' => $id);
 	        	$this->result['message'] = 'Data berhasil di simpan.';
@@ -1187,9 +1189,11 @@ class Bakul extends Public_Controller
 				$m_dpp->save();
 			}
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'pembayaran_pelanggan', ".$id.", ".$id.", 2";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'pembayaran_pelanggan', ".$id.", ".$id.", 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
 
 			$_d_pp = $m_pp->where('id', $id)->with(['detail'])->first();
 
@@ -1345,6 +1349,8 @@ class Bakul extends Public_Controller
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'pembayaran_pelanggan', ".$id.", ".$id.", 3";
             // $d_conf = $m_conf->hydrateRaw( $sql );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 3);
 
         	$this->result['status'] = 1;
         	$this->result['message'] = 'Data berhasil di hapus.';

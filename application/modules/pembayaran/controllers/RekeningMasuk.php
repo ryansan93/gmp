@@ -164,7 +164,7 @@ class RekeningMasuk extends Public_Controller
                     select sum(pp.jml_transfer) as jml_transfer, kode_umb from pembayaran_pelanggan pp group by kode_umb
                 ) pp
                 on
-                    pp.kode_umb = rm.kode
+                    pp.kode_umb = rm.no_bukti
             where
                 rm.tanggal between '".$start_date."' and '".$end_date."'
             order by
