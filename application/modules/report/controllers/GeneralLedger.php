@@ -255,7 +255,7 @@ class GeneralLedger extends Public_Controller {
                         select
                             sb.coa as no_coa,
                             sb.unit,
-                            sb.saldo_awal as debet1,
+                            isnull(sb.saldo_awal, 0) as debet1,
                             0 as kredit1,
                             0 as debet2,
                             0 as kredit2
@@ -270,7 +270,7 @@ class GeneralLedger extends Public_Controller {
                             sc.unit,
                             0 as debet1,
                             0 as kredit1,
-                            sc.debet as debet2,
+                            isnull(sc.debet, 0) as debet2,
                             0 as kredit2
                         from sacoa sc
                         where
