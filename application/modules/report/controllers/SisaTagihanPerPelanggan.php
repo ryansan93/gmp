@@ -86,22 +86,23 @@ class SisaTagihanPerPelanggan extends Public_Controller {
     public function get_unit()
     {
         $m_wilayah = new \Model\Storage\Wilayah_model();
-        $d_wilayah = $m_wilayah->where('jenis', 'UN')->orderBy('nama', 'asc')->get();
+        $data = $m_wilayah->getDataUnit(1, $this->userid);
+        // $d_wilayah = $m_wilayah->where('jenis', 'UN')->orderBy('nama', 'asc')->get();
 
-        $data = null;
-        if ( $d_wilayah->count() > 0 ) {
-            $d_wilayah = $d_wilayah->toArray();
+        // $data = null;
+        // if ( $d_wilayah->count() > 0 ) {
+        //     $d_wilayah = $d_wilayah->toArray();
 
-            foreach ($d_wilayah as $k_wil => $v_wil) {
-                $nama = trim(str_replace('KAB ', '', str_replace('KOTA ', '', strtoupper($v_wil['nama']))));
-                $data[ $nama.' - '.$v_wil['kode'] ] = array(
-                    'nama' => $nama,
-                    'kode' => $v_wil['kode']
-                );
-            }
+        //     foreach ($d_wilayah as $k_wil => $v_wil) {
+        //         $nama = trim(str_replace('KAB ', '', str_replace('KOTA ', '', strtoupper($v_wil['nama']))));
+        //         $data[ $nama.' - '.$v_wil['kode'] ] = array(
+        //             'nama' => $nama,
+        //             'kode' => $v_wil['kode']
+        //         );
+        //     }
 
-            ksort($data);
-        }
+        //     ksort($data);
+        // }
 
         return $data;
     }
@@ -159,25 +160,49 @@ class SisaTagihanPerPelanggan extends Public_Controller {
                 $pelanggan = $_pelanggan;
             }
 
+            // $id_unit = array();
+            // if ( !empty( $params['kode_unit'] ) ) {
+            //     foreach ($params['kode_unit'] as $k_ku => $v_ku) {
+            //         if ( stristr($v_ku, 'all') !== FALSE ) {
+            //             $m_wil = new \Model\Storage\Wilayah_model();
+            //             $data = $m_wil->getDataUnit(1, $this->userid);
+            //             $d_wil = $m_wil->where('jenis', 'UN')->orderBy('nama', 'asc')->get()->toArray();
+
+            //             foreach ($d_wil as $k_wil => $v_wil) {
+            //                 $id_unit[] = $v_wil['id'];
+            //             }
+
+            //             break;
+            //         } else {
+            //             $m_wil = new \Model\Storage\Wilayah_model();
+            //             $d_wil = $m_wil->where('kode', $v_ku)->where('jenis', 'UN')->orderBy('nama', 'asc')->get()->toArray();
+
+            //             foreach ($d_wil as $k_wil => $v_wil) {
+            //                 $id_unit[] = $v_wil['id'];
+            //             }
+            //         }
+            //     }
+            // }
+
             $id_unit = array();
-            if ( !empty( $params['kode_unit'] ) ) {
+            if ( in_array('all', $params['kode_unit']) ) {
+                $m_wil = new \Model\Storage\Wilayah_model();
+                $d_unit = $m_wil->getDataUnit(1, $this->userid);
+
+                foreach ($d_unit as $key => $value) {
+                    $m_wil = new \Model\Storage\Wilayah_model();
+                    $d_wil = $m_wil->where('kode', $value['kode'])->orderBy('nama', 'asc')->get()->toArray();
+                    foreach ($d_wil as $k_wil => $v_wil) {
+                        $id_unit[] = $v_wil['id'];
+                    }
+                }
+            } else {
                 foreach ($params['kode_unit'] as $k_ku => $v_ku) {
-                    if ( stristr($v_ku, 'all') !== FALSE ) {
-                        $m_wil = new \Model\Storage\Wilayah_model();
-                        $d_wil = $m_wil->where('jenis', 'UN')->orderBy('nama', 'asc')->get()->toArray();
+                    $m_wil = new \Model\Storage\Wilayah_model();
+                    $d_wil = $m_wil->where('kode', $v_ku)->where('jenis', 'UN')->orderBy('nama', 'asc')->get()->toArray();
 
-                        foreach ($d_wil as $k_wil => $v_wil) {
-                            $id_unit[] = $v_wil['id'];
-                        }
-
-                        break;
-                    } else {
-                        $m_wil = new \Model\Storage\Wilayah_model();
-                        $d_wil = $m_wil->where('kode', $v_ku)->where('jenis', 'UN')->orderBy('nama', 'asc')->get()->toArray();
-
-                        foreach ($d_wil as $k_wil => $v_wil) {
-                            $id_unit[] = $v_wil['id'];
-                        }
+                    foreach ($d_wil as $k_wil => $v_wil) {
+                        $id_unit[] = $v_wil['id'];
                     }
                 }
             }
@@ -313,26 +338,38 @@ class SisaTagihanPerPelanggan extends Public_Controller {
             $sql_pelanggan = "data_rs.no_pelanggan in ('".implode("', '", $_pelanggan)."') and";
         }
 
+        // $kode_unit = array();
+        // if ( in_array('all', $params['kode_unit']) ) {
+        //     $m_conf = new \Model\Storage\Conf();
+        //     $sql = "
+        //         select 
+        //             w.kode 
+        //         from wilayah w 
+        //         where 
+        //             w.jenis = 'UN' 
+        //         group by 
+        //             w.kode 
+        //     ";
+        //     $d_wil = $m_conf->hydrateRaw( $sql );
+
+        //     if ( $d_wil->count() > 0 ) {
+        //         $d_wil = $d_wil->toArray();
+
+        //         foreach ($d_wil as $k_wil => $v_wil) {
+        //             $kode_unit[] = $v_wil['kode'];
+        //         }
+        //     }
+        // } else {
+        //     $kode_unit = $params['kode_unit'];
+        // }
+
         $kode_unit = array();
         if ( in_array('all', $params['kode_unit']) ) {
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select 
-                    w.kode 
-                from wilayah w 
-                where 
-                    w.jenis = 'UN' 
-                group by 
-                    w.kode 
-            ";
-            $d_wil = $m_conf->hydrateRaw( $sql );
+            $m_wil = new \Model\Storage\Wilayah_model();
+            $d_unit = $m_wil->getDataUnit(1, $this->userid);
 
-            if ( $d_wil->count() > 0 ) {
-                $d_wil = $d_wil->toArray();
-
-                foreach ($d_wil as $k_wil => $v_wil) {
-                    $kode_unit[] = $v_wil['kode'];
-                }
+            foreach ($d_unit as $key => $value) {
+                $kode_unit[] = $value['kode'];
             }
         } else {
             $kode_unit = $params['kode_unit'];
