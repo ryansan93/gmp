@@ -135,7 +135,7 @@ class KasStart extends Public_Controller {
                 '' as tanggal,
                 '' as kode,
                 case
-                    when sa.debet2 > 0 then
+                    when sa.debet2 <> 0 then
                         'Saldo Awal (Initial Balance)'
                     else
                         'Saldo Awal'
@@ -206,7 +206,7 @@ class KasStart extends Public_Controller {
                         '' as kode,
                         'Saldo Awal' as keterangan,
                         case
-                            when sa.debet2 > 0 then
+                            when sa.debet2 <> 0 then
                                 sa.debet2
                             else
                                 sa.debet1
