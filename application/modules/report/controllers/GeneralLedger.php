@@ -234,7 +234,7 @@ class GeneralLedger extends Public_Controller {
                     sb.unit,
                     c.nama_coa,
                     case
-                        when sb.debet2 > 0 then
+                        when sb.debet2 <> 0 then
                             sb.debet2
                         else
                             sb.debet1
