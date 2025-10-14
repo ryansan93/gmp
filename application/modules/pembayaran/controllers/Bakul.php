@@ -1365,7 +1365,7 @@ class Bakul extends Public_Controller
 	{
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select id from pembayaran_pelanggan pp
+            select id from pembayaran_pelanggan pp where id = 2
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

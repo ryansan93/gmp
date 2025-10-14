@@ -40,11 +40,26 @@
         </div>
 		<div class="col-sm-12 no-padding" style="margin-bottom: 10px;">
 			<div class="col-sm-12 no-padding">
+				<label>UNIT</label>
+			</div>
+			<div class="col-sm-12 no-padding">
+				<select class="col-sm-12 form-control unit" data-required="1">
+					<option value="all">ALL</option>
+					<?php if ( count($unit) > 0 ): ?>
+						<?php foreach ($unit as $k_unit => $v_unit): ?>
+							<option value="<?php echo $v_unit['kode']; ?>"><?php echo strtoupper($v_unit['nama']); ?></option>
+						<?php endforeach ?>
+					<?php endif ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-sm-12 no-padding hide" style="margin-bottom: 10px;">
+			<div class="col-sm-12 no-padding">
 				<label>PERUSAHAAN</label>
 			</div>
 			<div class="col-sm-12 no-padding">
 				<select class="col-sm-12 form-control perusahaan" data-required="1">
-					<option value="">Pilih Perusahaan</option>
+					<!-- <option value="">Pilih Perusahaan</option> -->
 					<?php if ( count($perusahaan) > 0 ): ?>
 						<?php foreach ($perusahaan as $k_prs => $v_prs): ?>
 							<?php 

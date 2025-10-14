@@ -12,7 +12,7 @@
 				<td class="text-right sub_total" target="sub_total_cn" data-target="cn"><b>0</b></td>
 				<td class="text-right sub_total" target="sub_total_dn" data-target="dn"><b>0</b></td>
 				<td class="text-right sub_total" target="sub_total_bayar" data-target="bayar"><b>0</b></td>
-				<td class="text-right sub_total" target="sub_total_sisa_tagihan" data-target="sisa_tagiahn"><b>0</b></td>
+				<td class="text-right sub_total" target="sub_total_sisa_tagihan" data-target="sisa_tagihan"><b>0</b></td>
 				<td class="text-center" colspan="2"></td>
 			</tr>
 			<?php $no_pelanggan = $v_data['no_pelanggan']; ?>

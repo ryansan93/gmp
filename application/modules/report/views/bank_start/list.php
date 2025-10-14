@@ -18,7 +18,7 @@
             <tr class="abu">
                 <td colspan="10">
                     <div class="col-xs-12 no-padding">
-                        <div class="col-xs-1 no-padding"><label class="label-control">Kas</label></div>
+                        <div class="col-xs-1 no-padding"><label class="label-control">Bank</label></div>
                         <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
                         <div class="col-xs-10 no-padding"><label class="label-control"><?php echo strtoupper($value['kas'].' | '.$value['nama_kas']); ?></label></div>
                     </div>
@@ -43,7 +43,7 @@
         <?php } ?>
 
         <?php 
-            $tanggal = $value['tanggal'];
+            $tanggal = !empty($value['tanggal']) ? (($value['tanggal'] < '2000-01-01') ? null : $value['tanggal']) : null;
             $kode_trans = $value['kode'];
             $keterangan = $value['keterangan'];
 

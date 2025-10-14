@@ -39,8 +39,11 @@ class GeneralLedger extends Public_Controller {
 
             $data = $this->includes;
 
+            $m_wilayah = new \Model\Storage\Wilayah_model();
+
             $content['akses'] = $akses;
             $content['perusahaan'] = $this->getPerusahaan();
+            $content['unit'] = $m_wilayah->getDataUnit();
             $content['title_menu'] = 'Laporan GL (Buku Besar)';
 
             // Load Indexx
@@ -81,10 +84,15 @@ class GeneralLedger extends Public_Controller {
         return $data;
     }
 
-    public function getData($start_date, $end_date, $kode_gabung_perusahaan) {
+    public function getData($start_date, $end_date, $kode_gabung_perusahaan, $unit) {
         $sql_kode_gabung_perusahaan = "and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '".$kode_gabung_perusahaan."')";
         if ( $kode_gabung_perusahaan == 'all' ) {
             $sql_kode_gabung_perusahaan = null;
+        }
+
+        $sql_unit = null;
+        if ( $unit != 'all' ) {
+            $sql_unit = "where data.unit = '".$unit."'";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -341,6 +349,7 @@ class GeneralLedger extends Public_Controller {
                     (0-isnull(dj.kredit, 0)) <> 0 or
                     isnull(dj.debet, 0) <> 0
             ) data
+            ".$sql_unit."
             group by
                 data.no_coa,
                 data.unit,
@@ -369,6 +378,7 @@ class GeneralLedger extends Public_Controller {
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
         $kode_gabung_perusahaan = $params['perusahaan'];
+        $unit = $params['unit'];
 
         $i = $bulan-1;
 
@@ -378,7 +388,7 @@ class GeneralLedger extends Public_Controller {
         $start_date = date("Y-m-d", strtotime($date));
         $end_date = date("Y-m-t", strtotime($date));
 
-        $data = $this->getData( $start_date, $end_date, $kode_gabung_perusahaan );
+        $data = $this->getData( $start_date, $end_date, $kode_gabung_perusahaan, $unit );
 
         $content['data'] = $data;
         $html = $this->load->view($this->pathView.'list', $content, TRUE);
