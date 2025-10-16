@@ -85,6 +85,24 @@ class VerifikasiPembayaran extends Public_Controller
             }
         }
 
+        $m_wil = new \Model\Storage\Wilayah_model();
+        $d_wil = $m_wil->getDataUnit(1, $this->userid);
+
+        $unit = null;
+        foreach ($d_wil as $k_wil => $v_wil) {
+            $unit[] = $v_wil['kode'];
+        }
+
+        $sql_unit = null;
+        if ( !empty($unit) ) {
+            $sql_unit = "c.unit in ('".implode("', '", $unit)."')";
+            if ( !empty($sql_condition) ) {
+                $sql_condition .= " and ".$sql_unit;
+            } else {
+                $sql_condition .= "where ".$sql_unit;
+            }
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select 
@@ -192,6 +210,10 @@ class VerifikasiPembayaran extends Public_Controller
                 ) lt
                 on
                     data.id = lt.tbl_id
+            left join
+                coa c
+                on
+                    c.coa = data.coa_bank
             ".$sql_condition."
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
@@ -306,7 +328,7 @@ class VerifikasiPembayaran extends Public_Controller
                         kpop.nomor as kode_trans,
                         kpop.invoice as no_inv,
                         null as no_sj,
-                        kpop.total as bruto,
+                        (kpop.total+kpop.potongan_pph_23) as bruto,
                         kpop.potongan_pph_23 as pph
                     from konfirmasi_pembayaran_oa_pakan kpop
 
@@ -411,7 +433,7 @@ class VerifikasiPembayaran extends Public_Controller
                 $m_rp = new \Model\Storage\RealisasiPembayaran_model();
                 $m_rp->where('id', $data['id'])->update(
                     array(
-                        'no_bukti' => $data['no_bukti'],
+                        'no_bukti' => $no_kk,
                         'tgl_realisasi' => $data['tgl_bayar'],
                         'lampiran_realisasi' => $path_name,
                         'ket_realisasi' => $data['ket_bayar'],

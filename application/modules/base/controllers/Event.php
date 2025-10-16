@@ -34,7 +34,7 @@ class Event extends Public_Controller {
 
     $m_data_log = new \Model\Storage\Log\LogTables_model();
     $m_data_log->id_header = $m_log->id;
-    $m_data_log->_json = $model->toJson();
+    $m_data_log->_json = ( isset($model->id) && !empty($model->id) ) ? $model->toJson() : null;
     $m_data_log->save();
 
     return $m_log;
@@ -62,7 +62,7 @@ class Event extends Public_Controller {
 
     $m_data_log = new \Model\Storage\Log\LogTables_model();
     $m_data_log->id_header = $m_log->id;
-    $m_data_log->_json = $model->toJson();
+    $m_data_log->_json = ( isset($model->id) && !empty($model->id) ) ? $model->toJson() : null;
     $m_data_log->save();
 
     return $m_log;
@@ -90,7 +90,7 @@ class Event extends Public_Controller {
 
     $m_data_log = new \Model\Storage\Log\LogTables_model();
     $m_data_log->id_header = $m_log->id;
-    $m_data_log->_json = $model->toJson();
+    $m_data_log->_json = ( isset($model->id) && !empty($model->id) ) ? $model->toJson() : null;
     $m_data_log->save();
 
     return $m_log;

@@ -319,7 +319,15 @@ class Pegawai extends Public_Controller
 
 				if ( !$d_karyawan ) {
 					$m_karyawan = new \Model\Storage\Karyawan_model();
-					$m_karyawan->id = $v_kry['id'];
+					$d_kry = $m_karyawan->where('id', $v_kry['id'])->first();
+
+					$id = $v_kry['id'];
+					if ( $d_kry ) {
+						$id = $m_karyawan->getNextIdentity();
+					}
+
+					$m_karyawan = new \Model\Storage\Karyawan_model();
+					$m_karyawan->id = $id;
 					$m_karyawan->level = $v_kry['level'];
 					$m_karyawan->nik = $v_kry['nik'];
 					$m_karyawan->atasan = $v_kry['atasan'];
@@ -348,7 +356,7 @@ class Pegawai extends Public_Controller
 							$id_unit_karyawan = $m_unit_karyawan->getNextIdentity();
 	
 							$m_unit_karyawan->id = $id_unit_karyawan;
-							$m_unit_karyawan->id_karyawan = $val['id_karyawan'];
+							$m_unit_karyawan->id_karyawan = $id;
 							$m_unit_karyawan->unit = $val['unit'];
 							$m_unit_karyawan->save();
 						}
@@ -369,7 +377,7 @@ class Pegawai extends Public_Controller
 							$id_wilayah_karyawan = $m_wilayah_karyawan->getNextIdentity();
 	
 							$m_wilayah_karyawan->id = $id_wilayah_karyawan;
-							$m_wilayah_karyawan->id_karyawan = $val['id_karyawan'];
+							$m_wilayah_karyawan->id_karyawan = $id;
 							$m_wilayah_karyawan->wilayah = $val['wilayah'];
 							$m_wilayah_karyawan->save();
 						}

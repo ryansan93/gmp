@@ -47,7 +47,7 @@
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-12 no-padding"><b>NO BUKTI PEMBAYARAN</b></div>
 					<div class="col-xs-12 no-padding">
-                        <input type="text" class="form-control no_bukti" placeholder="NO. BUKTI" data-required="1">
+                        <input type="text" class="form-control no_bukti" placeholder="NO. BUKTI" disabled>
                     </div>
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

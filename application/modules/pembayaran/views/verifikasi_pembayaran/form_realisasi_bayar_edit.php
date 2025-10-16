@@ -47,7 +47,7 @@
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-12 no-padding"><b>NO BUKTI PEMBAYARAN</b></div>
 					<div class="col-xs-12 no-padding">
-                        <input type="text" class="form-control no_bukti" placeholder="NO. BUKTI" data-required="1" value="<?php echo $data['no_bukti']; ?>">
+                        <input type="text" class="form-control no_bukti" placeholder="NO. BUKTI" value="<?php echo $data['kode_trans']; ?>">
                     </div>
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

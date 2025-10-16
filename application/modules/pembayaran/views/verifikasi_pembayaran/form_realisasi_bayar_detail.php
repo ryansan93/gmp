@@ -43,7 +43,7 @@
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-3 no-padding"><b>NO BUKTI PEMBAYARAN</b></div>
-					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['no_bukti']); ?></div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['kode_trans']); ?></div>
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-3 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>

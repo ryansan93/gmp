@@ -275,22 +275,11 @@ class UpdateHargaPakan extends Public_Controller {
                 -- END - UPDATE HARGA STOK
 
                 -- UPDATE HARGA STOK SIKLUS
-                /*
-                update ds
-                set
-                	ds.hrg_beli = cast(".$harga_baru." as decimal(10, 2))
-                from det_stok_siklus dss
-                where
-                    op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
-                    op.supplier = '".$supplier."' and
-                    ds.kode_barang = '".$pakan."'
-                */
-
                 -- select dss.* from det_stok_siklus dss
                 update dss
                 set
                     dss.hrg_beli = cast(".$harga_baru." as decimal(10, 2)),
-                    dss.hrg_jual = cast(".$harga_baru." as decimal(10, 2)),
+                    dss.hrg_jual = cast(".$harga_baru." as decimal(10, 2))
                 from det_stok_siklus dss
                 left join
                     (
@@ -320,6 +309,64 @@ class UpdateHargaPakan extends Public_Controller {
                     dst.id is not null
                 -- END - UPDATE HARGA STOK SIKLUS
 
+                -- UPDATE HARGA STOK SIKLUS PINDAH PAKAN --
+                -- select dss.* from det_stok_siklus dss
+                update dss
+                set
+                    dss.hrg_beli = cast(".$harga_baru." as decimal(10, 2)),
+                    dss.hrg_jual = cast(".$harga_baru." as decimal(10, 2))
+                from det_stok_siklus dss
+                left join
+                    (
+                        select dsts.* from det_stok_trans_siklus dsts
+                        left join
+                            (
+                                select dss.id from det_stok_siklus dss
+                                left join
+                                    (
+                                        select dst.*, ds.hrg_beli from det_stok_trans dst
+                                        left join
+                                            det_stok ds
+                                            on
+                                                dst.id_header = ds.id
+                                        where
+                                            dst.id_header in (
+                                                select ds.id
+                                                from det_stok ds 
+                                                left join
+                                                    order_pakan op 
+                                                    on
+                                                        ds.kode_trans = op.no_order 
+                                                where
+                                                    op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
+                                                    op.supplier = '".$supplier."' and
+                                                    ds.kode_barang = '".$pakan."'
+                                            )
+                                    ) dst
+                                    on	
+                                        dss.kode_trans = dst.kode_trans and
+                                        dss.kode_barang = dst.kode_barang
+                                where
+                                    dst.id is not null
+                            ) dss
+                            on
+                                dsts.id_header = dss.id
+                        where
+                            dss.id is not null and
+                            dsts.tbl_name = 'terima_pakan'
+                    ) dsts
+                    on
+                        dss.kode_trans = dsts.kode_trans and
+                        dss.kode_barang = dsts.kode_barang and
+                        dss.jumlah = dsts.jumlah
+                where
+                    dsts.id is not null
+                -- END - UPDATE HARGA STOK SIKLUS PINDAH PAKAN --
+
+                -- UPDATE HARGA STOK SIKLUS RETUR PAKAN --
+                /* TUNGGU KALAU ADA */
+                -- END - UPDATE HARGA STOK SIKLUS RETUR PAKAN --
+
                 select 
                     op.no_order, 
                     opd.*
@@ -333,72 +380,142 @@ class UpdateHargaPakan extends Public_Controller {
                     op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
                     op.supplier = '".$supplier."'
             ";
+            // cetak_r( $sql, 1 );
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "
-                select tp.id from (
-                    select ds.kode_trans from det_stok ds 
-                    left join
-                        order_pakan op 
-                        on
-                            ds.kode_trans = op.no_order 
-                    where
-                        op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
-                        op.supplier = '".$supplier."' and
-                        ds.kode_barang = '".$pakan."'
-                        
-                    union all
-                        
-                    select dss.kode_trans from det_stok_siklus dss
-                    left join
-                        (
-                            select dst.*, ds.hrg_beli from det_stok_trans dst
-                            left join
-                                det_stok ds
-                                on
-                                    dst.id_header = ds.id
-                            where
-                                dst.id_header in (
-                                    select ds.id
-                                    from det_stok ds 
-                                    left join
-                                        order_pakan op 
-                                        on
-                                            ds.kode_trans = op.no_order 
-                                    where
-                                        op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
-                                        op.supplier = '".$supplier."' and
-                                        ds.kode_barang = '".$pakan."'
-                                )
-                        ) dst
-                        on	
-                            dss.kode_trans = dst.kode_trans and
-                            dss.kode_barang = dst.kode_barang
-                    where
-                        dst.id is not null
-                ) data
+                select
+                    dsts.tbl_name,
+                    case
+                        when tp.id is not null then
+                            cast(tp.id as varchar(20))
+                        else
+                            dsts.kode_trans
+                    end as kode_trans
+                from det_stok_trans_siklus dsts
                 left join
-                    kirim_pakan kp 
+                    (
+                        select dss.* from det_stok_siklus dss
+                        left join
+                            (
+                                select dst.*, ds.hrg_beli from det_stok_trans dst
+                                left join
+                                    det_stok ds
+                                    on
+                                        dst.id_header = ds.id
+                                where
+                                    dst.id_header in (
+                                        select ds.id
+                                        from det_stok ds 
+                                        left join
+                                            order_pakan op 
+                                            on
+                                                ds.kode_trans = op.no_order 
+                                        where
+                                            op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
+                                            op.supplier = '".$supplier."' and
+                                            ds.kode_barang = '".$pakan."'
+                                    )
+                            ) dst
+                            on	
+                                dss.kode_trans = dst.kode_trans and
+                                dss.kode_barang = dst.kode_barang
+                        where
+                            dst.id is not null
+
+                        union all
+
+                        select dss.* from det_stok_siklus dss
+                        left join
+                            (
+                                select dsts.* from det_stok_trans_siklus dsts
+                                left join
+                                    (
+                                        select dss.id from det_stok_siklus dss
+                                        left join
+                                            (
+                                                select dst.*, ds.hrg_beli from det_stok_trans dst
+                                                left join
+                                                    det_stok ds
+                                                    on
+                                                        dst.id_header = ds.id
+                                                where
+                                                    dst.id_header in (
+                                                        select ds.id
+                                                        from det_stok ds 
+                                                        left join
+                                                            order_pakan op 
+                                                            on
+                                                                ds.kode_trans = op.no_order 
+                                                        where
+                                                            op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
+                                                            op.supplier = '".$supplier."' and
+                                                            ds.kode_barang = '".$pakan."'
+                                                    )
+                                            ) dst
+                                            on	
+                                                dss.kode_trans = dst.kode_trans and
+                                                dss.kode_barang = dst.kode_barang
+                                        where
+                                            dst.id is not null
+                                    ) dss
+                                    on
+                                        dsts.id_header = dss.id
+                                where
+                                    dss.id is not null and
+                                    dsts.tbl_name = 'terima_pakan'
+                            ) dsts
+                            on
+                                dss.kode_trans = dsts.kode_trans and
+                                dss.kode_barang = dsts.kode_barang and
+                                dss.jumlah = dsts.jumlah
+                        where
+                            dsts.id is not null
+                    ) dss
                     on
-                        data.kode_trans = kp.no_order
+                        dsts.id_header = dss.id
                 left join
-                    terima_pakan tp 
+                    kirim_pakan kp
+                    on
+                        kp.no_order = dsts.kode_trans
+                left join
+                    terima_pakan tp
                     on
                         kp.id = tp.id_kirim_pakan
                 where
-                    tp.id is not null
+                    dss.id is not null
             ";
+            // cetak_r( $sql, 1 );
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             if ( $d_conf->count() > 0 ) {
                 $d_conf = $d_conf->toArray();
 
                 foreach ($d_conf as $key => $value) {
-                    // $this->insertKonfirmasi($value['id']);
-                    Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select top 1 '/'+df.path_detfitur as url from setting_automatic_jurnal saj
+                        left join
+                            detail_fitur df
+                            on
+                            saj.det_fitur_id = df.id_detfitur
+                        where
+                            saj.tbl_name = '".$value['tbl_name']."'
+                        group by
+                            df.path_detfitur
+                    ";
+                    $d_saj = $m_conf->hydrateRaw( $sql );
+
+                    if ( $d_saj->count() > 0 ) {
+                        $d_url = $d_saj->toArray()[0];
+
+                        Modules::run( 'base/InsertJurnal/exec', $d_url['url'], $value['kode_trans'], $value['kode_trans'], 2);
+                    }
                 }
             }
+
+            // cetak_r( $params, 1 );
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', null, $deskripsi_log, 'update_harga_pakan', null, json_encode($params));
@@ -413,70 +530,6 @@ class UpdateHargaPakan extends Public_Controller {
     }
 
     public function tes() {
-        $tgl_order = '2025-10-06';
-        $supplier = '19B005';
-
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select tp.id from (
-                select ds.kode_trans from det_stok ds 
-                left join
-                    order_pakan op 
-                    on
-                        ds.kode_trans = op.no_order 
-                where
-                    op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
-                    op.supplier = '".$supplier."'
-                    
-                union all
-                    
-                select dss.kode_trans from det_stok_siklus dss
-                left join
-                    (
-                        select dst.*, ds.hrg_beli from det_stok_trans dst
-                        left join
-                            det_stok ds
-                            on
-                                dst.id_header = ds.id
-                        where
-                            dst.id_header in (
-                                select ds.id
-                                from det_stok ds 
-                                left join
-                                    order_pakan op 
-                                    on
-                                        ds.kode_trans = op.no_order 
-                                where
-                                    op.rcn_kirim between '".$tgl_order."' and '".$tgl_order."' and
-                                    op.supplier = '".$supplier."'
-                            )
-                    ) dst
-                    on	
-                        dss.kode_trans = dst.kode_trans and
-                        dss.kode_barang = dst.kode_barang
-                where
-                    dst.id is not null
-            ) data
-            left join
-                kirim_pakan kp 
-                on
-                    data.kode_trans = kp.no_order
-            left join
-                terima_pakan tp 
-                on
-                    kp.id = tp.id_kirim_pakan
-            where
-                tp.id is not null
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
-
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
-
-            foreach ($d_conf as $key => $value) {
-                // $this->insertKonfirmasi($value['id']);
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
-            }
-        }
+        cetak_r($this->url);
     }
 }
