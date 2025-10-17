@@ -17,12 +17,14 @@
                 <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>
             </td>
             <td>
-                <button type="button" class="col-xs-12 btn btn-primary" data-id="<?php echo $value['id']; ?>" onclick="vp.formRealisasiBayar(this)"><i class="fa fa-check"></i> BAYAR</button>
+                <?php if ( $akses['a_ack'] == 1 ) { ?>
+                    <button type="button" class="col-xs-12 btn btn-primary" data-id="<?php echo $value['id']; ?>" onclick="vp.formRealisasiBayar(this)"><i class="fa fa-check"></i> BAYAR</button>
+                <?php } ?>
             </td>
         </tr>
     <?php } ?>
 <?php } else { ?>
     <tr>
-        <td colspan="6">Tidak ada pengajuan.</td>
+        <td colspan="8">Tidak ada pengajuan.</td>
     </tr>
 <?php } ?>

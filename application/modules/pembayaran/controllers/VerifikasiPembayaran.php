@@ -39,14 +39,14 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function outstanding() {
-        $content = null;
+        $content['akses'] = $this->hakAkses;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/outstanding', $content, true);
 
         return $html;
     }
 
     public function history() {
-        $content = null;
+        $content['akses'] = $this->hakAkses;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/history', $content, true);
 
         return $html;
@@ -261,6 +261,7 @@ class VerifikasiPembayaran extends Public_Controller
         $data = $this->getData();
 
         $content['data'] = $data;
+        $content['akses'] = $this->hakAkses;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/list_outstanding', $content, true);
 
         echo $html;
@@ -276,6 +277,7 @@ class VerifikasiPembayaran extends Public_Controller
         $data = $this->getData(null, 2, $start_date, $end_date, $jenis_transaksi);
 
         $content['data'] = $data;
+        $content['akses'] = $this->hakAkses;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/list_history', $content, true);
 
         echo $html;

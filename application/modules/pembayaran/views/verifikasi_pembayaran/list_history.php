@@ -18,7 +18,9 @@
                 <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>
             </td>
             <td>
-                <button type="button" class="col-xs-12 btn btn-primary" data-id="<?php echo $value['id']; ?>" onclick="vp.formRealisasiBayarDetail(this)"><i class="fa fa-file"></i></button>
+                <?php if ( $akses['a_ack'] == 1 ) { ?>
+                    <button type="button" class="col-xs-12 btn btn-primary" data-id="<?php echo $value['id']; ?>" onclick="vp.formRealisasiBayarDetail(this)"><i class="fa fa-file"></i></button>
+                <?php } ?>
             </td>
         </tr>
     <?php } ?>
