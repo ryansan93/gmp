@@ -1,3 +1,4 @@
+<?php if ( $akses['a_submit'] == 1 ) { ?>
 <div class="col-xs-7 no-padding" style="padding-right: 5px;">
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">No. Bank Keluar</label></div>
@@ -191,3 +192,6 @@
 <div class="col-xs-12 no-padding">
 	<button type="button" class="btn btn-primary pull-right" onclick="bk.save()"><i class="fa fa-save"></i> Simpan</button>
 </div>
+<?php } else { ?>
+	<h4>BANK KELUAR</h4>
+<?php } ?>

@@ -133,6 +133,7 @@ class BankKeluar extends Public_Controller {
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
         $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
+        $content['akses'] = $this->hakAkses;
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
 
         return $html;
@@ -152,6 +153,7 @@ class BankKeluar extends Public_Controller {
         $content['akses'] = $this->hakAkses;
         $content['data'] = $d_kk;
         $content['detail'] = $d_kki;
+        $content['akses'] = $this->hakAkses;
         $content['log'] = !empty($d_log) ? $d_log : null;
 
         $html = $this->load->view($this->pathView . 'viewForm', $content, TRUE);

@@ -150,6 +150,7 @@ class Memorial extends Public_Controller {
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
         $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
+        $content['akses'] = $this->hakAkses;
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
 
         return $html;
