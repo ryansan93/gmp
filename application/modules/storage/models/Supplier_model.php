@@ -52,26 +52,39 @@ class Supplier_model extends Conf {
 	public function getDataSupplier()
 	{
 		$sql = "
-			select
-                p.*
-				-- , kab_kota.nama as kab_kota
-            from pelanggan p
-            right join
-                ( select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor ) p1
-                on
-                    p.id = p1.id
-            -- right join
-            --     lokasi kec
-            --     on
-            --         kec.id = p.alamat_kecamatan
-            -- right join
-            --     lokasi kab_kota
-            --     on
-            --         kab_kota.id = kec.induk
-            where
-                p.mstatus = 1
+			select * from
+			(
+				select
+					p.nomor,
+					p.nama
+					-- , kab_kota.nama as kab_kota
+				from pelanggan p
+				right join
+					( select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor ) p1
+					on
+						p.id = p1.id
+				-- right join
+				--     lokasi kec
+				--     on
+				--         kec.id = p.alamat_kecamatan
+				-- right join
+				--     lokasi kab_kota
+				--     on
+				--         kab_kota.id = kec.induk
+				where
+					p.mstatus = 1
+
+				union all
+
+				select
+					coa as nomor,
+					nama_coa as nama
+				from coa
+				where 
+					bank = 1
+			) data
 			order by
-				p.nama asc
+				data.nama asc
 		";
 		$d_supplier = $this->hydrateRaw( $sql );
 

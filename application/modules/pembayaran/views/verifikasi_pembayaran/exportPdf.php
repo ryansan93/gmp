@@ -15,9 +15,16 @@
   	<?php // CSS files ?>
   	<style type="text/css">
 		@media print {
+			@page {
+				size: A5;
+				/* size: landscape; */
+				margin: 0;
+				padding: 0.5rem 1rem 0.5rem 0.5rem;
+			}
+			
 			html, body {
 				height: 99%;
-				width: 99.7%;
+				width: 100%;
 				max-width: 100%;
 			}
 
@@ -27,14 +34,14 @@
 			}
 
 			div.contain {
-				padding: 0px;
+				/* padding: 0px 5px 0px 0px; */
 				width: 210mm;
 				height: 148mm;
 				margin-bottom: 1rem;
 			}
 
-			table.maintable tbody { page-break-inside:auto }
-			table.maintable tbody tr.data { page-break-inside:avoid; page-break-after:auto }
+			/* table.maintable tbody { page-break-inside:auto } */
+			/* table.maintable tbody tr.data { page-break-inside:avoid; page-break-after:auto } */
 		}
 
 		@media screen {
@@ -366,7 +373,7 @@
 													</td>
 													<td class="text-center no-border" style="width: 25%;">
 														<label style="display: inline-block; text-align: center;">
-															<label class="col-xs-12" style="display: inline-block;">Diperikas Oleh,</label>
+															<label class="col-xs-12" style="display: inline-block;">Diperiksa Oleh,</label>
 															<br>
 															<br>
 															<br>
