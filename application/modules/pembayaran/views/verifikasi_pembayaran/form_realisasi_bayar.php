@@ -14,6 +14,18 @@
 					<div class="col-xs-3 no-padding">SUPPLIER</div>
 					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['nama_supl']); ?></div>
 				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-3 no-padding">NO. REKENING</div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['no_rek']); ?></div>
+				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-3 no-padding">ATAS NAMA</div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['atas_nama']); ?></div>
+				</div>
+				<div class="col-xs-12 no-padding">
+					<div class="col-xs-3 no-padding">BANK</div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['bank']); ?></div>
+				</div>
                 <div class="col-xs-12 no-padding">
 					<div class="col-xs-3 no-padding">TGL PENGAJUAN</div>
 					<div class="col-xs-9 no-padding">: <?php echo strtoupper(tglIndonesia($data['tgl_pengajuan'], '-', ' ')); ?></div>

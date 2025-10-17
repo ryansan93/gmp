@@ -109,7 +109,25 @@ class VerifikasiPembayaran extends Public_Controller
                 data.*,
                 supl.nama_supl,
                 lt.deskripsi,
-                lt.waktu
+                lt.waktu,
+                case
+                    when supl.no_rek is not null then
+                        supl.no_rek
+                    else
+                        rek.no_rek
+                end as no_rek,
+                case
+                    when supl.atas_nama is not null then
+                        supl.atas_nama
+                    else
+                        rek.atas_nama
+                end as atas_nama, 
+                case
+                    when supl.bank is not null then
+                        supl.bank
+                    else
+                        rek.bank
+                end as bank
             from
             (
                 select
@@ -141,7 +159,8 @@ class VerifikasiPembayaran extends Public_Controller
                     cast(rp.lampiran_realisasi as varchar(max)) as lampiran_realisasi,
                     cast(rp.ket_realisasi as varchar(max)) as ket_realisasi,
                     rp.no_bukti,
-                    nb.kode as kode_trans
+                    nb.kode as kode_trans,
+                    rp.no_rek
                 from realisasi_pembayaran_det rpd
                 left join
                     realisasi_pembayaran rp
@@ -169,11 +188,12 @@ class VerifikasiPembayaran extends Public_Controller
                     cast(rp.lampiran_realisasi as varchar(max)),
                     cast(rp.ket_realisasi as varchar(max)),
                     rp.no_bukti,
-                    nb.kode
+                    nb.kode,
+                    rp.no_rek
             ) data
             left join
                 (
-                    select plg1.nomor as kode_supl, plg1.nama as nama_supl, 'supplier' as jenis from pelanggan plg1
+                    select plg1.nomor as kode_supl, plg1.nama as nama_supl, 'supplier' as jenis, null as no_rek, null as atas_nama, null as bank from pelanggan plg1
                     right join
                         (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) plg2
                         on
@@ -183,7 +203,7 @@ class VerifikasiPembayaran extends Public_Controller
 
                     union all
 
-                    select eks1.nomor as kode_supl, eks1.nama as nama_supl, 'ekspedisi' as jenis from ekspedisi eks1
+                    select eks1.nomor as kode_supl, eks1.nama as nama_supl, 'ekspedisi' as jenis, null as no_rek, null as atas_nama, null as bank from ekspedisi eks1
                     right join
                         (select max(id) as id, nomor from ekspedisi group by nomor) eks2
                         on
@@ -191,7 +211,7 @@ class VerifikasiPembayaran extends Public_Controller
 
                     union all
                     
-                    select mtr1.nomor as kode_supl, mtr1.nama as nama_supl, 'mitra' as jenis from mitra mtr1
+                    select mtr1.nomor as kode_supl, mtr1.nama as nama_supl, 'mitra' as jenis, mtr1.rekening_nomor as no_rek, mtr1.rekening_pemilik as atas_nama, mtr1.bank from mitra mtr1
                     right join 
                         (select max(id) as id, nomor from mitra group by nomor) mtr2
                         on
@@ -214,6 +234,17 @@ class VerifikasiPembayaran extends Public_Controller
                 coa c
                 on
                     c.coa = data.coa_bank
+            left join
+                (
+                    select cast(id as varchar(10)) as id, rekening_nomor as no_rek, rekening_pemilik as atas_nama, bank, 'ekspedisi' as jenis from bank_ekspedisi be
+
+                    union all
+
+                    select cast(id as varchar(10)) as id, rekening_nomor as no_rek, rekening_pemilik as atas_nama, bank, 'supplier' as jenis from bank_pelanggan bp
+                ) rek
+                on
+                    data.no_rek = rek.id and
+                    data.jenis_supl = rek.jenis
             ".$sql_condition."
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );

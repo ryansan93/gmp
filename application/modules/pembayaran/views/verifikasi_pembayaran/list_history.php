@@ -15,12 +15,15 @@
                 <?php } ?>
             </td>
             <td>
+                <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>
+            </td>
+            <td>
                 <button type="button" class="col-xs-12 btn btn-primary" data-id="<?php echo $value['id']; ?>" onclick="vp.formRealisasiBayarDetail(this)"><i class="fa fa-file"></i></button>
             </td>
         </tr>
     <?php } ?>
 <?php } else { ?>
     <tr>
-        <td colspan="7">Tidak ada pengajuan.</td>
+        <td colspan="9">Tidak ada pengajuan.</td>
     </tr>
 <?php } ?>
