@@ -372,7 +372,7 @@
 													</td>
 													<td class="text-center no-border" style="width: 25%;">
 														<label style="display: inline-block; text-align: center;">
-															<label class="col-xs-12" style="display: inline-block;">Diperikas Oleh,</label>
+															<label class="col-xs-12" style="display: inline-block;">Diperiksa Oleh,</label>
 															<br>
 															<br>
 															<br>
