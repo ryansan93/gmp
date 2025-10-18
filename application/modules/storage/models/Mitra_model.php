@@ -74,6 +74,60 @@ class Mitra_model extends Conf{
     return $this->hasMany('\Model\Storage\LogTables_model', 'tbl_id', 'id')->select('waktu', 'deskripsi')->where('tbl_name', $this->table);
   }
 
+  public function getDataMitra($with_bank = 1)
+	{
+		$sql_bank = null;
+		if ( $with_bank == 1 ) {
+			$sql_bank = "
+				union all
+
+				select
+					coa as nomor,
+					nama_coa as nama
+				from coa
+				where 
+					bank = 1
+			";
+		}
+
+		$sql = "
+			select * from
+			(
+				select
+					m.nomor,
+					m.nama
+					-- , kab_kota.nama as kab_kota
+				from mitra m
+				right join
+					( select max(id) as id, nomor from mitra group by nomor ) m1
+					on
+						m.id = m1.id
+				-- right join
+				--     lokasi kec
+				--     on
+				--         kec.id = p.alamat_kecamatan
+				-- right join
+				--     lokasi kab_kota
+				--     on
+				--         kab_kota.id = kec.induk
+				where
+					m.mstatus = 1
+
+				".$sql_bank."
+			) data
+			order by
+				data.nama asc
+		";
+		$d_mitra = $this->hydrateRaw( $sql );
+
+		$data = null;
+		if ( $d_mitra->count() > 0 ) {
+			$data = $d_mitra->toArray();
+		}
+
+		return $data;
+	}
+
   public function getDashboard($status)
   {
     $table_name = $this->table;

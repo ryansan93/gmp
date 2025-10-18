@@ -47,6 +47,60 @@ class Ekspedisi_model extends Conf {
   	public function aktif() {
   		return $this->hasOne('\Model\Storage\AktifEkspedisi_model', 'ekspedisi_id', 'id');
   	}
+	
+	public function getDataEskpedisi($with_bank = 1)
+	{
+		$sql_bank = null;
+		if ( $with_bank == 1 ) {
+			$sql_bank = "
+				union all
+
+				select
+					coa as nomor,
+					nama_coa as nama
+				from coa
+				where 
+					bank = 1
+			";
+		}
+
+		$sql = "
+			select * from
+			(
+				select
+					e.nomor,
+					e.nama
+					-- , kab_kota.nama as kab_kota
+				from ekspedisi e
+				right join
+					( select max(id) as id, nomor from ekspedisi group by nomor ) e1
+					on
+						e.id = e1.id
+				-- right join
+				--     lokasi kec
+				--     on
+				--         kec.id = p.alamat_kecamatan
+				-- right join
+				--     lokasi kab_kota
+				--     on
+				--         kab_kota.id = kec.induk
+				where
+					e.mstatus = 1
+
+				".$sql_bank."
+			) data
+			order by
+				data.nama asc
+		";
+		$d_ekspedisi = $this->hydrateRaw( $sql );
+
+		$data = null;
+		if ( $d_ekspedisi->count() > 0 ) {
+			$data = $d_ekspedisi->toArray();
+		}
+
+		return $data;
+	}
 
   	public function getDashboard($status)
 	{

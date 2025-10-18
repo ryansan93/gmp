@@ -49,8 +49,22 @@ class Supplier_model extends Conf {
   		return $this->hasOne('\Model\Storage\AktifPelanggan_model', 'pelanggan', 'id');
   	}
 
-	public function getDataSupplier()
+	public function getDataSupplier($with_bank = 1)
 	{
+		$sql_bank = null;
+		if ( $with_bank == 1 ) {
+			$sql_bank = "
+				union all
+
+				select
+					coa as nomor,
+					nama_coa as nama
+				from coa
+				where 
+					bank = 1
+			";
+		}
+
 		$sql = "
 			select * from
 			(
@@ -74,14 +88,7 @@ class Supplier_model extends Conf {
 				where
 					p.mstatus = 1
 
-				union all
-
-				select
-					coa as nomor,
-					nama_coa as nama
-				from coa
-				where 
-					bank = 1
+				".$sql_bank."
 			) data
 			order by
 				data.nama asc

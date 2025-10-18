@@ -618,6 +618,7 @@ class RealisasiPembayaran extends Public_Controller
                         'dn' => $dn,
                         'cn' => $cn,
                         'transfer' => $transfer,
+                        'bayar' => $bayar,
                         'jumlah' => ($v_kpp['total'] > $bayar) ? $v_kpp['total'] - $bayar : 0,
                         'checked' => ($d_rpd) ? true : false
                     );

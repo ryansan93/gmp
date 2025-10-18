@@ -60,8 +60,22 @@ class Pelanggan_model extends Conf {
 		return $this->hasOne('\Model\Storage\DaftarKunjungan_model', 'no_pelanggan', 'nomor')->orderBy('id', 'desc');
 	}
 
-	public function getDataPelanggan()
+	public function getDataPelanggan($with_bank = 1)
 	{
+		$sql_bank = null;
+		if ( $with_bank == 1 ) {
+			$sql_bank = "
+				union all
+
+				select
+					coa as nomor,
+					nama_coa as nama
+				from coa
+				where 
+					bank = 1
+			";
+		}
+
 		$sql = "
 			select * from 
 			(
@@ -86,14 +100,7 @@ class Pelanggan_model extends Conf {
 					p.mstatus = 1 and
 					p.tipe = 'pelanggan'
 
-				union all
-
-				select
-					coa as nomor,
-					nama_coa as nama
-				from coa
-				where 
-					bank = 1
+				".$sql_bank."
 			) data
 			order by
 				data.nama asc
