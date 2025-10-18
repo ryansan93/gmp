@@ -434,7 +434,19 @@ class RealisasiPembayaran extends Public_Controller
                 not exists (
                     select data.* from
                     (
-                        select no_bayar, sum(bayar) as bayar from realisasi_pembayaran_det rpd group by no_bayar
+                        select 
+                            rpd.no_bayar, 
+                            sum(rpd.bayar) as bayar 
+                        from realisasi_pembayaran_det rpd 
+                        left join
+                            realisasi_pembayaran rp
+                            on
+                                rpd.id_header = rp.id
+                        where
+                            rp.status = 2
+                        group by 
+                            rpd.no_bayar,
+                            rp.status
                     ) data
                     where 
                         data.no_bayar = kpp.nomor and

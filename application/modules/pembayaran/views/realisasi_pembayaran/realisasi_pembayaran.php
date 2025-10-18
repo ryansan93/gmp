@@ -163,7 +163,7 @@
 									<?php endforeach ?>
 								<?php endif ?>
 							</select>
-						<?php } else if ( stristr($data['jenis_pembayaran'], 'supplier') !== FALSE ) { ?>
+						<?php } else if ( stristr($data['jenis_pembayaran'], 'plasma') !== FALSE ) { ?>
 							<input type="text" class="form-control rekening" data-required="1" value="<?php echo $data['rekening']; ?>" readonly>
 						<?php } else if ( stristr($data['jenis_pembayaran'], 'ekspedisi') !== FALSE ) { ?>
 							<select class="form-control rekening" data-required="1">
