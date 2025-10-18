@@ -1475,7 +1475,7 @@ class RealisasiPembayaran extends Public_Controller
                                 mm.nim, k.kandang, k.unit
                         ) kdg
                         on
-                            select SUBSTRING(kppd2.noreg, 1, 7) = kdg.nim and
+                            SUBSTRING(kppd2.noreg, 1, 7) = kdg.nim and
                             kppd2.kandang = kdg.kandang
                     left join
                         wilayah w
@@ -1496,7 +1496,7 @@ class RealisasiPembayaran extends Public_Controller
                     where
                         rpd.id_header = ".$id."
                     group by
-                        w.kode as kode_unit
+                        w.kode
                 ";
                 $d_unit = $m_conf->hydrateRaw( $sql );
 
