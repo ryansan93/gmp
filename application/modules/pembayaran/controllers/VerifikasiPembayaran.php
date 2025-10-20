@@ -272,7 +272,6 @@ class VerifikasiPembayaran extends Public_Controller
             order by
                 lt.waktu asc
         ";
-        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
