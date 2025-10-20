@@ -70,12 +70,14 @@
                     <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
                         <button type="button" class="col-xs-12 btn btn-default" onclick="vp.printPreview(this)" data-id="<?php echo exEncrypt($data['id']); ?>"><i class="fa fa-print"></i> Cetak</button>
                     </div>
-                    <div class="col-xs-6 no-padding" style="padding-right: 5px;">
-                        <button type="button" class="col-xs-12 btn btn-danger" onclick="vp.delete(this)" data-id="<?php echo $data['id']; ?>"><i class="fa fa-trash"></i> Hapus</button>
-                    </div>
-                    <div class="col-xs-6 no-padding" style="padding-left: 5px;">
-                        <button type="button" class="col-xs-12 btn btn-primary" onclick="vp.formRealisasiBayarEdit(this)" data-id="<?php echo $data['id']; ?>"><i class="fa fa-edit"></i> Edit</button>
-                    </div>
+					<?php if ( $data['verifikasi'] == 1 ) { ?>
+						<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+							<button type="button" class="col-xs-12 btn btn-danger" onclick="vp.delete(this)" data-id="<?php echo $data['id']; ?>"><i class="fa fa-trash"></i> Hapus</button>
+						</div>
+						<div class="col-xs-6 no-padding" style="padding-left: 5px;">
+							<button type="button" class="col-xs-12 btn btn-primary" onclick="vp.formRealisasiBayarEdit(this)" data-id="<?php echo $data['id']; ?>"><i class="fa fa-edit"></i> Edit</button>
+						</div>
+					<?php } ?>
 				</div>
 			</form>
 		</div>

@@ -39,6 +39,9 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function outstanding() {
+        $m_coa = new \Model\Storage\Coa_model();
+
+        $content['bank'] = $m_coa->getDataBank();
         $content['akses'] = $this->hakAkses;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/outstanding', $content, true);
 
@@ -46,13 +49,16 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function history() {
+        $m_coa = new \Model\Storage\Coa_model();
+
+        $content['bank'] = $m_coa->getDataBank();
         $content['akses'] = $this->hakAkses;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/history', $content, true);
 
         return $html;
     }
 
-    public function getData($id = null, $status = 1, $start_date = null, $end_date = null, $jenis = null) {
+    public function getData($id = null, $status = 1, $start_date = null, $end_date = null, $jenis = null, $bank = null) {
         $sql_condition = null;
 
         $sql_id = null;
@@ -82,6 +88,16 @@ class VerifikasiPembayaran extends Public_Controller
                 $sql_condition .= " and ".$sql_jenis;
             } else {
                 $sql_condition .= "where ".$sql_jenis;
+            }
+        }
+
+        $sql_bank = null;
+        if ( !empty($bank) && $bank != 'all' ) {
+            $sql_bank = "cast(data.coa_bank as varchar(15)) = '".$bank."'";
+            if ( !empty($sql_condition) ) {
+                $sql_condition .= " and ".$sql_bank;
+            } else {
+                $sql_condition .= "where ".$sql_bank;
             }
         }
 
@@ -254,6 +270,7 @@ class VerifikasiPembayaran extends Public_Controller
                     data.jenis_supl = rek.jenis
             ".$sql_condition."
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
@@ -280,8 +297,9 @@ class VerifikasiPembayaran extends Public_Controller
         $start_date = $params['start_date'];
         $end_date = $params['end_date'];
         $jenis_transaksi = $params['jenis'];
+        $bank = $params['bank'];
 
-        $data = $this->getData(null, 2, $start_date, $end_date, $jenis_transaksi);
+        $data = $this->getData(null, 2, $start_date, $end_date, $jenis_transaksi, $bank);
 
         $content['data'] = $data;
         $content['akses'] = $this->hakAkses;

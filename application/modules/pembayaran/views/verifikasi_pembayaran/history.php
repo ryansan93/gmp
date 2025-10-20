@@ -22,7 +22,7 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px; padding: 0px 0px 0px 0px;">
-		<div class="col-xs-12 no-padding"><label class="control-label text-left">Jenis Transaksi</label></div>
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">JENIS TRANSAKSI</label></div>
 		<div class="col-xs-12 no-padding">
 			<select class="jenis_transaksi" multiple="multiple" width="100%" data-required="1">
 				<option value="all">All</option>
@@ -34,6 +34,17 @@
 			</select>
 		</div>
 	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+        <div class="col-xs-12 no-padding"><label class="label-control">BANK</label></div>
+        <div class="col-xs-12 no-padding">
+            <select class="form-control bank">
+                <option value="all">ALL</option>
+                <?php foreach ($bank as $key => $value) { ?>
+                    <option value="<?php echo $value['no_coa']; ?>"><?php echo $value['no_coa'].' | '.$value['nama_coa']; ?></option>
+                <?php } ?>
+            </select>
+        </div>
+    </div>
 	<div class="col-xs-12 no-padding" style="margin-top: 5px; margin-bottom: 5px;">
 		<button id="btn-get-lists" type="button" class="btn btn-primary cursor-p col-xs-12" title="ADD" onclick="vp.getLists()"> 
 			<i class="fa fa-search" aria-hidden="true"></i> Tampilkan

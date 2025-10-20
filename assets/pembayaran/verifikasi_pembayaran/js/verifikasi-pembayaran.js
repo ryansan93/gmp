@@ -36,6 +36,11 @@ var vp = {
             $('select.jenis_transaksi').next('span.select2').css('width', '100%');
         });
         $('select.jenis_transaksi').next('span.select2').css('width', '100%');
+
+        $('div#outstanding').find('select.bank').select2().on("select2:select", function (e) {
+            vp.filterOutstanding();
+        });
+        $('div#history').find('select.bank').select2();
     }, // end - settingUp
 
     getDataOutstanding: function() {
@@ -49,9 +54,24 @@ var vp = {
             beforeSend : function(){ App.showLoaderInContent(dcontent); },
             success : function(html){
                 App.hideLoaderInContent(dcontent, html);
+
+                vp.filterOutstanding();
             },
         });
     }, // end - getDataOutstanding
+
+    filterOutstanding: function() {
+        var div = $('div#outstanding');
+
+        var bank = $(div).find('select.bank').select2().val();
+
+        $(div).find('tr.data').addClass('hide');
+        if ( bank != 'all' ) {
+            $(div).find('tr.data[data-coabank="'+bank+'"]').removeClass('hide');
+        } else {
+            $(div).find('tr.data').removeClass('hide');
+        }
+    }, // end - filterOutstanding
 
     getLists: function() {
         let dcontent = $('table.tbl_riwayat tbody');
@@ -72,7 +92,8 @@ var vp = {
             var params = {
                 'start_date': dateSQL($('#startDate').data('DateTimePicker').date()),
                 'end_date': dateSQL($('#endDate').data('DateTimePicker').date()),
-                'jenis': $('.jenis_transaksi').select2().val()
+                'jenis': $('.jenis_transaksi').select2().val(),
+                'bank': $('div#history').find('.bank').select2().val()
             };
 
             $.ajax({

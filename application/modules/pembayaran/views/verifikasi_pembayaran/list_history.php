@@ -1,6 +1,6 @@
 <?php if ( !empty($data) && count($data) > 0 ) { ?>
     <?php foreach ($data as $key => $value) { ?>
-        <tr class="cursor-p">
+        <tr class="cursor-p data" data-norek="<?php echo $value['no_rek']; ?>" data-atasnama="<?php echo $value['atas_nama']; ?>" data-bank="<?php echo $value['bank']; ?>" data-coabank="<?php echo $value['coa_bank']; ?>">
             <td><?php echo strtoupper($value['jenis_transaksi']); ?></td>
             <td><?php echo strtoupper($value['nama_supl']); ?></td>
             <td class="text-center"><?php echo strtoupper(tglIndonesia($value['tgl_bayar'], '-', ' ')); ?></td>
