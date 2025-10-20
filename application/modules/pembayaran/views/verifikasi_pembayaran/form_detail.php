@@ -21,7 +21,13 @@
                             <tbody>
                                 <?php foreach ($data as $key => $value) { ?>
                                     <tr>
-                                        <td><?php echo $value['no_inv']; ?></td>
+                                        <td>
+                                            <?php if ( isset($value['lampiran']) && !empty($value['lampiran']) ) { ?>
+                                                <a href="uploads/<?php echo $value['lampiran']; ?>" target="_blank"><?php echo $value['no_inv']; ?></a>
+                                            <?php } else { ?>
+                                                <?php echo $value['no_inv']; ?>
+                                            <?php } ?>
+                                        </td>
                                         <td class="text-right"><?php echo angkaDecimal($value['bruto']); ?></td>
                                         <td class="text-right"><?php echo angkaDecimal($value['pph']); ?></td>
                                         <td class="text-right"><?php echo angkaDecimal($value['netto']); ?></td>

@@ -301,7 +301,13 @@ class VerifikasiPembayaran extends Public_Controller
                 konfir_pembayaran.no_sj,
                 konfir_pembayaran.bruto,
                 konfir_pembayaran.pph,
-                konfir_pembayaran.bruto - konfir_pembayaran.pph as netto
+                konfir_pembayaran.bruto - konfir_pembayaran.pph as netto,
+                case
+                    when rp.lampiran is not null then
+                        rp.lampiran
+                    else
+                        konfir_pembayaran.lampiran
+                end as lampiran
             from realisasi_pembayaran_det rpd
             left join
                 realisasi_pembayaran rp
@@ -314,7 +320,8 @@ class VerifikasiPembayaran extends Public_Controller
                         td.no_sj as no_inv,
                         td.no_sj as no_sj,
                         kpdd.total as bruto,
-                        kpdd.total * (0.25/100) as pph
+                        kpdd.total * (0.25/100) as pph,
+                        '' as lampiran
                     from konfirmasi_pembayaran_doc_det kpdd
                     left join
                         konfirmasi_pembayaran_doc kpd
@@ -338,7 +345,8 @@ class VerifikasiPembayaran extends Public_Controller
                         kpp.invoice as no_inv,
                         kpp.invoice as no_sj,
                         kpp.total as bruto,
-                        0 as pph
+                        0 as pph,
+                        '' as lampiran
                     from konfirmasi_pembayaran_pakan kpp
 
                     union all
@@ -348,7 +356,8 @@ class VerifikasiPembayaran extends Public_Controller
                         null as no_inv,
                         kpvd.no_sj as no_sj,
                         kpvd.total as bruto,
-                        0 as pph
+                        0 as pph,
+                        '' as lampiran
                     from konfirmasi_pembayaran_voadip_det kpvd
                     left join
                         konfirmasi_pembayaran_voadip kpv
@@ -362,7 +371,8 @@ class VerifikasiPembayaran extends Public_Controller
                         kpop.invoice as no_inv,
                         null as no_sj,
                         (kpop.total+kpop.potongan_pph_23) as bruto,
-                        kpop.potongan_pph_23 as pph
+                        kpop.potongan_pph_23 as pph,
+                        kpop.lampiran
                     from konfirmasi_pembayaran_oa_pakan kpop
 
                     union all
@@ -372,7 +382,8 @@ class VerifikasiPembayaran extends Public_Controller
                         kpp.invoice as no_inv,
                         null as no_sj,
                         kpp.total as bruto,
-                        0 as pph
+                        0 as pph,
+                        kpp.lampiran
                     from konfirmasi_pembayaran_peternak kpp
                 ) konfir_pembayaran
                 on

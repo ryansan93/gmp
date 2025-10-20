@@ -209,7 +209,6 @@ class Rdim extends Public_Controller
             }
         }
 
-
         return $penimbang;
     } // end - getDataTimpanen
 
