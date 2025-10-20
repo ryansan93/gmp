@@ -6,6 +6,21 @@
 	<div class="row detailed">
 		<div class="col-xs-12 detailed no-padding">
 			<form role="form" class="form-horizontal">
+                <div class="col-xs-12 no-padding">
+                    <div class="col-xs-12 no-padding">
+                        <div class="col-xs-3 no-padding">ATAS NAMA</div>
+                        <div class="col-xs-9 no-padding">: <?php echo strtoupper($atas_nama); ?></div>
+                    </div>
+                    <div class="col-xs-12 no-padding">
+                        <div class="col-xs-3 no-padding">BANK</div>
+                        <div class="col-xs-9 no-padding">: <?php echo strtoupper($bank); ?></div>
+                    </div>
+                    <div class="col-xs-12 no-padding">
+                        <div class="col-xs-3 no-padding">NO. REKENING</div>
+                        <div class="col-xs-9 no-padding">: <?php echo strtoupper($no_rek); ?></div>
+                    </div>
+                </div>
+                <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 				<div class="col-xs-12 no-padding">
                     <small>
                         <table class="table table-bordered table-hover" style="margin-bottom: 0px;">

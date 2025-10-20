@@ -89,8 +89,13 @@ var vp = {
     }, // end - get_lists
 
     formDetail: function(elm) {
+        var tr = $(elm).closest('tr.data');
+
         var params = {
-            'id': $(elm).attr('data-id')
+            'id': $(elm).attr('data-id'),
+            'no_rek': $(tr).attr('data-norek'),
+            'atas_nama': $(tr).attr('data-atasnama'),
+            'bank': $(tr).attr('data-bank')
         };
 
         $.get('pembayaran/VerifikasiPembayaran/formDetail',{

@@ -683,12 +683,12 @@ class TSDRHPP extends Public_Controller {
             $d_bo = $m_bo->where('tgl_berlaku', '<=', date('Y-m-d'))->orderBy('tgl_berlaku', 'desc')->first();
 
             $biaya_opr = 0;
-            if ( $d_bo && $jenis_mitra == 'ME' ) {
-                $biaya_opr = $d_bo->biaya_opr;
-            } else {
-                $m_dj = new \Model\Storage\DetJurnal_model();
-                $biaya_opr = $m_dj->where('noreg', $_noreg)->sum('nominal');
-            }
+            // if ( $d_bo && $jenis_mitra == 'ME' ) {
+            //     $biaya_opr = $d_bo->biaya_opr;
+            // } else {
+            //     $m_dj = new \Model\Storage\DetJurnal_model();
+            //     $biaya_opr = $m_dj->where('noreg', $_noreg)->sum('nominal');
+            // }
 
             $data_piutang_plasma = $this->get_data_piutang( $d_rs['mitra']['d_mitra']['nomor'] );
             

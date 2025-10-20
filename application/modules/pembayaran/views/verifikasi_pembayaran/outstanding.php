@@ -14,13 +14,14 @@
                         <th class="col-xs-1">TRANSFER</th>
                         <th class="col-xs-2">LAMPIRAN</th>
                         <th class="col-xs-2">DI AJUKAN OLEH</th>
+                        <th class="col-xs-1">BANK</th>
                         <th class="col-xs-1">DETAIL</th>
                         <th class="col-xs-1">ACTION</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="7">Tidak ada pengajuan.</td>
+                        <td colspan="8">Tidak ada pengajuan.</td>
                     </tr>
                 </tbody>
             </table>

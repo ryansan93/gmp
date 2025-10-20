@@ -93,15 +93,15 @@ class VerifikasiPembayaran extends Public_Controller
             $unit[] = $v_wil['kode'];
         }
 
-        $sql_unit = null;
-        if ( !empty($unit) ) {
-            $sql_unit = "c.unit in ('".implode("', '", $unit)."')";
-            if ( !empty($sql_condition) ) {
-                $sql_condition .= " and ".$sql_unit;
-            } else {
-                $sql_condition .= "where ".$sql_unit;
-            }
-        }
+        // $sql_unit = null;
+        // if ( !empty($unit) ) {
+        //     $sql_unit = "c.unit in ('".implode("', '", $unit)."')";
+        //     if ( !empty($sql_condition) ) {
+        //         $sql_condition .= " and ".$sql_unit;
+        //     } else {
+        //         $sql_condition .= "where ".$sql_unit;
+        //     }
+        // }
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
@@ -127,7 +127,14 @@ class VerifikasiPembayaran extends Public_Controller
                         supl.bank
                     else
                         rek.bank
-                end as bank
+                end as bank,
+                case
+                    when c.unit in ('".implode("', '", $unit)."') then
+                        1
+                    else
+                        0
+                end as verifikasi,
+                c.unit
             from
             (
                 select
@@ -287,6 +294,9 @@ class VerifikasiPembayaran extends Public_Controller
         $params = $this->input->get('params');
 
         $id = $params['id'];
+        $no_rek = $params['no_rek'];
+        $atas_nama = $params['atas_nama'];
+        $bank = $params['bank'];
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
@@ -399,6 +409,9 @@ class VerifikasiPembayaran extends Public_Controller
         }
 
         $content['data'] = $data;
+        $content['no_rek'] = $no_rek;
+        $content['atas_nama'] = $atas_nama;
+        $content['bank'] = $bank;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/form_detail', $content, true);
 
         echo $html;
