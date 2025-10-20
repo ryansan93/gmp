@@ -269,6 +269,8 @@ class VerifikasiPembayaran extends Public_Controller
                     data.no_rek = rek.id and
                     data.jenis_supl = rek.jenis
             ".$sql_condition."
+            order by
+                lt.waktu asc
         ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
