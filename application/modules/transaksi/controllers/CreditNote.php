@@ -30,7 +30,7 @@ class CreditNote extends Public_Controller {
      */
     public function index($segment=0)
     {
-        // if ( $this->akses['a_view'] == 1 ) {
+        if ( $this->akses['a_view'] == 1 ) {
             $this->add_external_js(array(
                 "assets/select2/js/select2.min.js",
                 "assets/transaksi/credit_note/js/credit-note.js",
@@ -51,9 +51,9 @@ class CreditNote extends Public_Controller {
             $data['title_menu'] = 'Credit Note';
             $data['view'] = $this->load->view($this->path.'index', $content, TRUE);
             $this->load->view($this->template, $data);
-        // } else {
-        //     showErrorAkses();
-        // }
+        } else {
+            showErrorAkses();
+        }
     }
 
     public function getLists()

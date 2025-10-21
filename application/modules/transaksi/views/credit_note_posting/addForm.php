@@ -1,7 +1,7 @@
-<?php // if ( $akses['a_submit'] == 1 ) { ?>
+<?php if ( $akses['a_submit'] == 1 ) { ?>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 		<div class="col-xs-2 no-padding" style="padding-right: 5px;">
-			<div class="col-xs-12 no-padding"><label class="label-control">Tanggal Post</label></div>
+			<div class="col-xs-12 no-padding"><label class="label-control">Tanggal Pakai CN</label></div>
 			<div class="col-xs-12 no-padding">
 				<div class="input-group date datetimepicker lock_date_fiskal" name="tanggal" id="Tanggal">
 					<input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" />
@@ -97,6 +97,6 @@
 	<div class="col-xs-12 no-padding">
 		<button type="button" class="col-xs-12 btn btn-primary" onclick="cn.save()"><i class="fa fa-save"></i> Simpan</button>
 	</div>
-<?php // } else { ?>
-	<!-- <h4>CREDIT NOTE</h4> -->
-<?php // } ?>
+<?php } else { ?>
+	<h4>CREDIT NOTE</h4>
+<?php } ?>
