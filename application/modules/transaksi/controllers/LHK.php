@@ -398,6 +398,8 @@ class LHK extends Public_Controller
             }
         }
 
+        $sql_cek_ts = null;
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select

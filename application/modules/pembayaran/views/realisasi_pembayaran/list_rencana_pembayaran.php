@@ -13,7 +13,7 @@
 			<?php $netto = isset($v_data['netto']) ? $v_data['netto'] : $v_data['tagihan']; ?>
 			<td class="text-right _netto" data-val="<?php echo $netto; ?>"><?php echo angkaDecimal($netto); ?></td>
 			<td class="text-right _dn hide" data-val="<?php echo $v_data['dn']; ?>"><?php echo angkaDecimal($v_data['dn']); ?></td>
-			<td class="text-right _cn hide" data-val="<?php echo $v_data['cn']; ?>"><?php echo angkaDecimal($v_data['cn']); ?></td>
+			<td class="text-right _cn" data-val="<?php echo $v_data['cn']; ?>"><?php echo angkaDecimal($v_data['cn']); ?></td>
 			<td class="text-right _transfer" data-val="<?php echo $v_data['transfer']; ?>"><?php echo angkaDecimal($v_data['transfer']); ?></td>
 			<td class="text-right _bayar" data-val="<?php echo $v_data['bayar']; ?>"><?php echo isset($v_data['bayar']) ? angkaDecimal($v_data['bayar']) : 0; ?></td>
 			<td class="text-right _sisa tagihan" data-val="<?php echo $v_data['jumlah']; ?>"><?php echo angkaDecimal($v_data['jumlah']); ?></td>

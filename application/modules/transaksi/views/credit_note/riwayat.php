@@ -1,9 +1,9 @@
 <div class="col-xs-12 no-padding">
-	<?php if ( $akses['a_submit'] == 1 ) { ?>
+	<?php // if ( $akses['a_submit'] == 1 ) { ?>
 		<div class="col-xs-12 no-padding">
 			<button type="button" class="col-xs-12 btn btn-success" onclick="cn.changeTabActive(this)" data-id="" data-edit="" data-href="action"><i class="fa fa-plus"></i> Tambah</button>
 		</div>
-	<?php } ?>
+	<?php // } ?>
 	<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 		<div class="col-xs-6 no-padding" style="padding-right: 5px;">

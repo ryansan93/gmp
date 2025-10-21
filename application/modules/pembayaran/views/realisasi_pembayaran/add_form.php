@@ -163,7 +163,7 @@
 				<th class="col-xs-1">Potongan PPH</th>
 				<th class="col-xs-1">Netto</th>
 				<th class="col-xs-1 hide">DN</th>
-				<th class="col-xs-1 hide">CN</th>
+				<th class="col-xs-1">CN</th>
 				<th class="col-xs-1">Transfer</th>
 				<th class="col-xs-1">Bayar</th>
 				<th class="col-xs-1">Sisa</th>

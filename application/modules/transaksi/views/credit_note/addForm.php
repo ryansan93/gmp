@@ -1,4 +1,4 @@
-<?php if ( $akses['a_submit'] == 1 ) { ?>
+<?php // if ( $akses['a_submit'] == 1 ) { ?>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 		<div class="col-xs-3 no-padding">
 			<div class="col-xs-12 no-padding"><label class="label-control">No. CN</label></div>
@@ -91,6 +91,6 @@
 	<div class="col-xs-12 no-padding">
 		<button type="button" class="col-xs-12 btn btn-primary" onclick="cn.save()"><i class="fa fa-save"></i> Simpan</button>
 	</div>
-<?php } else { ?>
-	<h4>CREDIT NOTE</h4>
-<?php } ?>
+<?php // } else { ?>
+	<!-- <h4>CREDIT NOTE</h4> -->
+<?php // } ?>

@@ -548,7 +548,8 @@ class RealisasiPembayaran extends Public_Controller
             $sql = "
                 select
                     kpp.*,
-                    mtr.nama as nama_mitra
+                    mtr.nama as nama_mitra,
+                    cpd.tot_cn as cn
                 from konfirmasi_pembayaran_peternak kpp
                 left join
                     (
@@ -560,6 +561,14 @@ class RealisasiPembayaran extends Public_Controller
                     ) mtr
                     on
                         mtr.nomor = kpp.mitra
+                left join
+                    (
+                        select nomor, sum(pakai) as tot_cn from cn_post_det
+                        group by
+                            nomor
+                    ) cpd
+                    on
+                        cpd.nomor = kpp.nomor
                 where
                     kpp.tgl_bayar between '".$params['start_date']."' and '".$params['end_date']."' and
                     kpp.mitra in ('".implode("', '", $params['mitra'])."') and
@@ -613,9 +622,11 @@ class RealisasiPembayaran extends Public_Controller
                         $d_conf = $d_conf->toArray()[0];
                         $bayar = $d_conf['bayar'];
                         $dn = $d_conf['dn'];
-                        $cn = $d_conf['cn'];
+                        // $cn = $d_conf['cn'];
                         $transfer = $d_conf['transfer'];
                     }
+
+                    $cn = $v_kpp['cn'];
 
                     $data[] = array(
                         'tgl_bayar' => $v_kpp['tgl_bayar'],
@@ -631,7 +642,7 @@ class RealisasiPembayaran extends Public_Controller
                         'cn' => $cn,
                         'transfer' => $transfer,
                         'bayar' => $bayar,
-                        'jumlah' => ($v_kpp['total'] > $bayar) ? $v_kpp['total'] - $bayar : 0,
+                        'jumlah' => ($v_kpp['total'] > ($bayar + $cn)) ? $v_kpp['total'] - ($bayar + $cn) : 0,
                         'checked' => ($d_rpd) ? true : false
                     );
                 }
@@ -705,7 +716,7 @@ class RealisasiPembayaran extends Public_Controller
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select kpd.*, kpdd.kode_unit, supl.nama as nama_supplier, td.path as lampiran from konfirmasi_pembayaran_doc_det kpdd
+            select kpd.*, kpdd.kode_unit, supl.nama as nama_supplier, td.path as lampiran, cpd.tot_cn as cn from konfirmasi_pembayaran_doc_det kpdd
             left join
                 konfirmasi_pembayaran_doc kpd
                 on
@@ -732,6 +743,14 @@ class RealisasiPembayaran extends Public_Controller
                 ) td
                 on
                     kpdd.no_order = td.no_order
+            left join
+                (
+                    select nomor, sum(pakai) as tot_cn from cn_post_det
+                    group by
+                        nomor
+                ) cpd
+                on
+                    cpd.nomor = kpd.nomor
             where
                 kpd.tgl_bayar between '".$params['start_date']."' and '".$params['end_date']."' and
                 kpd.supplier = '".$params['supplier']."' and
@@ -748,7 +767,8 @@ class RealisasiPembayaran extends Public_Controller
                 kpd.lunas,
                 kpdd.kode_unit,
                 supl.nama,
-                td.path
+                td.path,
+                cpd.tot_cn
         ";
         // cetak_r( $sql, 1 );
         $d_kpd = $m_conf->hydrateRaw( $sql );
@@ -799,9 +819,11 @@ class RealisasiPembayaran extends Public_Controller
                     $d_conf = $d_conf->toArray()[0];
                     $bayar = $d_conf['bayar'];
                     $dn = $d_conf['dn'];
-                    $cn = $d_conf['cn'];
+                    // $cn = $d_conf['cn'];
                     $transfer = $d_conf['transfer'];
                 }
+
+                $cn = $v_kpd['cn'];
 
                 $pph = ($v_kpd['total'] * (0.25/100));
                 $netto = $v_kpd['total'] - $pph;
@@ -820,7 +842,7 @@ class RealisasiPembayaran extends Public_Controller
                     'cn' => $cn,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
-                    'jumlah' => ($netto > $bayar) ? $netto - $bayar : 0,
+                    'jumlah' => ($netto > ($bayar + $cn)) ? $netto - ($bayar + $cn) : 0,
                     'kode_unit' => $v_kpd['kode_unit'],
                     'checked' => ($d_rpd) ? true : false
                 );
@@ -836,7 +858,7 @@ class RealisasiPembayaran extends Public_Controller
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select kpp.*, kppd.kode_unit, supl.nama as nama_supplier from konfirmasi_pembayaran_pakan_det kppd
+            select kpp.*, kppd.kode_unit, supl.nama as nama_supplier, cpd.tot_cn as cn from konfirmasi_pembayaran_pakan_det kppd
             left join
                 konfirmasi_pembayaran_pakan kpp
                 on
@@ -853,6 +875,14 @@ class RealisasiPembayaran extends Public_Controller
                 ) supl
                 on
                     kpp.supplier = supl.nomor
+            left join
+                (
+                    select nomor, sum(pakai) as tot_cn from cn_post_det
+                    group by
+                        nomor
+                ) cpd
+                on
+                    cpd.nomor = kpp.nomor
             where
                 kpp.tgl_bayar between '".$params['start_date']."' and '".$params['end_date']."' and
                 kpp.supplier = '".$params['supplier']."' and
@@ -869,7 +899,8 @@ class RealisasiPembayaran extends Public_Controller
                 kpp.lunas,
                 kpp.invoice,
                 kppd.kode_unit,
-                supl.nama
+                supl.nama,
+                cpd.tot_cn
             order by
                 kppd.kode_unit asc,
                 kpp.invoice asc
@@ -922,9 +953,11 @@ class RealisasiPembayaran extends Public_Controller
                     $d_conf = $d_conf->toArray()[0];
                     $bayar = $d_conf['bayar'];
                     $dn = $d_conf['dn'];
-                    $cn = $d_conf['cn'];
+                    // $cn = $d_conf['cn'];
                     $transfer = $d_conf['transfer'];
                 }
+                
+                $cn = $v_kpp['cn'];
 
                 $data[] = array(
                     'tgl_bayar' => $v_kpp['tgl_bayar'],
@@ -940,7 +973,7 @@ class RealisasiPembayaran extends Public_Controller
                     'cn' => $cn,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
-                    'jumlah' => ($v_kpp['total'] > $bayar) ? $v_kpp['total'] - $bayar : 0,
+                    'jumlah' => ($v_kpp['total'] > ($bayar + $cn)) ? $v_kpp['total'] - ($bayar + $cn) : 0,
                     'kode_unit' => $v_kpp['kode_unit'],
                     'checked' => ($d_rpd) ? true : false
                 );
@@ -961,7 +994,7 @@ class RealisasiPembayaran extends Public_Controller
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select kpv.*, kpvd.kode_unit, supl.nama as nama_supplier from konfirmasi_pembayaran_voadip_det kpvd
+            select kpv.*, kpvd.kode_unit, supl.nama as nama_supplier, cpd.tot_cn as cn from konfirmasi_pembayaran_voadip_det kpvd
             left join
                 konfirmasi_pembayaran_voadip kpv
                 on
@@ -978,6 +1011,14 @@ class RealisasiPembayaran extends Public_Controller
                 ) supl
                 on
                     kpv.supplier = supl.nomor
+            left join
+                (
+                    select nomor, sum(pakai) as tot_cn from cn_post_det
+                    group by
+                        nomor
+                ) cpd
+                on
+                    cpd.nomor = kpv.nomor
             where
                 kpv.tgl_bayar between '".$params['start_date']."' and '".$params['end_date']."' and
                 kpv.supplier = '".$params['supplier']."' and
@@ -1044,9 +1085,11 @@ class RealisasiPembayaran extends Public_Controller
                     $d_conf = $d_conf->toArray()[0];
                     $bayar = $d_conf['bayar'];
                     $dn = $d_conf['dn'];
-                    $cn = $d_conf['cn'];
+                    // $cn = $d_conf['cn'];
                     $transfer = $d_conf['transfer'];
                 }
+
+                $cn = $v_kpv['cn'];
 
                 $data[] = array(
                     'tgl_bayar' => $v_kpv['tgl_bayar'],
@@ -1057,12 +1100,12 @@ class RealisasiPembayaran extends Public_Controller
                     'tagihan' => $v_kpv['total'],
                     'pph' => 0,
                     'netto' => $v_kpv['total'],
-                    'bayar' => $bayar,
+                    'dn' => $dn,
                     'cn' => $cn,
-                    'dn' => $bayar,
                     'transfer' => $transfer,
+                    'bayar' => $bayar,
                     'kode_unit' => $v_kpv['kode_unit'],
-                    'jumlah' => ($v_kpv['total'] > $bayar) ? $v_kpv['total'] - $bayar : 0,
+                    'jumlah' => ($v_kpv['total'] > ($bayar + $cn)) ? $v_kpv['total'] - ($bayar + $cn) : 0,
                     'checked' => ($d_rpd) ? true : false
                 );
             }
@@ -1151,8 +1194,23 @@ class RealisasiPembayaran extends Public_Controller
                     $d_conf = $d_conf->toArray()[0];
                     $bayar = $d_conf['bayar'];
                     $dn = $d_conf['dn'];
-                    $cn = $d_conf['cn'];
+                    // $cn = $d_conf['cn'];
                     $transfer = $d_conf['transfer'];
+                }
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql_cn = "
+                    select nomor, sum(pakai) as tot_cn from cn_post_det
+                    where
+                        nomor = '".$v_kpoap['nomor']."'
+                    group by
+                        nomor
+                ";
+                $d_cn = $m_conf->hydrateRaw( $sql_cn );
+
+                $cn = 0;
+                if ( $d_cn->count() > 0 ) {
+                    $cn = $d_cn->toArray()[0]['tot_cn'];
                 }
 
                 $data[] = array(
@@ -1168,7 +1226,7 @@ class RealisasiPembayaran extends Public_Controller
                     'cn' => $cn,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
-                    'jumlah' => ($v_kpoap['total'] > $bayar) ? $v_kpoap['total'] - $bayar : 0,
+                    'jumlah' => ($v_kpoap['total'] > ($bayar + $cn)) ? $v_kpoap['total'] - ($bayar + $cn) : 0,
                     'checked' => ($d_rpd) ? true : false
                 );
             }
