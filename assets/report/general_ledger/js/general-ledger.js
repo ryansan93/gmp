@@ -53,6 +53,47 @@ var gl = {
 		}
 	}, // end - getLists
 
+	formDetail: function(elm) {
+		var tr = $(elm).closest('tr');
+
+		var periode = $(tr).attr('data-periode');
+		var no_coa = $(tr).find('td.no_coa').text();
+		var unit = $(tr).find('td.unit').text();
+		var nama_coa = $(tr).find('td.nama_coa').text();
+
+		var params = {
+			'periode': periode,
+			'no_coa': no_coa,
+			'unit': unit,
+			'nama_coa': nama_coa,
+		};
+		
+		$.get('report/GeneralLedger/formDetail',{
+				'params': params
+			},function(data){
+			var _options = {
+				className : 'veryWidth',
+				message : data,
+				size : 'large',
+			};
+			bootbox.dialog(_options).bind('shown.bs.modal', function(){
+				$(this).find('.modal-dialog').css({'max-width':'100%', 'width': '70%'});
+
+				var modal_dialog = $(this).find('.modal-dialog');
+				var modal_body = $(this).find('.modal-body');
+				var table = $(modal_body).find('table');
+				var tbody = $(table).find('tbody');
+				if ( $(tbody).find('.modal-body tr').length <= 1 ) {
+					$(this).find('tr #btn-remove').addClass('hide');
+				};
+
+				$(this).find('button.close').click(function() {
+					$('div.modal.show').css({'overflow': 'auto'});
+				});
+			});
+		},'html');
+	}, // end - formDetail
+
     encryptParams: function() {
 		var err = 0;
 		

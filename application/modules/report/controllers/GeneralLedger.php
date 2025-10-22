@@ -96,137 +96,7 @@ class GeneralLedger extends Public_Controller {
         }
 
         $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select
-        //         c.coa as no_coa,
-        //         c.nama_coa,
-        //         c.lap,
-        //         c.coa_pos,
-        //         case
-        //             when c.coa_pos = 'D' then
-        //                 isnull(sb.saldo_awal, 0)
-        //         end as saldo_awal_debet,
-        //         case
-        //             when c.coa_pos = 'K' then
-        //                 isnull(sb.saldo_awal, 0)
-        //         end as saldo_awal_kredit,
-        //         isnull(dj_asal.nominal, 0) as kredit,
-        //         isnull(dj_tujuan.nominal, 0) as debet,
-        //         case
-        //             when c.coa_pos = 'D' then
-        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-        //         end as saldo_akhir_debet,
-        //         case
-        //             when c.coa_pos = 'K' then
-        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-        //         end as saldo_akhir_kredit,
-        //         case
-        //             when c.lap = 'L' and c.coa_pos = 'D' then
-        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-        //         end as lr_debet,
-        //         case
-        //             when c.lap = 'L' and c.coa_pos = 'K' then
-        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-        //         end as lr_kredit,
-        //         case
-        //             when c.lap = 'N' and c.coa_pos = 'D' then
-        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-        //         end as neraca_debet,
-        //         case
-        //             when c.lap = 'N' and c.coa_pos = 'K' then
-        //                 (( isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0))
-        //         end as neraca_kredit
-        //     from coa c
-        //     left join
-        //         (
-        //             select dj.coa_asal, sum(dj.nominal) as nominal 
-        //             from det_jurnal dj 
-        //             where 
-        //                 dj.tanggal between '".$start_date."' and '".$end_date."'
-        //                 -- ".$sql_kode_gabung_perusahaan."
-        //             group by dj.coa_asal
-        //         ) dj_asal
-        //         on
-        //             dj_asal.coa_asal = c.coa
-        //     left join
-        //         (
-        //             select dj.coa_tujuan, sum(dj.nominal) as nominal 
-        //             from det_jurnal dj 
-        //             where 
-        //                 dj.tanggal between '".$start_date."' and '".$end_date."'
-        //                 -- ".$sql_kode_gabung_perusahaan."
-        //             group by dj.coa_tujuan
-        //         ) dj_tujuan
-        //         on
-        //             dj_tujuan.coa_tujuan = c.coa
-        //     left join
-        //         (select * from saldo_bulanan where tanggal between '".$start_date."' and '".$end_date."') sb
-        //         on
-        //             sb.coa = c.coa
-        //     order by
-        //         c.coa asc
-        // ";
         $sql = "
-            /*
-            select
-                c.coa as no_coa,
-                case
-                    when c.unit is not null then
-                        c.unit
-                    else
-                        case
-                        	when dj_asal.unit is not null then
-                        		dj_asal.unit
-                        	else
-                        		dj_tujuan.unit
-                        end
-                end as unit,
-                c.nama_coa,
-                c.lap,
-                c.coa_pos,
-                isnull(sb.saldo_awal, 0) as saldo_awal,
-                isnull(dj_asal.nominal, 0) as kredit,
-                isnull(dj_tujuan.nominal, 0) as debet,
-                ((isnull(sb.saldo_awal, 0) + isnull(dj_tujuan.nominal, 0)) - isnull(dj_asal.nominal, 0)) as saldo_akhir
-            from coa c
-            left join
-                (
-                    select dj.coa_asal, sum(dj.nominal) as nominal, dj.unit
-                    from det_jurnal dj 
-                    where 
-                        dj.tanggal between '".$start_date."' and '".$end_date."'
-                        -- ".$sql_kode_gabung_perusahaan."
-                    group by dj.coa_asal, dj.unit
-                ) dj_asal
-                on
-                    dj_asal.coa_asal = c.coa
-            left join
-                (
-                    select 
-                        dj.coa_tujuan, 
-                        sum(dj.nominal) as nominal, 
-                        case
-                            when dj.unit_tujuan is not null then
-                                dj.unit_tujuan
-                            else
-                                dj.unit 
-                        end unit
-                    from det_jurnal dj 
-                    where 
-                        dj.tanggal between '".$start_date."' and '".$end_date."'
-                        -- ".$sql_kode_gabung_perusahaan."
-                    group by dj.coa_tujuan, dj.unit
-                ) dj_tujuan
-                on
-                    dj_tujuan.coa_tujuan = c.coa
-            left join
-                (select * from saldo_bulanan where tanggal between '".$start_date."' and '".$end_date."') sb
-                on
-                    sb.coa = c.coa
-            order by
-                c.coa asc
-            */
-
             select
                 data.no_coa,
                 data.unit,
@@ -282,7 +152,8 @@ class GeneralLedger extends Public_Controller {
                             0 as kredit2
                         from sacoa sc
                         where
-                            sc.periode = '".substr($start_date, 0, 7)."'
+                            sc.periode = '".substr($start_date, 0, 7)."' and
+                        	sc.debet <> 0
                     ) sa
                     group by
                         sa.no_coa,
@@ -298,7 +169,7 @@ class GeneralLedger extends Public_Controller {
                 select
                     c.coa as no_coa,
                     case
-                        when c.unit is not null then
+                        when c.unit is not null and c.unit <> '' then
                             c.unit
                         else
                             dj.unit
@@ -369,6 +240,205 @@ class GeneralLedger extends Public_Controller {
         return $data;
     }
 
+    public function getDetail($periode, $unit, $no_coa) {
+        $start_date = $periode;
+        $end_date = date("Y-m-t", strtotime($start_date));
+        
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.tanggal,
+                data.keterangan,
+                data.kode_trans,
+                data.no_coa,
+                data.unit,
+                data.nama_coa,
+                isnull(data.kredit, 0) as kredit,
+                isnull(data.debet, 0) as debet
+            from
+            (
+                select
+                    '' as tanggal,
+                    'Saldo Awal' as keterangan,
+                    '' as kode_trans,
+                    sb.no_coa as no_coa,
+                    sb.unit,
+                    c.nama_coa,
+                    0 as kredit,
+                    case
+                        when sb.debet2 <> 0 then
+                            -- sb.debet2
+                            0
+                        else
+                            sb.debet1
+                    end as debet,
+                    0 as urut
+                from (
+                    select
+                        sa.no_coa,
+                        sa.unit,
+                        sum(sa.debet1) as debet1,
+                        sum(sa.kredit1) as kredit1,
+                        sum(sa.debet2) as debet2,
+                        sum(sa.kredit2) as kredit2
+                    from
+                    (
+                        select
+                            sb.coa as no_coa,
+                            sb.unit,
+                            isnull(sb.saldo_awal, 0) as debet1,
+                            0 as kredit1,
+                            0 as debet2,
+                            0 as kredit2
+                        from saldo_bulanan sb 
+                        where 
+                            sb.tanggal between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        select
+                            sc.no_coa,
+                            sc.unit,
+                            0 as debet1,
+                            0 as kredit1,
+                            isnull(sc.debet, 0) as debet2,
+                            0 as kredit2
+                        from sacoa sc
+                        where
+                            sc.periode = '".substr($start_date, 0, 7)."' and
+                        	sc.debet <> 0
+                    ) sa
+                    group by
+                        sa.no_coa,
+                        sa.unit
+                ) sb 
+                left join
+                    coa c
+                    on
+                        sb.no_coa = c.coa
+
+                union all
+
+                select
+                    sc.periode+'-01' as tanggal,
+                    'Initial Balance' as keterangan,
+                    'INIT'+REPLACE(sc.periode, '-', '') as kode_trans,
+                    sc.no_coa,
+                    sc.unit,
+                    c.nama_coa,
+                    0 as kredit,
+                    isnull(sc.debet, 0) as debet,
+                    1 as urut
+                from sacoa sc
+                left join
+                    coa c
+                    on
+                        sc.no_coa = c.coa
+                where
+                    sc.periode = '".substr($start_date, 0, 7)."' and
+                    sc.debet <> 0
+
+                union all
+
+                select
+                    dj.tanggal, 
+                    dj.keterangan,
+                    dj.kode_trans,
+                    c.coa as no_coa,
+                    case
+                        when c.unit is not null and c.unit <> '' then
+                            c.unit
+                        else
+                            dj.unit
+                    end as unit,
+                    c.nama_coa,
+                    (0-isnull(dj.kredit, 0)) as kredit,
+                    isnull(dj.debet, 0) as debet,
+                    2 as urut
+                from coa c
+                left join
+                    (
+                        select 
+                            tanggal,
+                            cast(keterangan as varchar(max)) as keterangan,
+                            kode_trans,
+                            no_coa,
+                            sum(kredit) as kredit,
+                            sum(debet) as debet,
+                            unit
+                        from (
+                            select 
+                                dj.tanggal,
+                                cast(dj.keterangan as varchar(max)) as keterangan,
+                                dj.kode_trans,
+                                dj.coa_asal as no_coa, 
+                                sum(dj.nominal) as kredit, 
+                                0 as debet, 
+                                dj.unit
+                            from det_jurnal dj 
+                            where 
+                                dj.tanggal between '".$start_date."' and '".$end_date."'
+                            group by
+                                dj.tanggal,
+                                cast(dj.keterangan as varchar(max)),
+                                dj.kode_trans,
+                                dj.coa_asal,
+                                dj.unit
+                            
+                            union all
+                            
+                            select 
+                                dj.tanggal,
+                                cast(dj.keterangan as varchar(max)) as keterangan,
+                                dj.kode_trans,
+                                dj.coa_tujuan as no_coa, 
+                                0 as kredit, 
+                                sum(dj.nominal) as debet, 
+                                case
+                                    when dj.unit_tujuan is not null then
+                                        dj.unit_tujuan
+                                    else
+                                        dj.unit
+                                end as unit
+                            from det_jurnal dj 
+                            where 
+                                dj.tanggal between '".$start_date."' and '".$end_date."'
+                            group by
+                                dj.tanggal,
+                                cast(dj.keterangan as varchar(max)),
+                                dj.kode_trans,
+                                dj.coa_tujuan,
+                                dj.unit,
+                                dj.unit_tujuan
+                        ) data
+                        group by
+                            tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit
+                    ) dj
+                    on
+                        dj.no_coa = c.coa
+                where
+                    (0-isnull(dj.kredit, 0)) <> 0 or
+                    isnull(dj.debet, 0) <> 0
+            ) data
+            where
+                data.no_coa = '".$no_coa."' and
+                data.unit = '".$unit."'
+            order by
+                data.tanggal asc,
+                data.urut asc,
+                data.kode_trans asc
+        ";
+        // cetak_r( $sql, 1 );
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+        
+        return $data;
+    }
+
     public function getLists() {
         $params = $this->input->get('params');
 
@@ -391,7 +461,21 @@ class GeneralLedger extends Public_Controller {
         $data = $this->getData( $start_date, $end_date, $kode_gabung_perusahaan, $unit );
 
         $content['data'] = $data;
+        $content['periode'] = $start_date;
         $html = $this->load->view($this->pathView.'list', $content, TRUE);
+
+        echo $html;
+    }
+
+    public function formDetail()
+    {
+        $params = $this->input->get('params');
+
+        $detail = $this->getDetail( $params['periode'], $params['unit'], $params['no_coa'] );
+
+        $content['data'] = $params;
+        $content['detail'] = $detail;
+        $html = $this->load->view($this->pathView.'detail', $content, TRUE);
 
         echo $html;
     }

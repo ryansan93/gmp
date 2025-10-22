@@ -59,6 +59,6 @@ span.select2-selection {
 	padding: 3px;
 }
 
-.table tbody tr.data:hover td{
-	background-color: #ededed;
+.modal-header {
+	padding: 0px 0px 15px 0px;
 }
