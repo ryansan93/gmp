@@ -16,7 +16,7 @@
 				</div>
                 <div class="col-xs-12 no-padding">
                     <div class="col-xs-2 no-padding"><label class="control-label">Periode</label></div>
-                    <div class="col-xs-10 no-padding"><label class="control-label">: <?php echo strtoupper(tglIndonesia($data['periode'], '-', ' ', true)); ?></label></div>
+                    <div class="col-xs-10 no-padding"><label class="control-label">: <?php echo substr(strtoupper(tglIndonesia($data['periode'], '-', ' ', true)), 3); ?></label></div>
                 </div>
                 <div class="col-xs-12 no-padding">
                     <hr style="margin-top: 10px; margin-bottom: 10px;">
