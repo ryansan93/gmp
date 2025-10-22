@@ -131,7 +131,7 @@
 								</select>
 							</td>
 							<td>
-								<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan" maxlength="50">
+								<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan">
 							</td>
 							<td>
 								<input type="text" class="form-control no_invoice uppercase" placeholder="No. Invoice" maxlength="50">

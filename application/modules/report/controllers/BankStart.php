@@ -134,15 +134,11 @@ class BankStart extends Public_Controller {
             select
                 '' as tanggal,
                 '' as kode,
-                case
-                    when sa.debet2 <> 0 then
-                        'Saldo Awal (Initial Balance)'
-                    else
-                        'Saldo Awal'
-                end as keterangan,
+                'Saldo Awal' as keterangan,
                 case
                     when sa.debet2 > 0 then
-                        sa.debet2
+                        -- sa.debet2
+                        0
                     else
                         sa.debet1
                 end as debet,
@@ -411,8 +407,8 @@ class BankStart extends Public_Controller {
                 c.nama_coa as nama_kas
             from
             (
-                /* SALDO AWAL */
                 /*
+                /* SALDO AWAL */
                 select
                     '' as tanggal,
                     '' as kode,
@@ -460,9 +456,25 @@ class BankStart extends Public_Controller {
                     group by
                         sa.kas
                 ) sa
+                /* END - SALDO AWAL */
                 */
                 ".$sql_sa."
-                /* END - SALDO AWAL */
+
+                union all
+
+                /* INITIAL BALANCE */
+                select
+                    sc.periode+'-01' as tanggal,
+                    'INIT'+REPLACE(sc.periode, '-', '') as kode,
+                    'Initial Balance' as keterangan,
+                    sc.debet as debet,
+                    0 as kredit,
+                    sc.no_coa as kas
+                from sacoa sc
+                where
+                    sc.periode = '".substr($start_date, 0, 7)."' and
+                    sc.debet <> 0
+                /* END - INITIAL BALANCE */
 
                 union all
 
@@ -657,6 +669,7 @@ class BankStart extends Public_Controller {
                 data.tanggal asc,
                 data.kode asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

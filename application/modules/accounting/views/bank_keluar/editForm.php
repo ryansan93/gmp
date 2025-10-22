@@ -191,7 +191,7 @@
 								</td>
 								<td>
 									<?php $ket = strtoupper($v_det['keterangan']); ?>
-									<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan" maxlength="50" value="<?php echo strtoupper($ket); ?>">
+									<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan" value="<?php echo strtoupper($ket); ?>">
 								</td>
 								<td>
 									<input type="text" class="form-control no_invoice uppercase" placeholder="No. Invoice" maxlength="50" value="<?php echo $v_det['no_invoice']; ?>" >
@@ -234,7 +234,7 @@
 								</select>
 							</td>
 							<td>
-								<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan" maxlength="50">
+								<input type="text" class="form-control keterangan uppercase" placeholder="Keterangan">
 							</td>
 							<td>
 								<input type="text" class="form-control no_invoice uppercase" placeholder="No. Invoice" maxlength="50">
