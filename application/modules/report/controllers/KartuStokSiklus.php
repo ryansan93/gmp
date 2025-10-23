@@ -179,7 +179,7 @@ class KartuStokSiklus extends Public_Controller {
             }
         }
 
-        if ( $_noreg != 'all' || !empty($_noreg) ) {
+        if ( $_noreg != 'all' && !empty($_noreg) ) {
             if ( !empty($sql_condition) ) {
                 $sql_condition .= " and data.noreg = '".$_noreg."'";
             } else {

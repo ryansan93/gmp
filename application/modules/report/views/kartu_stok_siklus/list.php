@@ -50,6 +50,11 @@
                         <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
                         <div class="col-xs-10 no-padding"><label class="label-control"><?php echo $value['noreg'].' | '.$value['nama_plasma'].' (KDG:'.$value['kandang'].')'; ?></label></div>
                     </div>
+                    <div class="col-xs-12 no-padding">
+                        <div class="col-xs-1 no-padding"><label class="label-control">Status RHPP</label></div>
+                        <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
+                        <div class="col-xs-10 no-padding"><label class="label-control"><?php echo $value['status']; ?></label></div>
+                    </div>
                     <!-- <div class="col-xs-12 no-padding">
                         <div class="col-xs-1 no-padding"><label class="label-control">Kode Barang</label></div>
                         <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
