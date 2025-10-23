@@ -161,7 +161,7 @@ class KartuStokSiklus extends Public_Controller {
 
     public function mappingDataReport($_unit = null, $tutup_siklus = null, $_noreg = null, $_kode_brg = null, $_start_date, $_end_date)
     {
-        $sql_condition = null;
+        $sql_condition = "where data.jenis_barang <> 'doc'";
         if ( $_unit != 'all' ) {
             if ( !empty($sql_condition) ) {
                 $sql_condition .= " and rs.unit = '".$_unit."'";
