@@ -44,7 +44,7 @@
 					</div>
 				</div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<button type="button" class="col-xs-12 btn btn-primary pull-right tampilkan_riwayat" onclick="tb.tutupBulan()">PROSES TUTUP BULAN</button>
+					<button type="button" class="col-xs-12 btn btn-primary pull-right tampilkan_riwayat" onclick="tb.cekDataLhkAkhirBulan()">PROSES TUTUP BULAN</button>
 				</div>
 			</div>
 			<!-- <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>

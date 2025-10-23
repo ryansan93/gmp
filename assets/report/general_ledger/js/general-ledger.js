@@ -56,6 +56,8 @@ var gl = {
 	formDetail: function(elm) {
 		var tr = $(elm).closest('tr');
 
+		showLoading();
+
 		var periode = $(tr).attr('data-periode');
 		var no_coa = $(tr).find('td.no_coa').text();
 		var unit = $(tr).find('td.unit').text();
@@ -71,6 +73,7 @@ var gl = {
 		$.get('report/GeneralLedger/formDetail',{
 				'params': params
 			},function(data){
+			hideLoading();
 			var _options = {
 				className : 'veryWidth',
 				message : data,

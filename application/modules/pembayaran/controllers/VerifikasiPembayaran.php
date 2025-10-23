@@ -130,19 +130,19 @@ class VerifikasiPembayaran extends Public_Controller
                     when supl.no_rek is not null then
                         supl.no_rek
                     else
-                        rek.no_rek
+                        isnull(rek.no_rek, '')
                 end as no_rek,
                 case
                     when supl.atas_nama is not null then
                         supl.atas_nama
                     else
-                        rek.atas_nama
+                        isnull(rek.atas_nama, '')
                 end as atas_nama, 
                 case
                     when supl.bank is not null then
                         supl.bank
                     else
-                        rek.bank
+                        isnull(rek.bank, '')
                 end as bank,
                 case
                     when c.unit in ('".implode("', '", $unit)."') then
@@ -272,6 +272,7 @@ class VerifikasiPembayaran extends Public_Controller
             order by
                 lt.waktu asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

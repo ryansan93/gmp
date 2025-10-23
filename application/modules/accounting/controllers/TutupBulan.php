@@ -38,6 +38,131 @@ class TutupBulan extends Public_Controller
         }
     }
 
+    public function dataLhkAkhirBulan($end_date) {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select data.* from
+            (
+                select
+                    rs.noreg,
+                    m.nama as nama_mitra,
+                    k.kandang,
+                    ppl.nik as nik_ppl,
+                    ppl.nama as nama_ppl
+                    , w.kode as unit
+                from
+                (
+                	select rs.* from rdim_submit rs
+	                left join
+	                    tutup_siklus ts
+	                    on
+	                        ts.noreg = rs.noreg
+	                where
+	                    ts.id is null
+                	
+                ) rs
+                left join
+                    kandang k
+                    on
+                        k.id = rs.kandang
+                left join
+                    wilayah w
+                    on
+                        w.id = k.unit
+                left join
+                    (
+                        select mm1.* from mitra_mapping mm1
+                        right join
+                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                            on
+                                mm1.id = mm2.id
+                    ) mm
+                    on
+                        rs.nim = mm.nim
+                left join
+                    mitra m
+                    on
+                        mm.mitra = m.id
+                left join
+                    (
+                        select k1.* from karyawan k1
+                        right join
+                            (select max(id) as id, nik from karyawan where jabatan = 'ppl' and status = 1 group by nik) k2
+                            on
+                                k1.id = k2.id
+                    ) ppl
+                    on
+                        ppl.nik = rs.sampling
+            ) data
+            left join
+                (select * from lhk where tanggal = '".$end_date."') l
+                on
+                    l.noreg = data.noreg
+            where
+                l.id is null
+            order by
+                data.unit asc,
+                data.nama_ppl asc,
+                data.nama_mitra asc,
+                data.kandang asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        return $data;
+    }
+
+    public function cekDataLhkAkhirBulan() {
+        $params = $this->input->post('params');
+
+        try {
+            $bulan = $params['bulan'];
+            $tahun = substr($params['tahun'], 0, 4);
+            
+            $angka_bulan = (strlen($bulan) == 1) ? '0'.$bulan : $bulan;
+            
+            $date = $tahun.'-'.$angka_bulan.'-01';
+            $start_date = date("Y-m-d", strtotime($date));
+            $end_date = date("Y-m-t", strtotime($date));
+
+            $data = $this->dataLhkAkhirBulan($end_date);
+
+            if ( !empty($data) ) {
+                $this->result['status'] = 2;
+            } else {
+                $this->result['status'] = 1;
+            }
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function formDataLhkAkhirBulan() {
+        $params = $this->input->get('params');
+
+        $bulan = $params['bulan'];
+        $tahun = substr($params['tahun'], 0, 4);
+        
+        $angka_bulan = (strlen($bulan) == 1) ? '0'.$bulan : $bulan;
+        
+        $date = $tahun.'-'.$angka_bulan.'-01';
+        $start_date = date("Y-m-d", strtotime($date));
+        $end_date = date("Y-m-t", strtotime($date));
+
+        $data = $this->dataLhkAkhirBulan($end_date);
+
+        $content['data'] = $data;
+        $html = $this->load->view($this->pathView . 'listCekLhk', $content, true);
+
+        echo $html;
+    }
+
     public function tutupBulan() {
         $params = $this->input->post('params');
 
@@ -79,20 +204,22 @@ class TutupBulan extends Public_Controller
 
                     select
                         sb.no_coa as coa,
-                        sb.unit,
-                        c.nama_coa,
+                        sb.kode_trans,
+                        sb.kode_jurnal,
                         case
                             when sb.debet2 > 0 then
                                 sb.debet2
                             else
                                 sb.debet1
-                        end as saldo_awal,
+                        end as debet,
                         -- sb.saldo_awal,
                         0 as kredit,
-                        0 as debet
+                        sb.unit
                     from (
                         select
                             sa.coa as no_coa,
+                            sa.kode_trans,
+                            sa.kode_jurnal,
                             sa.unit,
                             sum(sa.debet1) as debet1,
                             sum(sa.kredit1) as kredit1,
@@ -117,7 +244,7 @@ class TutupBulan extends Public_Controller
 
                             select
                                 sc.no_coa as coa,
-                                null as kode_trans,
+                                'INIT'+REPLACE(sc.periode, '-', '') as kode_trans,
                                 null as kode_jurnal,
                                 0 as debet1,
                                 0 as kredit1,
@@ -130,12 +257,10 @@ class TutupBulan extends Public_Controller
                         ) sa
                         group by
                             sa.coa,
+                            sa.kode_trans,
+                            sa.kode_jurnal,
                             sa.unit
                     ) sb 
-                    left join
-                        coa c
-                        on
-                            sb.no_coa = c.coa
 
                     union all
 
@@ -186,6 +311,7 @@ class TutupBulan extends Public_Controller
                     -- d_jurnal.kode_trans,
                     -- d_jurnal.kode_jurnal
             ";
+            // cetak_r( $sql, 1 );
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             if ( $d_conf->count() > 0 ) {
