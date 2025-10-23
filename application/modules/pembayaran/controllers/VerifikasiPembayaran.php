@@ -252,7 +252,7 @@ class VerifikasiPembayaran extends Public_Controller
                             lt1.id = lt2.id
                 ) lt
                 on
-                    data.id = lt.tbl_id
+                    cast(data.id as varchar(20)) = lt.tbl_id
             left join
                 coa c
                 on
