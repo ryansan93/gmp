@@ -1035,7 +1035,8 @@ class RealisasiPembayaran extends Public_Controller
                 kpv.total,
                 kpv.lunas,
                 kpvd.kode_unit,
-                supl.nama
+                supl.nama,
+                cpd.tot_cn
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
