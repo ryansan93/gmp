@@ -66,7 +66,7 @@
 					<div class="col-xs-12 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>
 					<div class="col-xs-12 no-padding">
                         <label class="">
-                            <input type="file" onchange="showNameFile(this)" class="file_lampiran" data-required="1" name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
+                            <input type="file" onchange="showNameFile(this)" class="file_lampiran" name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
                             <i class="glyphicon glyphicon-paperclip cursor-p"></i>
                         </label>
                     </div>

@@ -65,7 +65,9 @@
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-12 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>
 					<div class="col-xs-12 no-padding">
-                        <a href="uploads/<?php echo $data['lampiran_realisasi']; ?>" target="_blank"><?php echo $data['lampiran_realisasi']; ?></a>
+						<?php if ( !empty($data['lampiran_realisasi']) ) { ?>
+							<a href="uploads/<?php echo $data['lampiran_realisasi']; ?>" target="_blank"><?php echo $data['lampiran_realisasi']; ?></a>
+						<?php } ?>
                         <label class="">
                             <input type="file" onchange="showNameFile(this)" class="file_lampiran" name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
                             <i class="glyphicon glyphicon-paperclip cursor-p"></i>

@@ -487,48 +487,43 @@ class VerifikasiPembayaran extends Public_Controller
                 $moved = uploadFile($files);
                 $isMoved = $moved['status'];
 
-            }
-            
-            if ($isMoved) {
                 $file_name = $moved['name'];
                 $path_name = $moved['path'];
-
-                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-                $d_rp = $m_rp->where('id', $data['id'])->first();
-
-                $m_coa = new \Model\Storage\Coa_model();
-                $d_coa = $m_coa->where('coa', $d_rp->coa_bank)->orderBy('id', 'desc')->first();
-
-                $m_nbbk = new \Model\Storage\NoBbk_model();
-                $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode);
-
-                $m_nbbk->tbl_name = $m_rp->getTable();
-                $m_nbbk->tbl_id = $d_rp->nomor;
-                $m_nbbk->kode = $no_kk;
-                $m_nbbk->save();
-
-                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-                $m_rp->where('id', $data['id'])->update(
-                    array(
-                        'no_bukti' => $no_kk,
-                        'tgl_realisasi' => $data['tgl_bayar'],
-                        'lampiran_realisasi' => $path_name,
-                        'ket_realisasi' => $data['ket_bayar'],
-                        'status' => 2
-                    )
-                );
-
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $data['tgl_bayar']);
-
-                $_d_rp = $m_rp->where('id', $data['id'])->first();
-                $deskripsi_log = 'di-bayar oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
-
-                $this->result['status'] = 1;
-                $this->result['message'] = 'Data pembayaran berhasil di simpan.';
-            } else {
-                $this->result['message'] = 'Error, segera hubungi tim IT.';
             }
+
+            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+            $d_rp = $m_rp->where('id', $data['id'])->first();
+
+            $m_coa = new \Model\Storage\Coa_model();
+            $d_coa = $m_coa->where('coa', $d_rp->coa_bank)->orderBy('id', 'desc')->first();
+
+            $m_nbbk = new \Model\Storage\NoBbk_model();
+            $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode);
+
+            $m_nbbk->tbl_name = $m_rp->getTable();
+            $m_nbbk->tbl_id = $d_rp->nomor;
+            $m_nbbk->kode = $no_kk;
+            $m_nbbk->save();
+
+            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+            $m_rp->where('id', $data['id'])->update(
+                array(
+                    'no_bukti' => $no_kk,
+                    'tgl_realisasi' => $data['tgl_bayar'],
+                    'lampiran_realisasi' => $path_name,
+                    'ket_realisasi' => $data['ket_bayar'],
+                    'status' => 2
+                )
+            );
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $data['tgl_bayar']);
+
+            $_d_rp = $m_rp->where('id', $data['id'])->first();
+            $deskripsi_log = 'di-bayar oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
+
+            $this->result['status'] = 1;
+            $this->result['message'] = 'Data pembayaran berhasil di simpan.';
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }

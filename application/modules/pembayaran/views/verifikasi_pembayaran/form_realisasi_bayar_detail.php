@@ -59,7 +59,13 @@
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-3 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>
-					<div class="col-xs-9 no-padding">: <a href="uploads/<?php echo $data['lampiran_realisasi']; ?>" target="_blank"><?php echo $data['lampiran_realisasi']; ?></a></div>
+					<div class="col-xs-9 no-padding">
+						<?php if ( !empty($data['lampiran_realisasi']) ) { ?>
+							: <a href="uploads/<?php echo $data['lampiran_realisasi']; ?>" target="_blank"><?php echo $data['lampiran_realisasi']; ?></a>
+						<?php } else { ?>
+							: -
+						<?php } ?>
+					</div>
 				</div>
                 <div class="col-xs-12 no-padding">
 					<div class="col-xs-3 no-padding"><b>KETERANGAN PEMBAYARAN</b></div>
