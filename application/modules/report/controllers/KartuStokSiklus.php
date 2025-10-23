@@ -221,7 +221,8 @@ class KartuStokSiklus extends Public_Controller {
                     'Saldo Awal' as kode_trans,
                     data.kode_barang,
                     data.jenis_barang,
-                    data.hrg_beli,
+                    0 as hrg_beli,
+                    -- data.hrg_beli,
                     sum(isnull(data.jml_debet, 0)-isnull(data.jml_kredit, 0)) as jml_debet,
                     sum(isnull(data.debet, 0) - isnull(data.kredit, 0)) as debet,
                     0 as jml_kredit,
@@ -242,7 +243,7 @@ class KartuStokSiklus extends Public_Controller {
                         dss.kode_barang,
                         dss.jenis_barang,
                         dss.jumlah,
-                        dss.hrg_beli,
+                        -- dss.hrg_beli,
                         (dss.jumlah * dss.hrg_beli) as nilai,
                         dss.jumlah as jml_debet,
                         (dss.jumlah * dss.hrg_beli) as debet,
@@ -272,7 +273,7 @@ class KartuStokSiklus extends Public_Controller {
                         dsts.kode_barang,
                         dss.jenis_barang,
                         dsts.jumlah,
-                        dss.hrg_beli,
+                        -- dss.hrg_beli,
                         (dsts.jumlah * dss.hrg_beli) as nilai,
                         0 as jml_debet,
                         0 as debet,
@@ -294,8 +295,8 @@ class KartuStokSiklus extends Public_Controller {
                 group by
                     data.noreg,
                     data.kode_barang,
-                    data.jenis_barang,
-                    data.hrg_beli
+                    data.jenis_barang
+                    -- ,data.hrg_beli
                 having
                     sum(isnull(data.jml_debet, 0)-isnull(data.jml_kredit, 0)) <> 0 and
                     sum(isnull(data.debet, 0) - isnull(data.kredit, 0)) <> 0

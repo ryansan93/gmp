@@ -1650,14 +1650,39 @@ class LHK extends Public_Controller
     public function tes() {
         // echo is_dir('uploads\LHK\NEKROPSI\273286_42');
 
-        $conf = new \Model\Storage\Conf();
-        $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '1802', '2025-10-11', 2, null, null";
-        $d_conf = $conf->hydrateRaw($sql);
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select l.* from 
+            (select min(l.tanggal) as tanggal, l.noreg from lhk l where l.tanggal >= '2025-10-01' group by l.noreg) data
+            left join
+                lhk l
+                on
+                    data.tanggal = l.tanggal and
+                    data.noreg = l.noreg
+            order by
+                data.tanggal
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        $conf = new \Model\Storage\Conf();
-        $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '1802', '2025-10-11', 2, null, null";
-        $d_conf = $conf->hydrateRaw($sql);
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 1802, 1802, 2);
+            foreach ($d_conf as $key => $value) {
+                $id = $value['id'];
+                $id_old = $value['id'];
+                $tanggal = $value['tanggal'];
+
+                // $conf = new \Model\Storage\Conf();
+                // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$d_lhk->tanggal."', 2, null, null";
+                // $d_conf = $conf->hydrateRaw($sql);
+        
+                $conf = new \Model\Storage\Conf();
+                $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
+                $d_conf = $conf->hydrateRaw($sql);
+        
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+            }
+        }
+
     }
 }
