@@ -60,12 +60,12 @@
 						<thead>
 							<tr>
 								<td class="text-right" colspan="3"><b>Total</b></td>
-								<td class="text-right grandTotal" data-target="tonase"><b>0</b></td>
-								<td class="text-right grandTotal" data-target="tagihan"><b>0</b></td>
-								<td class="text-right grandTotal" data-target="cn"><b>0</b></td>
-								<td class="text-right grandTotal" data-target="dn"><b>0</b></td>
-								<td class="text-right grandTotal" data-target="bayar"><b>0</b></td>
-								<td class="text-right grandTotal" data-target="sisa_tagiahn"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="sub_total_tonase"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="sub_total_tagihan"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="sub_total_cn"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="sub_total_dn"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="sub_total_bayar"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="sub_total_sisa_tagiahn"><b>0</b></td>
 								<td class="text-center" colspan="2"></td>
 							</tr>
 							<tr>
