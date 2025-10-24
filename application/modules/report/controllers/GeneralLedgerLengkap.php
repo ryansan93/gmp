@@ -117,9 +117,6 @@ class GeneralLedgerLengkap extends Public_Controller {
                         union all
     
                         select
-                            sc.periode+'-01' as tanggal,
-                            'Initial Balance' as keterangan,
-                            'INIT'+REPLACE(sc.periode, '-', '') as kode_trans,
                             sc.no_coa,
                             sc.unit,
                             c.nama_coa,
@@ -148,9 +145,6 @@ class GeneralLedgerLengkap extends Public_Controller {
                         union all
     
                         select
-                            dj.tanggal, 
-                            dj.keterangan,
-                            dj.kode_trans,
                             c.coa as no_coa,
                             case
                                 when c.unit is not null and c.unit <> '' then
@@ -166,18 +160,12 @@ class GeneralLedgerLengkap extends Public_Controller {
                         left join
                             (
                                 select 
-                                    tanggal,
-                                    cast(keterangan as varchar(max)) as keterangan,
-                                    kode_trans,
                                     no_coa,
                                     sum(kredit) as kredit,
                                     sum(debet) as debet,
                                     unit
                                 from (
                                     select 
-                                        dj.tanggal,
-                                        cast(dj.keterangan as varchar(max)) as keterangan,
-                                        dj.kode_trans,
                                         dj.coa_asal as no_coa, 
                                         sum(dj.nominal) as kredit, 
                                         0 as debet, 
@@ -186,18 +174,12 @@ class GeneralLedgerLengkap extends Public_Controller {
                                     where 
                                         dj.tanggal between '".$tgl_sb."' and '".$prev_date."'
                                     group by
-                                        dj.tanggal,
-                                        cast(dj.keterangan as varchar(max)),
-                                        dj.kode_trans,
                                         dj.coa_asal,
                                         dj.unit
                                     
                                     union all
                                     
                                     select 
-                                        dj.tanggal,
-                                        cast(dj.keterangan as varchar(max)) as keterangan,
-                                        dj.kode_trans,
                                         dj.coa_tujuan as no_coa, 
                                         0 as kredit, 
                                         sum(dj.nominal) as debet, 
@@ -211,15 +193,12 @@ class GeneralLedgerLengkap extends Public_Controller {
                                     where 
                                         dj.tanggal between '".$tgl_sb."' and '".$prev_date."'
                                     group by
-                                        dj.tanggal,
-                                        cast(dj.keterangan as varchar(max)),
-                                        dj.kode_trans,
                                         dj.coa_tujuan,
                                         dj.unit,
                                         dj.unit_tujuan
                                 ) data
                                 group by
-                                    tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit
+                                    no_coa, unit
                             ) dj
                             on
                                 dj.no_coa = c.coa
@@ -233,9 +212,6 @@ class GeneralLedgerLengkap extends Public_Controller {
 
                 $sql_sa = "
                     select
-                        '' as tanggal,
-                        'Saldo Awal' as keterangan,
-                        '' as kode_trans,
                         data.no_coa,
                         data.unit,
                         data.nama_coa,
@@ -335,9 +311,6 @@ class GeneralLedgerLengkap extends Public_Controller {
                 union all
 
                 select
-                    sc.periode+'-01' as tanggal,
-                    'Initial Balance' as keterangan,
-                    'INIT'+REPLACE(sc.periode, '-', '') as kode_trans,
                     sc.no_coa,
                     sc.unit,
                     c.nama_coa,
@@ -357,9 +330,6 @@ class GeneralLedgerLengkap extends Public_Controller {
                 union all
 
                 select
-                    dj.tanggal, 
-                    dj.keterangan,
-                    dj.kode_trans,
                     c.coa as no_coa,
                     case
                         when c.unit is not null and c.unit <> '' then
@@ -376,18 +346,12 @@ class GeneralLedgerLengkap extends Public_Controller {
                 left join
                     (
                         select 
-                            tanggal,
-                            cast(keterangan as varchar(max)) as keterangan,
-                            kode_trans,
                             no_coa,
                             sum(kredit) as kredit,
                             sum(debet) as debet,
                             unit
                         from (
                             select 
-                                dj.tanggal,
-                                cast(dj.keterangan as varchar(max)) as keterangan,
-                                dj.kode_trans,
                                 dj.coa_asal as no_coa, 
                                 sum(dj.nominal) as kredit, 
                                 0 as debet, 
@@ -396,18 +360,12 @@ class GeneralLedgerLengkap extends Public_Controller {
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
                             group by
-                                dj.tanggal,
-                                cast(dj.keterangan as varchar(max)),
-                                dj.kode_trans,
                                 dj.coa_asal,
                                 dj.unit
                             
                             union all
                             
                             select 
-                                dj.tanggal,
-                                cast(dj.keterangan as varchar(max)) as keterangan,
-                                dj.kode_trans,
                                 dj.coa_tujuan as no_coa, 
                                 0 as kredit, 
                                 sum(dj.nominal) as debet, 
@@ -421,15 +379,12 @@ class GeneralLedgerLengkap extends Public_Controller {
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
                             group by
-                                dj.tanggal,
-                                cast(dj.keterangan as varchar(max)),
-                                dj.kode_trans,
                                 dj.coa_tujuan,
                                 dj.unit,
                                 dj.unit_tujuan
                         ) data
                         group by
-                            tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit
+                            no_coa, unit
                     ) dj
                     on
                         dj.no_coa = c.coa
