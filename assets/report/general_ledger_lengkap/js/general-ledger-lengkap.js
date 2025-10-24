@@ -105,6 +105,9 @@ var gl = {
 		}
 	}, // end - getLists
 
+	getDetail: function() {
+	}, // end - getDetail
+
 	formDetail: function(elm) {
 		var tr = $(elm).closest('tr');
 

@@ -1,5 +1,6 @@
 <?php if ( !empty($data) && count($data) > 0 ) { ?>
     <?php
+        $urut = 1;
         $idx_coa = 0;
         $key_coa = null;
 
@@ -17,7 +18,7 @@
         <?php if ( $key_coa != $value['no_coa'].'-'.$value['unit'] ) { ?>
             <?php $key_coa = $value['no_coa'].'-'.$value['unit']; ?>
 
-            <tr class="abu">
+            <tr class="abu get_data" data-urut="<?php echo $urut; ?>">
                 <td colspan="10">
                     <div class="col-xs-12 no-padding">
                         <div class="col-xs-1 no-padding"><label class="label-control">NO. COA</label></div>
@@ -44,8 +45,11 @@
                 <td class="col-xs-2"><b>Debet</b></td>
                 <td class="col-xs-2"><b>Kredit</b></td>
             </tr>
+            <?php $urut++; ?>
         <?php } ?>
+        <tr class="detail"></tr>
         
+        <!--
         <?php if ( $idx_coa == 0 ) { ?>
             <?php if ( stristr($value['keterangan'], 'Saldo Awal') === false ) { ?>
                 <tr>
@@ -66,27 +70,35 @@
             <td class="text-right"><?php echo ($value['debet'] >= 0) ? angkaDecimal($value['debet']) : '('.angkaDecimal(abs($value['debet'])).')'; ?></td>
             <td class="text-right"><?php echo ($value['kredit'] >= 0) ? angkaDecimal($value['kredit']) : '('.angkaDecimal(abs($value['kredit'])).')'; ?></td>
         </tr>
+        -->
        
         <?php 
-            $idx_coa++; 
+            $idx_coa++;
 
-            if ( stristr($value['keterangan'], 'Saldo Awal') !== false || stristr($value['keterangan'], 'Initial Balance') !== false ) {
-                $tot_saldo_awal += $value['debet']+$value['kredit'];
+            $tot_saldo_awal += $value['saldo_awal'];
+            $tot_debet += $value['debet'];
+            $tot_kredit += $value['kredit'];
+            $tot_saldo_akhir += $value['saldo_akhir'];
 
-                $gt_saldo_awal += $value['debet']+$value['kredit'];
-            } else {
-                $tot_debet += $value['debet'];
-                $tot_kredit += $value['kredit'];
+            $gt_saldo_awal += $value['saldo_awal'];
+            $gt_debet += $value['debet'];
+            $gt_kredit += $value['kredit'];
+            $gt_saldo_akhir += $value['saldo_akhir'];
 
-                $gt_debet += $value['debet'];
-                $gt_kredit += $value['kredit'];
-            }
+            // if ( stristr($value['keterangan'], 'Saldo Awal') !== false || stristr($value['keterangan'], 'Initial Balance') !== false ) {
+            //     $tot_saldo_awal += $value['debet']+$value['kredit'];
+
+            //     $gt_saldo_awal += $value['debet']+$value['kredit'];
+            // } else {
+            //     $tot_debet += $value['debet'];
+            //     $tot_kredit += $value['kredit'];
+
+            //     $gt_debet += $value['debet'];
+            //     $gt_kredit += $value['kredit'];
+            // }
         ?>
 
         <?php if ( $key_coa != $data[$key+1]['no_coa'].'-'.$data[$key+1]['unit'] ) { ?>
-            <?php
-                $tot_saldo_akhir = $tot_saldo_awal + $tot_debet + $tot_kredit;
-            ?>
             <tr>
                 <td colspan="6" style="padding: 10px 5px 5px 5px;">
                     <table class="table table-bordered" style="margin-bottom: 0px;">
@@ -122,9 +134,6 @@
             ?>
         <?php } ?>
     <?php } ?>
-    <?php
-        $gt_saldo_akhir = $gt_saldo_awal + $gt_debet + $gt_kredit;
-    ?>
     <tr>
         <td colspan="6" style="padding: 10px 5px 5px 5px;">
             <table class="table table-bordered" style="margin-bottom: 0px;">
