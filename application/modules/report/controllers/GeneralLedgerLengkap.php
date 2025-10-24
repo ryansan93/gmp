@@ -414,7 +414,7 @@ class GeneralLedgerLengkap extends Public_Controller {
         return $data;
     }
 
-    public function getDetail($start_date, $end_date, $unit, $coa_start, $coa_end) {
+    public function getDetail($start_date, $end_date, $unit, $coa, $coa_start, $coa_end) {
         $sql_unit = null;
         if ( $unit != 'all' ) {
             $sql_unit .= " and data.unit = '".$unit."'";
@@ -599,6 +599,16 @@ class GeneralLedgerLengkap extends Public_Controller {
                             0 as urut
                         from (
                             select
+                                '".$coa."' as no_coa,
+                                '".$unit."' as unit,
+                                0 as debet1,
+                                0 as kredit1,
+                                0 as debet2,
+                                0 as kredit2
+
+                            union all
+
+                            select
                                 sa.no_coa,
                                 sa.unit,
                                 sum(sa.debet1) as debet1,
@@ -644,7 +654,7 @@ class GeneralLedgerLengkap extends Public_Controller {
                         ".$sql_trans."
                     ) data
                     where
-                        data.no_coa >= '".$coa_start."' and data.no_coa <= '".$coa_end."'
+                        data.no_coa = '".$coa."'
                         ".$sql_unit."
                     group by
                         data.no_coa,
@@ -783,7 +793,7 @@ class GeneralLedgerLengkap extends Public_Controller {
                     isnull(dj.debet, 0) <> 0
             ) data
             where
-                data.no_coa >= '".$coa_start."' and data.no_coa <= '".$coa_end."'
+                data.no_coa = '".$coa."'
                 ".$sql_unit."
             order by
                 data.no_coa asc,
@@ -818,6 +828,28 @@ class GeneralLedgerLengkap extends Public_Controller {
         $content['start_date'] = $start_date;
         $content['end_date'] = $start_date;
         $html = $this->load->view($this->pathView.'list', $content, TRUE);
+
+        echo $html;
+    }
+
+    public function getListsDetail() {
+        $params = $this->input->get('params');
+
+        $start_date = $params['start_date'];
+        $end_date = $params['end_date'];
+        $unit = $params['unit'];
+        $coa = $params['coa'];
+        $urut = $params['urut'];
+
+        // $data = $this->getData( $start_date, $end_date, $unit, $params['coa_start'], $params['coa_end'] );
+        $data = $this->getDetail( $start_date, $end_date, $unit, $coa, null, null );
+
+        // cetak_r( $data, 1 );
+
+        $content['data'] = $data;
+        $content['start_date'] = $start_date;
+        $content['end_date'] = $start_date;
+        $html = $this->load->view($this->pathView.'listDetail', $content, TRUE);
 
         echo $html;
     }

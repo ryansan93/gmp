@@ -100,12 +100,59 @@ var gl = {
                 beforeSend : function(){ App.showLoaderInContent( $(dcontent) ); },
                 success : function(html){
                 	App.hideLoaderInContent( $(dcontent), html );
+
+					setTimeout(function() {
+						// console.log("This message appears after 2 seconds.");
+						var urut = 1;
+						gl.getDetail( urut );
+					}, 1000); // 2000 milliseconds = 2 seconds
                 }
             });
 		}
 	}, // end - getLists
 
-	getDetail: function() {
+	getDetail: function(urut) {
+		var tr = $('tr.get_data[data-urut="'+urut+'"]');
+		var tr_detail = $('tr.detail[data-urut="'+urut+'"]');
+
+		var params = {
+			'start_date': dateSQL($('#StartDate').data('DateTimePicker').date()),
+			'end_date': dateSQL($('#EndDate').data('DateTimePicker').date()),
+			'unit': $(tr).attr('data-unit'),
+			'coa': $(tr).attr('data-coa'),
+			'urut': urut
+		};
+		
+		console.log( params );
+		console.log( urut );
+		console.log( $(tr_detail).length );
+		console.log( $('tr.get_data[data-urut="'+urut+'"]').length );
+
+		// urut = urut+1;
+		// if ( $('tr.get_data[data-urut="'+urut+'"]').length > 0 ) {
+		// 	gl.getDetail( urut );
+		// }
+
+		$.ajax({
+			url : 'report/GeneralLedgerLengkap/getListsDetail',
+			data : {
+				'params' : params
+			},
+			type : 'GET',
+			dataType : 'HTML',
+			beforeSend : function(){ App.showLoaderInContent( $(tr_detail) ); },
+			success : function(html){
+				// App.hideLoaderInContent( $(dcontent), html );
+				$(tr_detail).replaceWith( html );
+
+				setTimeout(function() {
+					urut = urut+1;
+					if ( $('tr.get_data[data-urut="'+urut+'"]').length > 0 ) {
+						gl.getDetail( urut );
+					}
+				}, 500); // 2000 milliseconds = 2 seconds
+			}
+		});
 	}, // end - getDetail
 
 	formDetail: function(elm) {

@@ -17,7 +17,14 @@
     <?php foreach ($data as $key => $value) { ?>
         <?php $key_coa = $value['no_coa'].'-'.$value['unit']; ?>
 
-        <tr class="abu get_data" data-urut="<?php echo $urut; ?>">
+        <?php
+            $tot_saldo_awal = 0;
+            $tot_debet = 0;
+            $tot_kredit = 0;
+            $tot_saldo_akhir = 0;
+        ?>
+
+        <tr class="abu get_data" data-urut="<?php echo $urut; ?>" data-coa="<?php echo $value['no_coa']; ?>" data-unit="<?php echo $value['unit']; ?>">
             <td colspan="10">
                 <div class="col-xs-12 no-padding">
                     <div class="col-xs-1 no-padding"><label class="label-control">NO. COA</label></div>
@@ -44,7 +51,7 @@
             <td class="col-xs-2"><b>Debet</b></td>
             <td class="col-xs-2"><b>Kredit</b></td>
         </tr>
-        <tr class="detail"></tr>
+        <tr class="detail" data-urut="<?php echo $urut; ?>"></tr>
         
         <!--
         <?php if ( $idx_coa == 0 ) { ?>
