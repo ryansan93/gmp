@@ -579,7 +579,7 @@ class Bakul extends Public_Controller
                             lt1.id = lt2.id
                 ) lt
                 on
-                    pp.id = lt.tbl_id
+                    cast(pp.id as varchar(50)) = lt.tbl_id
             where
                 pp.tgl_bayar between '".$start_date."' and '".$end_date."' and
                 (pp.bad_debt is null or pp.bad_debt = 0)

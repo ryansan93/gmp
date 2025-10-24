@@ -286,8 +286,18 @@ class GeneralLedger extends Public_Controller {
                         select
                             sb.coa as no_coa,
                             sb.unit,
-                            isnull(sb.saldo_awal, 0) as debet1,
-                            0 as kredit1,
+                            case
+                                when isnull(sb.saldo_awal, 0) >= 0 then
+                                    isnull(sb.saldo_awal, 0)
+                                else
+                                    0
+                            end as debet1,
+                            case
+                                when isnull(sb.saldo_awal, 0) < 0 then
+                                    isnull(sb.saldo_awal, 0)
+                                else
+                                    0
+                            end as kredit1,
                             0 as debet2,
                             0 as kredit2
                         from saldo_bulanan sb 
@@ -301,8 +311,18 @@ class GeneralLedger extends Public_Controller {
                             sc.unit,
                             0 as debet1,
                             0 as kredit1,
-                            isnull(sc.debet, 0) as debet2,
-                            0 as kredit2
+                            case
+                                when isnull(sc.debet, 0) >= 0 then
+                                    isnull(sc.debet, 0)
+                                else
+                                    0
+                            end as debet2,
+                            case
+                                when isnull(sc.debet, 0) < 0 then
+                                    isnull(sc.debet, 0)
+                                else
+                                    0
+                            end as kredit2
                         from sacoa sc
                         where
                             sc.periode = '".substr($start_date, 0, 7)."' and
@@ -326,8 +346,18 @@ class GeneralLedger extends Public_Controller {
                     sc.no_coa,
                     sc.unit,
                     c.nama_coa,
-                    0 as kredit,
-                    isnull(sc.debet, 0) as debet,
+                    case
+                        when isnull(sc.debet, 0) < 0 then
+                            isnull(sc.debet, 0)
+                        else
+                            0
+                    end as kredit,
+                    case
+                        when isnull(sc.debet, 0) >= 0 then
+                            isnull(sc.debet, 0)
+                        else
+                            0
+                    end as debet,
                     1 as urut
                 from sacoa sc
                 left join
