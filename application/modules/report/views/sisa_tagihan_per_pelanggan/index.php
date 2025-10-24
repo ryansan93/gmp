@@ -65,7 +65,7 @@
 								<td class="text-right grandTotal" data-target="sub_total_cn"><b>0</b></td>
 								<td class="text-right grandTotal" data-target="sub_total_dn"><b>0</b></td>
 								<td class="text-right grandTotal" data-target="sub_total_bayar"><b>0</b></td>
-								<td class="text-right grandTotal" data-target="sub_total_sisa_tagiahn"><b>0</b></td>
+								<td class="text-right grandTotal" data-target="sub_total_sisa_tagihan"><b>0</b></td>
 								<td class="text-center" colspan="2"></td>
 							</tr>
 							<tr>

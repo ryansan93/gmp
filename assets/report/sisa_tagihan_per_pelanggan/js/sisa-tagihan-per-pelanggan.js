@@ -135,11 +135,11 @@ var stpp = {
     }, // end - hitSubTotal
 
     hitGrandTotal: function () {
-        $.map( $('table').find('thead tr.grandTotal'), function(tr_gtotal) {
+        $.map( $('table').find('thead td.grandTotal'), function(tr_gtotal) {
             var target = $(tr_gtotal).attr('data-target');
             var g_total = 0;
             
-            $.map( $(table).find('td.sub_total[target="'+target+'"]'), function(td_subtotal) {
+            $.map( $('table').find('td.sub_total[target="'+target+'"]'), function(td_subtotal) {
                 var nilai = numeral.unformat($(td_subtotal).text());
                 g_total += nilai;
             });
