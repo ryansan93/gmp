@@ -1451,6 +1451,10 @@ class TSDRHPP extends Public_Controller {
                     $data['ongkos_angkut'][ $value['tgl_trans'] ][ $value['no_polisi'] ][ $key ]['total'] += $hrg_oa * $value['jumlah'];
                 }
             }
+
+            ksort( $data['plasma'] );
+            ksort( $data['inti'] );
+            ksort( $data['ongkos_angkut'] );
         }
 
         return $data;

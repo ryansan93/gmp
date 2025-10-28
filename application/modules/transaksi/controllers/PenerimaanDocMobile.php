@@ -742,26 +742,57 @@ class PenerimaanDocMobile extends Public_Controller {
     }
 
     public function tes() {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select * from terima_doc td where id = 117
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select od.noreg, td.* from (
+        //         select td1.* from terima_doc td1
+        //         right join
+        //             (
+        //                 select no_order, max(version) as version from terima_doc group by no_order
+        //             ) td2
+        //             on
+        //                 td1.no_order = td2.no_order and
+        //                 td1.version = td2.version
+        //     ) td
+        //     left join
+        //         (
+        //             select od1.* from order_doc od1
+        //             right join
+        //                 (select max(id) as id, no_order from order_doc group by no_order) od2
+        //                 on
+        //                     od1.id = od2.id
+        //         ) od
+        //         on
+        //             td.no_order = od.no_order
+        //     where
+        //         td.datang >= '2025-10-01'
+        //     order by
+        //         od.noreg asc
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $key => $value) {
-                // $tanggal = substr( $value['datang'], 0, 10 );
+        //     foreach ($d_conf as $key => $value) {
+        //         $tanggal = substr( $value['datang'], 0, 10 );
 
-                // $conf = new \Model\Storage\Conf();
-                // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 3, null, null";
-                // $conf->hydrateRaw($sql);
+        //         $conf = new \Model\Storage\Conf();
+        //         $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
+        //         $conf->hydrateRaw($sql);
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
-            }
-        }
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+        //     }
+        // }
             
-        // EXEC hitung_stok_siklus 'doc', 'terima_doc', '18', '2025-09-05', 1, '25090020101', null
+        // $conf = new \Model\Storage\Conf();
+        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
+        // $conf->hydrateRaw($sql);
+
+        $conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '330', '2025-10-15', 2, null, null";
+        $conf->hydrateRaw($sql);
+
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 286, 286, 2);
     }
 }

@@ -1096,9 +1096,18 @@ class ReturVoadip extends Public_Controller
 
     public function tes()
     {
-        $m_rv = new \Model\Storage\ReturVoadip_model();
-        $no_retur = $m_rv->getNextId();
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from retur_voadip rv where tgl_retur >= '2025-10-01'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        cetak_r( $no_retur );
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+            }
+        }
     }
 }

@@ -930,30 +930,124 @@ class PenerimaanVoadip extends Public_Controller {
         echo $html;
     }
 
+    public function hitStokByNoOrder($sep, $no_order = null) {
+        if ( $sep == 1 ) {
+            $sql_noreg = null;
+            if ( !empty($noreg) ) {
+                $sql_noreg = "and l.noreg = '".$noreg."'";
+            }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select l.* from 
+                (select min(l.tanggal) as tanggal, l.noreg from lhk l where l.tanggal < '2025-10-01' ".$sql_noreg." group by l.noreg) data
+                left join
+                    lhk l
+                    on
+                        data.tanggal = l.tanggal and
+                        data.noreg = l.noreg
+                where
+                    l.tanggal < '2025-10-01'
+                order by
+                    data.tanggal
+            ";
+            // cetak_r( $sql, 1 );
+            $d_conf = $m_conf->hydrateRaw( $sql );
+    
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray();
+    
+                foreach ($d_conf as $key => $value) {
+                    $id = $value['id'];
+                    $id_old = $value['id'];
+                    $tanggal = $value['tanggal'];
+    
+                    // $conf = new \Model\Storage\Conf();
+                    // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$d_lhk->tanggal."', 2, null, null";
+                    // $d_conf = $conf->hydrateRaw($sql);
+            
+                    $conf = new \Model\Storage\Conf();
+                    $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
+                    $d_conf = $conf->hydrateRaw($sql);
+            
+                    // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+                }
+            }
+        }
+
+        if ( $sep == 0 ) {
+            $sql_noreg = null;
+            if ( !empty($noreg) ) {
+                $sql_noreg = "and l.noreg = '".$noreg."'";
+            }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select l.* from 
+                (select min(l.tanggal) as tanggal, l.noreg from lhk l where l.tanggal >= '2025-10-01' ".$sql_noreg." group by l.noreg) data
+                left join
+                    lhk l
+                    on
+                        data.tanggal = l.tanggal and
+                        data.noreg = l.noreg
+                where
+                    l.tanggal >= '2025-10-01'
+                order by
+                    data.tanggal
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+    
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray();
+    
+                foreach ($d_conf as $key => $value) {
+                    $id = $value['id'];
+                    $id_old = $value['id'];
+                    $tanggal = $value['tanggal'];
+
+                    // cetak_r( $value['id'] );
+    
+                    // $conf = new \Model\Storage\Conf();
+                    // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$d_lhk->tanggal."', 2, null, null";
+                    // $d_conf = $conf->hydrateRaw($sql);
+            
+                    $conf = new \Model\Storage\Conf();
+                    $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
+                    $d_conf = $conf->hydrateRaw($sql);
+            
+                    // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+                }
+            }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select l.* from lhk l where l.tanggal >= '2025-10-01' ".$sql_noreg."
+                order by
+                    l.tanggal
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray();
+    
+                foreach ($d_conf as $key => $value) {
+                    $id = $value['id'];
+                    $id_old = $value['id'];
+            
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+                }
+            }
+        }
+    }
+
     public function tes()
     {
-        // $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select kv.no_order, tv.* from terima_voadip tv 
-        //     left join
-        //         kirim_voadip kv 
-        //         on
-        //             tv.id_kirim_voadip = kv.id
-        //     where
-        //         kv.jenis_kirim = 'opks' and
-        //         tv.tgl_terima >= '2024-02-01' and
-        //         not EXISTS (select * from konfirmasi_pembayaran_voadip_det where no_sj = kv.no_sj)
-        // ";
-        // $d_conf = $m_conf->hydrateRaw( $sql );
+        $conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '1665', '2025-10-11', 2, null, null";
+        $d_conf = $conf->hydrateRaw($sql);
 
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
+        $id = '1665';
+        $id_old = '1665';
 
-        //     foreach ($d_conf as $key => $value) {
-        //         $this->insertKonfirmasi($value['id']);
-        //     }
-        // }
-
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 1, 1, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
     }
 }

@@ -126,9 +126,9 @@ class Pembelian extends Public_Controller {
                 data.supplier,
                 data.barang,
                 data.nama_perusahaan,
-                data.jumlah,
+                sum(data.jumlah) as jumlah,
                 data.harga,
-                data.total
+                sum(data.total) as total
             from
             (
                 select
@@ -235,9 +235,9 @@ class Pembelian extends Public_Controller {
                 data.barang,
                 data.nama_perusahaan,
                 data.kode_perusahaan,
-                data.jumlah,
-                data.harga,
-                data.total
+                -- data.jumlah,
+                data.harga
+                -- data.total
             order by
                 data.datang asc,
                 data.unit asc,

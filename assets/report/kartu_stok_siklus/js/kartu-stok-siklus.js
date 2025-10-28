@@ -126,6 +126,10 @@ var stok = {
                 beforeSend : function(){ App.showLoaderInContent( $(dcontent) ); },
                 success : function(html){
                 	App.hideLoaderInContent( $(dcontent), html );
+
+                    // $(document).ready(function () {
+                        stok.setSelect2Plasma( $('.plasma') );
+                    // });
                 }
             });
 		}

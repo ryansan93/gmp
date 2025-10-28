@@ -1094,6 +1094,8 @@ class ODVP extends Public_Controller {
                     $tgl_stok = $d_terima_doc->datang;
                 }
 
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $d_terima_doc->id, $d_terima_doc->id, 3);
+
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
                 $now = $m_terima_doc->getDate();
 

@@ -1349,63 +1349,14 @@ class PenerimaanPakan extends Public_Controller {
 
     public function tes()
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select tp.id from terima_pakan tp where
-            id in
-            (
-            2,
-            3,
-            10,
-            9,
-            17,
-            24,
-            25,
-            27,
-            28,
-            26,
-            51,
-            52,
-            49,
-            50,
-            59,
-            60,
-            58,
-            84,
-            85,
-            82,
-            83,
-            123,
-            122,
-            120,
-            127,
-            121,
-            157,
-            171,
-            176,
-            180,
-            174,
-            175,
-            179,
-            172,
-            205,
-            207,
-            204,
-            220,
-            227,
-            228
-            )
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        $id = '2550';
+        $id_old = '2550';
+        $tanggal = '2025-10-16';
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        $conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
+        $d_conf = $conf->hydrateRaw($sql);
 
-            foreach ($d_conf as $key => $value) {
-                // $this->insertKonfirmasi($value['id']);
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
-            }
-        }
-
+        Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
     }
 }
