@@ -3,7 +3,15 @@
 		<tr>
 			<td><?php echo tglIndonesia($v_data['tgl_bayar'], '-', ' '); ?></td>
 			<td class="transaksi" data-val="<?php echo $v_data['transaksi']; ?>"><?php echo $v_data['transaksi']; ?></td>
-			<td class="no_bayar" data-val="<?php echo $v_data['no_bayar']; ?>"><?php echo (isset($v_data['no_invoice']) && !empty($v_data['no_invoice'])) ? $v_data['no_invoice'] : $v_data['no_bayar']; ?></td>
+			<td class="no_bayar" data-val="<?php echo $v_data['no_bayar']; ?>">
+				<?php if ( isset($v_data['lampiran']) && !empty($v_data['lampiran']) ) { ?>
+					<a href="upload/<?php echo $v_data['lampiran']; ?>" target="_blank">
+						<?php echo (isset($v_data['no_invoice']) && !empty($v_data['no_invoice'])) ? $v_data['no_invoice'] : $v_data['no_bayar']; ?>
+					</a>
+				<?php } else { ?>
+					<?php echo (isset($v_data['no_invoice']) && !empty($v_data['no_invoice'])) ? $v_data['no_invoice'] : $v_data['no_bayar']; ?>
+				<?php } ?>
+			</td>
 			<td><?php echo (isset($v_data['kode_unit']) && !empty($v_data['kode_unit'])) ? $v_data['kode_unit'] : '-'; ?></td>
 			<td><?php echo $v_data['periode']; ?></td>
 			<td><?php echo $v_data['nama_penerima']; ?></td>

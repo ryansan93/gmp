@@ -147,7 +147,15 @@
 			<?php foreach ($data['detail'] as $k_det => $v_det): ?>
 				<tr>
 					<td><?php echo $v_det['transaksi']; ?></td>
-					<td><?php echo $v_det['no_bayar']; ?></td>
+					<td>
+						<?php if ( isset($v_det['lampiran']) && !empty($v_det['lampiran']) ) { ?>
+							<a href="uploads/<?php echo $v_det['lampiran']; ?>" target="_blank">
+								<?php echo $v_det['no_bayar']; ?>
+							</a>
+						<?php } else { ?>
+							<?php echo $v_det['no_bayar']; ?>
+						<?php } ?>
+					</td>
 					<td><?php echo (isset($v_det['kode_unit']) && !empty($v_det['kode_unit'])) ? $v_det['kode_unit'] : '-'; ?></td>
 					<td class="text-right"><?php echo angkaDecimal($v_det['tagihan']); ?></td>
 					<td class="text-right hide"><?php echo angkaDecimal($v_det['dn']); ?></td>

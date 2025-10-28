@@ -1228,7 +1228,8 @@ class RealisasiPembayaran extends Public_Controller
                     'transfer' => $transfer,
                     'bayar' => $bayar,
                     'jumlah' => ($v_kpoap['total'] > ($bayar + $cn)) ? $v_kpoap['total'] - ($bayar + $cn) : 0,
-                    'checked' => ($d_rpd) ? true : false
+                    'checked' => ($d_rpd) ? true : false,
+                    'lampiran' => $v_kpoap['lampiran']
                 );
             }
         }
@@ -1344,7 +1345,7 @@ class RealisasiPembayaran extends Public_Controller
             $jenis_transaksi = null;
             foreach ($d_rp['detail'] as $k_det => $v_det) {
                 $jumlah += $v_det['bayar'];
-                $jenis_transaksi[] = $v_det['transaksi'];
+                $jenis_transaksi[0] = $v_det['transaksi'];
             }
 
             $log = !empty($d_rp['logs']) ? $d_rp['logs'][ count($d_rp['logs'])-1 ] : null;
@@ -1366,7 +1367,7 @@ class RealisasiPembayaran extends Public_Controller
             foreach ($d_rp['detail'] as $k_det => $v_det) {
                 $kode_unit = $this->getKodeUnit($v_det['transaksi'], $v_det['no_bayar']);
 
-                if ( $v_det['transaksi'] == 'PAKAN' || $v_det['transaksi'] == 'PLASMA' ) {
+                if ( $v_det['transaksi'] == 'PAKAN' || $v_det['transaksi'] == 'PLASMA' || $v_det['transaksi'] == 'OA PAKAN' ) {
                     $table_name = null;
                     if ( $v_det['transaksi'] == 'PAKAN' ) {
                         $table_name = 'konfirmasi_pembayaran_pakan';
@@ -1374,6 +1375,10 @@ class RealisasiPembayaran extends Public_Controller
 
                     if ( $v_det['transaksi'] == 'PLASMA' ) {
                         $table_name = 'konfirmasi_pembayaran_peternak';
+                    }
+
+                    if ( $v_det['transaksi'] == 'OA PAKAN' ) {
+                        $table_name = 'konfirmasi_pembayaran_oa_pakan';
                     }
 
                     $m_conf = new \Model\Storage\Conf();
@@ -1386,11 +1391,13 @@ class RealisasiPembayaran extends Public_Controller
                     ";
                     $d_conf = $m_conf->hydrateRaw( $sql );
 
+                    $lampiran = null;
                     $invoice = null;
                     if ( $d_conf->count() > 0 ) {
                         $d_kpp = $d_conf->toArray()[0];
-
+                        
                         $invoice = $d_kpp['invoice'];
+                        $lampiran = isset($d_kpp['lampiran']) ? $d_kpp['lampiran'] : null;
                     }
 
                     $detail[] = array(
@@ -1402,7 +1409,8 @@ class RealisasiPembayaran extends Public_Controller
                         'cn' => $v_det['cn'],
                         'transfer' => $v_det['transfer'],
                         'bayar' => $v_det['bayar'],
-                        'kode_unit' => $kode_unit
+                        'kode_unit' => $kode_unit,
+                        'lampiran' => $lampiran
                     );
                 } else {
                     $detail[] = array(
