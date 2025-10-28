@@ -1665,10 +1665,10 @@ class Rdim extends Public_Controller
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
-            $populasi = null;
-            if ( $d_conf->count() > 0 ) {
-                $populasi = $d_conf->toArray()[0]['populasi'];
-            }
+            $populasi = $v_data['populasi'];
+            // if ( $d_conf->count() > 0 ) {
+            //     $populasi = $d_conf->toArray()[0]['populasi'];
+            // }
 
             $_data['periode'] = $periode;
             $_data['nama'] = $v_data['d_mitra_mapping']['d_mitra']['nama'];
