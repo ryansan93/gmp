@@ -1683,206 +1683,220 @@ class RealisasiPembayaran extends Public_Controller
         return $kode_unit;
     }
 
-    public function realisasi_pembayaran()
-    {
-        $params = $this->input->get('params');
-
-        $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
-
-        $jenis_transaksi = $params['jenis_transaksi'];
-        $form_uang_muka = 0;
-        if ( in_array('doc', $jenis_transaksi) || in_array('pakan', $jenis_transaksi) ) {
-            $form_uang_muka = 1;
-        }
-
-        $data = null;
-
-        $total_potongan = 0;
-        $total = 0;
-        $total_bayar = 0;
-        $detail = null;
-        foreach ($params['detail'] as $k_det => $v_det) {
-            $total += $v_det['tagihan'];
-
-            $bayar = 0;
-            $cn = 0;
-            $dn = 0;
-            $transfer = 0;
-
-            if ( !empty($id) ) {
-                $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
-                $d_rpd = $m_rpd->where('no_bayar', $v_det['no_bayar'])->where('id_header', $id)->first();
-
-                if ( !empty($d_rpd) ) {
-                    $bayar = $d_rpd->bayar;
-                    $transfer = $d_rpd->transfer;
-                    $cn = $d_rpd->cn;
-                    $dn = $d_rpd->dn;
-                    $total_bayar += $d_rpd->bayar;
-                }
-            }
-
-            $detail[] = array(
-                'transaksi' => $v_det['transaksi'],
-                'no_bayar' => $v_det['no_bayar'],
-                'tagihan' => $v_det['tagihan'],
-                'dn' => $dn,
-                'cn' => $cn,
-                'transfer' => $transfer,
-                'bayar' => $bayar
-            );
-        }
-
-        $m_perusahaan = new \Model\Storage\Perusahaan_model();
-        $d_perusahaan = $m_perusahaan->where('kode', $params['perusahaan'])->orderBy('version', 'desc')->first();
-
-        $nomor = null;
-        $tgl_bayar = null;
-        $rekening = null;
-        $no_bukti = null;
-        $no_invoice = null;
-        $lampiran = null;
-        $jml_transfer = 0;
-        $uang_muka = 0;
-        $total_dn = 0;
-        $total_cn = 0;
-        $coa_bank = null;
-        $nama_bank = null;
-
-        $d_cn = null;
-        $d_dn = null;
-        if ( !empty($id) ) {
-            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-            $d_rp = $m_rp->where('id', $id)->first();
-
-            $nomor = $d_rp->nomor;
-            $tgl_bayar = $d_rp->tgl_bayar;
-            $rekening = $d_rp->no_rek;
-            $no_bukti = $d_rp->no_bukti;
-            $no_invoice = $d_rp->no_invoice;
-            $lampiran = $d_rp->lampiran;
-            $jml_transfer = $d_rp->jml_transfer;
-            $uang_muka = $d_rp->uang_muka;
-            $total_dn = $d_rp->dn;
-            $total_cn = $d_rp->cn;
-            $coa_bank = $d_rp->coa_bank;
-            $nama_bank = $d_rp->nama_bank;
-
-            $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
-            $d_rpcn = $m_rpcn->where('id_header', $id)->get();
-            if ( $d_rpcn->count() > 0 ) {
-                $d_cn = $d_rpcn->toArray();
-            }
-
-            $m_rpdn = new \Model\Storage\RealisasiPembayaranDn_model();
-            $d_rpdn = $m_rpdn->where('id_header', $id)->get();
-            if ( $d_rpdn->count() > 0 ) {
-                $d_dn = $d_rpdn->toArray();
-            }
-        }
-
-        $d_supplier = null;
-        $d_mitra = null;
-        $ekspedisi = null;
-        $bank_ekspedisi = null;
-        if ( stristr($params['jenis_pembayaran'], 'supplier') !== false ) {
-            $m_supplier = new \Model\Storage\Supplier_model();
-            $d_supplier = $m_supplier->where('nomor', $params['supplier'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('version', 'desc')->with(['banks'])->first();
-        } else if ( stristr($params['jenis_pembayaran'], 'plasma') !== false ) {
-            $m_mitra = new \Model\Storage\Mitra_model();
-            $d_mitra = $m_mitra->where('nomor', $params['peternak'])->orderBy('version', 'desc')->first();
-
-            $rekening = $d_mitra->rekening_nomor.' - '.$d_mitra->bank;
-        } else if ( stristr($params['jenis_pembayaran'], 'ekspedisi') !== false ) {
-            $m_ekspedisi = new \Model\Storage\Ekspedisi_model();
-            $sql = "
-                select 
-                    eks.id,
-                    eks.nomor,
-                    eks.nama
-                from ekspedisi eks 
-                right join 
-                    (select max(id) as id, nomor from ekspedisi group by nomor) as e 
-                    on
-                        eks.id = e.id
-                where
-                    eks.mstatus = 1 and
-                    eks.nomor = '".$params['ekspedisi']."' 
-                group by
-                    eks.id,
-                    eks.nomor,
-                    eks.nama
-                order by eks.nama asc
-            ";
-            $d_ekspedisi = $m_ekspedisi->hydrateRaw( $sql );
-            if ( $d_ekspedisi->count() > 0 ) {
-                $ekspedisi = $d_ekspedisi->toArray();
-            }
-
-            $m_bank_ekspedisi = new \Model\Storage\BankEkspedisi_model();
-            $sql = "
-                select be.* from bank_ekspedisi be
-                right join
-                    (
-                        select e1.* from ekspedisi e1
-                        right join
-                            (select max(id) as id, nomor from ekspedisi group by nomor) e2
-                            on
-                                e1.id = e2.id
-
-                    ) eks
-                    on
-                        be.ekspedisi_id = eks.id
-                where
-                    eks.nomor = '".$params['ekspedisi']."'
-            ";
-            $d_bank_ekspedisi = $m_bank_ekspedisi->hydrateRaw( $sql );
-            if ( $d_bank_ekspedisi->count() > 0 ) {
-                $bank_ekspedisi = $d_bank_ekspedisi->toArray();
-            }
-        }
-
-        $data = array(
-            'id' => !empty($id) ? $id : null,
-            'jenis_pembayaran' => $params['jenis_pembayaran'],
-            'uang_muka' => $uang_muka,
-            'jml_transfer' => $jml_transfer,
-            'total_dn' => $total_dn,
-            'total_cn' => $total_cn,
-            'total_potongan' => $total_potongan,
-            'total' => $total,
-            'total_bayar' => $total_bayar,
-            'nomor' => $nomor,
-            'tgl_bayar' => $tgl_bayar,
-            'rekening' => $rekening,
-            'no_bukti' => $no_bukti,
-            'no_invoice' => $no_invoice,
-            'lampiran' => $lampiran,
-            'no_perusahaan' => $d_perusahaan->kode,
-            'perusahaan' => $d_perusahaan->perusahaan,
-            'no_supplier' => !empty($d_supplier) ? $d_supplier->nomor : null,
-            'supplier' => !empty($d_supplier) ? $d_supplier->nama : null,
-            'bank_supplier' => !empty($d_supplier) ? $d_supplier->banks : null,
-            'no_peternak' => !empty($d_mitra) ? $d_mitra->nomor : null,
-            'peternak' => !empty($d_mitra) ? $d_mitra->nama : null,
-            'no_ekspedisi' => !empty($ekspedisi) ? $ekspedisi[0]['nomor'] : null,
-            'ekspedisi' => !empty($ekspedisi) ? $ekspedisi[0]['nama'] : null,
-            'bank_ekspedisi' => $bank_ekspedisi,
-            'form_uang_muka' => $form_uang_muka,
-            'coa_bank' => $coa_bank,
-            'nama_bank' => $nama_bank,
-            'detail' => $detail
-        );
-
-        $m_coa = new \Model\Storage\Coa_model();
-
-        $content['data'] = $data;
-        $content['bank'] = $m_coa->getDataBank();
-        $content['d_cn'] = !empty($d_cn) ? json_encode($d_cn) : null;
-        $content['d_dn'] = !empty($d_dn) ? json_encode($d_dn) : null;
+    public function formRealisasiPembayaran() {
+        $content = null;
         $html = $this->load->view('pembayaran/realisasi_pembayaran/realisasi_pembayaran', $content, true);
 
         echo $html;
+    }
+
+    public function realisasi_pembayaran()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
+
+            $jenis_transaksi = $params['jenis_transaksi'];
+            $form_uang_muka = 0;
+            if ( in_array('doc', $jenis_transaksi) || in_array('pakan', $jenis_transaksi) ) {
+                $form_uang_muka = 1;
+            }
+
+            $data = null;
+
+            $total_potongan = 0;
+            $total = 0;
+            $total_bayar = 0;
+            $detail = null;
+            foreach ($params['detail'] as $k_det => $v_det) {
+                $total += $v_det['tagihan'];
+
+                $bayar = 0;
+                $cn = 0;
+                $dn = 0;
+                $transfer = 0;
+
+                if ( !empty($id) ) {
+                    $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
+                    $d_rpd = $m_rpd->where('no_bayar', $v_det['no_bayar'])->where('id_header', $id)->first();
+
+                    if ( !empty($d_rpd) ) {
+                        $bayar = $d_rpd->bayar;
+                        $transfer = $d_rpd->transfer;
+                        $cn = $d_rpd->cn;
+                        $dn = $d_rpd->dn;
+                        $total_bayar += $d_rpd->bayar;
+                    }
+                }
+
+                $detail[] = array(
+                    'transaksi' => $v_det['transaksi'],
+                    'no_bayar' => $v_det['no_bayar'],
+                    'tagihan' => $v_det['tagihan'],
+                    'dn' => $dn,
+                    'cn' => $cn,
+                    'transfer' => $transfer,
+                    'bayar' => $bayar
+                );
+            }
+
+            $m_perusahaan = new \Model\Storage\Perusahaan_model();
+            $d_perusahaan = $m_perusahaan->where('kode', $params['perusahaan'])->orderBy('version', 'desc')->first();
+
+            $nomor = null;
+            $tgl_bayar = null;
+            $rekening = null;
+            $no_bukti = null;
+            $no_invoice = null;
+            $lampiran = null;
+            $jml_transfer = 0;
+            $uang_muka = 0;
+            $total_dn = 0;
+            $total_cn = 0;
+            $coa_bank = null;
+            $nama_bank = null;
+
+            $d_cn = null;
+            $d_dn = null;
+            if ( !empty($id) ) {
+                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+                $d_rp = $m_rp->where('id', $id)->first();
+
+                $nomor = $d_rp->nomor;
+                $tgl_bayar = $d_rp->tgl_bayar;
+                $rekening = $d_rp->no_rek;
+                $no_bukti = $d_rp->no_bukti;
+                $no_invoice = $d_rp->no_invoice;
+                $lampiran = $d_rp->lampiran;
+                $jml_transfer = $d_rp->jml_transfer;
+                $uang_muka = $d_rp->uang_muka;
+                $total_dn = $d_rp->dn;
+                $total_cn = $d_rp->cn;
+                $coa_bank = $d_rp->coa_bank;
+                $nama_bank = $d_rp->nama_bank;
+
+                $m_rpcn = new \Model\Storage\RealisasiPembayaranCn_model();
+                $d_rpcn = $m_rpcn->where('id_header', $id)->get();
+                if ( $d_rpcn->count() > 0 ) {
+                    $d_cn = $d_rpcn->toArray();
+                }
+
+                $m_rpdn = new \Model\Storage\RealisasiPembayaranDn_model();
+                $d_rpdn = $m_rpdn->where('id_header', $id)->get();
+                if ( $d_rpdn->count() > 0 ) {
+                    $d_dn = $d_rpdn->toArray();
+                }
+            }
+
+            $d_supplier = null;
+            $d_mitra = null;
+            $ekspedisi = null;
+            $bank_ekspedisi = null;
+            if ( stristr($params['jenis_pembayaran'], 'supplier') !== false ) {
+                $m_supplier = new \Model\Storage\Supplier_model();
+                $d_supplier = $m_supplier->where('nomor', $params['supplier'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('version', 'desc')->with(['banks'])->first();
+            } else if ( stristr($params['jenis_pembayaran'], 'plasma') !== false ) {
+                $m_mitra = new \Model\Storage\Mitra_model();
+                $d_mitra = $m_mitra->where('nomor', $params['peternak'])->orderBy('version', 'desc')->first();
+
+                $rekening = $d_mitra->rekening_nomor.' - '.$d_mitra->bank;
+            } else if ( stristr($params['jenis_pembayaran'], 'ekspedisi') !== false ) {
+                $m_ekspedisi = new \Model\Storage\Ekspedisi_model();
+                $sql = "
+                    select 
+                        eks.id,
+                        eks.nomor,
+                        eks.nama
+                    from ekspedisi eks 
+                    right join 
+                        (select max(id) as id, nomor from ekspedisi group by nomor) as e 
+                        on
+                            eks.id = e.id
+                    where
+                        eks.mstatus = 1 and
+                        eks.nomor = '".$params['ekspedisi']."' 
+                    group by
+                        eks.id,
+                        eks.nomor,
+                        eks.nama
+                    order by eks.nama asc
+                ";
+                $d_ekspedisi = $m_ekspedisi->hydrateRaw( $sql );
+                if ( $d_ekspedisi->count() > 0 ) {
+                    $ekspedisi = $d_ekspedisi->toArray();
+                }
+
+                $m_bank_ekspedisi = new \Model\Storage\BankEkspedisi_model();
+                $sql = "
+                    select be.* from bank_ekspedisi be
+                    right join
+                        (
+                            select e1.* from ekspedisi e1
+                            right join
+                                (select max(id) as id, nomor from ekspedisi group by nomor) e2
+                                on
+                                    e1.id = e2.id
+
+                        ) eks
+                        on
+                            be.ekspedisi_id = eks.id
+                    where
+                        eks.nomor = '".$params['ekspedisi']."'
+                ";
+                $d_bank_ekspedisi = $m_bank_ekspedisi->hydrateRaw( $sql );
+                if ( $d_bank_ekspedisi->count() > 0 ) {
+                    $bank_ekspedisi = $d_bank_ekspedisi->toArray();
+                }
+            }
+
+            $data = array(
+                'id' => !empty($id) ? $id : null,
+                'jenis_pembayaran' => $params['jenis_pembayaran'],
+                'uang_muka' => $uang_muka,
+                'jml_transfer' => $jml_transfer,
+                'total_dn' => $total_dn,
+                'total_cn' => $total_cn,
+                'total_potongan' => $total_potongan,
+                'total' => $total,
+                'total_bayar' => $total_bayar,
+                'nomor' => $nomor,
+                'tgl_bayar' => $tgl_bayar,
+                'rekening' => $rekening,
+                'no_bukti' => $no_bukti,
+                'no_invoice' => $no_invoice,
+                'lampiran' => $lampiran,
+                'no_perusahaan' => $d_perusahaan->kode,
+                'perusahaan' => $d_perusahaan->perusahaan,
+                'no_supplier' => !empty($d_supplier) ? $d_supplier->nomor : null,
+                'supplier' => !empty($d_supplier) ? $d_supplier->nama : null,
+                'bank_supplier' => !empty($d_supplier) ? $d_supplier->banks : null,
+                'no_peternak' => !empty($d_mitra) ? $d_mitra->nomor : null,
+                'peternak' => !empty($d_mitra) ? $d_mitra->nama : null,
+                'no_ekspedisi' => !empty($ekspedisi) ? $ekspedisi[0]['nomor'] : null,
+                'ekspedisi' => !empty($ekspedisi) ? $ekspedisi[0]['nama'] : null,
+                'bank_ekspedisi' => $bank_ekspedisi,
+                'form_uang_muka' => $form_uang_muka,
+                'coa_bank' => $coa_bank,
+                'nama_bank' => $nama_bank,
+                'detail' => $detail
+            );
+
+            $m_coa = new \Model\Storage\Coa_model();
+
+            $content['data'] = $data;
+            $content['bank'] = $m_coa->getDataBank();
+            $content['d_cn'] = !empty($d_cn) ? json_encode($d_cn) : null;
+            $content['d_dn'] = !empty($d_dn) ? json_encode($d_dn) : null;
+            $html = $this->load->view('pembayaran/realisasi_pembayaran/realisasi_pembayaran_list', $content, true);
+
+            $this->result['status'] = 1;
+            $this->result['html'] = $html;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
     }
 
     public function save()

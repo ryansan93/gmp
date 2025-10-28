@@ -501,8 +501,7 @@ var rp = {
                 'detail': detail
             };
             
-            $.get('pembayaran/RealisasiPembayaran/realisasi_pembayaran',{
-                'params': params
+            $.get('pembayaran/RealisasiPembayaran/formRealisasiPembayaran',{
             },function(data){
                 var _options = {
                     className : 'veryWidth',
@@ -519,62 +518,73 @@ var rp = {
                     var modal_header = $(this).find('.modal-header');
                     $(modal_header).css({'padding-top' : '0px'});
 
-                    var tgl_bayar = $(modal_body).find('#tgl_bayar').data('val');
-                    $(modal_body).find('#tgl_bayar').datetimepicker({
-                        locale: 'id',
-                        format: 'DD MMM Y'
-                    });
+                    $.ajax({
+                        url : 'pembayaran/RealisasiPembayaran/realisasi_pembayaran',
+                        data : { 'params': params },
+                        type : 'POST',
+                        dataType : 'JSON',
+                        beforeSend : function(){ App.showLoaderInContent( $(modal_body).find('form') ); },
+                        success : function(data){
+                            App.hideLoaderInContent( $(modal_body).find('form'), data.html );
 
-                    if ( !empty(tgl_bayar) ) {
-                        // $(modal_body).find('#tgl_bayar').data("DateTimePicker").minDate(moment(new Date(tgl_bayar)));
-                        $(modal_body).find('#tgl_bayar').data("DateTimePicker").date(new Date(tgl_bayar));
-                    } else {
-                        // $(modal_body).find('#tgl_bayar').data("DateTimePicker").minDate(moment());
-                    }
+                            var tgl_bayar = $(modal_body).find('#tgl_bayar').data('val');
+                            $(modal_body).find('#tgl_bayar').datetimepicker({
+                                locale: 'id',
+                                format: 'DD MMM Y'
+                            });
 
-                    $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
-                        $(this).priceFormat(Config[$(this).data('tipe')]);
-                    });
-
-                    if ( !empty(id) ) {
-                        var d_cn = [];
-                        var d_dn = [];
-                        if ( (empty(cn) || cn.length <= 0) ) {
-                            var json_cn = $(modal_body).find('span.d_cn').text();
-                            var d_cn = !empty(json_cn) ? JSON.parse(json_cn) : [];
-                        }
-
-                        if ( (empty(dn) || dn.length <= 0) ) {
-                            var json_dn = $(modal_body).find('span.d_dn').text();
-                            var d_dn = !empty(json_dn) ? JSON.parse(json_dn) : [];
-                        }
-
-                        if ( !empty(d_cn) && d_cn.length > 0 ) {
-                            for (let i = 0; i < d_cn.length; i++) {                                
-                                cn[i] = {
-                                    'id': parseInt(d_cn[i].id_cn),
-                                    'saldo': parseFloat(d_cn[i].saldo),
-                                    'sisa_saldo': parseFloat(d_cn[i].sisa_saldo),
-                                    'pakai': parseFloat(d_cn[i].pakai)
-                                };
+                            if ( !empty(tgl_bayar) ) {
+                                // $(modal_body).find('#tgl_bayar').data("DateTimePicker").minDate(moment(new Date(tgl_bayar)));
+                                $(modal_body).find('#tgl_bayar').data("DateTimePicker").date(new Date(tgl_bayar));
+                            } else {
+                                // $(modal_body).find('#tgl_bayar').data("DateTimePicker").minDate(moment());
                             }
-                        }
 
-                        if ( !empty(d_dn) && d_dn.length > 0 ) {
-                            for (let i = 0; i < d_dn.length; i++) {                                
-                                dn[i] = {
-                                    'id': parseInt(d_dn[i].id_dn),
-                                    'saldo': parseFloat(d_dn[i].saldo),
-                                    'sisa_saldo': parseFloat(d_dn[i].sisa_saldo),
-                                    'pakai': parseFloat(d_dn[i].pakai)
-                                };
+                            $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+                                $(this).priceFormat(Config[$(this).data('tipe')]);
+                            });
+
+                            if ( !empty(id) ) {
+                                var d_cn = [];
+                                var d_dn = [];
+                                if ( (empty(cn) || cn.length <= 0) ) {
+                                    var json_cn = $(modal_body).find('span.d_cn').text();
+                                    var d_cn = !empty(json_cn) ? JSON.parse(json_cn) : [];
+                                }
+
+                                if ( (empty(dn) || dn.length <= 0) ) {
+                                    var json_dn = $(modal_body).find('span.d_dn').text();
+                                    var d_dn = !empty(json_dn) ? JSON.parse(json_dn) : [];
+                                }
+
+                                if ( !empty(d_cn) && d_cn.length > 0 ) {
+                                    for (let i = 0; i < d_cn.length; i++) {                                
+                                        cn[i] = {
+                                            'id': parseInt(d_cn[i].id_cn),
+                                            'saldo': parseFloat(d_cn[i].saldo),
+                                            'sisa_saldo': parseFloat(d_cn[i].sisa_saldo),
+                                            'pakai': parseFloat(d_cn[i].pakai)
+                                        };
+                                    }
+                                }
+
+                                if ( !empty(d_dn) && d_dn.length > 0 ) {
+                                    for (let i = 0; i < d_dn.length; i++) {                                
+                                        dn[i] = {
+                                            'id': parseInt(d_dn[i].id_dn),
+                                            'saldo': parseFloat(d_dn[i].saldo),
+                                            'sisa_saldo': parseFloat(d_dn[i].sisa_saldo),
+                                            'pakai': parseFloat(d_dn[i].pakai)
+                                        };
+                                    }
+                                }
+
+                                rp.hit_jml_bayar();
                             }
-                        }
 
-                        rp.hit_jml_bayar();
-                    }
-
-                    App.setTutupBulan();
+                            App.setTutupBulan();
+                        },
+                    });
                 });
             },'html');
         }
