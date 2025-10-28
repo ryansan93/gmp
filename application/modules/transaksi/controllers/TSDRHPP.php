@@ -3577,6 +3577,8 @@ class TSDRHPP extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            $id_plasma = null;
+
             $m_conf = new \Model\Storage\Conf();
             $now = $m_conf->getDate();
 
@@ -3682,6 +3684,10 @@ class TSDRHPP extends Public_Controller {
                     $m_rhpp->save();
 
                     $id_rhpp = $m_rhpp->id;
+
+                    if ( stristr($v_rhpp['jenis'], 'plasma') !== false ) {
+                        $id_plasma = $id_rhpp;
+                    }
 
                     $m_rhpp_doc = new \Model\Storage\RhppDoc_model();
                     $m_rhpp_doc->id_header = $id_rhpp;
@@ -3925,6 +3931,8 @@ class TSDRHPP extends Public_Controller {
                 }
 
                 $d_ts = $m_ts->where('id', $id)->first();
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, null, 1);
 
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", NULL, 1";
@@ -4222,10 +4230,15 @@ class TSDRHPP extends Public_Controller {
                 $m_rhpp = new \Model\Storage\Rhpp_model();
                 $d_rhpp = $m_rhpp->where('id_ts', $params['id'])->with(['potongan'])->get();
     
+                $id_plasma = null;
                 if ( $d_rhpp->count() > 0 ) {
                     $d_rhpp = $d_rhpp->toArray();
     
                     foreach ($d_rhpp as $k_rhpp => $v_rhpp) {
+                        if ( stristr( $v_rhpp['jenis'], 'plasma' ) !== false ) {
+                            $id_plasma = $v_rhpp['id'];
+                        }
+
                         if ( !empty($v_rhpp['potongan']) ) {
                             foreach ($v_rhpp['potongan'] as $k_potongan => $v_potongan) {
                                 if ( !empty($v_potongan['id_trans']) ) {
@@ -4269,6 +4282,8 @@ class TSDRHPP extends Public_Controller {
                             }
                         }
                     }
+
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, $id_plasma, 3);
     
                     $id_rhpp = $m_rhpp->select('id')->where('id_ts', $params['id'])->get()->toArray();
     
@@ -5408,40 +5423,21 @@ class TSDRHPP extends Public_Controller {
 
     public function tes()
     {
-        $kode_unit = 'MLG';
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from rhpp r
+            where
+                r.invoice is not null and
+                r.jenis = 'rhpp_plasma'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        $m_rhpp = new \Model\Storage\Rhpp_model();
-        $invoice = $m_rhpp->getNoInvoice('INV/RHPP/'.$kode_unit);
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-        cetak_r( $invoice, 1 );
-
-        $_noreg = '22090170801';
-
-        $get_data_pakan = $this->get_data_pakan( $_noreg );
-        // // $get_data_pindah_pakan = $this->get_data_pindah_pakan( $_noreg, $get_data_pakan );
-        // // $get_data_retur_pakan = $this->get_data_retur_pakan( $_noreg );
-
-        // // $get_data_voadip = $this->get_data_voadip( $_noreg );
-        // // $get_data_retur_voadip = $this->get_data_retur_voadip( $_noreg, $get_data_voadip );
-        cetak_r( $get_data_pakan, 1 );
-
-        // $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select * from tutup_siklus where tgl_tutup >= '2023-08-01'
-        // ";
-        // $d_conf = $m_conf->hydrateRaw( $sql );
-
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
-
-        //     foreach ($d_conf as $key => $value) {
-        //         $id = $value['id'];
-
-        //         $m_conf = new \Model\Storage\Conf();
-        //         $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", ".$id.", 2";
-        
-        //         $d_conf = $m_conf->hydrateRaw( $sql );
-        //     }
-        // }
+            foreach ($d_conf as $key => $val) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
+            }
+        }
     }
 }

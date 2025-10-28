@@ -1875,7 +1875,7 @@ class LHK extends Public_Controller
                     on
                         tp.id_kirim_pakan = kp.id
                 where
-                    kp.jenis_kirim = 'opkp' and
+                    -- kp.jenis_kirim = 'opkp' and
                     tp.tgl_terima >= '2025-10-01'
             ) data
             left join

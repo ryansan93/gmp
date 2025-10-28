@@ -1386,10 +1386,8 @@ class RhppGroup extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        // cetak_r( $params, 1 );
-
         try {
-            // cetak_r( $params, 1 );
+            $id_plasma = null;
 
             $list_noreg = null;
             foreach ($params['data_rhpp'][0]['data_list_noreg'] as $k_ln => $v_ln) {
@@ -1464,6 +1462,10 @@ class RhppGroup extends Public_Controller {
                 $m_rhpp->save();
 
                 $id_rhpp = $m_rhpp->id;
+
+                if ( stristr($v_rhpp['jenis'], 'plasma') !== false ) {
+                    $id_plasma = $id_rhpp;
+                }
 
                 if ( !empty($v_rhpp['data_doc']) ) {
                     foreach ($v_rhpp['data_doc'] as $k_doc => $v_doc) {
@@ -1678,6 +1680,8 @@ class RhppGroup extends Public_Controller {
                 Modules::run( 'base/event/save', $m_rhpp, $deskripsi_log);
             }
 
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, null, 1);
+
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', ".$id_header.", NULL, 1";
             // $d_conf = $m_conf->hydrateRaw( $sql );
@@ -1696,11 +1700,15 @@ class RhppGroup extends Public_Controller {
     {
         $id = $this->input->post('params');
         try {
+            $id_plasma = null;
+
             $m_rgh = new \Model\Storage\RhppGroupHeader_model();
             $d_rgh = $m_rgh->where('id', $id)->first();
 
             $m_rg = new \Model\Storage\RhppGroup_model();
             $d_rg_plasma = $m_rg->where('id_header', $id)->where('jenis', 'rhpp_plasma')->first();
+
+            $id_plasma = $d_rg_plasma->id;
 
             $ket_delete = null;
             $delete = 1;
@@ -1755,6 +1763,8 @@ class RhppGroup extends Public_Controller {
             }
 
             if ( $delete == 1 ) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, $id_plasma, 3);
+
                 $m_rg = new \Model\Storage\RhppGroup_model();
                 $id_rg = $m_rg->select('id')->where('id_header', $id)->get()->toArray();
     
@@ -3002,22 +3012,18 @@ class RhppGroup extends Public_Controller {
     {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select * from rhpp_group_header where tgl_submit >= '2023-08-01'
+            select * from rhpp_group rg
+            where
+                rg.jenis = 'rhpp_plasma'
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         if ( $d_conf->count() > 0 ) {
             $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $key => $value) {
-                $id = $value['id'];
-
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', ".$id.", ".$id.", 2";
-        
-                $d_conf = $m_conf->hydrateRaw( $sql );
+            foreach ($d_conf as $key => $val) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
             }
         }
-
     }
 }
