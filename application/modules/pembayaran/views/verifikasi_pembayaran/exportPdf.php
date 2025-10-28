@@ -287,9 +287,9 @@
 											<label style="display: inline-block; width: 75.5%;"><?php echo strtoupper(tglIndonesia(substr($data['tgl_bayar'], 0, 10), '-', ' ')); ?></label>
 										</div>
 										<div class="col-xs-12" style="display: inline; text-align: left;">
-											<label style="display: inline-block; width: 18%;">Kepada</label>
-											<label style="display: inline-block; width: 2%;">:</label>
-											<label style="display: inline-block; width: 75.5%;"><?php echo $data['nama_supl']; ?></label>
+											<label style="display: inline-block; width: 18%; vertical-align:top;">Kepada</label>
+											<label style="display: inline-block; width: 2%; vertical-align:top;">:</label>
+											<label style="display: inline-block; width: 75.5%; vertical-align:top;"><?php echo $data['nama_supl'].'<br>'.$data['bank'].'-'.$data['no_rek']; ?></label>
 										</div>
 									</td>
 								</tr>
