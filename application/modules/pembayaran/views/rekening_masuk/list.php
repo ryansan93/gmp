@@ -7,7 +7,7 @@
                 </a>
             </td>
             <td>
-                <a href="accounting/JurnalPusat/index/<?php echo exEncrypt($value['no_bukti']); ?>" target="_blank" title="Link jurnal pusat">
+                <a href="accounting/BankMasuk/index/<?php echo exEncrypt($value['no_bukti']); ?>" target="_blank" title="Link bank masuk">
                     <?php echo $value['no_bukti']; ?>
                 </a>
                 <?php // echo strtoupper($value['no_bukti']); ?>

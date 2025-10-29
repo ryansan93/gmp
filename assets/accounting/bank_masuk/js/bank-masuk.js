@@ -525,6 +525,7 @@ var bm = {
 					});
 
 					var data = {
+                        'no_km': $(dcontent).find('.no_km').val(),
 						'tgl_km': dateSQL( $(dcontent).find('#TglKm').data('DateTimePicker').date() ),
 						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
 						'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),

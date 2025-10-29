@@ -1054,7 +1054,25 @@ class RealisasiSjMobile extends Public_Controller {
     {        
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select id from real_sj rs
+            select rs.id from det_real_sj_inv drsi 
+            left join
+                det_jurnal dj 
+                on
+                    drsi.no_inv = dj.kode_trans
+            left join
+                (
+                    select id_header, no_sj from det_real_sj drs group by id_header, no_sj
+                ) drs
+                on
+                    drsi.no_sj = drs.no_sj
+            left join
+                real_sj rs 
+                on
+                    drs.id_header = rs.id
+            where
+                dj.id is null 
+            group by
+                rs.id
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

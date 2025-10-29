@@ -19,7 +19,7 @@ class BankMasuk extends Public_Controller {
     /**
      * Default
      */
-    public function index($segment=0)
+    public function index($_no_bukti = null)
     {
         if ( $this->hakAkses['a_view'] == 1 ) {
             $this->add_external_js(array(
@@ -36,9 +36,12 @@ class BankMasuk extends Public_Controller {
 
             $data = $this->includes;
 
+            $no_bukti = !empty($_no_bukti) ? exDecrypt($_no_bukti) : null;
+
+            $content['no_bukti'] = $no_bukti;
             $content['akses'] = $this->hakAkses;
             $content['riwayat'] = $this->riwayat();
-            $content['add_form'] = $this->addForm();
+            $content['add_form'] = $this->addForm( $no_bukti );
             $content['title_panel'] = 'Bank Masuk';
 
             // Load Indexx
@@ -119,7 +122,7 @@ class BankMasuk extends Public_Controller {
         return $html;
     }
 
-    public function addForm()
+    public function addForm( $no_bukti = null )
     {
         $m_coa = new \Model\Storage\Coa_model();
         $m_plg = new \Model\Storage\Pelanggan_model();
@@ -127,6 +130,14 @@ class BankMasuk extends Public_Controller {
         $m_jt = new \Model\Storage\JurnalTrans_model();
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
+        $d_rm = null;
+        if ( !empty($no_bukti) ) {
+            $m_rm = new \Model\Storage\RekeningMasuk_model();
+            $d_rm = $m_rm->where('no_bukti', $no_bukti)->first();
+        }
+
+        $content['no_bukti'] = $no_bukti;
+        $content['rm'] = !empty($d_rm) ? $d_rm: null;
         $content['coa'] = $m_coa->getDataCoa();
         $content['bank'] = $m_coa->getDataBank(1, $this->userid);
         $content['pelanggan'] = $m_plg->getDataPelanggan();
@@ -196,13 +207,17 @@ class BankMasuk extends Public_Controller {
             $m_nbbm = new \Model\Storage\NoBbm_model();
             $m_km = new \Model\Storage\Km_model();
             
-            // $no_km = $m_nbbm->getKode('BBM');
-            $no_km = $m_nbbm->getKodeMasuk($params['kode']);
-
-            $m_nbbm->tbl_name = $m_km->getTable();
-            $m_nbbm->tbl_id = $no_km;
-            $m_nbbm->kode = $no_km;
-            $m_nbbm->save();
+            if ( !isset($params['no_km']) || empty($params['no_km']) ) {
+                // $no_km = $m_nbbm->getKode('BBM');
+                $no_km = $m_nbbm->getKodeMasuk($params['kode']);
+    
+                $m_nbbm->tbl_name = $m_km->getTable();
+                $m_nbbm->tbl_id = $no_km;
+                $m_nbbm->kode = $no_km;
+                $m_nbbm->save();
+            } else {
+                $no_km = $params['no_km'];
+            }
 
             $m_km->no_km = $no_km;
             // $m_km->no_coa = $params['no_coa'];

@@ -3,7 +3,7 @@
 		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 			<div class="col-xs-3 no-padding"><label class="control-label">No. Bank Masuk</label></div>
 			<div class="col-xs-4 no-padding">
-				<input type="text" class="col-xs-12 form-control no_km uppercase" placeholder="No. Bank Masuk" disabled>
+				<input type="text" class="col-xs-12 form-control no_km uppercase" placeholder="No. Bank Masuk" value="<?php echo $no_bukti; ?>" disabled>
 			</div>
 		</div>
 		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -38,7 +38,15 @@
 					<!-- <option value="">Pilih Bank</option> -->
 					<?php if ( !empty($bank) ): ?>
 						<?php foreach ($bank as $k_bank => $v_bank): ?>
-							<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" data-unit="<?php echo $v_bank['unit']; ?>" data-kode="<?php echo $v_bank['kode'] ?>" ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
+							<?php
+								$selected = null;
+								if ( !empty($rm) ) {
+									if ( $rm->bank == $v_bank['no_coa'] ) {
+										$selected = 'selected';
+									}
+								}	
+							?>
+							<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" data-unit="<?php echo $v_bank['unit']; ?>" data-kode="<?php echo $v_bank['kode'] ?>" <?php echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
 						<?php endforeach ?>
 					<?php endif ?>
 				</select>
@@ -48,7 +56,7 @@
 			<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Bank Masuk</label></div>
 			<div class="col-xs-4 no-padding">
 				<div class="input-group date datetimepicker lock_date_fiskal" name="tglKm" id="TglKm">
-					<input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" data-tgl="<?php echo date('Y-m-d'); ?>" />
+					<input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" data-tgl="<?php echo empty($rm) ? date('Y-m-d') : $rm->tanggal; ?>" />
 					<span class="input-group-addon">
 						<span class="glyphicon glyphicon-calendar"></span>
 					</span>
@@ -168,7 +176,7 @@
 								<input type="text" class="form-control text-right nilai_lpb uppercase" placeholder="Nilai Invoice" data-tipe="decimal" maxlength="19" disabled>
 							</td> -->
 							<td>
-								<input type="text" class="form-control text-right nilai uppercase" placeholder="Nilai" data-tipe="decimal" maxlength="19" data-required="1" onblur="bm.hitGrandTotal(this)">
+								<input type="text" class="form-control text-right nilai uppercase" placeholder="Nilai" data-tipe="decimal" maxlength="19" data-required="1" onblur="bm.hitGrandTotal(this)" value="<?php echo empty($rm) ? null : angkaDecimal($rm->jml_transfer); ?>" >
 							</td>
 							<td>
 								<div class="col-xs-12 no-padding">
