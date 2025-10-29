@@ -403,8 +403,9 @@ var bakul = {
 
 	            	$('input.saldo').val(numeral.formatDec(data.saldo));
 
-					if ( !empty(data.min_date) ) {
-						var minDate = data.min_date+' 00:00:00';
+					var tgl = $('div#tglBayar input').attr('data-val');
+					if ( !empty(tgl) ) {
+						var minDate = tgl+' 00:00:00';
 						$('#tglBayar').data('DateTimePicker').minDate(moment(new Date(minDate)));
 					}
 
