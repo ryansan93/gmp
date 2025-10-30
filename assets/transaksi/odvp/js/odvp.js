@@ -151,6 +151,8 @@ var odvp = {
 				if ( data.status == 1 ) {
 					// $(tbody).find('tr').remove();
 					$(tbody).html(data.content);
+
+					odvp.setting_up();
 				};
 
 				hideLoading();

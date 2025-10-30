@@ -142,7 +142,7 @@
 							</div>
 						</div>
 					</div>
-					<div class="col-lg-2 lock_btn_fiskal" data-date="<?php echo substr($data_order_doc['tgl_order'], 0, 10); ?>">
+					<div class="col-lg-2 lock_btn_fiskal" data-date="<?php echo substr($data_order_doc['tgl_submit'], 0, 10); ?>">
 						<div class="col-md-12 no-padding">
 							<button type="button" class="btn btn-danger pull-right" data-id="<?php echo $data_order_doc['id']; ?>" onclick="odvp.delete_order_doc(this)"><i class="fa fa-trash"></i> Hapus</button>
 						</div>

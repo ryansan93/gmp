@@ -273,7 +273,7 @@ var App = {
                     $.map( $('.lock_btn_fiskal'), function(div) {
                         var val = $(div).attr('data-date');
 
-                        if ( val < data.content.minDate ) {
+                        if ( !empty(val) && val < data.content.minDate ) {
                             $(div).find('label').remove();
                             $(div).find('button').remove();
                             $(div).find('a.edit').remove();

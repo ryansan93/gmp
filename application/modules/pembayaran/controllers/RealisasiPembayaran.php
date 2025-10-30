@@ -2964,27 +2964,105 @@ class RealisasiPembayaran extends Public_Controller
 
     public function tes()
     {
-        $to      = 'afinda.rahma@gmail.com';
-        $subject = 'TEST EMAIL';
-        $message = 'TEST';
-        $headers = 'From: ryansantoso93@gmail.com'       . "\r\n" .
-                    'X-Mailer: PHP/' . phpversion();
+        // $to      = 'afinda.rahma@gmail.com';
+        // $subject = 'TEST EMAIL';
+        // $message = 'TEST';
+        // $headers = 'From: ryansantoso93@gmail.com'       . "\r\n" .
+        //             'X-Mailer: PHP/' . phpversion();
 
-        mail($to, $subject, $message, $headers);
+        // mail($to, $subject, $message, $headers);
 
-        // ini_set('SMTP', 'smtp.gmail.com');
-        // ini_set('smtp_port', 587);
-        // ini_set('sendmail_from', 'ryansantoso93@gmail.com');
+        // // ini_set('SMTP', 'smtp.gmail.com');
+        // // ini_set('smtp_port', 587);
+        // // ini_set('sendmail_from', 'ryansantoso93@gmail.com');
 
-        // $to = 'ryansantoso93@gmail.com';
-        // $subject = 'Test Email';
-        // $message = 'This is a test email.';
-        // $headers = 'From: ryansantoso93@gmail.com';
+        // // $to = 'ryansantoso93@gmail.com';
+        // // $subject = 'Test Email';
+        // // $message = 'This is a test email.';
+        // // $headers = 'From: ryansantoso93@gmail.com';
 
-        if (mail($to, $subject, $message, $headers)) {
-            echo 'Email sent successfully!';
-        } else {
-            echo 'Email sending failed.';
+        // if (mail($to, $subject, $message, $headers)) {
+        //     echo 'Email sent successfully!';
+        // } else {
+        //     echo 'Email sending failed.';
+        // }
+
+        $array = array(
+            array(71, '2025-10-06'),
+            array(72, '2025-10-06'),
+            array(73, '2025-10-06'),
+            array(74, '2025-10-06'),
+            array(75, '2025-10-06'),
+            array(76, '2025-10-06'),
+            array(77, '2025-10-06'),
+            array(78, '2025-10-06'),
+            array(79, '2025-10-06'),
+            array(80, '2025-10-06'),
+            array(81, '2025-10-06'),
+            array(82, '2025-10-06'),
+            array(83, '2025-10-06'),
+            array(84, '2025-10-07'),
+            array(85, '2025-10-07'),
+            array(86, '2025-10-07'),
+            array(54, '2025-10-14'),
+            array(55, '2025-10-14'),
+            array(56, '2025-10-14'),
+            array(57, '2025-10-14'),
+            array(58, '2025-10-14'),
+            array(59, '2025-10-14'),
+            array(60, '2025-10-14'),
+            array(61, '2025-10-14'),
+            array(62, '2025-10-14'),
+            array(63, '2025-10-14'),
+            array(64, '2025-10-14'),
+            array(65, '2025-10-14'),
+            array(66, '2025-10-14'),
+            array(67, '2025-10-14'),
+            array(68, '2025-10-14'),
+            array(69, '2025-10-14'),
+            array(88, '2025-10-20'),
+            array(89, '2025-10-20'),
+            array(90, '2025-10-20'),
+            array(91, '2025-10-20'),
+            array(92, '2025-10-20'),
+            array(94, '2025-10-20'),
+            array(95, '2025-10-20'),
+            array(96, '2025-10-20'),
+            array(97, '2025-10-20'),
+            array(98, '2025-10-20'),
+            array(99, '2025-10-20'),
+            array(100, '2025-10-20'),
+            array(101, '2025-10-20'),
+            array(102, '2025-10-20'),
+            array(103, '2025-10-20'),
+            array(104, '2025-10-20'),
+            array(105, '2025-10-20'),
+            array(106, '2025-10-20'),
+            array(107, '2025-10-20'),
+            array(131, '2025-10-27'),
+            array(136, '2025-10-27'),
+            array(137, '2025-10-27'),
+            array(138, '2025-10-27'),
+            array(139, '2025-10-27'),
+            array(140, '2025-10-27'),
+            array(141, '2025-10-27'),
+            array(142, '2025-10-27'),
+            array(143, '2025-10-27'),
+            array(144, '2025-10-27'),
+            array(145, '2025-10-27'),
+            array(146, '2025-10-27'),
+            array(147, '2025-10-27'),
+            array(148, '2025-10-27'),
+            array(149, '2025-10-27'),
+            array(150, '2025-10-27'),
+            array(151, '2025-10-27'),
+            array(152, '2025-10-27'),
+            array(153, '2025-10-27'),
+            array(154, '2025-10-27'),
+        );
+        
+        foreach ($array as $key => $value) {
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $value[0], $value[0], 2, null, $value[1]);
         }
     }
 }

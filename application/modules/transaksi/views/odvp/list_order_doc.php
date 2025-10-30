@@ -37,7 +37,7 @@
 					<td><?php echo angkaRibuan( $v_od['jml_ekor'], '-', ' ' ); ?></td>
 					<td><?php echo !empty($v_od['terima_doc']) ? dateTimeFormat( $v_od['terima_doc']['datang'], '-', ' ' ) : '-'; ?></td>
 					<td><?php echo !empty($v_od['terima_doc']) ? angkaRibuan( $v_od['terima_doc']['jml_ekor'], '-', ' ' ) : '-'; ?></td>
-					<td class="text-center lock_btn_fiskal" data-date="<?php echo substr($v_od['terima_doc']['datang'], 0, 10); ?>">
+					<td class="text-center lock_btn_fiskal" data-date="<?php echo substr($v_od['tgl_submit'], 0, 10); ?>">
 						<?php if ( !$odc ): ?>
 							<a class="cursor-p" title="ADD ORDER" onclick="odvp.order_doc_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>"><i class="fa fa-plus"></i></a>
 							&nbsp

@@ -1308,7 +1308,8 @@ class Bakul extends Public_Controller
                 $m_sp->tgl_trans = date('Y-m-d');
                 $m_sp->jenis_trans = 'pembayaran_pelanggan';
                 $m_sp->nominal = $lebih_kurang;
-                $m_sp->saldo = (($saldo_lama - $lebih_kurang) > 0) ? ($saldo_lama - $lebih_kurang) : 0;
+                $m_sp->saldo = $saldo;
+                // $m_sp->saldo = (($saldo_lama - $lebih_kurang) > 0) ? ($saldo_lama - $lebih_kurang) : 0;
                 $m_sp->perusahaan = $_d_pp->perusahaan;
                 $m_sp->save();
             }
@@ -1341,7 +1342,8 @@ class Bakul extends Public_Controller
                 $m_sp->tgl_trans = date('Y-m-d');
                 $m_sp->jenis_trans = 'pembayaran_pelanggan';
                 $m_sp->nominal = $saldo;
-                $m_sp->saldo = ($saldo_lama + $saldo);
+                $m_sp->saldo = $saldo;
+                // $m_sp->saldo = ($saldo_lama + $saldo);
                 $m_sp->perusahaan = $_d_pp->perusahaan;
                 $m_sp->save();
             }
@@ -1365,7 +1367,7 @@ class Bakul extends Public_Controller
 	{
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select id from pembayaran_pelanggan pp
+            select id from pembayaran_pelanggan pp where id = 546
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

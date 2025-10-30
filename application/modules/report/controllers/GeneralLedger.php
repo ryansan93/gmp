@@ -264,11 +264,15 @@ class GeneralLedger extends Public_Controller {
                     sb.no_coa as no_coa,
                     sb.unit,
                     c.nama_coa,
-                    0 as kredit,
+                    case
+                        when sb.kredit2 <> 0 then
+                            sb.kredit2
+                        else
+                            sb.kredit1
+                    end as kredit,
                     case
                         when sb.debet2 <> 0 then
-                            -- sb.debet2
-                            0
+                            sb.debet2
                         else
                             sb.debet1
                     end as debet,

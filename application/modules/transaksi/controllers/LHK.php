@@ -1860,12 +1860,12 @@ class LHK extends Public_Controller
         }
     }
 
-    public function jurnalTanpaStok() {
+    public function jurnalTanpaStok($start_date = '2025-10-01') {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select data.*, saj.path from 
             (
-                select l.id, 'lhk' as tipe from lhk l where l.tanggal >= '2025-10-01'
+                select l.id, 'lhk' as tipe from lhk l where l.tanggal >= '".$start_date."'
     
                 union all
     
@@ -1876,7 +1876,7 @@ class LHK extends Public_Controller
                         tp.id_kirim_pakan = kp.id
                 where
                     -- kp.jenis_kirim = 'opkp' and
-                    tp.tgl_terima >= '2025-10-01'
+                    tp.tgl_terima >= '".$start_date."'
             ) data
             left join
                 (
