@@ -367,8 +367,9 @@ class OngkosAngkutPindahPakan extends Public_Controller
                     where
                         w.kode like '%".$params['unit']."%' and
                         (kp.jenis_kirim = 'opkp' or kp.jenis_kirim = 'opkg') and
-                        tp.tgl_terima > '".$date."' and
-                        not exists (select * from oa_pindah_pakan where no_sj = kp.no_sj)
+                        tp.tgl_terima >= '".$date."' and
+                        not exists (select * from oa_pindah_pakan where no_sj = kp.no_sj) and
+                        not exists (select * from konfirmasi_pembayaran_oa_pakan_det where no_sj = kp.no_sj)
                     group by
                         tp.tgl_terima,
                         kp.no_sj,
@@ -386,7 +387,7 @@ class OngkosAngkutPindahPakan extends Public_Controller
                 ) _data
                 where
                     (_data.jenis_kirim = 'opkg' and _data.jenis_tujuan <> 'mitra') or
-                    (_data.jenis_kirim = 'opkg' and _data.mutasi_asal = 1) or
+                    (_data.jenis_kirim = 'opkg') or -- and _data.mutasi_asal = 1) or
                     _data.jenis_kirim = 'opkp'
             ";
             $d_kp = $m_kp->hydrateRaw( $sql );
@@ -425,7 +426,7 @@ class OngkosAngkutPindahPakan extends Public_Controller
                         rp.id_asal = rs_asal.id_asal
                 right join
                     (
-                        select cast(g.id as varchar(11)) as id_tujuan, g.nama as nama from gudang g where mutasi = 1
+                        select cast(g.id as varchar(11)) as id_tujuan, g.nama as nama from gudang g -- where mutasi = 1
                     ) rs_tujuan
                     on
                         rp.id_tujuan = rs_tujuan.id_tujuan
