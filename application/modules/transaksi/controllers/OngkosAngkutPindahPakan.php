@@ -387,7 +387,7 @@ class OngkosAngkutPindahPakan extends Public_Controller
                 ) _data
                 where
                     (_data.jenis_kirim = 'opkg' and _data.jenis_tujuan <> 'mitra') or
-                    (_data.jenis_kirim = 'opkg') or -- and _data.mutasi_asal = 1) or
+                    -- (_data.jenis_kirim = 'opkg' and _data.mutasi_asal = 1) or
                     _data.jenis_kirim = 'opkp'
             ";
             $d_kp = $m_kp->hydrateRaw( $sql );
