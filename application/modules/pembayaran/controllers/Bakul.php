@@ -857,6 +857,7 @@ class Bakul extends Public_Controller
 
 				$id = $m_pp->id;
 
+                $unit = null;
 				foreach ($data['detail'] as $k_det => $v_det) {
 					$m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
                     $m_dpp->id_header = $id;
@@ -871,6 +872,8 @@ class Bakul extends Public_Controller
                     $m_dpp->status = $v_det['status'];
                     $m_dpp->sisa_tagihan = $v_det['sisa_tagihan'];
 					$m_dpp->save();
+
+                    $unit = substr($v_det['no_inv'], 4, 3);
 				}
 
                 if ( isset($data['dn']) && !empty($data['dn']) ) {
@@ -1018,12 +1021,12 @@ class Bakul extends Public_Controller
                     $m_sp->save();
 
                     // $m_sp = new \Model\Storage\SaldoPlg_model();
-                    // $nomor = $m_sp->getNextNomor('SLD');
-                    // nomor varchar(20) primary key not null,
-                    // unit varchar(5),
-                    // pembayaran_pelanggan_id int,
-                    // no_pelanggan varchar(10),
-                    // nominal decimal(13, 2)
+                    // $nomor = $m_sp->getNextNomor('SLD/'.$unit);
+                    // $m_sp->nomor = $nomor;
+                    // $m_sp->unit = $unit;
+                    // $m_sp->pembayaran_pelanggan_id = $id;
+                    // $m_sp->no_pelanggan = $data['pelanggan'];
+                    // $m_sp->nominal = $data['lebih_kurang'];
                     // $m_sp->save();
                 }
 
@@ -1374,18 +1377,20 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select id from pembayaran_pelanggan pp where id = 546
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select id from pembayaran_pelanggan pp where id = 546
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $k_rs => $v_rs) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
-            }
-        }
+        //     foreach ($d_conf as $k_rs => $v_rs) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
+        //     }
+        // }
+
+        cetak_r( substr('INV/MJK/25/00001', 4, 3) );
 	}
 }

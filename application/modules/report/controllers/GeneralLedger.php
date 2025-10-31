@@ -113,7 +113,8 @@ class GeneralLedger extends Public_Controller {
                     c.nama_coa,
                     case
                         when sb.debet2 <> 0 then
-                            sb.debet2
+                            -- sb.debet2
+                            0
                         else
                             sb.debet1
                     end as saldo_awal,
@@ -163,6 +164,34 @@ class GeneralLedger extends Public_Controller {
                     coa c
                     on
                         sb.no_coa = c.coa
+
+                union all
+
+                select
+                    sc.no_coa,
+                    sc.unit,
+                    c.nama_coa,
+                    0 as saldo_awal,
+                    case
+                        when isnull(sc.debet, 0) < 0 then
+                            isnull(sc.debet, 0)
+                        else
+                            0
+                    end as kredit,
+                    case
+                        when isnull(sc.debet, 0) >= 0 then
+                            isnull(sc.debet, 0)
+                        else
+                            0
+                    end as debet
+                from sacoa sc
+                left join
+                    coa c
+                    on
+                        sc.no_coa = c.coa
+                where
+                    sc.periode = '".substr($start_date, 0, 7)."' and
+                    sc.debet <> 0
 
                 union all
 
