@@ -6,7 +6,7 @@ var gl = {
     settingUp: function () {
         $('select.bulan').select2();
 		$('.perusahaan').select2();
-		$('.unit').select2();
+		$('select.unit').select2();
 
         $('#Tahun').datetimepicker({
             locale: 'id',
@@ -115,6 +115,7 @@ var gl = {
 			var params = {
 				'bulan': $('.bulan').select2().val(),
 				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() ),
+				'unit': $('.unit').select2().val(),
 				'perusahaan': $('.perusahaan').select2().val()
 			};
 

@@ -663,6 +663,7 @@ class GeneralLedger extends Public_Controller {
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
         $kode_gabung_perusahaan = $params['perusahaan'];
+        $unit = $params['unit'];
 
         $i = $bulan-1;
 
@@ -672,9 +673,9 @@ class GeneralLedger extends Public_Controller {
         $start_date = date("Y-m-d", strtotime($date));
         $end_date = date("Y-m-t", strtotime($date));
 
-        $data = $this->getData( $start_date, $end_date, $kode_gabung_perusahaan );
+        $data = $this->getData( $start_date, $end_date, $kode_gabung_perusahaan, $unit );
             
-        $filename = 'GL_PERIODE_'.$tahun.$bulan;
+        $filename = 'GL_PERIODE_'.$tahun.$bulan.'_'.strtoupper($unit);
 
         $arr_header = array('No. COA', 'Unit', 'Nama COA', 'Saldo Awal', 'Debet', 'Kredit', 'Saldo Akhir');
         $arr_column = null;
