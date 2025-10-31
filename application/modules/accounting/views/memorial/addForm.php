@@ -126,7 +126,7 @@
 								</select>
 							</td>
 							<td>
-								<select class="form-control tujuan" data-required="1">
+								<select class="form-control tujuan">
 									<option value="">Pilih COA</option>
 									<?php if ( !empty($coa) ): ?>
 										<?php foreach ($coa as $k_coa => $v_coa): ?>
@@ -136,7 +136,7 @@
 								</select>
 							</td>
 							<td>
-								<select class="form-control asal" data-required="1">
+								<select class="form-control asal">
 									<option value="">Pilih COA</option>
 									<?php if ( !empty($coa) ): ?>
 										<?php foreach ($coa as $k_coa => $v_coa): ?>

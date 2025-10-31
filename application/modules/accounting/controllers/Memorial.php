@@ -240,8 +240,8 @@ class Memorial extends Public_Controller {
                 $m_mmi->tgl_mm = $params['tgl_mm'];
                 $m_mmi->periode = substr($params['tgl_mm'], 0, 7);
                 $m_mmi->det_jurnal_trans = $v_det['det_jurnal_trans'];
-                $m_mmi->coa_asal = $v_det['coa_asal'];
-                $m_mmi->coa_tujuan = $v_det['coa_tujuan'];
+                $m_mmi->coa_asal = (isset($v_det['coa_asal']) && !empty($v_det['coa_asal'])) ? $v_det['coa_asal'] : null;
+                $m_mmi->coa_tujuan = (isset($v_det['coa_tujuan']) && !empty($v_det['coa_tujuan'])) ? $v_det['coa_tujuan'] : null;
                 $m_mmi->keterangan = $v_det['keterangan'];
                 $m_mmi->no_invoice = $v_det['no_invoice'];
                 $m_mmi->nilai = $v_det['nilai'];
@@ -328,8 +328,8 @@ class Memorial extends Public_Controller {
                 $m_mmi->tgl_mm = $params['tgl_mm'];
                 $m_mmi->periode = substr($params['tgl_mm'], 0, 7);
                 $m_mmi->det_jurnal_trans = $v_det['det_jurnal_trans'];
-                $m_mmi->coa_asal = $v_det['coa_asal'];
-                $m_mmi->coa_tujuan = $v_det['coa_tujuan'];
+                $m_mmi->coa_asal = (isset($v_det['coa_asal']) && !empty($v_det['coa_asal'])) ? $v_det['coa_asal'] : null;
+                $m_mmi->coa_tujuan = (isset($v_det['coa_tujuan']) && !empty($v_det['coa_tujuan'])) ? $v_det['coa_tujuan'] : null;
                 $m_mmi->keterangan = $v_det['keterangan'];
                 $m_mmi->no_invoice = $v_det['no_invoice'];
                 $m_mmi->nilai = $v_det['nilai'];

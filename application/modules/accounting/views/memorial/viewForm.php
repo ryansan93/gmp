@@ -76,8 +76,8 @@
 						<?php foreach ($detail as $k_det => $v_det) { ?>
 							<tr class="data" data-urut="">
 								<td><?php echo strtoupper($v_det['det_jurnal_trans_nama']) ?></td>
-								<td><?php echo strtoupper($v_det['coa_tujuan'].' | '.$v_det['coa_tujuan_nama']) ?></td>
-								<td><?php echo strtoupper($v_det['coa_asal'].' | '.$v_det['coa_asal_nama']) ?></td>
+								<td><?php echo (isset($v_det['coa_tujuan']) && !empty($v_det['coa_tujuan'])) ? strtoupper($v_det['coa_tujuan'].' | '.$v_det['coa_tujuan_nama']) : '-'; ?></td>
+								<td><?php echo (isset($v_det['coa_asal']) && !empty($v_det['coa_asal'])) ? strtoupper($v_det['coa_asal'].' | '.$v_det['coa_asal_nama']) : '-'; ?></td>
 								<td><?php echo !empty($v_det['keterangan']) ? strtoupper($v_det['keterangan']) : '-'; ?></td>
 								<td><?php echo !empty($v_det['no_invoice']) ? strtoupper($v_det['no_invoice']) : '-'; ?></td>
 								<td class="text-right">
