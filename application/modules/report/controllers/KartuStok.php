@@ -103,51 +103,51 @@ class KartuStok extends Public_Controller {
                 $jenis = 'voadip';
 
                 $sql_jenis_trans_masuk = "
-                    select kv.tgl_kirim as tanggal, kv.no_order as kode_trans, kv.no_order, 'ORDER' as jenis_trans from kirim_voadip kv where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select kv.tgl_kirim as tanggal, kv.no_order as kode_trans, kv.no_order, 'ORDER' as jenis_trans from kirim_voadip kv -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_voadip rv where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_voadip rv -- where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_voadip av where av.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_voadip av -- where av.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
 
                 $sql_jenis_trans_keluar = "
-                    select kv.tgl_kirim as tanggal, kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select kv.tgl_kirim as tanggal, kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_voadip rv where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_voadip rv -- where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_voadip av where av.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_voadip av -- where av.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
             } else {
                 $sql_jenis_trans_masuk = "
-                    select kp.tgl_kirim as tanggal, kp.no_order as kode_trans, kp.no_order, 'ORDER' as jenis_trans from kirim_pakan kp where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select kp.tgl_kirim as tanggal, kp.no_order as kode_trans, kp.no_order, 'ORDER' as jenis_trans from kirim_pakan kp -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_pakan rp where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_pakan rp -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_pakan ap where ap.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_pakan ap -- where ap.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
 
                 $sql_jenis_trans_keluar = "
-                    select kp.tgl_kirim as tanggal, kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select kp.tgl_kirim as tanggal, kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_pakan ap where ap.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_pakan ap -- where ap.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
             }
 
@@ -350,8 +350,9 @@ class KartuStok extends Public_Controller {
                         ".$sql_jenis_trans_keluar."
                     ) jt
                     on
-                        klwr.kode_trans = jt.no_order and
-                        klwr.tanggal = jt.tanggal
+                        klwr.kode_trans = jt.no_order 
+                        -- and
+                        -- klwr.tanggal = jt.tanggal
                 /* END - KELUAR */
             ) data
             left join
