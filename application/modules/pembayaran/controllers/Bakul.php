@@ -1023,8 +1023,9 @@ class Bakul extends Public_Controller
                     // $m_sp = new \Model\Storage\SaldoPlg_model();
                     // $nomor = $m_sp->getNextNomor('SLD/'.$unit);
                     // $m_sp->nomor = $nomor;
-                    // $m_sp->unit = $unit;
+                    // $m_sp->tanggal = $data['tgl_bayar'];
                     // $m_sp->pembayaran_pelanggan_id = $id;
+                    // $m_sp->unit = $unit;
                     // $m_sp->no_pelanggan = $data['pelanggan'];
                     // $m_sp->nominal = $data['lebih_kurang'];
                     // $m_sp->save();
@@ -1391,6 +1392,114 @@ class Bakul extends Public_Controller
         //     }
         // }
 
-        cetak_r( substr('INV/MJK/25/00001', 4, 3) );
+        // cetak_r( substr('INV/MJK/25/00001', 4, 3) );
+
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select dpp.unit, pp.* from pembayaran_pelanggan pp 
+        //     left join
+        //         (
+        //             select id_header, SUBSTRING(dpp.no_inv, 5, 3) as unit from det_pembayaran_pelanggan dpp group by id_header, SUBSTRING(dpp.no_inv, 5, 3)
+        //         ) dpp
+        //         on
+        //             pp.id = dpp.id_header
+        //     where 
+        //         pp.lebih_kurang > 0
+        //     --	or
+        //     --	pp.saldo > 0 
+        //     order by 
+        //         pp.no_pelanggan asc, 
+        //         pp.tgl_bayar asc
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
+
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
+
+        //     foreach ($d_conf as $k_pp => $v_pp) {
+        //         $m_sp = new \Model\Storage\SaldoPlg_model();
+        //         $nomor = $m_sp->getNextNomor('SLD/'.$v_pp['unit']);
+
+        //         $m_sp->nomor = $nomor;
+        //         $m_sp->tanggal = $v_pp['tgl_bayar'];
+        //         $m_sp->pembayaran_pelanggan_id = $v_pp['id'];
+        //         $m_sp->unit = $v_pp['unit'];
+        //         $m_sp->no_pelanggan = $v_pp['no_pelanggan'];
+        //         $m_sp->nominal = $v_pp['lebih_kurang'];
+        //         $m_sp->save();
+        //     }
+        // }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select dpp.unit, pp.* from pembayaran_pelanggan pp 
+            left join
+                (
+                    select id_header, SUBSTRING(dpp.no_inv, 5, 3) as unit from det_pembayaran_pelanggan dpp group by id_header, SUBSTRING(dpp.no_inv, 5, 3)
+                ) dpp
+                on
+                    pp.id = dpp.id_header
+            where 
+            --	pp.lebih_kurang > 0
+            --	or
+                pp.saldo > 0 
+            order by 
+                pp.no_pelanggan asc, 
+                pp.tgl_bayar asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $k_pp => $v_pp) {
+                $saldo = $v_pp['saldo'];
+
+                while ( $saldo > 0 ) {
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select sp.*, (sp.nominal - isnull(pps.nominal, 0)) as sisa from saldo_plg sp
+                        left join
+                            (
+                                select nomor, sum(nominal) as nominal from pembayaran_pelanggan_saldo group by nomor
+                            ) pps
+                            on
+                                sp.nomor = pps.nomor
+                        where
+                            sp.tanggal <= '".$v_pp['tgl_bayar']."' and
+                            sp.no_pelanggan = '".$v_pp['no_pelanggan']."' and
+                            sp.nominal > isnull(pps.nominal, 0)
+                        order by
+                            sp.nomor asc
+                    ";
+                    $d_pps = $m_conf->hydrateRaw( $sql );
+    
+                    $nomor = null;
+                    $nominal = null;
+                    if ( $d_pps->count() > 0 ) {
+                        $d_pps = $d_pps->toArray()[0];
+
+                        $nomor = $d_pps['nomor'];
+                        if ( $d_pps['sisa'] >= $saldo ) {
+                            $nominal = $saldo;
+
+                            $saldo = 0;
+                        } else {
+                            $nominal = $d_pps['sisa'];
+
+                            $saldo = $saldo - $d_pps['sisa'];
+                        }
+    
+                        $m_pps = new \Model\Storage\PembayaranPelangganSaldo_model();
+                        $m_pps->id_header = $v_pp['id'];
+                        $m_pps->nomor = $nomor;
+                        $m_pps->nominal = $nominal;
+                        $m_pps->save();
+                    } else {
+                        $saldo = 0;
+                    }
+                }
+            }
+        }
 	}
 }
