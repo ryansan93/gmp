@@ -280,7 +280,7 @@ class PosisiStok extends Public_Controller {
                         select ds1.* from det_stok ds1
                         right join
                             (
-                                select min(ds.id) as id, ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli from det_stok ds
+                                select min(ds.id_header) as id_header, ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli from det_stok ds
                                 left join
                                     stok s
                                     on
@@ -293,7 +293,14 @@ class PosisiStok extends Public_Controller {
                                     ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli
                             ) ds2
                             on
-                                ds1.id = ds2.id
+                                ds1.id_header = ds2.id_header and
+                                ds1.tgl_trans = ds2.tgl_trans and
+                                ds1.kode_gudang = ds2.kode_gudang and
+                                ds1.kode_barang = ds2.kode_barang and
+                                ds1.kode_trans = ds2.kode_trans and
+                                ds1.jenis_barang = ds2.jenis_barang and
+                                ds1.jenis_trans = ds2.jenis_trans and
+                                ds1.hrg_beli = ds2.hrg_beli
                     ) ds
                     left join
                         stok s

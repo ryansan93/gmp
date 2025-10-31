@@ -1016,6 +1016,15 @@ class Bakul extends Public_Controller
                     $m_sp->saldo = ($saldo_lama + $data['lebih_kurang']);
                     $m_sp->perusahaan = $data['perusahaan'];
                     $m_sp->save();
+
+                    // $m_sp = new \Model\Storage\SaldoPlg_model();
+                    // $nomor = $m_sp->getNextNomor('SLD');
+                    // nomor varchar(20) primary key not null,
+                    // unit varchar(5),
+                    // pembayaran_pelanggan_id int,
+                    // no_pelanggan varchar(10),
+                    // nominal decimal(13, 2)
+                    // $m_sp->save();
                 }
 
                 // $m_conf = new \Model\Storage\Conf();
