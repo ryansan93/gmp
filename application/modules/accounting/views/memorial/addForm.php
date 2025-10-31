@@ -87,11 +87,26 @@
 		</div>
 	</div>
 	<div class="col-xs-5 no-padding" style="padding-left: 5px;">
-		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 			<div class="col-xs-3">&nbsp;</div>
 			<div class="col-xs-3 no-padding"><label class="control-label">Total</label></div>
 			<div class="col-xs-6 no-padding nilai">
 				<input type="text" class="col-xs-12 form-control text-right nilai uppercase" placeholder="Total" disabled>
+			</div>
+		</div>
+
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+			<div class="col-xs-3">&nbsp;</div>
+			<div class="col-xs-3 no-padding"><label class="control-label">Debet</label></div>
+			<div class="col-xs-6 no-padding nilai">
+				<input type="text" class="col-xs-12 form-control text-right tot_debet uppercase" placeholder="Total" disabled>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+			<div class="col-xs-3">&nbsp;</div>
+			<div class="col-xs-3 no-padding"><label class="control-label">Kredit</label></div>
+			<div class="col-xs-6 no-padding nilai">
+				<input type="text" class="col-xs-12 form-control text-right tot_kredit uppercase" placeholder="Total" disabled>
 			</div>
 		</div>
 	</div>

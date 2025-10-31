@@ -336,15 +336,28 @@ var mm = {
         var tbody = $(tr).closest('tbody');
 
         var grand_total = 0;
+        var grand_total_debet = 0;
+        var grand_total_kredit = 0;
         
         $.map( $(tbody).find('tr'), function (tr) {
             var ipt = $(tr).find('input.nilai');
             var nilai = parseFloat(numeral.unformat( $(ipt).val() ));
 
+            var coa_asal = $(tr).find('select.asal').select2().val();
+            var coa_tujuan = $(tr).find('select.tujuan').select2().val();
+            if ( !empty(coa_asal) ) {
+                grand_total_kredit += nilai;
+            }
+            if ( !empty(coa_tujuan) ) {
+                grand_total_debet += nilai;
+            }
+
             grand_total += nilai;
         });
 
-        $('div.nilai input').val( numeral.format(grand_total) );
+        $('div.nilai input.nilai').val( numeral.format(grand_total) );
+        $('div.nilai input.tot_debet').val( numeral.format(grand_total_debet) );
+        $('div.nilai input.tot_kredit').val( numeral.format(grand_total_kredit) );
     }, // end - hitGrandTotal
 
 	changeTabActive: function(elm) {
@@ -629,11 +642,23 @@ var mm = {
                 var nilai_lpb = null;
                 var debet = null;
                 var kredit = null;
-
     
+                var err_coa = 0;
                 var keterangan_error = null;
                 var tanggal = dateSQL( $(dcontent).find('#TglMm').data('DateTimePicker').date() );
                 $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
+                    var coa_asal = $(tr).find('select.asal').select2().val();
+                    var coa_tujuan = $(tr).find('select.tujuan').select2().val();
+
+                    $(tr).find('select.asal').removeClass('has-error');
+                    $(tr).find('select.tujuan').removeClass('has-error');
+                    if ( empty(coa_asal) && empty(coa_tujuan) ) {
+                        $(tr).find('select.asal').addClass('has-error');
+                        $(tr).find('select.tujuan').addClass('has-error');
+
+                        err_coa++;
+                    }
+
                     var no_faktur = $(tr).find('select.faktur').select2().val();
                     var no_lpb = $(tr).find('select.lpb').select2().val();
                     if ( !empty(no_faktur) || !empty(no_lpb) ) {
@@ -693,11 +718,17 @@ var mm = {
                     }
                 });
     
-                if ( !empty(keterangan_error) ) {
-                    return_keterangan_error = keterangan_error;
-                    return_keterangan_error += '<br><br>Apakah anda yakin ingin tetap menyimpan data jurnal memorial ?';
+                if ( err_coa > 0 ) {
+                    return_keterangan_error = 'Ada data coa yang belum di isi, harap cek kembali data anda.';
+
+                    return_status = 0;
                 } else {
-                    return_keterangan_error = 'Apakah anda yakin ingin menyimpan data jurnal memorial ?';
+                    if ( !empty(keterangan_error) ) {
+                        return_keterangan_error = keterangan_error;
+                        return_keterangan_error += '<br><br>Apakah anda yakin ingin tetap menyimpan data jurnal memorial ?';
+                    } else {
+                        return_keterangan_error = 'Apakah anda yakin ingin menyimpan data jurnal memorial ?';
+                    }
                 }
             } else {
                 return_keterangan_error = 'Data tidak balance, harap cek kembali.';
