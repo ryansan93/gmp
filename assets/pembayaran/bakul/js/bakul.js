@@ -49,13 +49,17 @@ var bakul = {
 		$('.unit').select2({placeholder: 'Pilih Unit'}).on("select2:select", function (e) {
             var unit = $('.unit').select2().val();
 
-            for (var i = 0; i < unit.length; i++) {
-                if ( unit[i] == 'all' ) {
-                    $('.unit').select2().val('all').trigger('change');
+			if ( unit.length > 1 ) {
+				$('.unit').select2().val(unit[ unit.length-1 ]).trigger('change');
+			}
 
-                    i = unit.length;
-                }
-            }
+            // for (var i = 0; i < unit.length; i++) {
+            //     if ( unit[i] == 'all' ) {
+            //         $('.unit').select2().val('all').trigger('change');
+
+            //         i = unit.length;
+            //     }
+            // }
 
             $('.unit').next('span.select2').css('width', '100%');
         });
@@ -401,7 +405,8 @@ var bakul = {
 	            	$('table.tbl_list_do').find('tbody').html(data.html);
 	            	bakul.setting_up();
 
-	            	$('input.saldo').val(numeral.formatDec(data.saldo));
+	            	// $('input.saldo').val(numeral.formatDec(data.saldo));
+					$('button.formSaldo').removeAttr('disabled');
 
 					var tgl = $('div#tglBayar input').attr('data-val');
 					if ( !empty(tgl) ) {
@@ -416,6 +421,95 @@ var bakul = {
 	        });
 		}
 	}, // end - get_list_do
+
+	formSaldo: function() {
+		let div = $('div#action');
+        var unit = $(div).find('select.unit').val();
+        var pelanggan = $(div).find('select.pelanggan').val();
+		var id = $(div).find('input#id').val();
+
+        var params = {
+			'unit': unit,
+            'pelanggan': pelanggan,
+            'id': id
+        };
+
+		$('#modalSaldo').modal('show');
+
+		if ( $('.modal-body table tbody tr.data').length == 0 ) {
+			$.ajax({
+				url :'pembayaran/Bakul/getSaldo',
+				data : {
+					'params': params
+				},
+				dataType : 'JSON',
+				type : 'POST',
+				beforeSend : function(){
+					App.showLoaderInContent( $('#modalSaldo').find('.modal-body table tbody') );
+				},
+				success : function(data){
+					App.hideLoaderInContent( $('#modalSaldo').find('.modal-body table tbody'), data.html );
+
+					$('.modal-body table tbody tr').find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+						$(this).priceFormat(Config[$(this).data('tipe')]);
+					});
+				}
+			});
+		}
+	}, // end - formSaldo
+
+	cekMauPakai: function(elm) {
+		var tr = $(elm).closest('tr');
+
+		if ( $(elm).is(':checked') ) {
+			$(tr).find('input.pakai').removeAttr('disabled');
+			$(tr).find('input.pakai').attr('data-required', 1);
+		} else {
+			$(tr).find('input.pakai').val(null);
+			$(tr).find('input.pakai').attr('disabled', 'disabled');
+			$(tr).find('input.pakai').removeAttr('data-required');
+		}
+	}, // end - cekMauPakai
+
+	cekNominal: function(elm) {
+		var tr = $(elm).closest('tr');
+
+		var pakai = numeral.unformat($(elm).val());
+		var sisa = numeral.unformat($(tr).find('td.sisa').text());
+
+		if ( pakai > sisa ) {
+			bootbox.alert('Nilai yang anda masukkan melebihi sisa saldo pelanggan.', function() {
+				$(elm).val(null);
+			});
+		}
+	}, // end - cekNominal
+
+	simpanSaldo: function() {
+		var err = 0;
+
+		$.map( $('.modal-body').find('[data-required=1]'), function(ipt) {
+			if ( empty($(ipt).val()) ) {
+				$(ipt).parent().addClass('has-error');
+				err++;
+			} else {
+				$(ipt).parent().removeClass('has-error');
+			}
+		});
+
+		if ( err > 0 ) {
+			bootbox.alert('Harap lengkapi yang anda pilih.');
+		} else {
+			var totSaldo = 0;
+			$.map( $('.modal-body').find('[data-required=1]'), function(ipt) {
+				var saldo = numeral.unformat($(ipt).val());
+				totSaldo += saldo;
+			});
+
+			$('input.saldo').val( numeral.formatDec(totSaldo) );
+
+			$('#modalSaldo').modal('hide');
+		}
+	}, // end - simpanSaldo
 
 	hit_total_uang: function() {
 		var jml_trf = numeral.unformat($('input.jml_transfer').val());
@@ -677,6 +771,17 @@ var bakul = {
 				return _detail;
 			});
 
+			var d_saldo = $.map( $(div).find('#modalSaldo table tbody tr.data'), function(tr) {
+				if ( $(tr).find('.check').is(':checked') ) {
+					var _d_saldo = {
+						'nomor': $(tr).find('td.nomor').text(),
+						'nominal': numeral.unformat( $(tr).find('input.pakai').val() )
+					};
+	
+					return _d_saldo;
+				}
+			});
+
 			if ( detail.length > 0 ) {
 				bootbox.confirm('Apakah anda yakin ingin menyimpan data pembayaran ?', function(result) {
 					if ( result ) {
@@ -698,7 +803,8 @@ var bakul = {
 							'perusahaan': $('select.perusahaan').val(),
 							'cn': cn,
 							'dn': dn,
-							'detail': detail
+							'detail': detail,
+							'd_saldo': d_saldo
 						};
 
 						var formData = new FormData();

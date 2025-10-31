@@ -17,7 +17,7 @@
 		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 		<div class="col-lg-3" style="padding: 0px 30px 0px 0px;">
 			<select class="unit" name="unit[]" multiple="multiple" width="100%" data-required="1">
-				<option value="all" > All </option>
+				<!-- <option value="all" > All </option> -->
 				<?php foreach ($unit as $key => $v_unit): ?>
 					<option value="<?php echo $v_unit['kode']; ?>" > <?php echo strtoupper($v_unit['nama']); ?> </option>
 				<?php endforeach ?>
@@ -30,7 +30,7 @@
 		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 		<div class="col-lg-3" style="padding: 0px 30px 0px 0px;">
 			<select class="form-control selectpicker perusahaan" data-live-search="true" type="text" data-required="1">
-				<option value="">Pilih Perusahaan</option>
+				<!-- <option value="">Pilih Perusahaan</option> -->
 				<?php if ( count($perusahaan) > 0 ): ?>
 					<?php foreach ($perusahaan as $k_perusahaan => $v_perusahaan): ?>
 						<?php
@@ -120,6 +120,53 @@
 		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 		<div class="col-lg-2 no-padding">
 			<input type="text" class="form-control text-right saldo" data-tipe="decimal" placeholder="Saldo" data-required="1" readonly>
+		</div>
+		<div class="col-lg-3" style="padding: 0px 0px 0px 10px;">
+			<button type="button" class="btn btn-default formSaldo" onclick="bakul.formSaldo(this)" disabled>Pilih Saldo</button>
+
+			<div class="modal" id="modalSaldo">
+				<div class="modal-dialog modal-xl" style="width: auto;">
+					<div class="modal-content">
+
+						<!-- Modal Header -->
+						<div class="modal-header">
+							<h4 class="modal-title">List Saldo</h4>
+							<!-- <button type="button" class="close" data-dismiss="modal">&times;</button> -->
+						</div>
+
+						<!-- Modal body -->
+						<div class="modal-body">
+							<small>
+								<table class="table table-bordered" style="margin-bottom: 0px;">
+									<thead>
+										<tr>
+											<th class="col-xs-2">Nomor</th>
+											<th class="col-xs-1">Tanggal</th>
+											<th class="col-xs-1">Unit</th>
+											<th class="col-xs-1">Saldo</th>
+											<th class="col-xs-1">Pakai</th>
+											<th class="col-xs-1">Sisa</th>
+											<th class="col-xs-2">Mau Pakai</th>
+											<th class="col-xs-1">Pilih</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td colspan="8">Data tidak ditemukan.</td>
+										</tr>
+									</tbody>
+								</table>
+							</small>
+						</div>
+
+						<!-- Modal footer -->
+						<div class="modal-footer">
+							<button type="button" class="btn btn-primary" onclick="bakul.simpanSaldo()"><i class="fa fa-save"></i> Simpan</button>
+						</div>
+
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<div class="col-lg-12"></div>
