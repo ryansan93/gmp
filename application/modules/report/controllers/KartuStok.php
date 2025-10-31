@@ -103,7 +103,7 @@ class KartuStok extends Public_Controller {
                 $jenis = 'voadip';
 
                 $sql_jenis_trans_masuk = "
-                    select kv.tgl_kirim as tanggal, kv.no_order as kode_trans, kv.no_order, 'ORDER' as jenis_trans from kirim_voadip kv -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tv.tgl_terima as tanggal, kv.no_order as kode_trans, kv.no_order, 'ORDER' as jenis_trans from kirim_voadip kv left join terima_voadip tv on tv.id_kirim_voadip = kv.id -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
@@ -115,7 +115,7 @@ class KartuStok extends Public_Controller {
                 ";
 
                 $sql_jenis_trans_keluar = "
-                    select kv.tgl_kirim as tanggal, kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tv.tgl_terima as tanggal, kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv left join terima_voadip tv on tv.id_kirim_voadip = kv.id -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
@@ -127,7 +127,7 @@ class KartuStok extends Public_Controller {
                 ";
             } else {
                 $sql_jenis_trans_masuk = "
-                    select kp.tgl_kirim as tanggal, kp.no_order as kode_trans, kp.no_order, 'ORDER' as jenis_trans from kirim_pakan kp -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tp.tgl_terima as tanggal, kp.no_order as kode_trans, kp.no_order, 'ORDER' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
@@ -139,7 +139,7 @@ class KartuStok extends Public_Controller {
                 ";
 
                 $sql_jenis_trans_keluar = "
-                    select kp.tgl_kirim as tanggal, kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tp.tgl_terima as tanggal, kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
@@ -351,8 +351,8 @@ class KartuStok extends Public_Controller {
                     ) jt
                     on
                         klwr.kode_trans = jt.no_order 
-                        -- and
-                        -- klwr.tanggal = jt.tanggal
+                        and
+                        klwr.tanggal = jt.tanggal
                 /* END - KELUAR */
             ) data
             left join

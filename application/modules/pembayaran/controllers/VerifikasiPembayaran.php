@@ -648,4 +648,29 @@ class VerifikasiPembayaran extends Public_Controller
 
         echo $res_view_html;
     }
+
+    public function tes() {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select rp.id, rp.tgl_realisasi from realisasi_pembayaran_det rpd
+            left join
+                realisasi_pembayaran rp 
+                on
+                    rpd.id_header = rp.id
+            where
+                rpd.transaksi = 'DOC' and 
+                rp.tgl_realisasi is not null
+            group by
+                rp.id, rp.tgl_realisasi
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, null, null);
+            }
+        }
+    }
 }
