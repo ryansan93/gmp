@@ -672,7 +672,7 @@ class RpahMobile extends Public_Controller {
             $end_date_fiskal = $d_conf['end_date'];
 
             $m_konfir = new \Model\Storage\Konfir_model();
-            $d_konfir = $m_konfir->where('noreg', $noreg)->whereBetween('tgl_panen', '>=', $start_date_fiskal)->get();
+            $d_konfir = $m_konfir->where('noreg', $noreg)->where('tgl_panen', '>=', $start_date_fiskal)->get();
 
             if ( $d_konfir->count() > 0 ) {
                 $d_konfir = $d_konfir->toArray();
