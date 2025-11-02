@@ -1435,59 +1435,59 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 573, 573, 2);
-
-        // $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select id from pembayaran_pelanggan pp
-        // ";
-        // $d_conf = $m_conf->hydrateRaw( $sql );
-
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
-
-        //     foreach ($d_conf as $k_rs => $v_rs) {
-        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
-        //     }
-        // }
-
-        // cetak_r( substr('INV/MJK/25/00001', 4, 3) );
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 780, 780, 2);
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select dpp.unit, pp.* from pembayaran_pelanggan pp 
-            left join
-                (
-                    select id_header, SUBSTRING(dpp.no_inv, 5, 3) as unit from det_pembayaran_pelanggan dpp group by id_header, SUBSTRING(dpp.no_inv, 5, 3)
-                ) dpp
-                on
-                    pp.id = dpp.id_header
-            where 
-                pp.lebih_kurang > 0
-            --	or
-            --	pp.saldo > 0 
-            order by 
-                pp.no_pelanggan asc, 
-                pp.tgl_bayar asc
+            select id from pembayaran_pelanggan pp
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         if ( $d_conf->count() > 0 ) {
             $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $k_pp => $v_pp) {
-                $m_sp = new \Model\Storage\SaldoPlg_model();
-                $nomor = $m_sp->getNextNomor('SLD/'.$v_pp['unit']);
-
-                $m_sp->nomor = $nomor;
-                $m_sp->tanggal = $v_pp['tgl_bayar'];
-                $m_sp->pembayaran_pelanggan_id = $v_pp['id'];
-                $m_sp->unit = $v_pp['unit'];
-                $m_sp->no_pelanggan = $v_pp['no_pelanggan'];
-                $m_sp->nominal = $v_pp['lebih_kurang'];
-                $m_sp->save();
+            foreach ($d_conf as $k_rs => $v_rs) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
             }
         }
+
+        // cetak_r( substr('INV/MJK/25/00001', 4, 3) );
+
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select dpp.unit, pp.* from pembayaran_pelanggan pp 
+        //     left join
+        //         (
+        //             select id_header, SUBSTRING(dpp.no_inv, 5, 3) as unit from det_pembayaran_pelanggan dpp group by id_header, SUBSTRING(dpp.no_inv, 5, 3)
+        //         ) dpp
+        //         on
+        //             pp.id = dpp.id_header
+        //     where 
+        //         pp.lebih_kurang > 0
+        //     --	or
+        //     --	pp.saldo > 0 
+        //     order by 
+        //         pp.no_pelanggan asc, 
+        //         pp.tgl_bayar asc
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
+
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
+
+        //     foreach ($d_conf as $k_pp => $v_pp) {
+        //         $m_sp = new \Model\Storage\SaldoPlg_model();
+        //         $nomor = $m_sp->getNextNomor('SLD/'.$v_pp['unit']);
+
+        //         $m_sp->nomor = $nomor;
+        //         $m_sp->tanggal = $v_pp['tgl_bayar'];
+        //         $m_sp->pembayaran_pelanggan_id = $v_pp['id'];
+        //         $m_sp->unit = $v_pp['unit'];
+        //         $m_sp->no_pelanggan = $v_pp['no_pelanggan'];
+        //         $m_sp->nominal = $v_pp['lebih_kurang'];
+        //         $m_sp->save();
+        //     }
+        // }
 
         // $m_conf = new \Model\Storage\Conf();
         // $sql = "

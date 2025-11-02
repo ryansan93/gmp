@@ -497,7 +497,7 @@ class BankStart extends Public_Controller {
                     (
                         select 
                             'kk' as tbl_name,
-                            ki.no_kk as tbl_id,
+                            nb.tbl_id as tbl_id,
                             ki.tgl_kk as tanggal,
                             ki.keterangan,
                             0 as debet,
@@ -508,6 +508,10 @@ class BankStart extends Public_Controller {
                             kk k
                             on
                                 ki.no_kk = k.no_kk
+                        left join
+                            no_bbk nb
+                            on
+                                k.no_kk = nb.kode
                         where 
                             ki.no_kk like '%BCA%' and 
                             ki.tgl_kk between '".$start_date."' and '".$end_date."'
@@ -516,7 +520,7 @@ class BankStart extends Public_Controller {
 
                         select 
                             'km' as tbl_name,
-                            ki.no_km as tbl_id,
+                            nb.tbl_id as tbl_id,
                             ki.tgl_km as tanggal,
                             ki.keterangan,
                             ki.nilai as debet,
@@ -527,6 +531,10 @@ class BankStart extends Public_Controller {
                             km k
                             on
                                 ki.no_km = k.no_km
+                        left join
+                            no_bbm nb
+                            on
+                                k.no_km = nb.kode
                         where 
                             ki.no_km like '%BCA%' and 
                             ki.tgl_km between '".$start_date."' and '".$end_date."'
