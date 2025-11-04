@@ -454,12 +454,12 @@ class SisaTagihanPerPelanggan extends Public_Controller {
                     mitra mitra
                     on
                         mm.id_mitra = mitra.id
-                left join
-                    (
-                        select max(id) as id, no_pelanggan, tgl_mulai_bayar from saldo_pelanggan group by no_pelanggan, tgl_mulai_bayar
-                    ) sp
-                    on
-                        drs.no_pelanggan = sp.no_pelanggan
+                -- left join
+                --     (
+                --         select max(id) as id, no_pelanggan, tgl_mulai_bayar from saldo_pelanggan group by no_pelanggan, tgl_mulai_bayar
+                --     ) sp
+                --     on
+                --         drs.no_pelanggan = sp.no_pelanggan
                 left join
                     (
                         select 
@@ -492,7 +492,7 @@ class SisaTagihanPerPelanggan extends Public_Controller {
                         pp.no_pelanggan = drs.no_pelanggan
                 where
                     rs.tgl_panen <= '".$tgl_max_do."' and
-                    (rs.tgl_panen >= sp.tgl_mulai_bayar or sp.tgl_mulai_bayar is null) and
+                    -- (rs.tgl_panen >= sp.tgl_mulai_bayar or sp.tgl_mulai_bayar is null) and
                     cast(SUBSTRING(drsi.no_inv, 5, 3) as varchar(5)) in ('".implode("', '", $kode_unit)."')
             ) as data_rs
             where
@@ -505,6 +505,7 @@ class SisaTagihanPerPelanggan extends Public_Controller {
                 data_rs.tgl_panen asc,
                 data_rs.no_inv asc
         ";
+        // cetak_r( $sql, 1 );
         $m_drs = new \Model\Storage\DetRealSJ_model();
         $d_drs = $m_drs->hydrateRaw($sql);
 

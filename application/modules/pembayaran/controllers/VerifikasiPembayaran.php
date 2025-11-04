@@ -665,6 +665,7 @@ class VerifikasiPembayaran extends Public_Controller
                 rp.id, rp.tgl_realisasi
             */
 
+            /*
             select
                 rp.id
             from realisasi_pembayaran rp 
@@ -680,6 +681,29 @@ class VerifikasiPembayaran extends Public_Controller
                     rp.id = rpd.id_header
             where 
                 rp.tgl_bayar >= '2025-10-01'
+            */
+
+            select rp.id, rp.tgl_bayar from realisasi_pembayaran_det rpd 
+            left join
+                (
+                    select kpop.*, kpopd.unit from konfirmasi_pembayaran_oa_pakan kpop
+                    left join
+                        (select id_header, SUBSTRING(no_sj, 4, 3) as unit from konfirmasi_pembayaran_oa_pakan_det group by id_header, SUBSTRING(no_sj, 4, 3)) kpopd
+                        on
+                            kpop.id = kpopd.id_header
+                ) kpop 
+                on
+                    rpd.no_bayar = kpop.nomor
+            left join
+                realisasi_pembayaran rp 
+                on
+                    rpd.id_header = rp.id
+            where
+                rpd.transaksi like '%oa pakan%' and
+                kpop.id is not null and
+                rp.tgl_bayar >= '2025-10-01'
+            order by
+                rp.tgl_bayar asc
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
