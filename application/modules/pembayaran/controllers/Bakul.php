@@ -285,6 +285,7 @@ class Bakul extends Public_Controller
         try {
             $m_conf = new \Model\Storage\Conf();
             $sql = "
+                /*
                 select sp.*, isnull(pps.nominal, 0) as pakai, (sp.nominal - isnull(pps.nominal, 0)) as sisa from saldo_plg sp
                 left join
                     (
@@ -298,6 +299,25 @@ class Bakul extends Public_Controller
                 order by
                     sp.tanggal asc,
                     sp.nomor asc
+                */
+
+                select
+                    dj.kode_trans as nomor,
+                    dj.tanggal,
+                    dj.unit,
+                    dj.pelanggan as no_pelanggan,
+                    dj.nominal,
+                    isnull(pps.nominal, 0) as pakai, (dj.nominal - isnull(pps.nominal, 0)) as sisa
+                from det_jurnal dj
+                left join
+                    (
+                        select nomor, sum(nominal) as nominal from pembayaran_pelanggan_saldo group by nomor
+                    ) pps
+                    on
+                        dj.kode_trans = pps.nomor
+                where
+                    dj.coa_asal = '23100.000' and
+                    dj.pelanggan = '".$params['pelanggan']."'
             ";
             $d_pps = $m_conf->hydrateRaw( $sql );
 
@@ -1071,26 +1091,32 @@ class Bakul extends Public_Controller
                     $m_sp->perusahaan = $data['perusahaan'];
                     $m_sp->save();
 
-                    $m_sp = new \Model\Storage\SaldoPlg_model();
-                    $nomor = $m_sp->getNextNomor('SLD/'.$unit);
-                    $m_sp->nomor = $nomor;
-                    $m_sp->tanggal = $data['tgl_bayar'];
-                    $m_sp->pembayaran_pelanggan_id = $id;
-                    $m_sp->unit = $unit;
-                    $m_sp->no_pelanggan = $data['pelanggan'];
-                    $m_sp->nominal = $data['lebih_kurang'];
-                    $m_sp->save();
+                    // $m_sp = new \Model\Storage\SaldoPlg_model();
+                    // $nomor = $m_sp->getNextNomor('SLD/'.$unit);
+                    // $m_sp->nomor = $nomor;
+                    // $m_sp->tanggal = $data['tgl_bayar'];
+                    // $m_sp->pembayaran_pelanggan_id = $id;
+                    // $m_sp->unit = $unit;
+                    // $m_sp->no_pelanggan = $data['pelanggan'];
+                    // $m_sp->nominal = $data['lebih_kurang'];
+                    // $m_sp->save();
                 }
 
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'pembayaran_pelanggan', ".$id.", NULL, 1";
                 // $d_conf = $m_conf->hydrateRaw( $sql );
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, null, 1);
+                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, null, 1);
 
 	        	$this->result['status'] = 1;
-	        	$this->result['content'] = array('id' => $id);
-	        	$this->result['message'] = 'Data berhasil di simpan.';
+                $this->result['content'] = array(
+                    'id' => $id,
+                    'id_old' => null,
+                    'status' => 1,
+                    'message' => 'Data berhasil di simpan.',
+                );
+	        	// $this->result['content'] = array('id' => $id);
+	        	// $this->result['message'] = 'Data berhasil di simpan.';
             }else {
 	        	$this->result['message'] = 'Error, segera hubungi tim IT.';
             }
@@ -1257,7 +1283,7 @@ class Bakul extends Public_Controller
             // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'pembayaran_pelanggan', ".$id.", ".$id.", 2";
             // $d_conf = $m_conf->hydrateRaw( $sql );
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
 
 			$_d_pp = $m_pp->where('id', $id)->with(['detail'])->first();
 
@@ -1300,7 +1326,13 @@ class Bakul extends Public_Controller
 			// $m_sp->save();
 
         	$this->result['status'] = 1;
-        	$this->result['message'] = 'Data berhasil di edit.';
+            $this->result['content'] = array(
+                'id' => $id,
+                'id_old' => $id,
+                'status' => 2,
+                'message' => 'Data berhasil di edit.',
+            );
+        	// $this->result['message'] = 'Data berhasil di edit.';
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
@@ -1342,8 +1374,8 @@ class Bakul extends Public_Controller
             $m_pps = new \Model\Storage\PembayaranPelangganSaldo_model();
             $m_pps->where('id_header', $id)->delete();
 
-            $m_sp = new \Model\Storage\SaldoPlg_model();
-            $m_sp->where('pembayaran_pelanggan_id', $id)->delete();
+            // $m_sp = new \Model\Storage\SaldoPlg_model();
+            // $m_sp->where('pembayaran_pelanggan_id', $id)->delete();
 
             $m_pp = new \Model\Storage\PembayaranPelanggan_model();
             $m_pp->where('id', $id)->delete();
@@ -1422,10 +1454,16 @@ class Bakul extends Public_Controller
             // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'pembayaran_pelanggan', ".$id.", ".$id.", 3";
             // $d_conf = $m_conf->hydrateRaw( $sql );
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 3);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 3);
 
         	$this->result['status'] = 1;
-        	$this->result['message'] = 'Data berhasil di hapus.';
+        	$this->result['content'] = array(
+                'id' => $id,
+                'id_old' => $id,
+                'status' => 3,
+                'message' => 'Data berhasil di hapus.',
+            );
+        	// $this->result['message'] = 'Data berhasil di hapus.';
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
@@ -1433,13 +1471,52 @@ class Bakul extends Public_Controller
         display_json( $this->result );
 	}
 
+    public function execJurnal() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $id_old = $params['id_old'];
+            $status = $params['status'];
+            $message = $params['message'];
+
+            $status_jurnal = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+
+            $this->result['status'] = $status_jurnal['status'];
+            $this->result['content'] = array('id' => (($status != 3) ? $id : ''));
+        	$this->result['message'] = $message;
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = "Gagal : " . $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
 	public function tes()
 	{
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 780, 780, 2);
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select id from pembayaran_pelanggan pp
+            -- select id from pembayaran_pelanggan pp where tgl_bayar >= '2025-10-01'
+            -- select id from pembayaran_pelanggan where id = 115
+            -- select id from pembayaran_pelanggan pp where tgl_bayar between '2025-10-01' and '2025-10-31' and lebih_kurang > 0 order by tgl_bayar asc
+
+            select dj.*, pp.jml_transfer, dj.nominal - pp.jml_transfer as selisih from
+            (
+                select dj.tbl_id, dj.tanggal, sum(nominal) as nominal from det_jurnal dj 
+                where 
+                    dj.coa_tujuan = '11130.003' and
+                    dj.tbl_name = 'pembayaran_pelanggan'
+                group by
+                    dj.tbl_id, dj.tanggal
+            ) dj
+            left join
+                pembayaran_pelanggan pp 
+                on
+                    dj.tbl_id = pp.id
+            where
+                dj.nominal - pp.jml_transfer <> 0
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -1447,7 +1524,7 @@ class Bakul extends Public_Controller
             $d_conf = $d_conf->toArray();
 
             foreach ($d_conf as $k_rs => $v_rs) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['tbl_id'], $v_rs['tbl_id'], 2);
             }
         }
 
@@ -1517,6 +1594,7 @@ class Bakul extends Public_Controller
         //         while ( $saldo > 0 ) {
         //             $m_conf = new \Model\Storage\Conf();
         //             $sql = "
+        //                 /*
         //                 select sp.*, (sp.nominal - isnull(pps.nominal, 0)) as sisa from saldo_plg sp
         //                 left join
         //                     (
@@ -1531,6 +1609,28 @@ class Bakul extends Public_Controller
         //                 order by
         //                     sp.tanggal asc,
         //                     sp.nomor asc
+        //                 */
+
+        //                 select
+        //                     dj.kode_trans as nomor,
+        //                     dj.tanggal,
+        //                     dj.unit,
+        //                     dj.pelanggan as no_pelanggan,
+        //                     dj.nominal,
+        //                     isnull(pps.nominal, 0) as pakai, 
+        //                     (dj.nominal - isnull(pps.nominal, 0)) as sisa
+        //                 from det_jurnal dj
+        //                 left join
+        //                     (
+        //                         select nomor, sum(nominal) as nominal from pembayaran_pelanggan_saldo group by nomor
+        //                     ) pps
+        //                     on
+        //                         dj.kode_trans = pps.nomor
+        //                 where
+        //                     dj.coa_asal = '23100.000' and
+        //                     dj.tanggal <= '".$v_pp['tgl_bayar']."' and
+        //                     dj.pelanggan = '".$v_pp['no_pelanggan']."' and
+        //                     dj.nominal > isnull(pps.nominal, 0)
         //             ";
         //             $d_pps = $m_conf->hydrateRaw( $sql );
     

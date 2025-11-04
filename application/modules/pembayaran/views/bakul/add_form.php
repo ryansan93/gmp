@@ -123,50 +123,6 @@
 		</div>
 		<div class="col-lg-3" style="padding: 0px 0px 0px 10px;">
 			<button type="button" class="btn btn-default formSaldo" onclick="bakul.formSaldo(this)" disabled>Pilih Saldo</button>
-
-			<div class="modal" id="modalSaldo">
-				<div class="modal-dialog modal-xl" style="width: auto;">
-					<div class="modal-content">
-
-						<!-- Modal Header -->
-						<div class="modal-header">
-							<h4 class="modal-title">List Saldo</h4>
-							<!-- <button type="button" class="close" data-dismiss="modal">&times;</button> -->
-						</div>
-
-						<!-- Modal body -->
-						<div class="modal-body">
-							<small>
-								<table class="table table-bordered" style="margin-bottom: 0px;">
-									<thead>
-										<tr>
-											<th class="col-xs-2">Nomor</th>
-											<th class="col-xs-1">Tanggal</th>
-											<th class="col-xs-1">Unit</th>
-											<th class="col-xs-1">Saldo</th>
-											<th class="col-xs-1">Pakai</th>
-											<th class="col-xs-1">Sisa</th>
-											<th class="col-xs-2">Mau Pakai</th>
-											<th class="col-xs-1">Pilih</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td colspan="8">Data tidak ditemukan.</td>
-										</tr>
-									</tbody>
-								</table>
-							</small>
-						</div>
-
-						<!-- Modal footer -->
-						<div class="modal-footer">
-							<button type="button" class="btn btn-primary" onclick="bakul.simpanSaldo()"><i class="fa fa-save"></i> Simpan</button>
-						</div>
-
-					</div>
-				</div>
-			</div>
 		</div>
 	</div>
 	<div class="col-lg-12"></div>
@@ -277,6 +233,49 @@
 	<div class="col-lg-12 no-padding"><hr></div>
 	<div class="col-lg-12 no-padding">
 		<button type="button" class="btn btn-primary pull-right" onclick="bakul.save()"><i class="fa fa-save"></i> Simpan</button>
+	</div>
+
+	<div class="modal" id="modalSaldo">
+		<div class="modal-dialog modal-xl" style="width: auto;">
+			<div class="modal-content">
+
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title">List Saldo</h4>
+					<!-- <button type="button" class="close" data-dismiss="modal">&times;</button> -->
+				</div>
+
+				<!-- Modal body -->
+				<div class="modal-body">
+					<small>
+						<table class="table table-bordered" style="margin-bottom: 0px;">
+							<thead>
+								<tr>
+									<th class="col-xs-2">Nomor</th>
+									<th class="col-xs-1">Tanggal</th>
+									<th class="col-xs-1">Unit</th>
+									<th class="col-xs-1">Saldo</th>
+									<th class="col-xs-1">Pakai</th>
+									<th class="col-xs-1">Sisa</th>
+									<th class="col-xs-2">Mau Pakai</th>
+									<th class="col-xs-1">Pilih</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td colspan="8">Data tidak ditemukan.</td>
+								</tr>
+							</tbody>
+						</table>
+					</small>
+				</div>
+
+				<!-- Modal footer -->
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary" onclick="bakul.simpanSaldo()"><i class="fa fa-save"></i> Simpan</button>
+				</div>
+			</div>
+		</div>
 	</div>
 <?php else: ?>
 	<h3>Detail Pembayaran</h3>

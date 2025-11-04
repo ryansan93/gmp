@@ -652,6 +652,7 @@ class VerifikasiPembayaran extends Public_Controller
     public function tes() {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
+            /*
             select rp.id, rp.tgl_realisasi from realisasi_pembayaran_det rpd
             left join
                 realisasi_pembayaran rp 
@@ -662,6 +663,23 @@ class VerifikasiPembayaran extends Public_Controller
                 rp.tgl_realisasi is not null
             group by
                 rp.id, rp.tgl_realisasi
+            */
+
+            select
+                rp.id
+            from realisasi_pembayaran rp 
+            left join
+                (
+                    select
+                        id_header, sum(transfer) as jml_transfer, max(id) as id, transaksi
+                    from realisasi_pembayaran_det rpd
+                    group by
+                        id_header, transaksi
+                ) rpd
+                on
+                    rp.id = rpd.id_header
+            where 
+                rp.tgl_bayar >= '2025-10-01'
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -672,5 +690,7 @@ class VerifikasiPembayaran extends Public_Controller
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, null, null);
             }
         }
+
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 160, 160, 2, null, null);
     }
 }

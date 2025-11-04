@@ -227,7 +227,7 @@ class KasStart extends Public_Controller {
                                 sb.coa as kas
                             from saldo_bulanan sb 
                             where
-                                sb.tgl_trans = '".$start_date_new."'
+                                sb.tanggal = '".$start_date_new."'
         
                             union all
         

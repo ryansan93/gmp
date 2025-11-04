@@ -80,7 +80,9 @@
         <?php if ( !empty($kode_kas) && $kode_kas <> $data[$key+1]['kas'] ) { ?>
             <?php // $gt_saldo += $saldo_gdg; $gt_jml_saldo += $jml_saldo_gdg; ?>
             <tr class="biru">
-                <td colspan="5"><b>Saldo</b></td>
+                <td colspan="3"><b>Saldo</b></td>
+                <td class="text-right"><b><?php echo ($gt_debet >= 0) ? angkaDecimal($gt_debet) : '('.angkaDecimal(abs($gt_debet)).')'; ?></b></td>
+                <td class="text-right"><b><?php echo ($gt_kredit >= 0) ? angkaDecimal($gt_kredit) : '('.angkaDecimal(abs($gt_kredit)).')'; ?></b></td>
                 <td class="text-right"><b><?php echo ($saldo >= 0) ? angkaDecimal($saldo) : '('.angkaDecimal(abs($saldo)).')'; ?></b></td>
             </tr>
             <tr>

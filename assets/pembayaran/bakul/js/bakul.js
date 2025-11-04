@@ -435,6 +435,7 @@ var bakul = {
         };
 
 		$('#modalSaldo').modal('show');
+		$('#modalSaldo').removeAttr('aria-hidden');
 
 		if ( $('.modal-body table tbody tr.data').length == 0 ) {
 			$.ajax({
@@ -508,6 +509,7 @@ var bakul = {
 			$('input.saldo').val( numeral.formatDec(totSaldo) );
 
 			$('#modalSaldo').modal('hide');
+			$('#modalSaldo').removeAttr('aria-hidden');
 		}
 	}, // end - simpanSaldo
 
@@ -833,19 +835,9 @@ var bakul = {
 				showLoading();
 			},
 			success : function(data){
-				hideLoading();
+				// hideLoading();
                 if ( data.status == 1 ) {
-                    bootbox.alert(data.message, function(){
-                    	var start_date = $('div#StartDate_PP input').val();
-						var end_date = $('div#EndDate_PP input').val();
-						if ( !empty(start_date) && !empty(end_date) ) {
-							bakul.get_list_pembayaran();
-						}
-                    	bakul.load_form(data.content.id);
-
-						cn = [];
-						dn = [];
-                    });
+					bakul.execJurnal( data.content );
                 } else {
                     bootbox.alert(data.message);
                 }
@@ -939,16 +931,17 @@ var bakul = {
 				showLoading();
 			},
 			success : function(data){
-				hideLoading();
+				// hideLoading();
                 if ( data.status == 1 ) {
-                    bootbox.alert(data.message, function(){
-                    	var start_date = $('div#StartDate_PP input').val();
-						var end_date = $('div#EndDate_PP input').val();
-						if ( !empty(start_date) && !empty(end_date) ) {
-							bakul.get_list_pembayaran();
-						}
-                    	bakul.load_form();
-                    });
+					bakul.execJurnal( data.content );
+                    // bootbox.alert(data.message, function(){
+                    // 	var start_date = $('div#StartDate_PP input').val();
+					// 	var end_date = $('div#EndDate_PP input').val();
+					// 	if ( !empty(start_date) && !empty(end_date) ) {
+					// 		bakul.get_list_pembayaran();
+					// 	}
+                    // 	bakul.load_form();
+                    // });
                 } else {
                     bootbox.alert(data.message);
                 }
@@ -973,16 +966,9 @@ var bakul = {
 						showLoading();
 					},
 					success : function(data){
-						hideLoading();
+						// hideLoading();
 		                if ( data.status == 1 ) {
-		                    bootbox.alert(data.message, function(){
-		                    	var start_date = $('div#StartDate_PP input').val();
-								var end_date = $('div#EndDate_PP input').val();
-								if ( !empty(start_date) && !empty(end_date) ) {
-									bakul.get_list_pembayaran();
-								}
-		                    	bakul.load_form();
-		                    });
+							bakul.execJurnal( data.content );
 		                } else {
 		                    bootbox.alert(data.message);
 		                }
@@ -991,6 +977,39 @@ var bakul = {
 			}
 		});
 	}, // end - delete
+
+	execJurnal: function(content) {
+		// showLoading('Proses Jurnal . . .');
+		$.ajax({
+			url :'pembayaran/Bakul/execJurnal',
+			data : {
+				'params': content
+			},
+			dataType : 'JSON',
+			type : 'POST',
+			beforeSend : function(){
+			},
+			success : function(data){
+				hideLoading();
+				if ( data.status == 1 ) {
+					bootbox.alert(data.message, function(){
+                    	var start_date = $('div#StartDate_PP input').val();
+						var end_date = $('div#EndDate_PP input').val();
+						if ( !empty(start_date) && !empty(end_date) ) {
+							bakul.get_list_pembayaran();
+						}
+
+                    	bakul.load_form(data.content.id);
+
+						cn = [];
+						dn = [];
+                    });
+				} else {
+					bootbox.alert(data.message);
+				}
+			}
+		});
+	}, // end - execJurnal
 };
 
 bakul.start_up();
