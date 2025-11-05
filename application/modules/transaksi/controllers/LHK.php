@@ -1860,16 +1860,21 @@ class LHK extends Public_Controller
         }
     }
 
-    public function jurnalTanpaStok($start_date = '2025-10-01') {
+    public function jurnalTanpaStok($start_date = '2025-10-01', $noreg = null) {
+        $sql_noreg = null;
+        if ( !empty($noreg) ) {
+            $sql_noreg = "where data.noreg = '".$noreg."'";
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select data.*, saj.path from 
             (
-                select l.id, 'lhk' as tipe from lhk l where l.tanggal >= '".$start_date."'
+                select l.id, 'lhk' as tipe, l.noreg from lhk l where l.tanggal >= '".$start_date."'
     
                 union all
     
-                select tp.id, 'terima_pakan' as tipe from terima_pakan tp
+                select tp.id, 'terima_pakan' as tipe, kp.tujuan as noreg from terima_pakan tp
                 left join
                     kirim_pakan kp
                     on
@@ -1895,6 +1900,7 @@ class LHK extends Public_Controller
                 ) saj
                 on
                     saj.tbl_name = data.tipe
+            ".$sql_noreg."
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
         if ( $d_conf->count() > 0 ) {

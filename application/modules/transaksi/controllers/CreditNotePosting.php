@@ -396,7 +396,7 @@ class CreditNotePosting extends Public_Controller {
                 $m_cnd->save();
             }
 
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $data['tgl_bayar']);
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $m_cn->id, null, 1);
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_cn, $deskripsi_log);
@@ -438,7 +438,7 @@ class CreditNotePosting extends Public_Controller {
             $m_cn = new \Model\Storage\CnPost_model();
             $d_cn = $m_cn->where('id', $params['id'])->first();
 
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $data['tgl_bayar']);
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 2);
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_cn, $deskripsi_log);
@@ -465,7 +465,7 @@ class CreditNotePosting extends Public_Controller {
             
             $m_cn->where('id', $params['id'])->delete();
 
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $data['tgl_bayar']);
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 3);
 
             $deskripsi_log = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_cn, $deskripsi_log);
@@ -477,5 +477,20 @@ class CreditNotePosting extends Public_Controller {
         }
 
         display_json( $this->result );
+    }
+
+    public function tes() {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from cn_post
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+            }
+        }
     }
 }
