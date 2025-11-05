@@ -565,7 +565,7 @@ class PenerimaanDocMobile extends Public_Controller {
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", NULL, 1";
                 // $m_conf->hydrateRaw( $sql );
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, null, 1);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
     
                 $deskripsi_log_terima_doc = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log_terima_doc);

@@ -645,7 +645,7 @@ class PenerimaanVoadipMobile extends Public_Controller {
                 'tanggal' => $params['tiba'],
                 'delete' => 0,
                 'message' => 'Data Penerimaan Voadip berhasil di simpan.',
-                'status_jurnal' => 1
+                'status_jurnal' => 2
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();

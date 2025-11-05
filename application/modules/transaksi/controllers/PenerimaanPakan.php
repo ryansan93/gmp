@@ -687,7 +687,7 @@ class PenerimaanPakan extends Public_Controller {
                 'tanggal' => $params['tgl_terima'],
                 'delete' => 0,
                 'message' => 'Data Penerimaan Pakan berhasil di simpan.',
-                'status_jurnal' => 1
+                'status_jurnal' => 2
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -1349,9 +1349,9 @@ class PenerimaanPakan extends Public_Controller {
 
     public function tes()
     {
-        $id = '4429';
-        $id_old = '4429';
-        $tanggal = '2025-10-31';
+        $id = '5053';
+        $id_old = '5053';
+        $tanggal = '2025-11-03';
 
         $conf = new \Model\Storage\Conf();
         $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
