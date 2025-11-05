@@ -497,7 +497,7 @@ var s_loading = null;
 function showLoading(pesan = "Please wait . . . "){
     if (s_loading == null ) {
         s_loading = bootbox.dialog({
-            message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> '+ pesan +'</div>',
+            message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> <span class="txt-msg-loading">'+ pesan +'</span></div>',
             closeButton : false,
         });
     }

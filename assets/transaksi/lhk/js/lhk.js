@@ -744,12 +744,13 @@ var lhk = {
 								showLoading();
 							},
 							success: function(data) {
-								hideLoading();
 								if ( data.status == 1 ) {
-									bootbox.alert(data.message, function(){
-										lhk.load_form(data.content.id, null, 'transaksi');
-									});
+									// bootbox.alert(data.message, function(){
+									// 	lhk.load_form(data.content.id, null, 'transaksi');
+									// });
+									lhk.execHitStokDoc(data.content);
 								} else {
+									hideLoading();
 									bootbox.alert(data.message);
 								}
 							}
@@ -941,12 +942,13 @@ var lhk = {
 								showLoading();
 							},
 							success: function(data) {
-								hideLoading();
 								if ( data.status == 1 ) {
-									bootbox.alert(data.message, function(){
-										lhk.load_form(data.content.id, null, 'transaksi');
-									});
+									// bootbox.alert(data.message, function(){
+									// 	lhk.load_form(data.content.id, null, 'transaksi');
+									// });
+									lhk.execHitStokDoc(data.content);
 								} else {
+									hideLoading();
 									bootbox.alert(data.message);
 								}
 							}
@@ -972,17 +974,17 @@ var lhk = {
 		            type: 'POST',
 	            	dataType: 'JSON',
 		            beforeSend: function() {
-		                showLoading();
+		                showLoading('Proses hapus data . . .');
 		            },
 		            success: function(data) {
-		            	hideLoading();
-
-		                if ( data.status == 1 ) {
-		                    bootbox.alert(data.message, function(){
-		                    	lhk.load_form(null, null, 'transaksi');
-		                    	$('button.tampilkan_riwayat').click();
-		                    });
-		                } else {
+						if ( data.status == 1 ) {
+							// bootbox.alert(data.message, function(){
+							// 	lhk.load_form(null, null, 'transaksi');
+							// 	$('button.tampilkan_riwayat').click();
+							// });
+							lhk.execHitStokDoc(data.content);
+						} else {
+							hideLoading();
 		                    bootbox.alert(data.message);
 		                }
 		            }
@@ -990,6 +992,78 @@ var lhk = {
 			}
 		});
 	}, // end - delete
+
+	execHitStokDoc: function(content) {
+		$.ajax({
+			url: 'transaksi/LHK/execHitStokDoc',
+			data: {'params': content},
+			type: 'POST',
+			dataType: 'JSON',
+			beforeSend: function() {
+				// showLoading('Hitung stok doc . . .');
+				$('span.txt-msg-loading').text('Hitung stok doc . . .');
+			},
+			success: function(data) {
+				if ( data.status == 1 ) {
+					lhk.execHitStokPakan(data.content);
+				} else {
+					hideLoading();
+					bootbox.alert(data.message);
+				}
+			}
+		});
+	}, // end - execHitStokDoc
+
+	execHitStokPakan: function(content) {
+		$.ajax({
+			url: 'transaksi/LHK/execHitStokPakan',
+			data: {'params': content},
+			type: 'POST',
+			dataType: 'JSON',
+			beforeSend: function() {
+				// showLoading('Hitung stok pakan . . .');
+				$('span.txt-msg-loading').text('Hitung stok pakan . . .');
+			},
+			success: function(data) {
+				if ( data.status == 1 ) {
+					lhk.execInsertJurnal(data.content);
+				} else {
+					hideLoading();
+					bootbox.alert(data.message);
+				}
+			}
+		});
+	}, // end - execHitStokPakan
+
+	execInsertJurnal: function(content) {
+		$.ajax({
+			url: 'transaksi/LHK/execInsertJurnal',
+			data: {'params': content},
+			type: 'POST',
+			dataType: 'JSON',
+			beforeSend: function() {
+				// showLoading('Insert Jurnal . . .');
+				$('span.txt-msg-loading').text('Insert Jurnal . . .');
+			},
+			success: function(data) {
+				hideLoading();
+
+				if ( data.status == 1 ) {
+					console.log('jurnal berhasil');
+					bootbox.alert(data.content.message, function(){
+						if ( data.content.status != 3 ) {
+							lhk.load_form(data.content.id, null, 'transaksi');
+						} else {
+							lhk.load_form(null, null, 'transaksi');
+							$('button.tampilkan_riwayat').click();
+						}
+					});
+				} else {
+					bootbox.alert(data.message);
+				}
+			}
+		});
+	}, // end - execInsertJurnal
 
 	compress_img: function(elm) {
 		showLoading();

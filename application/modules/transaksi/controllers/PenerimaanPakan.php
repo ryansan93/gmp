@@ -1349,14 +1349,36 @@ class PenerimaanPakan extends Public_Controller {
 
     public function tes()
     {
-        $id = '5053';
-        $id_old = '5053';
-        $tanggal = '2025-11-03';
+        $id = '2926';
+        $id_old = '2926';
+        $tanggal = '2025-10-19';
 
         $conf = new \Model\Storage\Conf();
         $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
         $d_conf = $conf->hydrateRaw($sql);
-
+        
         Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+        
+        // $conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select tp.id from terima_pakan tp
+        //     left join
+        //         kirim_pakan kp
+        //         on
+        //             tp.id_kirim_pakan = kp.id
+        //     where 
+        //         kp.jenis_kirim = 'opkp' and 
+        //         tp.tgl_terima > '2025-09-30' 
+        //     order by tp.tgl_terima asc
+        // ";
+        // $d_conf = $conf->hydrateRaw($sql);
+
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
+
+        //     foreach ($d_conf as $key => $value) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+        //     }
+        // }
     }
 }

@@ -1096,25 +1096,32 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 1, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 1, null, null";
+            // $d_conf = $conf->hydrateRaw($sql);
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 1, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 1, null, null";
+            // $d_conf = $conf->hydrateRaw($sql);
 
-            $id = $d_lhk->id;
-            $id_old = null;
+            // $id = $d_lhk->id;
+            // $id_old = null;
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
 
             $deskripsi_log = 'di-simpan oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_lhk, $deskripsi_log);
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil di simpan.';
-            $this->result['content'] = array('id' => $id_lhk);
+            // $this->result['content'] = array('id' => $id_lhk);
+            $this->result['content'] = array(
+                'id' => $id_lhk,
+                'tanggal' => $params['tanggal'],
+                'noreg' => $params['noreg'],
+                'status' => 2,
+                'message' => 'Data berhasil di simpan.'
+            );
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -1406,25 +1413,32 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
+            // $d_conf = $conf->hydrateRaw($sql);
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
+            // $d_conf = $conf->hydrateRaw($sql);
 
-            $id = $d_lhk->id;
-            $id_old = $d_lhk->id;
+            // $id = $d_lhk->id;
+            // $id_old = $d_lhk->id;
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_lhk, $deskripsi_log);
 
             $this->result['status'] = 1;
-            $this->result['message'] = 'Data berhasil di update.';
-            $this->result['content'] = array('id' => $params['id']);
+            // $this->result['message'] = 'Data berhasil di update.';
+            // $this->result['content'] = array('id' => $params['id']);
+            $this->result['content'] = array(
+                'id' => $params['id'],
+                'tanggal' => $d_lhk_by_id->tanggal,
+                'noreg' => $params['noreg'],
+                'status' => 2,
+                'message' => 'Data berhasil di update.'
+            );
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -1441,17 +1455,17 @@ class LHK extends Public_Controller
 
             $id_lhk = $id;
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
+            // $d_conf = $conf->hydrateRaw($sql);
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
+            // $d_conf = $conf->hydrateRaw($sql);
 
-            $id_old = $d_lhk->id;
+            // $id_old = $d_lhk->id;
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 3);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 3);
 
             /* SISA PAKAN */
             $folder_name = $id_lhk;
@@ -1506,7 +1520,14 @@ class LHK extends Public_Controller
             Modules::run( 'base/event/delete', $d_lhk, $deskripsi_log);
 
             $this->result['status'] = 1;
-            $this->result['message'] = 'Data berhasil di hapus.';
+            // $this->result['message'] = 'Data berhasil di hapus.';
+            $this->result['content'] = array(
+                'id' => $id,
+                'tanggal' => $d_lhk->tanggal,
+                'noreg' => $d_lhk->noreg,
+                'status' => 3,
+                'message' => 'Data berhasil di hapus.'
+            );
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -1563,9 +1584,7 @@ class LHK extends Public_Controller
 
         try {
             $id = $params['id'];
-            $id_old = $params['id_old'];
-            $tanggal = $params['tanggal'];
-            $noreg = $params['noreg'];
+            $id_old = $params['id'];
             $status = $params['status'];
 
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
