@@ -258,16 +258,24 @@ var App = {
     }, // end - setBindSHA1
 
     setTutupBulan : function(){
+        var pathname = window.location.pathname;
+
+        var params = {
+            'url': pathname
+        };
+
         $.ajax({
             url : 'base/TutupBulan/getData',
-            data : {},
+            data : {
+                'params': params
+            },
             type : 'POST',
             dataType : 'JSON',
             beforeSend : function(){},
             success : function(data){
                 if ( !empty( data.content ) ) {
                     $.map( $('.lock_date_fiskal'), function(d) {
-                        $(d).data("DateTimePicker").minDate(moment(new Date(data.content.minDate)));
+                        $(d).data("DateTimePicker").minDate(moment(new Date(data.content.minDate)).startOf('day'));
                     });
 
                     $.map( $('.lock_btn_fiskal'), function(div) {

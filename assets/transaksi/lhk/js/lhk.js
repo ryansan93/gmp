@@ -102,7 +102,8 @@ var lhk = {
 
 		$('.date').datetimepicker({
 			locale: 'id',
-            format: 'DD MMM Y'
+            format: 'DD MMM Y',
+			useCurrent: true
 		});
 
 		$.map( $('.date'), function(ipt) {

@@ -95,17 +95,40 @@ class TutupBulan extends Public_Controller
                         ppl.nik = rs.sampling
             ) data
             left join
+                (
+                    select od1.* from order_doc od1
+                    right join
+                        (select max(id) as id, no_order from order_doc group by no_order) od2
+                        on
+                            od1.id = od2.id
+                ) od
+                on
+                    od.noreg = data.noreg
+            left join
+                (
+                    select td1.* from terima_doc td1
+                    right join
+                        (select max(id) as id, no_order from terima_doc group by no_order) td2
+                        on
+                            td1.id = td2.id
+                ) td
+                on
+                    td.no_order = od.no_order
+            left join
                 (select * from lhk where tanggal = '".$end_date."') l
                 on
                     l.noreg = data.noreg
             where
-                l.id is null
+                l.id is null and
+                td.id is not null and
+                td.datang < '".next_date($end_date)."'
             order by
                 data.unit asc,
                 data.nama_ppl asc,
                 data.nama_mitra asc,
                 data.kandang asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
