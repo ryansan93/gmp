@@ -1041,12 +1041,12 @@ class PenerimaanVoadip extends Public_Controller {
 
     public function tes()
     {
-        $conf = new \Model\Storage\Conf();
-        $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '1665', '2025-10-11', 2, null, null";
-        $d_conf = $conf->hydrateRaw($sql);
+        // $conf = new \Model\Storage\Conf();
+        // $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '1665', '2025-10-11', 2, null, null";
+        // $d_conf = $conf->hydrateRaw($sql);
 
-        $id = '1665';
-        $id_old = '1665';
+        $id = '1625';
+        $id_old = '1625';
 
         Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
     }

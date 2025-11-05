@@ -91,6 +91,20 @@ class RealisasiChickIn extends Public_Controller {
                 k.kab_kota
             from rdim_submit rs
             left join
+                kandang kdg
+                on
+                    rs.kandang = kdg.id
+            left join
+                (
+                    select mm1.* from mitra_mapping mm1
+                    right join
+                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        on
+                            mm1.id = mm2.id
+                ) mm
+                on
+                    rs.nim = mm.nim
+            left join
                 (
                     select k.*, l_kec.nama as kecamatan, l_kab_kota.nama as kab_kota, l_prov.nama as provinsi from kandang k 
                     left join
@@ -107,25 +121,16 @@ class RealisasiChickIn extends Public_Controller {
                             l_kab_kota.induk = l_prov.id
                 ) k
                 on
-                    rs.kandang = k.id
-            left join
-                wilayah w
-                on
-                    k.unit = w.id
-            left join
-                (
-                    select mm1.* from mitra_mapping mm1
-                    right join
-                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                        on
-                            mm1.id = mm2.id
-                ) mm
-                on
-                    rs.nim = mm.nim
+                    kdg.kandang = k.kandang and
+                    mm.id = k.mitra_mapping
             left join
                 mitra m
                 on
                     mm.mitra = m.id
+            left join
+                wilayah w
+                on
+                    k.unit = w.id
             left join
                 (
                     select

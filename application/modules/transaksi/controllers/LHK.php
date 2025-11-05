@@ -1514,6 +1514,71 @@ class LHK extends Public_Controller
         display_json( $this->result );
     }
 
+    public function execHitStokDoc() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $tanggal = $params['tanggal'];
+            $noreg = $params['noreg'];
+            $status = $params['status'];
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$tanggal."', ".$status.", '".$noreg."', null";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function execHitStokPakan() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $tanggal = $params['tanggal'];
+            $noreg = $params['noreg'];
+            $status = $params['status'];
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', ".$status.", '".$noreg."', null";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function execInsertJurnal() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $id_old = $params['id_old'];
+            $tanggal = $params['tanggal'];
+            $noreg = $params['noreg'];
+            $status = $params['status'];
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function deleteDirectory($dir) {
         system('rm -rf -- ' . escapeshellarg($dir), $retval);
         return $retval == 0; // UNIX commands return zero on success
@@ -1906,12 +1971,17 @@ class LHK extends Public_Controller
         if ( $d_conf->count() > 0 ) {
             $d_conf = $d_conf->toArray();
 
+            $idx = 1;
             foreach ($d_conf as $key => $value) {
                 $id = $value['id'];
                 $id_old = $value['id'];
                 $path = $value['path'];
 
+                cetak_r( $idx.' - '.$id.' ('.$path.')' );
+
                 Modules::run( 'base/InsertJurnal/exec', $path, $id, $id_old, 2);
+
+                $idx++;
             }
         }
     }

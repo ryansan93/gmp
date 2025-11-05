@@ -853,28 +853,21 @@ class OngkosAngkutPindahPakan extends Public_Controller
 
     public function tes()
     {
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 26, 26, 2);
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select 
-                opp.* 
-            from oa_pindah_pakan opp
-            right join
-                (
-                    select tp.tgl_terima, kp.no_sj, kp.jenis_kirim, cast(kp.asal as varchar(11)) as asal, cast(kp.tujuan as varchar(11)) as tujuan, kp.no_order as kode_trans from kirim_pakan kp
-                    right join
-                        terima_pakan tp
-                        on
-                            kp.id = tp.id_kirim_pakan
-            
-                    union all
-            
-                    select rp.tgl_retur as tgl_terima, rp.no_retur as no_sj, 'opkp' as jenis_kirim, cast(rp.id_asal as varchar(11)) as asal, cast(rp.id_tujuan as varchar(11)) as tujuan, rp.no_order as kode_trans from retur_pakan rp
-                ) _data
+            select opp.* from oa_pindah_pakan opp
+            left join
+                kirim_pakan kp
                 on
-                    opp.no_sj = _data.no_sj
+                    opp.no_sj = kp.no_sj 
+            left join
+                terima_pakan tp 
+                on
+                    tp.id_kirim_pakan = kp.id
             where
-                _data.tgl_terima between '2023-10-01' and '2023-10-31' and
-                opp.id is not null
+                tp.tgl_terima >= '2025-10-01'
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -882,9 +875,9 @@ class OngkosAngkutPindahPakan extends Public_Controller
             $d_conf = $d_conf->toArray();
 
             foreach ($d_conf as $key => $value) {
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'OA PAKAN', '".$value['no_sj']."', NULL, ".$value['ongkos_angkut'].", 'oa_pindah_pakan', ".$value['id'].", ".$value['id'].", 2";
-                $m_conf->hydrateRaw( $sql );
+                cetak_r($value['id']);
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
             }
         }
     }
