@@ -209,7 +209,7 @@ class BankMasuk extends Public_Controller {
             
             if ( !isset($params['no_km']) || empty($params['no_km']) ) {
                 // $no_km = $m_nbbm->getKode('BBM');
-                $no_km = $m_nbbm->getKodeMasuk($params['kode']);
+                $no_km = $m_nbbm->getKodeMasuk($params['kode'], $params['tgl_km']);
     
                 $m_nbbm->tbl_name = $m_km->getTable();
                 $m_nbbm->tbl_id = $no_km;

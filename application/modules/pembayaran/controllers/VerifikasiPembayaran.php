@@ -498,7 +498,7 @@ class VerifikasiPembayaran extends Public_Controller
             $d_coa = $m_coa->where('coa', $d_rp->coa_bank)->orderBy('id', 'desc')->first();
 
             $m_nbbk = new \Model\Storage\NoBbk_model();
-            $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode);
+            $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
 
             $m_nbbk->tbl_name = $m_rp->getTable();
             $m_nbbk->tbl_id = $d_rp->nomor;
@@ -560,7 +560,7 @@ class VerifikasiPembayaran extends Public_Controller
 
             if ( !$d_nbbk ) {
                 $m_nbbk = new \Model\Storage\NoBbk_model();
-                $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode);
+                $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
                 $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->update(
                     array('kode' => $no_kk)
                 );

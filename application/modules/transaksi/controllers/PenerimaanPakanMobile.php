@@ -646,17 +646,38 @@ class PenerimaanPakanMobile extends Public_Controller {
         display_json($this->result);
     }
 
+    public function execInsertKonfirmasi()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $status = $params['status'];
+            $delete = ($status == 3) ? 1 : 0;
+
+            $this->insertKonfirmasi( $id, $delete );
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function hitungStokByTransaksi()
     {
         $params = $this->input->post('params');
 
-        $id = $params['id'];
-        $tanggal = $params['tanggal'];
-        $delete = $params['delete'];
-        $message = $params['message'];
-        $status_jurnal = $params['status_jurnal'];
-
+        
         try {
+            $id = $params['id'];
+            $tanggal = $params['tanggal'];
+            $delete = $params['delete'];
+            $message = $params['message'];
+            $status_jurnal = $params['status_jurnal'];
+            
             $noreg1 = null;
             $noreg2 = null;
 
@@ -693,25 +714,66 @@ class PenerimaanPakanMobile extends Public_Controller {
                 $noreg2 = $d_conf['noreg2'];
             }
 
-            $this->insertKonfirmasi( $id, $delete );
+            // $this->insertKonfirmasi( $id, $delete );
 
             $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
             $d_conf = $conf->hydrateRaw($sql);
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
+            // $d_conf = $conf->hydrateRaw($sql);
 
-            $id_old = null;
-            if ( $status_jurnal <> 1 ) {
-                $id_old = $id;
-            }
+            // $id_old = null;
+            // if ( $status_jurnal <> 1 ) {
+            //     $id_old = $id;
+            // }
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
             $this->result['status'] = 1;
             $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function execHitStokSiklus() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $tanggal = $params['tanggal'];
+            $noreg = $params['noreg'];
+            $status = $params['status'];
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg."', null";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function execInsertJurnal() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $id_old = $params['id'];
+            $status = $params['status'];
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }

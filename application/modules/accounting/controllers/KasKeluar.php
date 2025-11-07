@@ -199,7 +199,7 @@ class KasKeluar extends Public_Controller {
             $m_kk = new \Model\Storage\Kk_model();
 
             // $no_kk = $m_nbbk->getKode('BBK');
-            $no_kk = $m_nbbk->getKodeKeluar($params['kode']);
+            $no_kk = $m_nbbk->getKodeKeluar($params['kode'], $params['tgl_kk']);
 
             $m_nbbk->tbl_name = $m_kk->getTable();
             $m_nbbk->tbl_id = $no_kk;

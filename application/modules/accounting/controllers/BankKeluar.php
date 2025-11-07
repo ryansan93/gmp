@@ -198,7 +198,7 @@ class BankKeluar extends Public_Controller {
             $m_kk = new \Model\Storage\Kk_model();
 
             // $no_kk = $m_nbbk->getKode('BBK');
-            $no_kk = $m_nbbk->getKodeKeluar($params['kode']);
+            $no_kk = $m_nbbk->getKodeKeluar($params['kode'], $params['tgl_kk']);
 
             $m_nbbk->tbl_name = $m_kk->getTable();
             $m_nbbk->tbl_id = $no_kk;
@@ -492,9 +492,57 @@ class BankKeluar extends Public_Controller {
 
     public function tes()
     {
-        $m_po = new \Model\Storage\Po_model();
-        $no_po = $m_po->getNextNoPo();
+        cetak_r( substr(str_replace('-', '', '2025-10-11'), 2, 4) );
 
-        cetak_r( $no_po );
+        // $array = array(
+        //     array('kk', 'KTAG25113010', 'KTAG25113010', 'KTAG25113001'),
+        //     array('kk', 'KTAG25113011', 'KTAG25113011', 'KTAG25113002'),
+        //     array('kk', 'KTAG25113012', 'KTAG25113012', 'KTAG25113003'),
+        //     array('kk', 'KTAG25113013', 'KTAG25113013', 'KTAG25113004'),
+        //     array('kk', 'KTAG25113014', 'KTAG25113014', 'KTAG25113005'),
+        //     array('kk', 'KTAG25113015', 'KTAG25113015', 'KTAG25113006'),
+        // );
+
+        // foreach ($array as $key => $value) {
+        //     // cetak_r( $value );
+        //     if ( $value[0] == 'realisasi_pembayaran' ) {
+        //         $m_nb = new \Model\Storage\NoBbk_model();
+        //         $m_nb->where('tbl_id', $value[1])->update(
+        //             array('kode' => $value[3])
+        //         );
+
+        //         $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+        //         $m_rp->where('nomor', $value[1])->update(
+        //             array('no_bukti' => $value[3])
+        //         );
+        //     } else {
+        //         $m_nb = new \Model\Storage\NoBbk_model();
+        //         $m_nb->where('kode', $value[1])->update(
+        //             array(
+        //                 'kode' => $value[3],
+        //                 'tbl_id' => $value[3]
+        //             )
+        //         );
+
+        //         $m_kk = new \Model\Storage\Kk_model();
+        //         $m_kk->where('no_kk', $value[1])->update(
+        //             array('no_kk' => $value[3])
+        //         );
+
+        //         $m_kki = new \Model\Storage\KkItem_model();
+        //         $m_kki->where('no_kk', $value[1])->update(
+        //             array('no_kk' => $value[3])
+        //         );
+
+        //         $m_dj = new \Model\Storage\DetJurnal_model();
+        //         $m_dj->where('tbl_id', $value[1])->update(
+        //             array(
+        //                 'tbl_id' => $value[3],
+        //                 'kode_trans' => $value[3],
+        //                 'kode_jurnal' => $value[3]
+        //             )
+        //         );
+        //     }
+        // }
     }
 }

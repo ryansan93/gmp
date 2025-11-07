@@ -197,7 +197,7 @@ class KasMasuk extends Public_Controller {
             $m_km = new \Model\Storage\Km_model();
 
             // $no_km = $m_nbbm->getKode('BKM');
-            $no_km = $m_nbbm->getKodeMasuk($params['kode']);
+            $no_km = $m_nbbm->getKodeMasuk($params['kode'], $params['tgl_km']);
 
             $m_nbbm->tbl_name = $m_km->getTable();
             $m_nbbm->tbl_id = $no_km;

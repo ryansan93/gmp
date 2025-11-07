@@ -1731,207 +1731,65 @@ class LHK extends Public_Controller
         display_json( $this->result );
     }
 
-    public function hitStokTanpaJurnal() {
+    public function hitStokTanpaJurnal($noreg) {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select 
-                rs.nama,
-                td.datang,
-                data.*
-            from (
-                select data.* from
-                (
-                    select kp.tujuan as noreg, min(tp.id) as id, tp.tgl_terima as tanggal, 'terima_pakan' as tipe, 1 as urut from terima_pakan tp
-                    left join
-                        kirim_pakan kp
-                        on
-                            tp.id_kirim_pakan = kp.id
-                    where
-                        kp.jenis_kirim = 'opkg' and
-                        tp.tgl_terima >= '2025-09-01'
-                    group by
-                        kp.tujuan,
-                        tp.tgl_terima
-                        
-                    union all
-                    
-                    select kp.tujuan as noreg, min(tp.id) as id, tp.tgl_terima as tanggal, 'terima_pakan' as tipe, 1 as urut from terima_pakan tp
-                    left join
-                        kirim_pakan kp
-                        on
-                            tp.id_kirim_pakan = kp.id
-                    where
-                        kp.jenis_kirim = 'opkp' and
-                        tp.tgl_terima >= '2025-09-01'
-                    group by
-                        kp.tujuan,
-                        tp.tgl_terima
-                    
-                    union all
-                
-                    select l.noreg, l.id, l.tanggal, 'lhk' as tipe, 2 as urut from 
-                    (select min(l.tanggal) as tanggal, l.noreg from lhk l where l.tanggal >= '2025-09-01' group by l.noreg) data
-                    left join
-                        lhk l
-                        on
-                            data.tanggal = l.tanggal and
-                            data.noreg = l.noreg
-                    where
-                        l.tanggal >= '2025-09-01'
-                        
-                    union all
-                    
-                    select kp.asal as noreg, min(tp.id) as id, tp.tgl_terima as tanggal, 'terima_pakan' as tipe, 2 as urut from terima_pakan tp
-                    left join
-                        kirim_pakan kp
-                        on
-                            tp.id_kirim_pakan = kp.id
-                    where
-                        kp.jenis_kirim = 'opkp' and
-                        tp.tgl_terima >= '2025-09-01'
-                    group by
-                        kp.asal,
-                        tp.tgl_terima
-                ) data
-                right join
-                    (
-                        select
-                            data.noreg,
-                            min(data.id) as id,
-                            min(data.tanggal) as tanggal,
-                            min(data.urut) as urut
-                        from (
-                            select kp.tujuan as noreg, min(tp.id) as id, tp.tgl_terima as tanggal, 'terima_pakan' as tipe, 1 as urut from terima_pakan tp
-                            left join
-                                kirim_pakan kp
-                                on
-                                    tp.id_kirim_pakan = kp.id
-                            where
-                                kp.jenis_kirim = 'opkg' and
-                                tp.tgl_terima >= '2025-09-01'
-                            group by
-                                kp.tujuan,
-                                tp.tgl_terima
-                                
-                            union all
-                            
-                            select kp.tujuan as noreg, min(tp.id) as id, tp.tgl_terima as tanggal, 'terima_pakan' as tipe, 1 as urut from terima_pakan tp
-                            left join
-                                kirim_pakan kp
-                                on
-                                    tp.id_kirim_pakan = kp.id
-                            where
-                                kp.jenis_kirim = 'opkp' and
-                                tp.tgl_terima >= '2025-09-01'
-                            group by
-                                kp.tujuan,
-                                tp.tgl_terima
-                            
-                            union all
-                        
-                            select l.noreg, l.id, l.tanggal, 'lhk' as tipe, 2 as urut from 
-                            (select min(l.tanggal) as tanggal, l.noreg from lhk l where l.tanggal >= '2025-09-01' group by l.noreg) data
-                            left join
-                                lhk l
-                                on
-                                    data.tanggal = l.tanggal and
-                                    data.noreg = l.noreg
-                            where
-                                l.tanggal >= '2025-09-01'
-                                
-                            union all
-                            
-                            select kp.asal as noreg, min(tp.id) as id, tp.tgl_terima as tanggal, 'terima_pakan' as tipe, 2 as urut from terima_pakan tp
-                            left join
-                                kirim_pakan kp
-                                on
-                                    tp.id_kirim_pakan = kp.id
-                            where
-                                kp.jenis_kirim = 'opkp' and
-                                tp.tgl_terima >= '2025-09-01'
-                            group by
-                                kp.asal,
-                                tp.tgl_terima
-                        ) data
-                        group by
-                            data.noreg
-                    ) _data
+            select data.*, saj.path from 
+            (
+                select l.id, 'lhk' as tipe, l.noreg, l.tanggal from lhk l
+    
+                union all
+    
+                select tp.id, 'terima_pakan' as tipe, kp.tujuan as noreg, tp.tgl_terima as tanggal from terima_pakan tp
+                left join
+                    kirim_pakan kp
                     on
-                        data.noreg = _data.noreg and
-                        data.id = _data.id
+                        tp.id_kirim_pakan = kp.id
+
+                union all
+    
+                select tp.id, 'terima_pakan' as tipe, kp.asal as noreg, tp.tgl_terima as tanggal from terima_pakan tp
+                left join
+                    kirim_pakan kp
+                    on
+                        tp.id_kirim_pakan = kp.id
             ) data
             left join
                 (
-                    select
-                        rs.noreg,
-                        mtr.nama,
-                        w.kode as unit,
-                        mtr.perusahaan as kode_perusahaan
-                    from rdim_submit rs
-                    left join
-                        kandang k
-                        on
-                            rs.kandang = k.id
-                    left join
-                        wilayah w
-                        on
-                            k.unit = w.id
-                    left join
-                        (
-                            select mm1.* from mitra_mapping mm1
-                            right join
-                                (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                                on
-                                    mm1.id = mm2.id
-                        ) mm
-                        on
-                            rs.nim = mm.nim
-                    left join
-                        mitra mtr
-                        on
-                            mtr.id = mm.mitra
-                ) rs
-                on
-                    rs.noreg = data.noreg
-            left join
-                (
-                    select td.*, od.noreg from (
-                        select td1.* from terima_doc td1
+                    select saj.*, '/'+df.path_detfitur as path from
+                    (
+                        select saj1.* from setting_automatic_jurnal saj1
                         right join
-                            (select max(id) as id, no_order from terima_doc group by no_order) td2
+                            (select max(id) as id, tbl_name from setting_automatic_jurnal group by tbl_name) saj2
                             on
-                                td1.id = td2.id
-                    ) td
+                                saj1.id = saj2.id
+                    ) saj
                     left join
-                        (
-                            select od1.* from order_doc od1
-                            right join
-                                (select max(id) as id, no_order from order_doc group by no_order) od2
-                                on
-                                    od1.id = od2.id
-                        ) od
+                        detail_fitur df 
                         on
-                            td.no_order = od.no_order
-                ) td
+                            saj.det_fitur_id = df.id_detfitur 
+                ) saj
                 on
-                    td.noreg = rs.noreg
+                    saj.tbl_name = data.tipe
+            where
+                data.noreg = '".$noreg."'
             order by
-                data.tanggal asc,
-                data.urut asc,
-                data.id asc,
-                data.tipe asc,
-                data.noreg asc
+                data.tanggal asc
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
     
         if ( $d_conf->count() > 0 ) {
             $d_conf = $d_conf->toArray();
 
+            // cetak_r( $d_conf, 1 );
+
             foreach ($d_conf as $key => $value) {
                 $id = $value['id'];
                 $id_old = $value['id'];
                 $tanggal = $value['tanggal'];
                 $tipe = $value['tipe'];
+
+                cetak_r( $value['noreg'].' -> '.$value['tanggal'].' -> '.$value['tipe'] );
 
                 // $conf = new \Model\Storage\Conf();
                 // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$d_lhk->tanggal."', 2, null, null";
