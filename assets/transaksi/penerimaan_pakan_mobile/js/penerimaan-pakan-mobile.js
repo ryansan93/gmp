@@ -448,7 +448,7 @@ var ppm = {
                 };
             },
         });
-    }
+    } // end - execInsertJurnal
 };
 
 ppm.start_up();

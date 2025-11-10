@@ -687,7 +687,8 @@ class PenerimaanPakan extends Public_Controller {
                 'tanggal' => $params['tgl_terima'],
                 'delete' => 0,
                 'message' => 'Data Penerimaan Pakan berhasil di simpan.',
-                'status_jurnal' => 2
+                'status_jurnal' => 2,
+                'status' => 2
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -767,7 +768,8 @@ class PenerimaanPakan extends Public_Controller {
                     'tanggal' => $tgl_trans,
                     'delete' => 0,
                     'message' => 'Data Penerimaan Pakan berhasil di ubah.',
-                    'status_jurnal' => 2
+                    'status_jurnal' => 2,
+                    'status' => 2
                 );
             }
         } catch (\Illuminate\Database\QueryException $e) {
@@ -801,13 +803,34 @@ class PenerimaanPakan extends Public_Controller {
                 'tanggal' => $d_terima_pakan->tgl_terima,
                 'delete' => 1,
                 'message' => 'Data Penerimaan Pakan berhasil di hapus.',
-                'status_jurnal' => 3
+                'status_jurnal' => 3,
+                'status' => 3
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
 
         display_json($this->result);
+    }
+
+    public function execInsertKonfirmasi()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $status = $params['status'];
+            $delete = ($status == 3) ? 1 : 0;
+
+            $this->insertKonfirmasi( $id, $delete );
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
     }
 
     public function hitungStokByTransaksi()
@@ -817,67 +840,55 @@ class PenerimaanPakan extends Public_Controller {
         $id = $params['id'];
         $tanggal = $params['tanggal'];
         $delete = $params['delete'];
-        $message = $params['message'];
         $status_jurnal = $params['status_jurnal'];
-        $noreg1 = isset($params['noreg1']) ? $params['noreg1'] : null;
-        $noreg2 = isset($params['noreg2']) ? $params['noreg2'] : null;;
 
         try {
-            $noreg1 = null;
-            $noreg2 = null;
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select
-					case
-						when kp.jenis_kirim = 'opkp' then
-							kp.asal
-						else
-							kp.tujuan
-					end as noreg1,
-					case
-						when kp.jenis_kirim = 'opkp' then
-							kp.tujuan
-						else
-							null
-					end as noreg2,
-                    kp.jenis_kirim
-				from terima_pakan tp
-				left join
-					kirim_pakan kp
-					on
-						tp.id_kirim_pakan = kp.id
-				where
-					tp.id = '".$id."'
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-
-            if ( $d_conf->count() > 0 ) {
-                $d_conf = $d_conf->toArray()[0];
-
-                $noreg1 = $d_conf['noreg1'];
-                $noreg2 = $d_conf['noreg2'];
-            }
-
-            $this->insertKonfirmasi( $id, $delete );
-
             $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
             $d_conf = $conf->hydrateRaw($sql);
 
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function execHitStokSiklus() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $tanggal = $params['tanggal'];
+            $status = $params['status'];
+
             $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
             $d_conf = $conf->hydrateRaw($sql);
 
-            $id_old = null;
-            if ( $status_jurnal <> 1 ) {
-                $id_old = $id;
-            }
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
+        display_json( $this->result );
+    }
+
+    public function execInsertJurnal() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $id_old = $params['id'];
+            $status = $params['status'];
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
 
             $this->result['status'] = 1;
-            $this->result['message'] = $message;
+            $this->result['content'] = $params;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -1011,18 +1022,6 @@ class PenerimaanPakan extends Public_Controller {
                 $m_kppd->jumlah = $d_conf['jumlah'];
                 $m_kppd->total = $d_conf['total'];
                 $m_kppd->save();
-
-                // $id_det = $m_kppd->id;
-                // foreach ($v_det['detail'] as $k_det2 => $v_det2) {
-                //     $m_kppd2 = new \Model\Storage\KonfirmasiPembayaranPakanDet2_model();
-                //     $m_kppd2->id_header = $id_det;
-                //     $m_kppd2->id_gudang = $v_det2['id_gudang'];
-                //     $m_kppd2->kode_brg = $v_det2['kode_brg'];
-                //     $m_kppd2->jumlah = $v_det2['jumlah'];
-                //     $m_kppd2->harga = $v_det2['harga'];
-                //     $m_kppd2->total = $v_det2['total'];
-                //     $m_kppd2->save();
-                // }
                 
                 $d_kpd = $m_kpp->where('id', $id)->first();
 
@@ -1031,299 +1030,6 @@ class PenerimaanPakan extends Public_Controller {
             }
         }
     }
-
-    // public function hitungStokAwal()
-    // {
-    //     $params = $this->input->post('params');
-
-    //     try {
-    //         $id_terima = $params['id_terima'];
-
-    //         $date = date('Y-m-d');
-            
-    //         $m_stok = new \Model\Storage\Stok_model();
-    //         $now = $m_stok->getDate();
-    //         $d_stok = $m_stok->where('periode', $date)->first();
-
-    //         $stok_id = null;
-    //         if ( $d_stok ) {
-    //             $stok_id = $d_stok->id;
-
-    //             $this->hitungStok($id_terima, $stok_id);
-    //         } else {
-    //             $m_stok->periode = $date;
-    //             $m_stok->user_proses = $this->userid;
-    //             $m_stok->tgl_proses = $now['waktu'];
-    //             $m_stok->save();
-
-    //             $stok_id = $m_stok->id;
-
-    //             $conf = new \Model\Storage\Conf();
-    //             $sql = "EXEC get_data_stok_pakan_by_tanggal @date = '$date'";
-
-    //             $d_conf = $conf->hydrateRaw($sql);
-
-    //             if ( $d_conf->count() > 0 ) {
-    //                 $d_conf = $d_conf->toArray();
-    //                 $jml_data = count($d_conf);
-    //                 $idx = 0;
-    //                 foreach ($d_conf as $k_conf => $v_conf) {
-    //                     $m_ds = new \Model\Storage\DetStok_model();
-    //                     $m_ds->id_header = $stok_id;
-    //                     $m_ds->tgl_trans = $v_conf['tgl_trans'];
-    //                     $m_ds->kode_gudang = $v_conf['kode_gudang'];
-    //                     $m_ds->kode_barang = $v_conf['kode_barang'];
-    //                     $m_ds->jumlah = $v_conf['jumlah'];
-    //                     $m_ds->hrg_jual = $v_conf['hrg_jual'];
-    //                     $m_ds->hrg_beli = $v_conf['hrg_beli'];
-    //                     $m_ds->kode_trans = $v_conf['kode_trans'];
-    //                     $m_ds->jenis_barang = $v_conf['jenis_barang'];
-    //                     $m_ds->jenis_trans = $v_conf['jenis_trans'];
-    //                     $m_ds->jml_stok = $v_conf['jml_stok'];
-    //                     $m_ds->save();
-
-    //                     $idx++;
-
-    //                     if ( $jml_data == $idx ) {
-    //                         $this->hitungStok($id_terima, $stok_id);
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         $this->result['status'] = 1;
-    //         $this->result['message'] = 'Data Penerimaan Pakan berhasil di simpan.';
-    //     } catch (\Illuminate\Database\QueryException $e) {
-    //         $this->result['message'] = "Gagal : " . $e->getMessage();
-    //     }
-
-    //     display_json($this->result);
-    // }
-
-    // public function hitungStok($id_terima, $stok_id)
-    // {
-    //     $m_terima_pakan = new \Model\Storage\TerimaPakan_model();
-    //     $d_terima_pakan = $m_terima_pakan->where('id', $id_terima)->with(['detail'])->first()->toArray();
-
-    //     $m_kirim_pakan = new \Model\Storage\KirimPakan_model();
-    //     $d_kirim_pakan = $m_kirim_pakan->where('id', $d_terima_pakan['id_kirim_pakan'])->first()->toArray();
-
-    //     $total = 0;
-
-    //     foreach ($d_terima_pakan['detail'] as $k_detail => $v_detail) {
-    //         if ( stristr($d_kirim_pakan['jenis_tujuan'], 'gudang') !== FALSE ) {
-    //             if ( stristr($d_kirim_pakan['jenis_kirim'], 'opkg') === false ) {
-    //                 // MASUK STOK GUDANG
-    //                 $m_order_pakan = new \Model\Storage\OrderPakan_model();
-    //                 $d_order_pakan = $m_order_pakan->where('no_order', $d_kirim_pakan['no_order'])->first();
-
-    //                 $harga_jual = 0;
-    //                 $harga_beli = 0;
-    //                 if ( !empty($d_order_pakan) ) {
-    //                     $m_dorder_pakan = new \Model\Storage\OrderPakanDetail_model();
-    //                     $d_dorder_pakan = $m_dorder_pakan->where('id_header', $d_order_pakan->id)->where('barang', trim($v_detail['item']))->first();
-
-    //                     $harga_jual = $d_dorder_pakan->harga_jual;
-    //                     $harga_beli = $d_dorder_pakan->harga;
-    //                 }
-
-    //                 // MASUk STOK GUDANG
-    //                 $m_dstok = new \Model\Storage\DetStok_model();
-    //                 $m_dstok->id_header = $stok_id;
-    //                 $m_dstok->tgl_trans = $d_terima_pakan['tgl_terima'];
-    //                 $m_dstok->kode_gudang = $d_kirim_pakan['tujuan'];
-    //                 $m_dstok->kode_barang = $v_detail['item'];
-    //                 $m_dstok->jumlah = $v_detail['jumlah'];
-    //                 $m_dstok->hrg_jual = $harga_jual;
-    //                 $m_dstok->hrg_beli = $harga_beli;
-    //                 $m_dstok->kode_trans = $d_kirim_pakan['no_order'];
-    //                 $m_dstok->jenis_barang = 'pakan';
-    //                 $m_dstok->jenis_trans = 'ORDER';
-    //                 $m_dstok->jml_stok = $v_detail['jumlah'];
-    //                 $m_dstok->save();
-
-    //                 $total += $harga_beli * $v_detail['jumlah'];
-    //             } else {
-    //                 // KELUAR STOK GUDANG
-    //                 $nilai_beli = 0;
-    //                 $nilai_jual = 0;
-    //                 $jml_keluar = $v_detail['jumlah'];
-    //                 while ($jml_keluar > 0) {
-    //                     $m_dstok = new \Model\Storage\DetStok_model();
-    //                     $sql = "
-    //                         select top 1 * from det_stok ds 
-    //                         where
-    //                             ds.id_header = ".$stok_id." and 
-    //                             ds.kode_gudang = ".$d_kirim_pakan['asal']." and 
-    //                             ds.kode_barang = '".$v_detail['item']."' and 
-    //                             ds.jml_stok > 0
-    //                         order by
-    //                             ds.jenis_trans desc,
-    //                             ds.tgl_trans asc,
-    //                             ds.kode_trans asc,
-    //                             ds.id asc
-    //                     ";
-
-    //                     $d_dstok = $m_dstok->hydrateRaw($sql);
-
-    //                     if ( $d_dstok->count() > 0 ) {
-    //                         $d_dstok = $d_dstok->toArray()[0];
-
-    //                         $harga_jual = $d_dstok['hrg_jual'];
-    //                         $harga_beli = $d_dstok['hrg_beli'];
-
-    //                         $jml_stok = $d_dstok['jml_stok'];
-    //                         if ( $jml_stok > $jml_keluar ) {
-    //                             $jml_stok = $jml_stok - $jml_keluar;
-    //                             $nilai_beli += $jml_keluar*$harga_beli;
-    //                             $nilai_jual += $jml_keluar*$harga_jual;
-
-    //                             $m_dstokt = new \Model\Storage\DetStokTrans_model();
-    //                             $m_dstokt->id_header = $d_dstok['id'];
-    //                             $m_dstokt->kode_trans = $d_kirim_pakan['no_order'];
-    //                             $m_dstokt->jumlah = $jml_keluar;
-    //                             $m_dstokt->kode_barang = $v_detail['item'];
-    //                             $m_dstokt->save();
-
-    //                             // MASUK STOK GUDANG
-    //                             $m_dstok = new \Model\Storage\DetStok_model();
-    //                             $m_dstok->id_header = $stok_id;
-    //                             $m_dstok->tgl_trans = $d_terima_pakan['tgl_terima'];
-    //                             $m_dstok->kode_gudang = $d_kirim_pakan['tujuan'];
-    //                             $m_dstok->kode_barang = $v_detail['item'];
-    //                             $m_dstok->jumlah = $jml_keluar;
-    //                             $m_dstok->hrg_jual = $harga_jual;
-    //                             $m_dstok->hrg_beli = $harga_beli;
-    //                             $m_dstok->kode_trans = $d_kirim_pakan['no_order'];
-    //                             $m_dstok->jenis_barang = 'pakan';
-    //                             $m_dstok->jenis_trans = 'ORDER';
-    //                             $m_dstok->jml_stok = $jml_keluar;
-    //                             $m_dstok->save();
-
-    //                             $total += $harga_beli * $jml_keluar;
-
-    //                             $jml_keluar = 0;
-    //                         } else {
-    //                             $jml_keluar = $jml_keluar - $d_dstok['jml_stok'];
-    //                             $nilai_beli += $d_dstok['jml_stok']*$harga_beli;
-    //                             $nilai_jual += $d_dstok['jml_stok']*$harga_jual;
-
-    //                             $m_dstokt = new \Model\Storage\DetStokTrans_model();
-    //                             $m_dstokt->id_header = $d_dstok['id'];
-    //                             $m_dstokt->kode_trans = $d_kirim_pakan['no_order'];
-    //                             $m_dstokt->jumlah = $d_dstok['jml_stok'];
-    //                             $m_dstokt->kode_barang = $v_detail['item'];
-    //                             $m_dstokt->save();
-
-    //                             // MASUK STOK GUDANG
-    //                             $m_dstok = new \Model\Storage\DetStok_model();
-    //                             $m_dstok->id_header = $stok_id;
-    //                             $m_dstok->tgl_trans = $d_terima_pakan['tgl_terima'];
-    //                             $m_dstok->kode_gudang = $d_kirim_pakan['tujuan'];
-    //                             $m_dstok->kode_barang = $v_detail['item'];
-    //                             $m_dstok->jumlah = $d_dstok['jml_stok'];
-    //                             $m_dstok->hrg_jual = $harga_jual;
-    //                             $m_dstok->hrg_beli = $harga_beli;
-    //                             $m_dstok->kode_trans = $d_kirim_pakan['no_order'];
-    //                             $m_dstok->jenis_barang = 'pakan';
-    //                             $m_dstok->jenis_trans = 'ORDER';
-    //                             $m_dstok->jml_stok = $d_dstok['jml_stok'];
-    //                             $m_dstok->save();
-
-    //                             $total += $harga_beli * $d_dstok['jml_stok'];
-
-    //                             $jml_stok = 0;
-    //                         }
-    //                         $m_dstok->where('id', $d_dstok['id'])->update(
-    //                             array(
-    //                                 'jml_stok' => $jml_stok
-    //                             )
-    //                         );
-    //                     } else {
-    //                         $jml_keluar = 0;
-    //                     }
-    //                 }
-    //             }
-    //         } else {
-    //             if ( stristr($d_kirim_pakan['jenis_kirim'], 'opkg') !== FALSE && stristr($d_kirim_pakan['jenis_tujuan'], 'gudang') === FALSE ) {
-    //                 // KELUAR STOK GUDANG
-    //                 $nilai_beli = 0;
-    //                 $nilai_jual = 0;
-    //                 $jml_keluar = $v_detail['jumlah'];
-    //                 while ($jml_keluar > 0) {
-    //                     $m_dstok = new \Model\Storage\DetStok_model();
-    //                     $sql = "
-    //                         select top 1 * from det_stok ds 
-    //                         where
-    //                             ds.id_header = ".$stok_id." and 
-    //                             ds.kode_gudang = ".$d_kirim_pakan['asal']." and 
-    //                             ds.kode_barang = '".$v_detail['item']."' and 
-    //                             ds.jml_stok > 0
-    //                         order by
-    //                             ds.jenis_trans desc,
-    //                             ds.tgl_trans asc,
-    //                             ds.kode_trans asc,
-    //                             ds.id asc
-    //                     ";
-
-    //                     $d_dstok = $m_dstok->hydrateRaw($sql);
-
-    //                     if ( $d_dstok->count() > 0 ) {
-    //                         $d_dstok = $d_dstok->toArray()[0];
-
-    //                         $harga_jual = $d_dstok['hrg_jual'];
-    //                         $harga_beli = $d_dstok['hrg_beli'];
-
-    //                         $jml_stok = $d_dstok['jml_stok'];
-    //                         if ( $jml_stok > $jml_keluar ) {
-    //                             $jml_stok = $jml_stok - $jml_keluar;
-    //                             $nilai_beli += $jml_keluar*$harga_beli;
-    //                             $nilai_jual += $jml_keluar*$harga_jual;
-
-    //                             $m_dstokt = new \Model\Storage\DetStokTrans_model();
-    //                             $m_dstokt->id_header = $d_dstok['id'];
-    //                             $m_dstokt->kode_trans = $d_kirim_pakan['no_order'];
-    //                             $m_dstokt->jumlah = $jml_keluar;
-    //                             $m_dstokt->kode_barang = $v_detail['item'];
-    //                             $m_dstokt->save();
-
-    //                             $total += $harga_beli * $jml_keluar;
-
-    //                             $jml_keluar = 0;
-    //                         } else {
-    //                             $jml_keluar = $jml_keluar - $d_dstok['jml_stok'];
-    //                             $nilai_beli += $d_dstok['jml_stok']*$harga_beli;
-    //                             $nilai_jual += $d_dstok['jml_stok']*$harga_jual;
-
-    //                             $m_dstokt = new \Model\Storage\DetStokTrans_model();
-    //                             $m_dstokt->id_header = $d_dstok['id'];
-    //                             $m_dstokt->kode_trans = $d_kirim_pakan['no_order'];
-    //                             $m_dstokt->jumlah = $d_dstok['jml_stok'];
-    //                             $m_dstokt->kode_barang = $v_detail['item'];
-    //                             $m_dstokt->save();
-
-    //                             $total += $harga_beli * $d_dstok['jml_stok'];
-
-    //                             $jml_stok = 0;
-    //                         }
-    //                         $m_dstok->where('id', $d_dstok['id'])->update(
-    //                             array(
-    //                                 'jml_stok' => $jml_stok
-    //                             )
-    //                         );
-    //                     } else {
-    //                         $jml_keluar = 0;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     $m_conf = new \Model\Storage\Conf();
-    //     $sql = "exec insert_jurnal 'PAKAN', '".$d_kirim_pakan['no_order']."', NULL, ".$total.", 'terima_pakan', ".$id_terima.", NULL, 1";
-
-    //     $d_conf = $m_conf->hydrateRaw( $sql );
-    // }
 
     public function listActivity()
     {

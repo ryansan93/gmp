@@ -338,8 +338,8 @@ var pp = {
 			},
 			success: function(data) {
 				if ( data.status == 1 ) {
-					// pp.hitungStokAwal( data.content.id_terima );
-					pp.hitungStokByTransaksi(data.content);
+					// pp.hitungStokByTransaksi(data.content);
+					pp.execInsertKonfirmasi(data.content);
 				} else {
 					hideLoading();
 					bootbox.alert(data.message);
@@ -347,41 +347,6 @@ var pp = {
 			},
 	    });
 	}, // end - exec_save_terima_pakan
-
-	hitungStokAwal: function(id_terima) {
-		var params = {
-			'id_terima': id_terima
-		};
-
-		$.ajax({
-			url: 'transaksi/PenerimaanPakan/hitungStokAwal',
-			dataType: 'json',
-            type: 'post',
-            data: {
-            	'params': params
-            },
-			beforeSend: function() {},
-			success: function(data) {
-				hideLoading();
-				if ( data.status == 1 ) {
-					bootbox.alert(data.message, function() {
-						var div_riwayat = $('div#riwayat');
-				    	var start_date = $(div_riwayat).find('[name=startDate]').data('DateTimePicker').date();
-						var end_date = $(div_riwayat).find('[name=endDate]').data('DateTimePicker').date();
-						if ( !empty(start_date) && !empty(end_date) ) {
-							// pp.get_lists();
-						}
-
-						var btn = '<button data-href="riwayat">';
-						pp.changeTabActive(btn);
-						pp.load_form();
-					});
-				} else {
-					bootbox.alert(data.message);
-				};
-			},
-	    });
-	}, // end - hitungStokAwal
 
 	edit_terima_pakan: function(elm) {
 		var div_penerimaan = $('div#penerimaan');
@@ -460,7 +425,6 @@ var pp = {
 			},
 			success: function(data) {
 				if ( data.status == 1 ) {
-					// pp.hitungStokAwal( data.content.id_terima );
 					pp.hitungStokByTransaksi(data.content);
 				} else {
 					hideLoading();
@@ -504,6 +468,30 @@ var pp = {
 		});
 	}, // end - delete
 
+	execInsertKonfirmasi: function(content) {
+        var params = content;
+
+        $.ajax({
+            url: 'transaksi/PenerimaanPakan/execInsertKonfirmasi',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Buat konfirmasi . . .');
+            },
+            success: function(data) {
+                if ( data.status == 1 ) {
+                    pp.hitungStokByTransaksi(data.content);
+                } else {
+                    hideLoading();
+                    bootbox.alert(data.message);
+                };
+            },
+        });
+    }, // end - execInsertKonfirmasi
+
 	hitungStokByTransaksi: function(content) {
 		var params = content;
 
@@ -515,21 +503,86 @@ var pp = {
 			type: 'POST',
 			dataType: 'JSON',
 			beforeSend: function() {
-				showLoading('Hitung Stok Ulang . . .');
+				$('span.txt-msg-loading').text('Hitung stok di gudang . . .');
 			},
 			success: function(data) {
-				hideLoading();
 				if ( data.status == 1 ) {
-					bootbox.alert(content.message, function() {
-						pp.get_lists();
-						pp.load_form();
-					});
+					// bootbox.alert(content.message, function() {
+					// 	pp.get_lists();
+					// 	pp.load_form();
+					// });
+					pp.execHitStokSiklus(data.content);
 				} else {
+					hideLoading();
 					bootbox.alert(data.message);
 				};
 			},
 	    });
 	}, // end - hitungStokByTransaksi
+
+	execHitStokSiklus: function(content) {
+        var params = content;
+
+        $.ajax({
+            url: 'transaksi/PenerimaanPakan/execHitStokSiklus',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Hitung stok di kandang . . .');
+            },
+            success: function(data) {
+                if ( data.status == 1 ) {
+                    pp.execInsertJurnal(data.content);
+                } else {
+                    hideLoading();
+                    bootbox.alert(data.message);
+                };
+            },
+        });
+    }, // end - execHitStokSiklus
+
+    execInsertJurnal: function(content) {
+        var params = content;
+
+        $.ajax({
+            url: 'transaksi/PenerimaanPakan/execHitStokSiklus',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Insert jurnal . . .');
+            },
+            success: function(data) {
+                hideLoading();
+                if ( data.status == 1 ) {
+                    // bootbox.alert(data.content.message, function() {
+                    //     ppm.load_form(data.content.no_sj, null, 'transaksi');
+                    // });
+					bootbox.alert(data.content.message, function() {
+						var start_date = $('[name=startDate]').data('DateTimePicker').date();
+						var end_date = $('[name=endDate]').data('DateTimePicker').date();
+
+						if ( !empty(start_date) || !empty(end_date) ) {
+							pp.get_lists();
+						}
+
+						if ( data.content.status == 3 ) {
+							pp.load_form();
+						} else {
+							pp.load_form(data.content.id);
+						}
+					});
+                } else {
+                    bootbox.alert(data.message);
+                };
+            },
+        });
+    }, // end - execInsertJurnal
 
 	listActivity: function(elm) {
 		let tr = $(elm).closest('tr');

@@ -676,61 +676,11 @@ class PenerimaanPakanMobile extends Public_Controller {
             $id = $params['id'];
             $tanggal = $params['tanggal'];
             $delete = $params['delete'];
-            $message = $params['message'];
             $status_jurnal = $params['status_jurnal'];
-            
-            $noreg1 = null;
-            $noreg2 = null;
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select
-					case
-						when kp.jenis_kirim = 'opkp' then
-							kp.asal
-						else
-							kp.tujuan
-					end as noreg1,
-					case
-						when kp.jenis_kirim = 'opkp' then
-							kp.tujuan
-						else
-							null
-					end as noreg2,
-                    kp.jenis_kirim
-				from terima_pakan tp
-				left join
-					kirim_pakan kp
-					on
-						tp.id_kirim_pakan = kp.id
-				where
-					tp.id = '".$id."'
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-
-            if ( $d_conf->count() > 0 ) {
-                $d_conf = $d_conf->toArray()[0];
-
-                $noreg1 = $d_conf['noreg1'];
-                $noreg2 = $d_conf['noreg2'];
-            }
-
-            // $this->insertKonfirmasi( $id, $delete );
 
             $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
             $d_conf = $conf->hydrateRaw($sql);
-
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
-            // $d_conf = $conf->hydrateRaw($sql);
-
-            // $id_old = null;
-            // if ( $status_jurnal <> 1 ) {
-            //     $id_old = $id;
-            // }
-
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
             $this->result['status'] = 1;
             $this->result['content'] = $params;
