@@ -66,7 +66,7 @@ class RealisasiChickIn extends Public_Controller {
         if ( stristr($jenis, 'realisasi') !== FALSE ) {
             $sql_periode = "
                 where
-                    td.datang between '".$start_date." 00:00:00.001' and '".$end_date." 23:59:59.999'
+                    td.datang between '".$start_date.'00:00:00.001'."' and '".$end_date.'23:59:59.999'."'
             ";
         }
 
