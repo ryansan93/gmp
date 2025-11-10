@@ -1349,12 +1349,13 @@ class PenerimaanPakan extends Public_Controller {
 
     public function tes()
     {
-        $id = '3295';
-        $id_old = '3295';
-        $tanggal = '2025-10-23';
+        $id = '5877';
+        $id_old = '5877';
+        $tanggal = '2025-11-07';
 
         $conf = new \Model\Storage\Conf();
         $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
+        // cetak_r( $sql, 1 );
         $d_conf = $conf->hydrateRaw($sql);
         
         Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);

@@ -637,7 +637,9 @@ class PenerimaanPakanMobile extends Public_Controller {
                 'tanggal' => $params['tiba'],
                 'delete' => 0,
                 'message' => 'Data Penerimaan Pakan berhasil di simpan.',
-                'status_jurnal' => 2
+                'status_jurnal' => 2,
+                'status' => 2,
+                'no_sj' => $params['no_sj']
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -670,7 +672,6 @@ class PenerimaanPakanMobile extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        
         try {
             $id = $params['id'];
             $tanggal = $params['tanggal'];
@@ -732,7 +733,7 @@ class PenerimaanPakanMobile extends Public_Controller {
             // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
             $this->result['status'] = 1;
-            $this->result['message'] = $message;
+            $this->result['content'] = $params;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -746,11 +747,10 @@ class PenerimaanPakanMobile extends Public_Controller {
         try {
             $id = $params['id'];
             $tanggal = $params['tanggal'];
-            $noreg = $params['noreg'];
             $status = $params['status'];
 
             $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg."', null";
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
             $d_conf = $conf->hydrateRaw($sql);
 
             $this->result['status'] = 1;

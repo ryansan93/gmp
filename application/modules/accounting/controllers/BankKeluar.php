@@ -492,7 +492,10 @@ class BankKeluar extends Public_Controller {
 
     public function tes()
     {
-        cetak_r( substr(str_replace('-', '', '2025-10-11'), 2, 4) );
+        $m_nb = new \Model\Storage\NoBbk_model();
+        $no_kk = $m_nb->getKodeKeluar('BCA2', '2025-10-30');
+
+        cetak_r( $no_kk );
 
         // $array = array(
         //     array('kk', 'KTAG25113010', 'KTAG25113010', 'KTAG25113001'),

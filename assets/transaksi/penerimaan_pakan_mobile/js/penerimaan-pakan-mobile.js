@@ -340,8 +340,7 @@ var ppm = {
 			            beforeSend : function(){ showLoading() },
 			            success : function(data){
 			                if ( data.status == 1 ) {
-			                    // ppm.hitungStokAwal( data.content.id_terima, no_sj );
-                                ppm.hitungStokByTransaksi(data.content, no_sj);
+                                ppm.execInsertKonfirmasi(data.content);
 			                } else {
                                 hideLoading();
 			                    bootbox.alert( data.message );
@@ -353,33 +352,31 @@ var ppm = {
         }
     }, // end - save
 
-    hitungStokAwal: function(id_terima, no_sj) {
-        var params = {
-            'id_terima': id_terima
-        };
+    execInsertKonfirmasi: function(content) {
+        var params = content;
 
         $.ajax({
-            url: 'transaksi/PenerimaanPakanMobile/hitungStokAwal',
-            dataType: 'json',
-            type: 'post',
+            url: 'transaksi/PenerimaanPakanMobile/execInsertKonfirmasi',
             data: {
                 'params': params
             },
-            beforeSend: function() {},
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Buat konfirmasi . . .');
+            },
             success: function(data) {
-                hideLoading();
                 if ( data.status == 1 ) {
-                    bootbox.alert(data.message, function() {
-                        ppm.load_form(no_sj, null, 'transaksi');
-                    });
+                    ppm.hitungStokByTransaksi(data.content);
                 } else {
+                    hideLoading();
                     bootbox.alert(data.message);
                 };
             },
         });
-    }, // end - hitungStokAwal
+    }, // end - execInsertKonfirmasi
 
-    hitungStokByTransaksi: function(content, no_sj) {
+    hitungStokByTransaksi: function(content) {
         var params = content;
 
         $.ajax({
@@ -390,120 +387,68 @@ var ppm = {
             type: 'POST',
             dataType: 'JSON',
             beforeSend: function() {
-                showLoading('Hitung Stok Ulang . . .');
+                $('span.txt-msg-loading').text('Hitung stok di gudang . . .');
             },
             success: function(data) {
-                hideLoading();
                 if ( data.status == 1 ) {
-                    bootbox.alert(content.message, function() {
-                        ppm.load_form(no_sj, null, 'transaksi');
-                    });
+                    ppm.execHitStokSiklus(data.content);
                 } else {
+                    hideLoading();
                     bootbox.alert(data.message);
                 };
             },
         });
     }, // end - hitungStokByTransaksi
 
-	// edit: function(elm) {
- //        let err = 0;
- //        let div = $(elm).closest('div#transaksi');
+    execHitStokSiklus: function(content) {
+        var params = content;
 
- //        $.map( $(div).find('[data-required=1]'), function(ipt) {
- //            if ( empty($(ipt).val()) ) {
- //                $(ipt).parent().addClass('has-error');
- //                err++;
- //            } else {
- //                $(ipt).parent().removeClass('has-error');
- //            }
- //        });
+        $.ajax({
+            url: 'transaksi/PenerimaanPakanMobile/execHitStokSiklus',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Hitung stok di kandang . . .');
+            },
+            success: function(data) {
+                if ( data.status == 1 ) {
+                    ppm.execInsertJurnal(data.content);
+                } else {
+                    hideLoading();
+                    bootbox.alert(data.message);
+                };
+            },
+        });
+    }, // end - execHitStokSiklus
 
- //        if ( err > 0 ) {
- //            bootbox.alert( 'Harap lengkapi data penerimaan pakan.' );
- //        } else {
- //            bootbox.confirm( 'Apakah anda yakin ingin menyimpan data ?', function(result) {
- //                if ( result ) {
- //                    let data_brg = $.map( $(div).find('table.data_brg tbody tr'), function(tr) {
- //                        let _data = {
- //                            'kode_brg': $(tr).find('td.brg').data('kode'),
- //                            'jumlah': numeral.unformat( $(tr).find('input.jumlah_terima').val() ),
- //                            'kondisi': $(tr).find('input.kondisi').val()
- //                        };
+    execInsertJurnal: function(content) {
+        var params = content;
 
- //                        return _data;
- //                    });
-
- //                    var no_sj = $(div).find('#select_no_sj').val();
-
- //                    let data = {
- //                        'no_sj': no_sj,
- //                        'no_sj_old': $(div).find('#select_no_sj').data('old'),
- //                        'tiba': dateSQL( $(div).find('#tanggal_tiba').data('DateTimePicker').date() ),
- //                        'data_brg': data_brg
- //                    };
-
- //                    $.ajax({
- //                        url : 'transaksi/PenerimaanPakanMobile/edit',
- //                        dataType: 'JSON',
- //                        type: 'POST',
- //                        data: {'params': data},
- //                        beforeSend : function(){ showLoading() },
- //                        success : function(data){
- //                            hideLoading();
- //                            if ( data.status == 1 ) {
- //                                bootbox.alert( data.message, function() {
- //                                    ppm.load_form(no_sj, null, 'transaksi');
- //                                    // location.reload();
- //                                });
- //                            } else {
- //                                bootbox.alert( data.message );
- //                            }
- //                        },
- //                    });
- //                }
- //            });
- //        }
-	// }, // end - edit
-
-	// batal_edit: function(elm) {
-	// 	var id = $(elm).data('id');
-	// 	ppm.load_form(id, null, 'transaksi');
-	// }, // end - batal_edit
-
-	// delete: function() {
- //    	var div = $('div#transaksi');
-
- //    	bootbox.confirm('Apakah anda yakin ingin meng-hapus data penerimaan pakan ?', function(result) {
-	// 		if ( result ) {
-	// 			var data = {
-	// 				'no_sj': $(div).find('div.no_sj').data('val')
-	// 			};
-
-	// 			$.ajax({
-	// 	            url: 'transaksi/PenerimaanPakanMobile/delete',
-	// 	            data: { 'params': data },
-	// 	            type: 'POST',
-	// 	            dataType: 'JSON',
-	// 	            beforeSend: function(){ showLoading() },
-	// 	            success: function(data){
-	// 	                hideLoading();
-	// 	                if ( data.status == 1 ) {
-	// 	                	bootbox.alert( data.message, function() {
-	// 	                		var div_riwayat = $('div#riwayat');
-	// 	                		if ( !empty($(div_riwayat).find('select#select_mitra').val()) && !empty($(div_riwayat).find('select#select_noreg').val()) ) {
-	// 	                			$('button.tampilkan_riwayat').click();
-	// 	                		}
-
-	// 	                		$('button.tambah_penerimaan').click();
-	// 	                	});
-	// 	                } else {
-	// 	                	bootbox.alert( data.message );
-	// 	                }
-	// 	            }
-	// 	        });
-	// 		}
-	// 	});
- //    }, // end - delete
+        $.ajax({
+            url: 'transaksi/PenerimaanPakanMobile/execHitStokSiklus',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Insert jurnal . . .');
+            },
+            success: function(data) {
+                hideLoading();
+                if ( data.status == 1 ) {
+                    bootbox.alert(data.content.message, function() {
+                        ppm.load_form(data.content.no_sj, null, 'transaksi');
+                    });
+                } else {
+                    bootbox.alert(data.message);
+                };
+            },
+        });
+    }
 };
 
 ppm.start_up();
