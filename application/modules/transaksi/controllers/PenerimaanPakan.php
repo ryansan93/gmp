@@ -1098,9 +1098,9 @@ class PenerimaanPakan extends Public_Controller {
         //     }
         // }
 
-        $id = '5099';
-        $id_old = '5099';
-        $tanggal = '2025-11-03';
+        $id = '5822';
+        $id_old = '5822';
+        $tanggal = '2025-11-04';
 
         $conf = new \Model\Storage\Conf();
         $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
