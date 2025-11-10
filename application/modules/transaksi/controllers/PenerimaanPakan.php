@@ -1055,13 +1055,55 @@ class PenerimaanPakan extends Public_Controller {
 
     public function tes()
     {
-        $id = '5877';
-        $id_old = '5877';
-        $tanggal = '2025-11-07';
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select tp.* from terima_pakan tp
+        //     left join
+        //         (select * from det_jurnal where tbl_name = 'terima_pakan') dj 
+        //         on
+        //             tp.id = dj.tbl_id
+        //     left join
+        //         kirim_pakan kp 
+        //         on
+        //             kp.id = tp.id_kirim_pakan 
+        //     left join
+        //         (select kode_trans from det_stok_siklus dss where jenis_barang = 'pakan' group by kode_trans) dss
+        //         on
+        //             dss.kode_trans = kp.no_order 
+        //     where
+        //         tp.tgl_terima >= '2025-11-01' and
+        //     --	kp.jenis_kirim <> 'opks' and
+        //         dj.id is null
+        //     --	dss.kode_trans is null
+        //     order by
+        //         tp.tgl_terima asc,
+        //         tp.id asc
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
+
+        // if ( $d_conf->count() > 0 ) {
+        //     $data = $d_conf->toArray();
+
+        //     $idx = 1;
+        //     foreach ($data as $key => $value) {
+        //         // $conf = new \Model\Storage\Conf();
+        //         // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$value['id']."', '".$value['tgl_terima']."', 2, null, null";
+        //         // $d_conf = $conf->hydrateRaw($sql);
+
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+
+        //         cetak_r( $idx.' : '.$value['id'].' | '.$value['tgl_terima'] );
+
+        //         $idx++;
+        //     }
+        // }
+
+        $id = '5099';
+        $id_old = '5099';
+        $tanggal = '2025-11-03';
 
         $conf = new \Model\Storage\Conf();
         $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
-        // cetak_r( $sql, 1 );
         $d_conf = $conf->hydrateRaw($sql);
         
         Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);

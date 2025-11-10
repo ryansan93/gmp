@@ -317,6 +317,7 @@ class Bakul extends Public_Controller
                         dj.kode_trans = pps.nomor
                 where
                     dj.coa_asal = '23100.000' and
+                    (dj.nominal - isnull(pps.nominal, 0)) > 0 and
                     dj.pelanggan = '".$params['pelanggan']."'
             ";
             $d_pps = $m_conf->hydrateRaw( $sql );
@@ -1112,7 +1113,7 @@ class Bakul extends Public_Controller
                 $this->result['content'] = array(
                     'id' => $id,
                     'id_old' => null,
-                    'status' => 1,
+                    'status' => 2,
                     'message' => 'Data berhasil di simpan.',
                 );
 	        	// $this->result['content'] = array('id' => $id);

@@ -2077,15 +2077,15 @@ array('25091630101', 15, 39, 21, 184),
         //     $d_conf = $d_conf->toArray();
 
         //     foreach ($d_conf as $key => $value) {
-                // $id = '232';
-                // $id_old = '232';
-                // $tanggal = '2025-09-24';
+                $id = '3987';
+                $id_old = '3987';
+                $tanggal = '2025-11-02';
         
-                // $conf = new \Model\Storage\Conf();
-                // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
-                // $d_conf = $conf->hydrateRaw($sql);
+                $conf = new \Model\Storage\Conf();
+                $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
+                $d_conf = $conf->hydrateRaw($sql);
         
-                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
         //     }
         // }
     }
