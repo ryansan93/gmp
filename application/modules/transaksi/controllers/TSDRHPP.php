@@ -5164,14 +5164,24 @@ class TSDRHPP extends Public_Controller {
             ";
             $d_karyawan = $m_conf->hydrateRaw( $sql );
 
+            $all = 0;
+            $id_unit = null;
             $unit_karyawan = null;
             if ( $d_karyawan->count() > 0 ) {
-                $d_karyawan = $d_karyawan->toArray()[0];
+                $d_karyawan = $d_karyawan->toArray();
 
-                if ( stristr($d_karyawan['unit'], 'all') !== false ) {
+                foreach ($d_karyawan as $key => $value) {
+                    if ( stristr($d_karyawan['unit'], 'all') !== false ) {
+                        $all = 1;
+                    } else {
+                        $id_unit[] = $value['unit'];
+                    }
+                }
+
+                if ( $all == 1 ) {
                     $sql = "select * from wilayah w where w.pusat = 1";
                 } else {
-                    $sql = "select * from wilayah w where w.id = ".$d_karyawan['unit']."";
+                    $sql = "select * from wilayah w where w.id in (".implode(", ", $id_unit).")";
                 }
 
                 $d_unit = $m_conf->hydrateRaw( $sql );
