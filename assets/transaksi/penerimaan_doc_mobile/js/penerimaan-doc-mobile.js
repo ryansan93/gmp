@@ -360,15 +360,16 @@ var pdm = {
 			            data: formData,
 			            beforeSend : function(){ showLoading() },
 			            success : function(data){
-			                hideLoading();
-			                if ( data.status == 1 ) {
-			                    bootbox.alert( data.message, function() {
-			                        pdm.load_form(data.content.id, null, 'transaksi');
-			                        // location.reload();
-									var btn = $('div#riwayat').find('button.tampilkan_riwayat');
-									pdm.list_riwayat( $(btn) );
-			                    });
+							if ( data.status == 1 ) {
+								pdm.execHitStokSiklus( data.content );
+								// bootbox.alert( data.message, function() {
+								// 	pdm.load_form(data.content.id, null, 'transaksi');
+			                    //     // location.reload();
+								// 	var btn = $('div#riwayat').find('button.tampilkan_riwayat');
+								// 	pdm.list_riwayat( $(btn) );
+			                    // });
 			                } else {
+								hideLoading();
 			                    bootbox.alert( data.message );
 			                }
 			            },
@@ -456,15 +457,16 @@ var pdm = {
 			            data: formData,
 			            beforeSend : function(){ showLoading() },
 			            success : function(data){
-			                hideLoading();
-			                if ( data.status == 1 ) {
-			                    bootbox.alert( data.message, function() {
-			                        pdm.load_form($(elm).attr('data-id'), null, 'transaksi');
-			                        // location.reload();
-									var btn = $('div#riwayat').find('button.tampilkan_riwayat');
-									pdm.list_riwayat( $(btn) );
-			                    });
+							if ( data.status == 1 ) {
+								pdm.execHitStokSiklus( data.content );
+								// bootbox.alert( data.message, function() {
+								// 	pdm.load_form($(elm).attr('data-id'), null, 'transaksi');
+			                    //     // location.reload();
+								// 	var btn = $('div#riwayat').find('button.tampilkan_riwayat');
+								// 	pdm.list_riwayat( $(btn) );
+			                    // });
 			                } else {
+								hideLoading();
 			                    bootbox.alert( data.message );
 			                }
 			            },
@@ -496,17 +498,18 @@ var pdm = {
 		            dataType: 'JSON',
 		            beforeSend: function(){ showLoading() },
 		            success: function(data){
-		                hideLoading();
-		                if ( data.status == 1 ) {
-		                	bootbox.alert( data.message, function() {
-		                		var div_riwayat = $('div#riwayat');
-		                		if ( !empty($(div_riwayat).find('select#select_mitra').val()) && !empty($(div_riwayat).find('select#select_noreg').val()) ) {
-		                			$('button.tampilkan_riwayat').click();
-		                		}
-
-		                		$('button.tambah_penerimaan').click();
-		                	});
+						if ( data.status == 1 ) {
+							pdm.execHitStokSiklus( data.content );
+							// bootbox.alert( data.message, function() {
+							// 	var div_riwayat = $('div#riwayat');
+		                	// 	if ( !empty($(div_riwayat).find('select#select_mitra').val()) && !empty($(div_riwayat).find('select#select_noreg').val()) ) {
+							// 		$('button.tampilkan_riwayat').click();
+		                	// 	}
+								
+		                	// 	$('button.tambah_penerimaan').click();
+		                	// });
 		                } else {
+							hideLoading();
 		                	bootbox.alert( data.message );
 		                }
 		            }
@@ -537,6 +540,65 @@ var pdm = {
             hideLoading();
         });
     }, // end - compress_img
+
+	execHitStokSiklus: function(content) {
+        var params = content;
+
+        $.ajax({
+            url: 'transaksi/PenerimaanDocMobile/execHitStokSiklus',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Hitung stok di kandang . . .');
+            },
+            success: function(data) {
+                if ( data.status == 1 ) {
+                    pdm.execInsertJurnal(data.content);
+                } else {
+                    hideLoading();
+                    bootbox.alert(data.message);
+                };
+            },
+        });
+    }, // end - execHitStokSiklus
+
+    execInsertJurnal: function(content) {
+        var params = content;
+
+        $.ajax({
+            url: 'transaksi/PenerimaanDocMobile/execInsertJurnal',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Insert jurnal . . .');
+            },
+            success: function(data) {
+                hideLoading();
+                if ( data.status == 1 ) {
+					bootbox.alert(data.content.message, function() {
+						if ( data.content.status == 3 ) {
+							pdm.load_form(null, null, 'transaksi');
+						} else {
+							pdm.load_form(data.content.id, null, 'transaksi');
+						}
+
+						var div_riwayat = $('div#riwayat');
+						if ( !empty($(div_riwayat).find('select#select_mitra').val()) && !empty($(div_riwayat).find('select#select_noreg').val()) ) {
+							$('button.tampilkan_riwayat').click();
+						}
+					});
+                } else {
+                    bootbox.alert(data.message);
+                };
+            },
+        });
+    }, // end - execInsertJurnal
 };
 
 pdm.start_up();

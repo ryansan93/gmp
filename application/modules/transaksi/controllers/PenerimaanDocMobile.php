@@ -558,22 +558,32 @@ class PenerimaanDocMobile extends Public_Controller {
                     }
                 }
     
-                $conf = new \Model\Storage\Conf();
-                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$params['tiba']."', 1, null, null";
-                $d_conf = $conf->hydrateRaw($sql);
+                // $conf = new \Model\Storage\Conf();
+                // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$params['tiba']."', 1, null, null";
+                // $d_conf = $conf->hydrateRaw($sql);
     
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", NULL, 1";
                 // $m_conf->hydrateRaw( $sql );
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
+
+                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
     
                 $deskripsi_log_terima_doc = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log_terima_doc);
             }
 
             $this->result['status'] = 1;
-            $this->result['content'] = array('id' => $id);
-            $this->result['message'] = 'Data Terima DOC berhasil disimpan.';
+            // $this->result['content'] = array('id' => $id);
+            $this->result['content'] = array(
+                'id' => $id,
+                'tanggal' => $params['tiba'],
+                'delete' => 0,
+                'message' => 'Data Terima DOC berhasil disimpan.',
+                'status_jurnal' => 2,
+                'status' => 2,
+                'noreg' => $d_order_doc->noreg
+            );
+            // $this->result['message'] = 'Data Terima DOC berhasil disimpan.';
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
@@ -661,9 +671,9 @@ class PenerimaanDocMobile extends Public_Controller {
                 }
             }
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
+            // $d_conf = $conf->hydrateRaw($sql);
 
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", ".$id.", 2";
@@ -671,13 +681,22 @@ class PenerimaanDocMobile extends Public_Controller {
             // $m_conf->hydrateRaw( $sql );
             $d_terima_doc = $m_terima_doc->where('id', $id)->first();
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
 
             $deskripsi_log_terima_doc = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_terima_doc, $deskripsi_log_terima_doc);
 
             $this->result['status'] = 1;
-            $this->result['message'] = 'Data Terima DOC berhasil di-update.';
+            $this->result['content'] = array(
+                'id' => $id,
+                'tanggal' => $tgl_stok,
+                'delete' => 0,
+                'message' => 'Data Terima DOC berhasil di-update.',
+                'status_jurnal' => 2,
+                'status' => 2,
+                'noreg' => $d_order_doc->noreg
+            );
+            // $this->result['message'] = 'Data Terima DOC berhasil di-update.';
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
@@ -698,14 +717,15 @@ class PenerimaanDocMobile extends Public_Controller {
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $d_terima_doc = $m_terima_doc->where('id', $id)->first();
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".$d_terima_doc->datang."', 3, '".$d_order_doc->noreg."', null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".$d_terima_doc->datang."', 3, '".$d_order_doc->noreg."', null";
+            // $d_conf = $conf->hydrateRaw($sql);
 
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$d_terima_doc->id.", ".$d_terima_doc->id.", 3";
             // $m_conf->hydrateRaw( $sql );
-            Modules::run( 'base/InsertJurnal/exec', $this->url, null, $d_terima_doc->id, 3);
+
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, null, $d_terima_doc->id, 3);
 
             $m_terima_doc->where('id', $d_terima_doc->id)->delete();
             $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
@@ -715,12 +735,62 @@ class PenerimaanDocMobile extends Public_Controller {
             Modules::run( 'base/event/delete', $d_terima_doc, $deskripsi_log);
 
             $this->result['status'] = 1;
-            $this->result['message'] = 'Data berhasil di hapus';           
+            $this->result['content'] = array(
+                'id' => $id,
+                'tanggal' => $d_terima_doc->datang,
+                'delete' => 1,
+                'message' => 'Data berhasil di hapus.',
+                'status_jurnal' => 3,
+                'status' => 3,
+                'noreg' => $d_order_doc->noreg
+            );
+            // $this->result['message'] = 'Data berhasil di hapus';           
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
 
         display_json($this->result);
+    }
+
+    public function execHitStokSiklus() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $tanggal = substr($params['tanggal'], 0, 10);
+            $status = $params['status'];
+            $noreg = $params['noreg'];
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tanggal."', ".$status.", ".$noreg.", null";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function execInsertJurnal() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $id_old = $params['id'];
+            $status = $params['status'];
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
     }
 
     public function mappingFiles($files)

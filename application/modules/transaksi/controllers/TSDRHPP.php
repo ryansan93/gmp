@@ -5158,7 +5158,7 @@ class TSDRHPP extends Public_Controller {
                     on
                         uk.id_karyawan =  k.id
                 where
-                    k.nama like '".$nama_user_cetak."' and
+                    k.nama like '".trim($nama_user_cetak)."' and
                     k.status = 1
 
             ";
