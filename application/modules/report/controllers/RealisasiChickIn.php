@@ -348,7 +348,7 @@ class RealisasiChickIn extends Public_Controller {
         $params = json_decode( exDecrypt($params_encrypt), true );
 
         $start_date = $params['start_date'].' 00:00:00.001';
-        $end_date = $params['end_date'].' 23:53:59.999';
+        $end_date = $params['end_date'].' 23:59:59.999';
         $unit = $params['unit'];
         $jenis = $params['jenis'];
 
