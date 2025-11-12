@@ -3572,6 +3572,140 @@ class TSDRHPP extends Public_Controller {
         return $data;
     }
 
+    public function cekDataLhk()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select rs.noreg, l.tanggal as tgl_lhk, r_sj.tanggal as tgl_panen, (l.pakai_pakan * 50) as pakai_pakan, tp.jumlah as jml_terima, pp.jumlah as jml_pindah, l.ekor_mati, r_sj.jml_panen, td.jml_ekor as populasi from rdim_submit rs
+                left join
+                    (
+                        select l1.* from lhk l1
+                        right join
+                            (select noreg, max(tanggal) as tanggal from lhk group by noreg) l2
+                            on
+                                l1.noreg = l2.noreg and
+                                l1.tanggal = l2.tanggal
+                    ) l
+                    on
+                        l.noreg = rs.noreg
+                left join
+                    (
+                        select noreg, max(tgl_panen) as tanggal, sum(netto_ekor) as jml_panen from real_sj group by noreg
+                    ) r_sj
+                    on
+                        r_sj.noreg = rs.noreg
+                left join
+                    (
+                        select kp.tujuan as noreg, sum(dtp.jumlah) as jumlah from det_terima_pakan dtp
+                        left join
+                            terima_pakan tp
+                            on
+                                dtp.id_header = tp.id
+                        left join
+                            kirim_pakan kp
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        where
+                            kp.jenis_kirim <> 'opks'
+                        group by
+                            kp.tujuan
+                    ) tp
+                    on
+                        tp.noreg = rs.noreg
+                left join
+                    (
+                        select kp.asal as noreg, sum(dtp.jumlah) as jumlah from det_terima_pakan dtp
+                        left join
+                            terima_pakan tp
+                            on
+                                dtp.id_header = tp.id
+                        left join
+                            kirim_pakan kp
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        where
+                            kp.jenis_kirim = 'opkp'
+                        group by
+                            kp.asal
+                    ) pp
+                    on
+                        pp.noreg = rs.noreg
+                left join
+                	(
+                		select td.*, od.noreg from (
+	                		select td1.* from terima_doc td1
+	                		right join
+	                			(select max(id) as id, no_order from terima_doc group by no_order) td2
+	                			on
+	                				td1.id = td2.id
+                		) td
+                		left join
+                			(
+                				select od1.* from order_doc od1
+                				right join
+	                				(select max(id) as id, no_order from order_doc group by no_order) od2
+	                				on
+	                					od1.id = od2.id
+                			) od
+                			on
+                				td.no_order = od.no_order
+                	) td
+                	on
+                		td.noreg = rs.noreg
+                where
+                    rs.noreg = '".$params['noreg']."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $status = 1;
+            $message = null;
+
+            $tgl_lhk = null;
+            $tgl_panen = null;
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                $tgl_lhk = $d_conf['tgl_lhk'];
+                $tgl_panen = $d_conf['tgl_panen'];
+
+                if ( $tgl_lhk < $tgl_panen ) {
+                    $status = 0;
+                    $message = 'Data LHK akhir siklus belum di submit, segera hubungi PPL yang bersangkutan untuk melakukan submit data LHK akhir siklus.';
+                } else {
+                    if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah'])) || ($d_conf['ekor_mati'] != ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
+                        $status = 0;
+
+                        $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
+                        $message .= '<br>';
+                        $message .= '<b><u>Pakan</u></b><br>';
+                        $message .= 'Terima Pakan : '.angkaRibuan($d_conf['jml_terima']).'<br>';
+                        $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']).'<br>';
+                        $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-$d_conf['jml_pindah'])).'<br>';
+                        $message .= 'Pemakaian Pakan LHK : '.angkaRibuan($d_conf['pakai_pakan']).'<br>';
+                        $message .= '<br>';
+                        $message .= '<b><u>Kematian</u></b><br>';
+                        $message .= 'Populasi : '.angkaRibuan($d_conf['populasi']).'<br>';
+                        $message .= 'Jumlah Panen : '.angkaRibuan($d_conf['jml_panen']).'<br>';
+                        $message .= 'Selisih Populasi dan Jumlah Panen : '.angkaRibuan(($d_conf['populasi']-$d_conf['jml_panen'])).'<br>';
+                        $message .= 'Jumlah Kematian LHK : '.angkaRibuan($d_conf['ekor_mati']).'<br>';
+                        $message .= '<br>';
+                        $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
+                    }
+                }
+            }
+
+            $this->result['status'] = $status;
+            $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function tutup_siklus()
     {
         $params = $this->input->post('params');
@@ -5146,6 +5280,9 @@ class TSDRHPP extends Public_Controller {
                 'data_bonus' => $data_bonus,
                 'data_piutang_plasma' => $data_piutang_plasma
             );
+
+            // $nama = 'Anis Yulia Trisna';
+            // $nama_user_cetak = $nama;
 
             $nama_user_cetak = $this->userdata['detail_user']['nama_detuser'];
             $m_conf = new \Model\Storage\Conf();

@@ -486,6 +486,33 @@ var tsdrhpp = {
 		$(div_rhpp_plasma).find('td.pendapatan_peternak_setelah_potong_hutang b').html( text_pendapatan_peternak_setelah_potong_hutang );
     }, // end - hit_pendapatan_peternak_setelah_potong_hutang
 
+	cekDataLhk: function(elm) {
+		var noreg = $(elm).attr('data-noreg');
+
+		var params = {
+			'noreg': noreg,
+			'tgl_tutup_siklus': dateSQL( $('[name=tutup_siklus]').data('DateTimePicker').date() ),
+		};
+
+		$.ajax({
+			url : 'transaksi/TSDRHPP/cekDataLhk',
+			data : {
+				'params' :  params
+			},
+			type : 'POST',
+			dataType : 'JSON',
+			beforeSend : function(){ showLoading('Cek data LHK . . .'); },
+			success : function(data){
+				hideLoading();
+				if ( data.status == 1 ) {
+					tsdrhpp.tutup_siklus(elm);
+				} else {
+					bootbox.alert( data.message );
+				}
+			},
+		});
+	}, // end - cekDataLhk
+
     tutup_siklus: function(elm) {
 		let div_rhpp = $(elm).closest('div#rhpp');
 

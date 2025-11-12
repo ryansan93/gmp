@@ -38,7 +38,7 @@
 							    </div>
 		                	</div>
 		                	<div class="col-md-2">
-		                		<button type="button" class="btn btn-primary" onclick="tsdrhpp.tutup_siklus(this)" data-noreg="<?php echo $data['noreg']; ?>"><i class="fa fa-check"></i> TUTUP SIKLUS</button>
+		                		<button type="button" class="btn btn-primary" onclick="tsdrhpp.cekDataLhk(this)" data-noreg="<?php echo $data['noreg']; ?>"><i class="fa fa-check"></i> TUTUP SIKLUS</button>
 		                	</div>
 	                	</div>
 	                </div>
