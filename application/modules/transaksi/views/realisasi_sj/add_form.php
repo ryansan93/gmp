@@ -164,7 +164,7 @@
 	</div>
 </div>
 <?php if ( $akses['a_submit'] == 1 ): ?>
-	<div class="form-group">
+	<div class="form-group lock_btn_fiskal" data-date="<?php echo substr($tgl_panen, 0, 10); ?>">
 		<div class="col-md-12">
 			<button type="button" class="btn btn-primary btn_save" onclick="real_sj.save()"><i class="fa fa-save"></i> Simpan</button>
 		</div>

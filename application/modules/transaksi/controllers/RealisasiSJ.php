@@ -154,6 +154,7 @@ class RealisasiSJ extends Public_Controller
         $akses = hakAkses($this->url);
         $content['akses'] = $akses;
         $content['noreg'] = $noreg;
+        $content['tgl_panen'] = $tgl_panen;
         $content['data_penjualan'] = $d_rpah;
         $content['data_real_sj'] = !empty($d_real_sj) ? $d_real_sj->toArray() : null;
         $content['jenis_ayam'] = $this->config->item('jenis_ayam');

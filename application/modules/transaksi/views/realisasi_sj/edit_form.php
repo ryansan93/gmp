@@ -231,7 +231,7 @@
 		<hr style="margin-top: 0px; margin-bottom: 0px;">
 	</div>
 </div>
-<div class="form-group">
+<div class="form-group lock_btn_fiskal" data-date="<?php echo substr($tgl_panen, 0, 10); ?>">
 	<div class="col-md-12">
     	<button type="button" class="btn btn-danger" onclick="real_sj.get_data(this)" style="margin-right: 10px;"><i class="fa fa-times"></i> Batal</button>
 		<button type="button" class="btn btn-primary" onclick="real_sj.edit(this);" data-id="<?php echo $data['id']; ?>"><i class="fa fa-save"></i> Edit</button>

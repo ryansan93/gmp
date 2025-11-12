@@ -166,7 +166,7 @@
             ?>
         </p>
     </div>
-	<div class="col-md-6">
+	<div class="col-md-6 lock_btn_fiskal" data-date="<?php echo substr($tgl_panen, 0, 10); ?>">
 	    <?php if ( $akses['a_delete'] == 1 ): ?>
 	        <button type="button" class="btn btn-danger pull-right" onclick="real_sj.delete(this)" data-id="<?php echo $data_real_sj['id']; ?>"><i class="fa fa-trash"></i> Hapus</button>
 	    <?php endif ?>

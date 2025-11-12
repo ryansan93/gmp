@@ -115,6 +115,8 @@ var real_sj = {
             	real_sj.hit_total();
 
             	App.formatNumber();
+
+				App.setTutupBulan();
             },
         });
     }, // end - get_data

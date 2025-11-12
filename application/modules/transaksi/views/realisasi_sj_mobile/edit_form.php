@@ -50,7 +50,7 @@
 					<label class="control-label">Tanggal Panen</label>
 				</div>
 				<div class="col-xs-12 no-padding">
-					<div class="input-group date datetimepicker" name="tanggal" id="tanggal">
+					<div class="input-group date datetimepicker lock_date_fiskal" name="tanggal" id="tanggal">
 		                <input type="text" class="form-control text-center uppercase" placeholder="Tanggal" data-required="1" data-tgl="<?php echo $data['tgl_panen']; ?>" data-old="<?php echo $data['tgl_panen']; ?>" disabled />
 		                <span class="input-group-addon">
 		                    <span class="glyphicon glyphicon-calendar"></span>

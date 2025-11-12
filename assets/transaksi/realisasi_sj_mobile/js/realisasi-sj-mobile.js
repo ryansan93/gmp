@@ -65,6 +65,8 @@ var rsm = {
 				rsm.set_umur_panen(this);
 			}
 		});
+
+		App.setTutupBulan();
 	}, // end - setting_up
 
 	showNameFile : function(elm, isLable = 1) {

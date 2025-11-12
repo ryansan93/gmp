@@ -206,7 +206,7 @@
 		</form>
 	</div>
 	<div class="col-xs-12 detailed"><hr></div>
-	<div class="col-xs-12 detailed">
+	<div class="col-xs-12 detailed lock_btn_fiskal" data-date="<?php echo substr($data['tgl_panen'], 0, 10); ?>">
 		<form role="form" class="form-horizontal">
 			<?php if ( $edit_data == 1 ): ?>
 				<?php if ( !empty($hide_input_harga) ): ?>
