@@ -556,6 +556,40 @@ var lhk = {
 	}, // end - hit_total_pakan
 	*/
 
+	cekDataPrev: function(callback) {
+        var div_transaksi = $('#transaksi');
+		var umur = $(div_transaksi).find('input[name=umur]').val();
+		var noreg = $(div_transaksi).find('select#select_noreg').val();
+		var pakai_pakan = numeral.unformat($(div_transaksi).find('input[name=pakai_pakan]').val());
+		var ekor_mati = numeral.unformat($(div_transaksi).find('input[name=ekor_mati]').val());
+		var tanggal = dateSQL($(div_transaksi).find('#tanggal').data('DateTimePicker').date());
+
+		var params = {
+			'umur': umur,
+			'noreg': noreg,
+			'pakai_pakan': pakai_pakan,
+			'ekor_mati': ekor_mati,
+			'tanggal': tanggal,
+		};
+
+		$.ajax({
+			url: 'transaksi/LHK/cekDataPrev',
+			dataType: 'json',
+			type: 'post',
+			data: {
+				'params': params
+			},
+			beforeSend: function() {
+				showLoading('Cek data LHK sebelumnya . . .');
+			},
+			success: function(data) {
+				hideLoading();
+
+				callback({'status': data.status, 'message': data.message});
+			}
+		});
+    }, // end - cekDataPrev
+
 	save: function(elm) {
 		var div_transaksi = $('#transaksi');
 		var div = $(div_transaksi).find('div.row:first');
@@ -673,86 +707,92 @@ var lhk = {
 					ket_confirm = 'Apakah anda yakin ingin menyimpan data LHK ?';
 				}
 
-				bootbox.confirm(ket_confirm, function(result) {
-					if ( result ) {
-						var data_sekat = $.map( $('table.tbl_sekat tbody tr'), function(tr) {
-							var _data_sekat = {
-								'no': $(tr).find('td.no_urut').text(),
-								'bb': numeral.unformat($(tr).find('input[name=bb]').val())
-							};
-
-							return _data_sekat;
-						});
-
-						var tbl_peralatan = $('table.tbl_peralatan');
-						var data_peralatan = {
-							'umur': $(tbl_peralatan).find('td.umur').text(),
-							'waktu': $(tbl_peralatan).find('td.waktu').attr('data-val'),
-							'flok_lantai': $(tbl_peralatan).find('input.flok_lantai').val(),
-							'tipe_controller': $(tbl_peralatan).find('input.tipe_controller').val(),
-							'kelembapan1': numeral.unformat( $(tbl_peralatan).find('input.kelembapan1').val() ),
-							'kelembapan2': numeral.unformat( $(tbl_peralatan).find('input.kelembapan2').val() ),
-							'suhu_current1': numeral.unformat( $(tbl_peralatan).find('input.suhu_current1').val() ),
-							'suhu_current2': numeral.unformat( $(tbl_peralatan).find('input.suhu_current2').val() ),
-							'suhu_experience1': numeral.unformat( $(tbl_peralatan).find('input.suhu_experience1').val() ),
-							'suhu_experience2': numeral.unformat( $(tbl_peralatan).find('input.suhu_experience2').val() ),
-							'air_speed_depan_inlet1': numeral.unformat( $(tbl_peralatan).find('input.air_speed_depan_inlet1').val() ),
-							'air_speed_depan_inlet2': numeral.unformat( $(tbl_peralatan).find('input.air_speed_depan_inlet2').val() ),
-							'kerataan_air_speed1': numeral.unformat( $(tbl_peralatan).find('input.kerataan_air_speed1').val() ),
-							'kerataan_air_speed2': numeral.unformat( $(tbl_peralatan).find('input.kerataan_air_speed2').val() ),
-							'ukuran_kipas1': numeral.unformat( $(tbl_peralatan).find('input.ukuran_kipas1').val() ),
-							'ukuran_kipas2': numeral.unformat( $(tbl_peralatan).find('input.ukuran_kipas2').val() ),
-							'jumlah_kipas1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas1').val() ),
-							'jumlah_kipas2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas2').val() ),
-							'jumlah_kipas_on1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_on1').val() ),
-							'jumlah_kipas_on2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_on2').val() ),
-							'jumlah_kipas_off1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_off1').val() ),
-							'jumlah_kipas_off2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_off2').val() ),
-							'waktu_kipas_on1': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_on1').val() ),
-							'waktu_kipas_on2': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_on2').val() ),
-							'waktu_kipas_off1': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_off1').val() ),
-							'waktu_kipas_off2': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_off2').val() ),
-							'cooling_pad_status1': $(tbl_peralatan).find('input[name="cooling_pad_status1"]:checked').val(),
-							'cooling_pad_status2': $(tbl_peralatan).find('input[name="cooling_pad_status2"]:checked').val()
-						};
-
-						var data = {
-							'umur': $(div_transaksi).find('input[name=umur]').val(),
-							'mitra': $(div_transaksi).find('select#select_mitra').val(),
-							'noreg': $(div_transaksi).find('select#select_noreg').val(),
-							'pakai_pakan': numeral.unformat($(div_transaksi).find('input[name=pakai_pakan]').val()),
-							'sisa_pakan': numeral.unformat($(div_transaksi).find('input[name=sisa_pakan]').val()),
-							'ekor_mati': numeral.unformat($(div_transaksi).find('input[name=ekor_mati]').val()),
-							'keterangan': $(div_transaksi).find('textarea').val(),
-							'tanggal': dateSQL($(div_transaksi).find('#tanggal').data('DateTimePicker').date()),
-							'lat': $(elm).attr('data-lat'),
-							'long': $(elm).attr('data-long'),
-							'data_sekat': data_sekat,
-							'data_nekropsi': data_nekropsi,
-							'data_solusi': data_solusi,
-							'data_peralatan': data_peralatan
-						};
-
-						$.ajax({
-							url: 'transaksi/LHK/save',
-							dataType: 'json',
-							type: 'post',
-							data: {
-								'params': data
-							},
-							beforeSend: function() {
-								showLoading();
-							},
-							success: function(data) {
-								if ( data.status == 1 ) {
-									// bootbox.alert(data.message, function(){
-									// 	lhk.load_form(data.content.id, null, 'transaksi');
-									// });
-									lhk.execHitStokDoc(data.content);
-								} else {
-									hideLoading();
-									bootbox.alert(data.message);
-								}
+				lhk.cekDataPrev(function(data) {
+					if ( data.status != 1 ) {
+						bootbox.alert(data.message);
+					} else {
+						bootbox.confirm(ket_confirm, function(result) {
+							if ( result ) {
+								var data_sekat = $.map( $('table.tbl_sekat tbody tr'), function(tr) {
+									var _data_sekat = {
+										'no': $(tr).find('td.no_urut').text(),
+										'bb': numeral.unformat($(tr).find('input[name=bb]').val())
+									};
+		
+									return _data_sekat;
+								});
+		
+								var tbl_peralatan = $('table.tbl_peralatan');
+								var data_peralatan = {
+									'umur': $(tbl_peralatan).find('td.umur').text(),
+									'waktu': $(tbl_peralatan).find('td.waktu').attr('data-val'),
+									'flok_lantai': $(tbl_peralatan).find('input.flok_lantai').val(),
+									'tipe_controller': $(tbl_peralatan).find('input.tipe_controller').val(),
+									'kelembapan1': numeral.unformat( $(tbl_peralatan).find('input.kelembapan1').val() ),
+									'kelembapan2': numeral.unformat( $(tbl_peralatan).find('input.kelembapan2').val() ),
+									'suhu_current1': numeral.unformat( $(tbl_peralatan).find('input.suhu_current1').val() ),
+									'suhu_current2': numeral.unformat( $(tbl_peralatan).find('input.suhu_current2').val() ),
+									'suhu_experience1': numeral.unformat( $(tbl_peralatan).find('input.suhu_experience1').val() ),
+									'suhu_experience2': numeral.unformat( $(tbl_peralatan).find('input.suhu_experience2').val() ),
+									'air_speed_depan_inlet1': numeral.unformat( $(tbl_peralatan).find('input.air_speed_depan_inlet1').val() ),
+									'air_speed_depan_inlet2': numeral.unformat( $(tbl_peralatan).find('input.air_speed_depan_inlet2').val() ),
+									'kerataan_air_speed1': numeral.unformat( $(tbl_peralatan).find('input.kerataan_air_speed1').val() ),
+									'kerataan_air_speed2': numeral.unformat( $(tbl_peralatan).find('input.kerataan_air_speed2').val() ),
+									'ukuran_kipas1': numeral.unformat( $(tbl_peralatan).find('input.ukuran_kipas1').val() ),
+									'ukuran_kipas2': numeral.unformat( $(tbl_peralatan).find('input.ukuran_kipas2').val() ),
+									'jumlah_kipas1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas1').val() ),
+									'jumlah_kipas2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas2').val() ),
+									'jumlah_kipas_on1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_on1').val() ),
+									'jumlah_kipas_on2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_on2').val() ),
+									'jumlah_kipas_off1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_off1').val() ),
+									'jumlah_kipas_off2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_off2').val() ),
+									'waktu_kipas_on1': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_on1').val() ),
+									'waktu_kipas_on2': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_on2').val() ),
+									'waktu_kipas_off1': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_off1').val() ),
+									'waktu_kipas_off2': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_off2').val() ),
+									'cooling_pad_status1': $(tbl_peralatan).find('input[name="cooling_pad_status1"]:checked').val(),
+									'cooling_pad_status2': $(tbl_peralatan).find('input[name="cooling_pad_status2"]:checked').val()
+								};
+		
+								var data = {
+									'umur': $(div_transaksi).find('input[name=umur]').val(),
+									'mitra': $(div_transaksi).find('select#select_mitra').val(),
+									'noreg': $(div_transaksi).find('select#select_noreg').val(),
+									'pakai_pakan': numeral.unformat($(div_transaksi).find('input[name=pakai_pakan]').val()),
+									'sisa_pakan': numeral.unformat($(div_transaksi).find('input[name=sisa_pakan]').val()),
+									'ekor_mati': numeral.unformat($(div_transaksi).find('input[name=ekor_mati]').val()),
+									'keterangan': $(div_transaksi).find('textarea').val(),
+									'tanggal': dateSQL($(div_transaksi).find('#tanggal').data('DateTimePicker').date()),
+									'lat': $(elm).attr('data-lat'),
+									'long': $(elm).attr('data-long'),
+									'data_sekat': data_sekat,
+									'data_nekropsi': data_nekropsi,
+									'data_solusi': data_solusi,
+									'data_peralatan': data_peralatan
+								};
+		
+								$.ajax({
+									url: 'transaksi/LHK/save',
+									dataType: 'json',
+									type: 'post',
+									data: {
+										'params': data
+									},
+									beforeSend: function() {
+										showLoading();
+									},
+									success: function(data) {
+										if ( data.status == 1 ) {
+											// bootbox.alert(data.message, function(){
+											// 	lhk.load_form(data.content.id, null, 'transaksi');
+											// });
+											lhk.execHitStokDoc(data.content);
+										} else {
+											hideLoading();
+											bootbox.alert(data.message);
+										}
+									}
+								});
 							}
 						});
 					}
@@ -871,86 +911,92 @@ var lhk = {
 			} else {
 				var ket_confirm = 'Apakah anda yakin ingin meng-ubah data LHK ?';
 
-				bootbox.confirm(ket_confirm, function(result) {
-					if ( result ) {
-						var data_sekat = $.map( $('table.tbl_sekat tbody tr'), function(tr) {
-							var _data_sekat = {
-								'no': $(tr).find('td.no_urut').text(),
-								'bb': numeral.unformat($(tr).find('input[name=bb]').val())
-							};
-
-							return _data_sekat;
-						});
-
-						var tbl_peralatan = $('table.tbl_peralatan');
-						var data_peralatan = {
-							'umur': $(tbl_peralatan).find('td.umur').text(),
-							'waktu': $(tbl_peralatan).find('td.waktu').attr('data-val'),
-							'flok_lantai': $(tbl_peralatan).find('input.flok_lantai').val(),
-							'tipe_controller': $(tbl_peralatan).find('input.tipe_controller').val(),
-							'kelembapan1': numeral.unformat( $(tbl_peralatan).find('input.kelembapan1').val() ),
-							'kelembapan2': numeral.unformat( $(tbl_peralatan).find('input.kelembapan2').val() ),
-							'suhu_current1': numeral.unformat( $(tbl_peralatan).find('input.suhu_current1').val() ),
-							'suhu_current2': numeral.unformat( $(tbl_peralatan).find('input.suhu_current2').val() ),
-							'suhu_experience1': numeral.unformat( $(tbl_peralatan).find('input.suhu_experience1').val() ),
-							'suhu_experience2': numeral.unformat( $(tbl_peralatan).find('input.suhu_experience2').val() ),
-							'air_speed_depan_inlet1': numeral.unformat( $(tbl_peralatan).find('input.air_speed_depan_inlet1').val() ),
-							'air_speed_depan_inlet2': numeral.unformat( $(tbl_peralatan).find('input.air_speed_depan_inlet2').val() ),
-							'kerataan_air_speed1': numeral.unformat( $(tbl_peralatan).find('input.kerataan_air_speed1').val() ),
-							'kerataan_air_speed2': numeral.unformat( $(tbl_peralatan).find('input.kerataan_air_speed2').val() ),
-							'ukuran_kipas1': numeral.unformat( $(tbl_peralatan).find('input.ukuran_kipas1').val() ),
-							'ukuran_kipas2': numeral.unformat( $(tbl_peralatan).find('input.ukuran_kipas2').val() ),
-							'jumlah_kipas1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas1').val() ),
-							'jumlah_kipas2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas2').val() ),
-							'jumlah_kipas_on1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_on1').val() ),
-							'jumlah_kipas_on2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_on2').val() ),
-							'jumlah_kipas_off1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_off1').val() ),
-							'jumlah_kipas_off2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_off2').val() ),
-							'waktu_kipas_on1': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_on1').val() ),
-							'waktu_kipas_on2': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_on2').val() ),
-							'waktu_kipas_off1': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_off1').val() ),
-							'waktu_kipas_off2': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_off2').val() ),
-							'cooling_pad_status1': $(tbl_peralatan).find('input[name="cooling_pad_status1"]:checked').val(),
-							'cooling_pad_status2': $(tbl_peralatan).find('input[name="cooling_pad_status2"]:checked').val()
-						};
-
-						var data = {
-							'id': $(elm).data('id'),
-							'umur': $(div_transaksi).find('input[name=umur]').val(),
-							'mitra': $(div_transaksi).find('select#select_mitra').val(),
-							'noreg': $(div_transaksi).find('select#select_noreg').val(),
-							'pakai_pakan': numeral.unformat($(div_transaksi).find('input[name=pakai_pakan]').val()),
-							'sisa_pakan': numeral.unformat($(div_transaksi).find('input[name=sisa_pakan]').val()),
-							'ekor_mati': numeral.unformat($(div_transaksi).find('input[name=ekor_mati]').val()),
-							'keterangan': $(div_transaksi).find('textarea').val(),
-							'lat': $(elm).attr('data-lat'),
-							'long': $(elm).attr('data-long'),
-							'data_sekat': data_sekat,
-							'data_nekropsi': data_nekropsi,
-							'data_solusi': data_solusi,
-							'data_peralatan': data_peralatan
-						};
-
-						$.ajax({
-							url: 'transaksi/LHK/edit',
-							dataType: 'json',
-							type: 'post',
-							data: {
-								'params': data
-							},
-							beforeSend: function() {
-								showLoading();
-							},
-							success: function(data) {
-								if ( data.status == 1 ) {
-									// bootbox.alert(data.message, function(){
-									// 	lhk.load_form(data.content.id, null, 'transaksi');
-									// });
-									lhk.execHitStokDoc(data.content);
-								} else {
-									hideLoading();
-									bootbox.alert(data.message);
-								}
+				lhk.cekDataPrev(function(data) {
+					if ( data.status != 1 ) {
+						bootbox.alert(data.message);
+					} else {
+						bootbox.confirm(ket_confirm, function(result) {
+							if ( result ) {
+								var data_sekat = $.map( $('table.tbl_sekat tbody tr'), function(tr) {
+									var _data_sekat = {
+										'no': $(tr).find('td.no_urut').text(),
+										'bb': numeral.unformat($(tr).find('input[name=bb]').val())
+									};
+		
+									return _data_sekat;
+								});
+		
+								var tbl_peralatan = $('table.tbl_peralatan');
+								var data_peralatan = {
+									'umur': $(tbl_peralatan).find('td.umur').text(),
+									'waktu': $(tbl_peralatan).find('td.waktu').attr('data-val'),
+									'flok_lantai': $(tbl_peralatan).find('input.flok_lantai').val(),
+									'tipe_controller': $(tbl_peralatan).find('input.tipe_controller').val(),
+									'kelembapan1': numeral.unformat( $(tbl_peralatan).find('input.kelembapan1').val() ),
+									'kelembapan2': numeral.unformat( $(tbl_peralatan).find('input.kelembapan2').val() ),
+									'suhu_current1': numeral.unformat( $(tbl_peralatan).find('input.suhu_current1').val() ),
+									'suhu_current2': numeral.unformat( $(tbl_peralatan).find('input.suhu_current2').val() ),
+									'suhu_experience1': numeral.unformat( $(tbl_peralatan).find('input.suhu_experience1').val() ),
+									'suhu_experience2': numeral.unformat( $(tbl_peralatan).find('input.suhu_experience2').val() ),
+									'air_speed_depan_inlet1': numeral.unformat( $(tbl_peralatan).find('input.air_speed_depan_inlet1').val() ),
+									'air_speed_depan_inlet2': numeral.unformat( $(tbl_peralatan).find('input.air_speed_depan_inlet2').val() ),
+									'kerataan_air_speed1': numeral.unformat( $(tbl_peralatan).find('input.kerataan_air_speed1').val() ),
+									'kerataan_air_speed2': numeral.unformat( $(tbl_peralatan).find('input.kerataan_air_speed2').val() ),
+									'ukuran_kipas1': numeral.unformat( $(tbl_peralatan).find('input.ukuran_kipas1').val() ),
+									'ukuran_kipas2': numeral.unformat( $(tbl_peralatan).find('input.ukuran_kipas2').val() ),
+									'jumlah_kipas1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas1').val() ),
+									'jumlah_kipas2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas2').val() ),
+									'jumlah_kipas_on1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_on1').val() ),
+									'jumlah_kipas_on2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_on2').val() ),
+									'jumlah_kipas_off1': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_off1').val() ),
+									'jumlah_kipas_off2': numeral.unformat( $(tbl_peralatan).find('input.jumlah_kipas_off2').val() ),
+									'waktu_kipas_on1': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_on1').val() ),
+									'waktu_kipas_on2': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_on2').val() ),
+									'waktu_kipas_off1': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_off1').val() ),
+									'waktu_kipas_off2': numeral.unformat( $(tbl_peralatan).find('input.waktu_kipas_off2').val() ),
+									'cooling_pad_status1': $(tbl_peralatan).find('input[name="cooling_pad_status1"]:checked').val(),
+									'cooling_pad_status2': $(tbl_peralatan).find('input[name="cooling_pad_status2"]:checked').val()
+								};
+		
+								var data = {
+									'id': $(elm).data('id'),
+									'umur': $(div_transaksi).find('input[name=umur]').val(),
+									'mitra': $(div_transaksi).find('select#select_mitra').val(),
+									'noreg': $(div_transaksi).find('select#select_noreg').val(),
+									'pakai_pakan': numeral.unformat($(div_transaksi).find('input[name=pakai_pakan]').val()),
+									'sisa_pakan': numeral.unformat($(div_transaksi).find('input[name=sisa_pakan]').val()),
+									'ekor_mati': numeral.unformat($(div_transaksi).find('input[name=ekor_mati]').val()),
+									'keterangan': $(div_transaksi).find('textarea').val(),
+									'lat': $(elm).attr('data-lat'),
+									'long': $(elm).attr('data-long'),
+									'data_sekat': data_sekat,
+									'data_nekropsi': data_nekropsi,
+									'data_solusi': data_solusi,
+									'data_peralatan': data_peralatan
+								};
+		
+								$.ajax({
+									url: 'transaksi/LHK/edit',
+									dataType: 'json',
+									type: 'post',
+									data: {
+										'params': data
+									},
+									beforeSend: function() {
+										showLoading();
+									},
+									success: function(data) {
+										if ( data.status == 1 ) {
+											// bootbox.alert(data.message, function(){
+											// 	lhk.load_form(data.content.id, null, 'transaksi');
+											// });
+											lhk.execHitStokDoc(data.content);
+										} else {
+											hideLoading();
+											bootbox.alert(data.message);
+										}
+									}
+								});
 							}
 						});
 					}

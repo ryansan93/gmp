@@ -842,6 +842,68 @@ class LHK extends Public_Controller
         echo $html;
     }
 
+    public function cekDataPrev()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $umur = $params['umur'];
+            $noreg = $params['noreg'];
+            $pakai_pakan = $params['pakai_pakan'];
+            $ekor_mati = $params['ekor_mati'];
+            $tanggal = $params['tanggal'];
+
+            $status = 1;
+            $message = null;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select top 1 * from lhk where noreg = '".$noreg."' and umur = '".$umur."' order by umur desc
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                $status = 0;
+                $message = 'Data LHK umur '.$umur.' sudah ada, cek kembali data yang anda masukkan.';
+            } else {
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select top 1 * from lhk where noreg = '".$noreg."' and umur < '".$umur."' order by umur desc
+                ";
+                $d_conf_prev = $m_conf->hydrateRaw( $sql );
+
+                if ( $d_conf_prev->count() > 0 ) {
+                    $d_conf_prev = $d_conf_prev->toArray()[0];
+
+                    if ( $d_conf_prev['pakai_pakan'] >= $pakai_pakan || $d_conf_prev['ekor_mati'] >= $ekor_mati ) {
+                        $status = 0;
+
+                        $message = '<span style="color: red;">Data LHK yang anda masukkan tidak sesuai !!!</span>';
+                        $message .= '<br>';
+                        $message .= '<b><u>PAKAI PAKAN</u></b><br>';
+                        $message .= 'UMUR '.$d_conf_prev['umur'].' = '.$d_conf_prev['pakai_pakan'].' Zak<br>';
+                        $message .= 'UMUR '.$umur.' = '.$pakai_pakan.' Zak<br>';
+                        $message .= '<br>';
+                        $message .= '<b><u>EKOR MATI</u></b><br>';
+                        $message .= 'UMUR '.$d_conf_prev['umur'].' = '.$d_conf_prev['ekor_mati'].' Ekor<br>';
+                        $message .= 'UMUR '.$umur.' = '.$ekor_mati.' Ekor<br>';
+                        $message .= '<br>';
+                        $message .= 'Data yang di masukkan adalah data akumulasi, cek kembali data yang anda masukkan.';
+                    }
+                }
+            }
+
+            $this->result['status'] = $status;
+            $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function save()
     {
         $params = $this->input->post('params');
@@ -2077,9 +2139,9 @@ array('25091630101', 15, 39, 21, 184),
         //     $d_conf = $d_conf->toArray();
 
         //     foreach ($d_conf as $key => $value) {
-                $id = '4850';
-                $id_old = '4850';
-                $tanggal = '2025-11-10';
+                $id = '5104';
+                $id_old = '5104';
+                $tanggal = '2025-11-09';
         
                 $conf = new \Model\Storage\Conf();
                 $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
