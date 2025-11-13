@@ -763,7 +763,7 @@ class BankStart extends Public_Controller {
             $nama = $d_conf['nama_coa'];
         }
 
-        $filename = strtoupper("LAPORAN_".str_replace(' ', '_', $d_conf['nama_coa'])."_");
+        $filename = strtoupper("LAPORAN_BANK_".str_replace(' ', '_', $d_conf['nama_coa'])."_");
         $filename = $filename.str_replace('-', '', $start_date).'_'.str_replace('-', '', $end_date).'.xls';
 
         $arr_column = null;

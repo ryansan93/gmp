@@ -85,10 +85,7 @@ class KasStart extends Public_Controller {
         return $data;
     }
 
-    public function getLists()
-    {
-        $params = $this->input->get('params');
-
+    public function getData($params) {
         $kas = $params['kas'];
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
@@ -433,119 +430,30 @@ class KasStart extends Public_Controller {
             $data = $d_conf->toArray();
         }
 
+        return $data;
+    }
+
+    public function getLists()
+    {
+        $params = $this->input->get('params');
+
+        $data = $this->getData( $params );
+
         $content['data'] = $data;
         $html = $this->load->view($this->pathView.'list', $content, TRUE);
 
         echo $html;
     }
 
-    public function save()
+    public function excryptParams()
     {
         $params = $this->input->post('params');
 
         try {
-            $unit = $params['unit'];
-            $perusahaan = $params['perusahaan'];
-            $periode = $params['periode'];
-
-            $startDate = substr($periode, 0, 7).'-01';
-            $endDate = date('Y-m-t', strtotime($startDate));
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select top 1
-                    sk.id
-                from saldo_kas sk
-                where
-                    sk.periode between '".$startDate."' and '".$endDate."' and
-                    sk.unit = '".$unit."' and
-                    sk.perusahaan = '".$perusahaan."'
-            ";
-            $d_sk = $m_conf->hydrateRaw( $sql );
-
-            $id = 0;
-
-            if ( $d_sk->count() > 0 ) {
-                $id = $d_sk->toArray()[0]['id'];
-
-                $m_sk1 = new \Model\Storage\SaldoKas_model();
-                $now = $m_sk1->getDate();
-
-                $waktu = $now['waktu'];
-
-                $m_sk1->where('id', $id)->update(
-                    array(
-                        'saldo_akhir' => $params['saldo_akhir'],
-                        'g_status' => getStatus('submit')
-                    )
-                );
-
-                $d_sk1 = $m_sk1->where('id', $id)->first();
-
-                $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/update', $d_sk1, $deskripsi_log );
-
-                $m_sk2 = new \Model\Storage\SaldoKas_model();
-                $m_sk2->tgl_trans = $waktu;
-                $m_sk2->unit = $unit;
-                $m_sk2->perusahaan = $perusahaan;
-                $m_sk2->periode = date('Y-m-d', strtotime($startDate. ' + 1 months'));
-                $m_sk2->saldo_awal = $params['saldo_akhir'];
-                $m_sk2->saldo_akhir = 0;
-                $m_sk2->g_status = 0;
-                $m_sk2->save();
-
-                $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/save', $m_sk2, $deskripsi_log );
-            } else {
-                $m_sk1 = new \Model\Storage\SaldoKas_model();
-                $now = $m_sk1->getDate();
-
-                $waktu = $now['waktu'];
-
-                $m_sk1->tgl_trans = $waktu;
-                $m_sk1->unit = $unit;
-                $m_sk1->perusahaan = $perusahaan;
-                $m_sk1->periode = $startDate;
-                $m_sk1->saldo_awal = 0;
-                $m_sk1->saldo_akhir = $params['saldo_akhir'];
-                $m_sk1->g_status = getStatus('ack');
-                $m_sk1->save();
-
-                $id = $m_sk1->id;
-
-                $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/save', $m_sk1, $deskripsi_log );
-
-                $m_sk2 = new \Model\Storage\SaldoKas_model();
-                $m_sk2->tgl_trans = $waktu;
-                $m_sk2->unit = $unit;
-                $m_sk2->perusahaan = $perusahaan;
-                $m_sk2->periode = date('Y-m-d', strtotime($startDate. ' + 1 months'));
-                $m_sk2->saldo_awal = $params['saldo_akhir'];
-                $m_sk2->saldo_akhir = 0;
-                $m_sk1->g_status = 0;
-                $m_sk2->save();
-
-                $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/save', $m_sk2, $deskripsi_log );
-            }
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'materai', NULL, NULL, 0, 'saldo_kas', ".$id.", NULL, 1, 1";
-            $m_conf->hydrateRaw( $sql );
-
-            $m_sk = new \Model\Storage\SewaKantor_model();
-            // $d_sk = $m_sk->where('mulai', '<=', $startDate)->where('akhir', '>=', $endDate)->where('unit', $unit)->first();
-            $d_sk = $m_sk->where('akhir', '>=', $endDate)->where('unit', $unit)->where('perusahaan', $perusahaan)->first();
-            if ( $d_sk ) {
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'OPERASIONAL UNIT', NULL, NULL, 0, 'sewa_kantor', ".$d_sk->id.", NULL, 1, 1, '".$endDate."'";
-                $m_conf->hydrateRaw( $sql );
-            }
+            $params_encrypt = exEncrypt( json_encode($params) );
 
             $this->result['status'] = 1;
-            $this->result['message'] = 'Data berhasil di tutup.';
+            $this->result['content'] = $params_encrypt;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -553,277 +461,147 @@ class KasStart extends Public_Controller {
         display_json( $this->result );
     }
 
-    public function ack()
+    public function exportExcel($params_encrypt)
     {
-        $params = $this->input->post('params');
+        $params = json_decode( exDecrypt($params_encrypt), true );
 
-        try {
-            $unit = $params['unit'];
-            $perusahaan = $params['perusahaan'];
-            $periode = $params['periode'];
+        $kas = $params['kas'];
+        $bulan = $params['bulan'];
+        $tahun = substr($params['tahun'], 0, 4);
 
-            $startDate = substr($periode, 0, 7).'-01';
-            $endDate = date('Y-m-t', strtotime($startDate));
+        if ( $bulan != 'all' ) {
+            $i = $bulan;
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select top 1
-                    sk.id
-                from saldo_kas sk
-                where
-                    sk.periode between '".$startDate."' and '".$endDate."' and
-                    sk.unit = '".$unit."' and
-                    sk.perusahaan = '".$perusahaan."'
-            ";
-            $d_sk = $m_conf->hydrateRaw( $sql );
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
 
-            $id = 0;
+            $date = $tahun.'-'.$angka_bulan.'-01';
+            $start_date = date("Y-m-d", strtotime($date));
+            $end_date = date("Y-m-t", strtotime($date));
+        } else {
+            $i = 1;
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+            $_start_date = $tahun.'-'.$angka_bulan.'-01';
+            $start_date = date("Y-m-d", strtotime($_start_date));
 
-            if ( $d_sk->count() > 0 ) {
-                $id = $d_sk->toArray()[0]['id'];
-
-                $m_sk = new \Model\Storage\SaldoKas_model();
-                $now = $m_sk->getDate();
-
-                $m_sk->where('id', $id)->update(
-                    array(
-                        'saldo_akhir' => $params['saldo_akhir'],
-                        'g_status' => getStatus('ack')
-                    )
-                );
-
-                $d_sk = $m_sk->where('id', $id)->first();
-
-                $deskripsi_log = 'di-ack oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/update', $d_sk, $deskripsi_log );
-            } 
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'materai', NULL, NULL, 0, 'saldo_kas', ".$id.", ".$id.", 2, 1";
-            $m_conf->hydrateRaw( $sql );
-
-            $m_sk = new \Model\Storage\SewaKantor_model();
-            // $d_sk = $m_sk->where('mulai', '<=', $startDate)->where('akhir', '>=', $endDate)->where('unit', $unit)->first();
-            $d_sk = $m_sk->where('akhir', '>=', $endDate)->where('unit', $unit)->where('perusahaan', $perusahaan)->first();
-            if ( $d_sk ) {
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'OPERASIONAL UNIT', NULL, NULL, 0, 'sewa_kantor', ".$d_sk->id.", ".$d_sk->id.", 2, 1, '".$endDate."'";
-                $m_conf->hydrateRaw( $sql );
-            }
-
-            $this->result['status'] = 1;
-            $this->result['message'] = 'Data berhasil di tutup.';
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
+            $i = 12;
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+            $_end_date = $tahun.'-'.$angka_bulan.'-01';
+            $end_date = date("Y-m-t", strtotime($_end_date));
         }
 
-        display_json( $this->result );
-    }
+        $data = $this->getData( $params );
 
-    public function getDataDetJurnal($id) {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select
-                dj.id,
-                w.nama as nama_unit,
-                prs.perusahaan as nama_perusahaan,
-                dj.tanggal,
-                jt.nama as transaksi_jurnal,
-                jt.id as transaksi_jurnal_id,
-                djt.nama as detail_transaksi_jurnal,
-                dj.pic,
-                dj.keterangan,
-                dj.asal,
-                dj.coa_asal,
-                dj.tujuan,
-                dj.coa_tujuan
-            from det_jurnal dj
-            left join
-                jurnal j
-                on
-                    j.id = dj.id
-            left join
-                det_jurnal_trans djt
-                on
-                    dj.det_jurnal_trans_id = djt.id
-            left join
-                jurnal_trans jt
-                on
-                    djt.id_header = jt.id
-            left join
-                (
-                    select 
-                        w1.kode,
-                        REPLACE(REPLACE(w1.nama, 'Kab ', ''), 'Kota ', '') as nama
-                    from wilayah w1
-                    right join
-                        (select max(id) as id, kode from wilayah where kode is not null group by kode) w2
-                        on
-                            w1.id = w2.id
+            select * from coa where coa = '".$kas."'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $nama = null;
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray()[0];
+
+            $nama = $d_conf['nama_coa'];
+        }
+
+        $filename = strtoupper("LAPORAN_KAS_".str_replace(' ', '_', $d_conf['nama_coa'])."_");
+        $filename = $filename.str_replace('-', '', $start_date).'_'.str_replace('-', '', $end_date).'.xls';
+
+        $arr_column = null;
+
+        $idx = 0;
+        $arr_column[ $idx ] = array(
+            'Saldo' => array('value' => 'LAPORAN KAS '.strtoupper($nama), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+        );
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'Saldo' => array('value' => 'PERIODE '.str_replace('-', '/', $start_date).' - '.str_replace('-', '/', $end_date), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+        );
+        $idx++;
+
+        $start_row_header = $idx+1;
+
+        $arr_header = array('Tanggal', 'No', 'Keterangan', 'Masuk', 'Keluar', 'Saldo');
+        if ( !empty($data) ) {
+            $kode_kas = null; 
+            $idx_kas = 0;
+            $saldo = 0;
+
+            $saldo_kas = 0;
+
+            $tot_debet_kas = 0;
+            $tot_kredit_kas = 0;
+
+            $gt_debet = 0;
+            $gt_kredit = 0;
+            $gt_saldo = 0;
+            foreach ($data as $key => $value) {
+                if ( $kode_kas <> $value['kas'] ) {
+                    $idx_kas = 0;
+                    $saldo = 0;
+                    $kode_kas = $value['kas'];
                     
-                    union all
+                    $tot_debet_kas = 0;
+                    $tot_kredit_kas = 0;
+                }
 
-                    select 'pusat' as kode, 'PUSAT' as nama
-                ) w
-                on
-                    dj.unit = w.kode
-            left join
-                (
-                    select p1.* from perusahaan p1
-                    right join
-                        (select max(id) as id, kode from perusahaan group by kode) p2
-                        on
-                            p1.id = p2.id
-                ) prs
-                on
-                    dj.perusahaan = prs.kode
-            where
-                dj.id = ".$id."
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+                $tanggal = !empty($value['tanggal']) ? (($value['tanggal'] < '2000-01-01') ? null : $value['tanggal']) : null;
+                $kode_trans = $value['kode'];
+                $keterangan = $value['keterangan'];
 
-        $data = null;
-        if ( $d_conf->count() > 0 ) {
-            $data = $d_conf->toArray()[0];
-        }
+                $debet = $value['debet'];
+                $kredit = $value['kredit'];
+                $saldo = ($saldo+$debet)-$kredit;
 
-        return $data;
-    }
+                $tot_debet_kas += $debet;
+                $tot_kredit_kas += $kredit;
 
-    public function detailForm() {
-        $params = $this->input->get('params');
+                $gt_debet += $debet;
+                $gt_kredit += $kredit;
 
-        $id = $params['id'];
-        $g_status = $params['g_status'];
+                if ( $idx_kas == 0 ) {
+                    if ( stristr($value['keterangan'], 'saldo awal') === false ) {
+                        $arr_column[ $idx ] = array(
+                            'Tanggal' => array('value' => '', 'data_type' => 'date'),
+                            'No' => array('value' => '', 'data_type' => 'string'),
+                            'Keterangan' => array('value' => 'Saldo Awal', 'data_type' => 'string'),
+                            'Masuk' => array('value' => 0, 'data_type' => 'decimal2'),
+                            'Keluar' => array('value' => 0, 'data_type' => 'decimal2'),
+                            'Saldo' => array('value' => 0, 'data_type' => 'decimal2')
+                        );
 
-        $data = $this->getDataDetJurnal($id);
+                        $idx++;
+                    }
+                }
 
-        $content['akses'] = $this->akses;
-        $content['g_status'] = $g_status;
-        $content['data'] = $data;
-        $html = $this->load->view($this->pathView.'detailForm', $content, TRUE);
-
-        echo $html;
-    }
-
-    public function editForm() {
-        $params = $this->input->get('params');
-
-        $id = $params['id'];
-
-        $data = $this->getDataDetJurnal($id);
-
-        $content['data'] = $data;
-        $content['det_jurnal_trans'] = $this->getDetJurnalTrans( $data['transaksi_jurnal_id'] );
-        $html = $this->load->view($this->pathView.'editForm', $content, TRUE);
-
-        echo $html;
-    }
-
-    public function getDetJurnalTrans( $id_jurnal_trans ) {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select djt.* from det_jurnal_trans djt
-            right join
-                (
-                    select jt1.* from jurnal_trans jt1
-                    right join
-                        (
-                            select * from jurnal_trans
-                            where
-                                id = ".$id_jurnal_trans."
-                        ) jt2
-                        on
-                            jt1.kode = jt2.kode
-                    where
-                        jt1.mstatus = 1
-                ) jt
-                on
-                    djt.id_header = jt.id
-            order by
-                djt.nama asc
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
-
-        $data = null;
-        if ( $d_conf->count() > 0 ) {
-            $data = $d_conf->toArray();
-        }
-
-        return $data;
-    }
-
-    public function getSumberTujuanCoa()
-    {
-        $params = $this->input->post('params');
-
-        try {
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select * from det_jurnal_trans djt
-                where
-                    id = ".$params."
-            ";
-            $d_djt = $m_conf->hydrateRaw( $sql );
-
-            $data = null;
-            if ( $d_djt->count() > 0 ) {
-                $d_djt = $d_djt->toArray()[0];
-
-                $data = array(
-                    'sumber' => $d_djt['sumber'],
-                    'sumber_coa' => $d_djt['sumber_coa'],
-                    'tujuan' => $d_djt['tujuan'],
-                    'tujuan_coa' => $d_djt['tujuan_coa'],
+                $arr_column[ $idx ] = array(
+                    'Tanggal' => array('value' => !empty($tanggal) ? $tanggal : '', 'data_type' => 'date'),
+                    'No' => array('value' => !empty($kode_trans) ? $kode_trans : '', 'data_type' => 'string'),
+                    'Keterangan' => array('value' => $keterangan, 'data_type' => 'string'),
+                    'Masuk' => array('value' => $debet, 'data_type' => 'decimal2'),
+                    'Keluar' => array('value' => $kredit, 'data_type' => 'decimal2'),
+                    'Saldo' => array('value' => $saldo, 'data_type' => 'decimal2')
                 );
+
+                if ( !empty($kode_kas) && (!isset($data[$key+1]) || $kode_kas <> $data[$key+1]['kas']) ) {
+                    $idx++;
+
+                    $arr_column[ $idx ] = array(
+                        'Keterangan' => array('value' => 'Total', 'data_type' => 'string', 'colspan' => array('A','C'), 'align' => 'right', 'text_style' => 'bold'),
+                        'Masuk' => array('value' => $gt_debet, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+                        'Keluar' => array('value' => $gt_kredit, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+                        'Saldo' => array('value' => $saldo, 'data_type' => 'decimal2', 'text_style' => 'bold')
+                    );
+                }
+
+                $idx++;
+                $idx_kas++;
             }
-
-            $this->result['status'] = 1;
-            $this->result['content'] = $data;
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
         }
 
-        display_json( $this->result );
-    }
+        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column, $start_row_header );
 
-    public function editDetJurnal() {
-        $params = $this->input->post('params');
-
-        try {
-            $m_dj = new \Model\Storage\DetJurnal_model();
-            $m_dj->where('id', $params['id'])->update(
-                array(
-                    'det_jurnal_trans_id' => $params['det_jurnal_trans_id'],
-                    'asal' => $params['sumber'],
-                    'coa_asal' => $params['sumber_coa'],
-                    'tujuan' => $params['tujuan'],
-                    'coa_tujuan' => $params['tujuan_coa']
-                )
-            );
-
-            $d_dj = $m_dj->where('id', $params['id'])->first();
-
-            $m_jurnal = new \Model\Storage\Jurnal_model();
-            $d_jurnal = $m_jurnal->where('id', $d_dj->id_header)->first();
-
-            $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_jurnal, $deskripsi_log);
-
-            $this->result['status'] = 1;
-            $this->result['message'] = 'Data berhasil di edit';
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
-    }
-
-    public function model($status)
-    {
-        $m_sk = new \Model\Storage\SaldoKas_model();
-        $dashboard = $m_sk->getDashboard($status);
-
-        return $dashboard;
+        $this->load->helper('download');
+        force_download('export_excel/'.$filename.'.xlsx', NULL);
     }
 }
