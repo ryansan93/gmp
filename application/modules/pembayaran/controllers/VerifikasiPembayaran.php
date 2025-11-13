@@ -320,106 +320,129 @@ class VerifikasiPembayaran extends Public_Controller
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select
-                rpd.*,
-                case
-                    when konfir_pembayaran.no_inv is not null then
-                        konfir_pembayaran.no_inv
-                    else
-                        rp.no_invoice
-                end as no_inv,
-                konfir_pembayaran.no_sj,
-                konfir_pembayaran.bruto,
-                konfir_pembayaran.pph,
-                konfir_pembayaran.bruto - konfir_pembayaran.pph as netto,
-                case
-                    when rp.lampiran is not null then
-                        rp.lampiran
-                    else
-                        konfir_pembayaran.lampiran
-                end as lampiran
-            from realisasi_pembayaran_det rpd
-            left join
-                realisasi_pembayaran rp
-                on
-                    rpd.id_header = rp.id
-            left join
-                (
-                    select
-                        kpd.nomor as kode_trans,
-                        td.no_sj as no_inv,
-                        td.no_sj as no_sj,
-                        kpdd.total as bruto,
-                        kpdd.total * (0.25/100) as pph,
-                        '' as lampiran
-                    from konfirmasi_pembayaran_doc_det kpdd
-                    left join
-                        konfirmasi_pembayaran_doc kpd
-                        on
-                            kpdd.id_header = kpd.id
-                    left join
-                        (
-                            select td1.* from terima_doc td1
-                            right join
-                                (select max(id) as id, no_order from terima_doc group by no_order) td2
-                                on
-                                    td1.id = td2.id
-                        ) td
-                        on
-                            td.no_order = kpdd.no_order
-
-                    union all
-
-                    select
-                        kpp.nomor as kode_trans,
-                        kpp.invoice as no_inv,
-                        kpp.invoice as no_sj,
-                        kpp.total as bruto,
-                        0 as pph,
-                        '' as lampiran
-                    from konfirmasi_pembayaran_pakan kpp
-
-                    union all
-
-                    select
-                        kpv.nomor as kode_trans,
-                        null as no_inv,
-                        kpvd.no_sj as no_sj,
-                        kpvd.total as bruto,
-                        0 as pph,
-                        '' as lampiran
-                    from konfirmasi_pembayaran_voadip_det kpvd
-                    left join
-                        konfirmasi_pembayaran_voadip kpv
-                        on
-                            kpvd.id_header = kpv.id
-
-                    union all
-
-                    select
-                        kpop.nomor as kode_trans,
-                        kpop.invoice as no_inv,
-                        null as no_sj,
-                        (kpop.total+kpop.potongan_pph_23) as bruto,
-                        kpop.potongan_pph_23 as pph,
-                        kpop.lampiran
-                    from konfirmasi_pembayaran_oa_pakan kpop
-
-                    union all
-
-                    select
-                        kpp.nomor as kode_trans,
-                        kpp.invoice as no_inv,
-                        null as no_sj,
-                        kpp.total as bruto,
-                        0 as pph,
-                        kpp.lampiran
-                    from konfirmasi_pembayaran_peternak kpp
-                ) konfir_pembayaran
-                on
-                    rpd.no_bayar = konfir_pembayaran.kode_trans
-            where
-                rp.id = ".$id."
+            select data.*
+            from
+            (
+                select
+                    rpd.id_header,
+                    rpd.transaksi,
+                    rpd.no_bayar,
+                    rpd.tagihan,
+                    rpd.bayar,
+                    rpd.cn,
+                    rpd.potongan,
+                    rpd.transfer,
+                    rpd.uang_muka,
+                    rpd.dn,
+                    rpd.id,
+                    case
+                        when konfir_pembayaran.no_inv is not null then
+                            konfir_pembayaran.no_inv
+                        else
+                            rp.no_invoice
+                    end as no_inv,
+                    konfir_pembayaran.no_sj,
+                    konfir_pembayaran.bruto,
+                    konfir_pembayaran.pph,
+                    konfir_pembayaran.bruto - konfir_pembayaran.pph as netto,
+                    case
+                        when rp.lampiran is not null then
+                            rp.lampiran
+                        else
+                            konfir_pembayaran.lampiran
+                    end as lampiran,
+                    konfir_pembayaran.tanggal
+                from realisasi_pembayaran_det rpd
+                left join
+                    realisasi_pembayaran rp
+                    on
+                        rpd.id_header = rp.id
+                left join
+                    (
+                        select
+                            kpd.tgl_bayar as tanggal,
+                            kpd.nomor as kode_trans,
+                            td.no_sj as no_inv,
+                            td.no_sj as no_sj,
+                            kpdd.total as bruto,
+                            kpdd.total * (0.25/100) as pph,
+                            '' as lampiran
+                        from konfirmasi_pembayaran_doc_det kpdd
+                        left join
+                            konfirmasi_pembayaran_doc kpd
+                            on
+                                kpdd.id_header = kpd.id
+                        left join
+                            (
+                                select td1.* from terima_doc td1
+                                right join
+                                    (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                    on
+                                        td1.id = td2.id
+                            ) td
+                            on
+                                td.no_order = kpdd.no_order
+    
+                        union all
+    
+                        select
+                            kpp.tgl_bayar as tanggal,
+                            kpp.nomor as kode_trans,
+                            kpp.invoice as no_inv,
+                            kpp.invoice as no_sj,
+                            kpp.total as bruto,
+                            0 as pph,
+                            '' as lampiran
+                        from konfirmasi_pembayaran_pakan kpp
+    
+                        union all
+    
+                        select
+                            kpv.tgl_bayar as tanggal,
+                            kpv.nomor as kode_trans,
+                            null as no_inv,
+                            kpvd.no_sj as no_sj,
+                            kpvd.total as bruto,
+                            0 as pph,
+                            '' as lampiran
+                        from konfirmasi_pembayaran_voadip_det kpvd
+                        left join
+                            konfirmasi_pembayaran_voadip kpv
+                            on
+                                kpvd.id_header = kpv.id
+    
+                        union all
+    
+                        select
+                            kpop.tgl_bayar as tanggal,
+                            kpop.nomor as kode_trans,
+                            kpop.invoice as no_inv,
+                            null as no_sj,
+                            (kpop.total+kpop.potongan_pph_23) as bruto,
+                            kpop.potongan_pph_23 as pph,
+                            kpop.lampiran
+                        from konfirmasi_pembayaran_oa_pakan kpop
+    
+                        union all
+    
+                        select
+                            kpp.tgl_bayar as tanggal,
+                            kpp.nomor as kode_trans,
+                            kpp.invoice as no_inv,
+                            null as no_sj,
+                            kpp.total as bruto,
+                            0 as pph,
+                            kpp.lampiran
+                        from konfirmasi_pembayaran_peternak kpp
+                    ) konfir_pembayaran
+                    on
+                        rpd.no_bayar = konfir_pembayaran.kode_trans
+                where
+                    rp.id = ".$id."
+            ) data
+            order by
+                data.tanggal asc,
+                data.no_inv asc
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

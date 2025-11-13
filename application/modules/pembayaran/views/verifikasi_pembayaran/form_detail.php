@@ -26,6 +26,7 @@
                         <table class="table table-bordered table-hover" style="margin-bottom: 0px;">
                             <thead>
                                 <tr>
+                                    <th class="col-xs-1">Tanggal</th>
                                     <th class="col-xs-1">No. Bayar / No. Invoice</th>
                                     <th class="col-xs-1">Bruto</th>
                                     <th class="col-xs-1">Potongan PPH</th>
@@ -34,8 +35,17 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <?php
+                                    $t_bruto = 0;
+                                    $t_pph = 0;
+                                    $t_netto = 0;
+                                    $t_pengajuan_transafer = 0;
+                                ?>
                                 <?php foreach ($data as $key => $value) { ?>
                                     <tr>
+                                        <td>
+                                            <?php echo strtoupper(tglIndonesia($value['tanggal'], '-', ' ')); ?>
+                                        </td>
                                         <td>
                                             <?php if ( isset($value['lampiran']) && !empty($value['lampiran']) ) { ?>
                                                 <a href="uploads/<?php echo $value['lampiran']; ?>" target="_blank"><?php echo $value['no_inv']; ?></a>
@@ -47,8 +57,22 @@
                                         <td class="text-right"><?php echo angkaDecimal($value['pph']); ?></td>
                                         <td class="text-right"><?php echo angkaDecimal($value['netto']); ?></td>
                                         <td class="text-right"><?php echo angkaDecimal($value['transfer']); ?></td>
+
+                                        <?php
+                                            $t_bruto += $value['bruto'];
+                                            $t_pph += $value['pph'];
+                                            $t_netto += $value['netto'];
+                                            $t_pengajuan_transafer += $value['transfer'];
+                                        ?>
                                     </tr>
                                 <?php } ?>
+                                <tr>
+                                    <td colspan="2"><b>TOTAL</b></td>
+                                    <td class="text-right"><b><?php echo angkaDecimal($t_bruto); ?></b></td>
+                                    <td class="text-right"><b><?php echo angkaDecimal($t_pph); ?></b></td>
+                                    <td class="text-right"><b><?php echo angkaDecimal($t_netto); ?></b></td>
+                                    <td class="text-right"><b><?php echo angkaDecimal($t_pengajuan_transafer); ?></b></td>
+                                </tr>
                             </tbody>
                         </table>
                     </small>
