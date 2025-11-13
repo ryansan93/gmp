@@ -556,7 +556,7 @@ var lhk = {
 	}, // end - hit_total_pakan
 	*/
 
-	cekDataPrev: function(callback) {
+	cekDataPrev: function(callback, id) {
         var div_transaksi = $('#transaksi');
 		var umur = $(div_transaksi).find('input[name=umur]').val();
 		var noreg = $(div_transaksi).find('select#select_noreg').val();
@@ -565,6 +565,7 @@ var lhk = {
 		var tanggal = dateSQL($(div_transaksi).find('#tanggal').data('DateTimePicker').date());
 
 		var params = {
+			'id': id,
 			'umur': umur,
 			'noreg': noreg,
 			'pakai_pakan': pakai_pakan,
@@ -796,7 +797,7 @@ var lhk = {
 							}
 						});
 					}
-				});
+				}, null);
 			}
 		}
 	}, // end - save
@@ -1000,7 +1001,7 @@ var lhk = {
 							}
 						});
 					}
-				});
+				}, $(elm).data('id'));
 			}
 		}
 	}, // end - edit

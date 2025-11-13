@@ -847,6 +847,7 @@ class LHK extends Public_Controller
         $params = $this->input->post('params');
 
         try {
+            $id = (isset($params['id']) && !empty($params['id'])) ? $params['id'] : null;
             $umur = $params['umur'];
             $noreg = $params['noreg'];
             $pakai_pakan = $params['pakai_pakan'];
@@ -856,9 +857,14 @@ class LHK extends Public_Controller
             $status = 1;
             $message = null;
 
+            $sql_id = null;
+            if ( !empty($id) ) {
+                $sql_id = " and id <> '".$id."'";
+            }
+
             $m_conf = new \Model\Storage\Conf();
             $sql = "
-                select top 1 * from lhk where noreg = '".$noreg."' and umur = '".$umur."' order by umur desc
+                select top 1 * from lhk where noreg = '".$noreg."' and umur = '".$umur."' ".$sql_id." order by umur desc
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 

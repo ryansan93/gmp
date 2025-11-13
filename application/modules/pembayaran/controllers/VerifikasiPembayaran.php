@@ -650,71 +650,71 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function tes() {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            /*
-            select rp.id, rp.tgl_realisasi from realisasi_pembayaran_det rpd
-            left join
-                realisasi_pembayaran rp 
-                on
-                    rpd.id_header = rp.id
-            where
-                rpd.transaksi = 'DOC' and 
-                rp.tgl_realisasi is not null
-            group by
-                rp.id, rp.tgl_realisasi
-            */
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     /*
+        //     select rp.id, rp.tgl_realisasi from realisasi_pembayaran_det rpd
+        //     left join
+        //         realisasi_pembayaran rp 
+        //         on
+        //             rpd.id_header = rp.id
+        //     where
+        //         rpd.transaksi = 'DOC' and 
+        //         rp.tgl_realisasi is not null
+        //     group by
+        //         rp.id, rp.tgl_realisasi
+        //     */
 
-            /*
-            select
-                rp.id
-            from realisasi_pembayaran rp 
-            left join
-                (
-                    select
-                        id_header, sum(transfer) as jml_transfer, max(id) as id, transaksi
-                    from realisasi_pembayaran_det rpd
-                    group by
-                        id_header, transaksi
-                ) rpd
-                on
-                    rp.id = rpd.id_header
-            where 
-                rp.tgl_bayar >= '2025-10-01'
-            */
+        //     /*
+        //     select
+        //         rp.id
+        //     from realisasi_pembayaran rp 
+        //     left join
+        //         (
+        //             select
+        //                 id_header, sum(transfer) as jml_transfer, max(id) as id, transaksi
+        //             from realisasi_pembayaran_det rpd
+        //             group by
+        //                 id_header, transaksi
+        //         ) rpd
+        //         on
+        //             rp.id = rpd.id_header
+        //     where 
+        //         rp.tgl_bayar >= '2025-10-01'
+        //     */
 
-            select rp.id, rp.tgl_bayar from realisasi_pembayaran_det rpd 
-            left join
-                (
-                    select kpop.*, kpopd.unit from konfirmasi_pembayaran_oa_pakan kpop
-                    left join
-                        (select id_header, SUBSTRING(no_sj, 4, 3) as unit from konfirmasi_pembayaran_oa_pakan_det group by id_header, SUBSTRING(no_sj, 4, 3)) kpopd
-                        on
-                            kpop.id = kpopd.id_header
-                ) kpop 
-                on
-                    rpd.no_bayar = kpop.nomor
-            left join
-                realisasi_pembayaran rp 
-                on
-                    rpd.id_header = rp.id
-            where
-                rpd.transaksi like '%oa pakan%' and
-                kpop.id is not null and
-                rp.tgl_bayar >= '2025-10-01'
-            order by
-                rp.tgl_bayar asc
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        //     select rp.id, rp.tgl_bayar from realisasi_pembayaran_det rpd 
+        //     left join
+        //         (
+        //             select kpop.*, kpopd.unit from konfirmasi_pembayaran_oa_pakan kpop
+        //             left join
+        //                 (select id_header, SUBSTRING(no_sj, 4, 3) as unit from konfirmasi_pembayaran_oa_pakan_det group by id_header, SUBSTRING(no_sj, 4, 3)) kpopd
+        //                 on
+        //                     kpop.id = kpopd.id_header
+        //         ) kpop 
+        //         on
+        //             rpd.no_bayar = kpop.nomor
+        //     left join
+        //         realisasi_pembayaran rp 
+        //         on
+        //             rpd.id_header = rp.id
+        //     where
+        //         rpd.transaksi like '%oa pakan%' and
+        //         kpop.id is not null and
+        //         rp.tgl_bayar >= '2025-10-01'
+        //     order by
+        //         rp.tgl_bayar asc
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $key => $value) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, null, null);
-            }
-        }
+        //     foreach ($d_conf as $key => $value) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, null, null);
+        //     }
+        // }
 
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 160, 160, 2, null, null);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 330, 330, 2, null, '2025-11-12');
     }
 }
