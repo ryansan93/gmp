@@ -17,7 +17,7 @@ class ExportExcel extends Public_Controller {
         parent::__construct();
     }
 
-    public function exportExcelUsingSpreadSheet( $file_name, $arr_header, $arr_column ) {
+    public function exportExcelUsingSpreadSheet( $file_name, $arr_header, $arr_column, $start_row_header = 1 ) {
         /* Spreadsheet Init */
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -26,20 +26,30 @@ class ExportExcel extends Public_Controller {
         for ($i=0; $i < count($arr_header); $i++) { 
             $huruf = toAlpha($i+1);
 
-            $posisi = $huruf.'1';
+            $posisi = $huruf.$start_row_header;
             $sheet->setCellValue($posisi, $arr_header[$i]);
 
             $styleBold = [
                 'font' => [
                     'bold' => true,
-                ]
+                ],
+                'borders' => [
+                    'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                    'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                    'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                    'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                ],
             ];
             $spreadsheet->getActiveSheet()->getStyle($posisi)->applyFromArray($styleBold);
         }
 
-        $baris = 2;
+        $baris = 1;
         if ( !empty($arr_column) && count($arr_column) ) {
             for ($i=0; $i < count($arr_column); $i++) {
+                if ( $baris == $start_row_header ) {
+                    $baris++;
+                }
+
                 for ($j=0; $j < count($arr_header); $j++) {
                     $huruf = toAlpha($j+1);
 
@@ -104,6 +114,16 @@ class ExportExcel extends Public_Controller {
                             }
 
                             if ( isset($data['align']) ) {
+                                if ( $data['align'] == 'left' ) {
+                                    $sheet->getStyle($data['colspan'][0].$baris)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                                }
+                                if ( $data['align'] == 'right' ) {
+                                    $sheet->getStyle($data['colspan'][0].$baris)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                                }
+                                if ( $data['align'] == 'center' ) {
+                                    $sheet->getStyle($data['colspan'][0].$baris)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                                }
+                            } else {
                                 $sheet->getStyle($data['colspan'][0].$baris)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
                             }
 
@@ -119,6 +139,19 @@ class ExportExcel extends Public_Controller {
                                 $sheet->getStyle($huruf.$baris)->getFont()->setBold(true);
                             }
                         }
+
+                        if ( !isset($data['border']) || (isset($data['border']) && $data['border'] == 'border') ) {
+                            $styleArray = [
+                                'borders' => [
+                                    'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                    'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                    'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                    'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                ],
+                            ];
+                            
+                            $spreadsheet->getActiveSheet()->getStyle($huruf.$baris)->applyFromArray($styleArray, false);
+                        }
                     }
                 }
 
@@ -132,16 +165,16 @@ class ExportExcel extends Public_Controller {
             $sheet->setCellValue($range1, 'Data tidak ditemukan.');
         }
 
-        $styleArray = [
-            'borders' => [
-                'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
-                'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
-                'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
-                'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
-            ],
-        ];
+        // $styleArray = [
+        //     'borders' => [
+        //         'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+        //         'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+        //         'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+        //         'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+        //     ],
+        // ];
         
-        $spreadsheet->getActiveSheet()->getStyle('A1:'.toAlpha(count($arr_header)).$baris)->applyFromArray($styleArray, false);
+        // $spreadsheet->getActiveSheet()->getStyle('A1:'.toAlpha(count($arr_header)).$baris)->applyFromArray($styleArray, false);
 
         // try {
         //     $writer = new Xlsx($spreadsheet);

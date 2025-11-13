@@ -82,6 +82,10 @@
 				</table>
 			</small>
 		</div>
+		<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+		<div class="col-xs-12 no-padding">
+			<button type="button" class="btn btn-default pull-right" onclick="kk.excryptParams(this)"><i class="fa fa-file-excel-o"></i> Export Excel</button>
+		</div>
 		<div class="col-xs-12 no-padding btn-tutup-bulan hide" data-status="0">
 			<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 			<div class="col-xs-12 no-padding">
