@@ -300,6 +300,8 @@ var ppm = {
         let err = 0;
         let div = $(elm).closest('div#transaksi');
 
+        $(elm).attr('disabled', 'disabled');
+
         $.map( $(div).find('[data-required=1]'), function(ipt) {
             if ( empty($(ipt).val()) ) {
                 $(ipt).parent().addClass('has-error');
@@ -310,6 +312,7 @@ var ppm = {
         });
 
         if ( err > 0 ) {
+            $(elm).removeAttr('disabled');
             bootbox.alert( 'Harap lengkapi data penerimaan pakan.' );
         } else {
             bootbox.confirm( 'Apakah anda yakin ingin menyimpan data ?', function(result) {
@@ -343,10 +346,13 @@ var ppm = {
                                 ppm.execInsertKonfirmasi(data.content);
 			                } else {
                                 hideLoading();
+                                $(elm).removeAttr('disabled');
 			                    bootbox.alert( data.message );
 			                }
 			            },
 			        });
+                } else {
+                    $(elm).removeAttr('disabled');
                 }
             });
         }

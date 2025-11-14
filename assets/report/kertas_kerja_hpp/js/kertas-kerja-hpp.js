@@ -5,11 +5,20 @@ var kkh = {
 
 	settingUp: function () {
 		$('select.unit').select2();
-		$('select.bulan').select2();
+		// $('select.bulan').select2();
 
-		$('#Tahun').datetimepicker({
+		// $('#Tahun').datetimepicker({
+        //     locale: 'id',
+        //     format: 'Y'
+        // });
+
+		$("#StartDate").datetimepicker({
             locale: 'id',
-            format: 'Y'
+            format: 'DD MMM Y'
+        });
+        $("#EndDate").datetimepicker({
+            locale: 'id',
+            format: 'DD MMM Y'
         });
 
 		kkh.set_table_page('#tbl_kkh');
@@ -45,8 +54,10 @@ var kkh = {
 			var dcontent = $('table tbody');
 			var params = {
 				'unit': $('.unit').select2('val'),
-				'bulan': $('.bulan').select2().val(),
-				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
+				// 'bulan': $('.bulan').select2().val(),
+				// 'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
+				'start_date': dateSQL( $('#StartDate').data('DateTimePicker').date() ),
+				'end_date': dateSQL( $('#EndDate').data('DateTimePicker').date() )
 			};
 
 			$.ajax({

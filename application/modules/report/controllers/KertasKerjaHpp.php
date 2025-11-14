@@ -69,37 +69,559 @@ class KertasKerjaHpp extends Public_Controller {
 
     public function getData($params) {
         $unit = $params['unit'];
-        $bulan = $params['bulan'];
-        $tahun = substr($params['tahun'], 0, 4);
+        // $bulan = $params['bulan'];
+        // $tahun = substr($params['tahun'], 0, 4);
 
-        if ( $bulan != 'all' ) {
-            $i = $bulan;
+        // if ( $bulan != 'all' ) {
+        //     $i = $bulan;
 
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+        //     $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
 
-            $date = $tahun.'-'.$angka_bulan.'-01';
-            $start_date = date("Y-m-d", strtotime($date));
-            $end_date = date("Y-m-t", strtotime($date));
-        } else {
-            $i = 1;
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
-            $_start_date = $tahun.'-'.$angka_bulan.'-01';
-            $start_date = date("Y-m-d", strtotime($_start_date));
+        //     $date = $tahun.'-'.$angka_bulan.'-01';
+        //     $start_date = date("Y-m-d", strtotime($date));
+        //     $end_date = date("Y-m-t", strtotime($date));
+        // } else {
+        //     $i = 1;
+        //     $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+        //     $_start_date = $tahun.'-'.$angka_bulan.'-01';
+        //     $start_date = date("Y-m-d", strtotime($_start_date));
 
-            $i = 12;
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
-            $_end_date = $tahun.'-'.$angka_bulan.'-01';
-            $end_date = date("Y-m-t", strtotime($_end_date));
+        //     $i = 12;
+        //     $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+        //     $_end_date = $tahun.'-'.$angka_bulan.'-01';
+        //     $end_date = date("Y-m-t", strtotime($_end_date));
+        // }
+
+        $start_date = $params['start_date'];
+        $end_date = $params['end_date'];
+
+        $sql_unit = null;
+        if ( stristr('all', $unit) === false ) {
+            $sql_unit = " and w.kode = '".$unit."'";
         }
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select data.* from
+            select 
+                w.kode as unit,
+                data.noreg,
+                m.nama,
+                case
+                    when td.datang is not null then
+                        td.datang
+                    else
+                        rs.tgl_docin
+                end as tgl_chick_in,
+                case
+                    when td.jml_ekor is not null then
+                        td.jml_ekor
+                    else
+                        rs.populasi
+                end as populasi,
+                sum(beli_pkn) as beli_pkn,
+                sum(mutasi_msk_pkn) as mutasi_msk_pkn,
+                sum(mutasi_klwr_pkn) as mutasi_klwr_pkn,
+                sum(pemakaian_pkn) as pemakaian_pkn,
+                sum(beli_ovk) as beli_ovk,
+                sum(mutasi_msk_ovk) as mutasi_msk_ovk,
+                sum(mutasi_klwr_ovk) as mutasi_klwr_ovk,
+                sum(pemakaian_ovk) as pemakaian_ovk,
+                sum(beli_doc) as beli_doc,
+                sum(mutasi_msk_doc) as mutasi_msk_doc,
+                sum(mutasi_klwr_doc) as mutasi_klwr_doc,
+                sum(pemakaian_doc) as pemakaian_doc,
+                sum(beli_oa) as beli_oa,
+                sum(mutasi_msk_oa) as mutasi_msk_oa,
+                sum(mutasi_klwr_oa) as mutasi_klwr_oa,
+                sum(pemakaian_oa) as pemakaian_oa,
+                rhpp_p.pdpt_peternak_belum_pajak as pdpt_peternak,
+                (sum(pemakaian_pkn) + (sum(pemakaian_ovk)-sum(mutasi_klwr_ovk)) + sum(pemakaian_doc) + sum(pemakaian_oa)) as total
+            from
             (
-                
+                select
+                    pkn.noreg,
+                    sum(pkn.jml_beli * pkn.hrg_beli) as beli_pkn,
+                    sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk) as mutasi_msk_pkn,
+                    sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr) as mutasi_klwr_pkn,
+                    sum(pkn.jml_pemakaian * pkn.hrg_pemakaian) as pemakaian_pkn,
+                    0 as beli_ovk,
+                    0 as mutasi_msk_ovk,
+                    0 as mutasi_klwr_ovk,
+                    0 as pemakaian_ovk,
+                    0 as beli_doc,
+                    0 as mutasi_msk_doc,
+                    0 as mutasi_klwr_doc,
+                    0 as pemakaian_doc,
+                    0 as beli_oa,
+                    0 as mutasi_msk_oa,
+                    0 as mutasi_klwr_oa,
+                    0 as pemakaian_oa
+                from (
+                    select 
+                        dss.noreg,
+                        dss.kode_trans,
+                        sum(dss.jumlah) as jml_beli,
+                        dss.hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_siklus dss
+                    left join
+                        kirim_pakan kp
+                        on
+                            dss.kode_trans = kp.no_order
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dss.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        kp.jenis_kirim = 'opkg'
+                    group by
+                        dss.noreg, dss.kode_trans, dss.hrg_beli
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dss.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        sum(dss.jumlah) as jml_mutasi_msk,
+                        dss.hrg_beli as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_siklus dss
+                    left join
+                        kirim_pakan kp
+                        on
+                            dss.kode_trans = kp.no_order
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dss.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        kp.jenis_kirim = 'opkp'
+                    group by
+                        dss.noreg, dss.kode_trans, dss.hrg_beli
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dsts.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        sum(dsts.jumlah) as jml_mutasi_klwr,
+                        dss.hrg_beli as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_trans_siklus dsts
+                    left join 
+                        det_stok_siklus dss
+                        on
+                            dsts.id_header = dss.id
+                    left join
+                        kirim_pakan kp
+                        on
+                            dsts.kode_trans = kp.no_order
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        kp.jenis_kirim = 'opkp'
+                    group by
+                        dss.noreg, dsts.kode_trans, dss.hrg_beli
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dsts.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        sum(dsts.jumlah) as jml_pemakaian,
+                        dss.hrg_beli as hrg_pemakaian
+                    from det_stok_trans_siklus dsts
+                    left join 
+                        det_stok_siklus dss
+                        on
+                            dsts.id_header = dss.id
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        dsts.tbl_name = 'lhk'
+                    group by
+                        dss.noreg, dsts.kode_trans, dss.hrg_beli
+                ) pkn
+                group by
+                    pkn.noreg
+
+                union all
+
+                select
+                    ovk.noreg,
+                    0 as beli_pkn,
+                    0 as mutasi_msk_pkn,
+                    0 as mutasi_klwr_pkn,
+                    0 as pemakaian_pkn,
+                    sum(ovk.jml_beli * ovk.hrg_beli) as beli_ovk,
+                    sum(ovk.jml_mutasi_msk * ovk.hrg_mutasi_msk) as mutasi_msk_ovk,
+                    sum(ovk.jml_mutasi_klwr * ovk.hrg_mutasi_klwr) as mutasi_klwr_ovk,
+                    sum(ovk.jml_beli * ovk.hrg_beli) as pemakaian_ovk,
+                    -- sum(ovk.jml_pemakaian * ovk.hrg_pemakaian) as pemakaian_ovk,
+                    0 as beli_doc,
+                    0 as mutasi_msk_doc,
+                    0 as mutasi_klwr_doc,
+                    0 as pemakaian_doc,
+                    0 as beli_oa,
+                    0 as mutasi_msk_oa,
+                    0 as mutasi_klwr_oa,
+                    0 as pemakaian_oa
+                from (
+                    select 
+                        dss.noreg,
+                        dss.kode_trans,
+                        sum(dss.jumlah) as jml_beli,
+                        dss.hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_siklus dss
+                    left join
+                        kirim_voadip kv
+                        on
+                            dss.kode_trans = kv.no_order
+                    where
+                        dss.jenis_barang = 'voadip' and
+                        dss.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        kv.jenis_kirim = 'opkg'
+                    group by
+                        dss.noreg, dss.kode_trans, dss.hrg_beli
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dss.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        sum(dss.jumlah) as jml_mutasi_msk,
+                        dss.hrg_beli as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_siklus dss
+                    left join
+                        kirim_voadip kv
+                        on
+                            dss.kode_trans = kv.no_order
+                    where
+                        dss.jenis_barang = 'voadip' and
+                        dss.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        kv.jenis_kirim = 'opkp'
+                    group by
+                        dss.noreg, dss.kode_trans, dss.hrg_beli
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dsts.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        sum(dsts.jumlah) as jml_mutasi_klwr,
+                        dss.hrg_beli as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_trans_siklus dsts
+                    left join 
+                        det_stok_siklus dss
+                        on
+                            dsts.id_header = dss.id
+                    where
+                        dss.jenis_barang = 'voadip' and
+                        dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        dsts.tbl_name <> 'lhk'
+                    group by
+                        dss.noreg, dsts.kode_trans, dss.hrg_beli
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dsts.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        sum(dsts.jumlah) as jml_pemakaian,
+                        dss.hrg_beli as hrg_pemakaian
+                    from det_stok_trans_siklus dsts
+                    left join 
+                        det_stok_siklus dss
+                        on
+                            dsts.id_header = dss.id
+                    where
+                        dss.jenis_barang = 'voadip' and
+                        dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        dsts.tbl_name = 'lhk'
+                    group by
+                        dss.noreg, dsts.kode_trans, dss.hrg_beli
+                ) ovk
+                group by
+                    ovk.noreg
+
+                union all
+
+                select
+                    doc.noreg,
+                    0 as beli_pkn,
+                    0 as mutasi_msk_pkn,
+                    0 as mutasi_klwr_pkn,
+                    0 as pemakaian_pkn,
+                    0 as beli_ovk,
+                    0 as mutasi_msk_ovk,
+                    0 as mutasi_klwr_ovk,
+                    0 as pemakaian_ovk,
+                    sum(doc.jml_beli * doc.hrg_beli) as beli_doc,
+                    sum(doc.jml_mutasi_msk * doc.hrg_mutasi_msk) as mutasi_msk_doc,
+                    sum(doc.jml_mutasi_klwr * doc.hrg_mutasi_klwr) as mutasi_klwr_doc,
+                    sum(doc.jml_beli * doc.hrg_beli) as pemakaian_doc,
+                    -- sum(doc.jml_pemakaian * doc.hrg_pemakaian) as pemakaian_doc,
+                    0 as beli_oa,
+                    0 as mutasi_msk_oa,
+                    0 as mutasi_klwr_oa,
+                    0 as pemakaian_oa
+                from (
+                    select 
+                        dss.noreg,
+                        dss.kode_trans,
+                        sum(dss.jumlah) as jml_beli,
+                        dss.hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_siklus dss
+                    where
+                        dss.jenis_barang = 'doc' and
+                        dss.tgl_trans between '".$start_date."' and '".$end_date."'
+                    group by
+                        dss.noreg, dss.kode_trans, dss.hrg_beli
+                ) doc
+                group by
+                    doc.noreg
+
+                union all
+
+                select
+                    oa.noreg,
+                    0 as beli_pkn,
+                    0 as mutasi_msk_pkn,
+                    0 as mutasi_klwr_pkn,
+                    0 as pemakaian_pkn,
+                    0 as beli_ovk,
+                    0 as mutasi_msk_ovk,
+                    0 as mutasi_klwr_ovk,
+                    0 as pemakaian_ovk,
+                    0 as beli_doc,
+                    0 as mutasi_msk_doc,
+                    0 as mutasi_klwr_doc,
+                    0 as pemakaian_doc,
+                    sum(oa.jml_beli * oa.hrg_beli) as beli_oa,
+                    sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk) as mutasi_msk_oa,
+                    sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr) as mutasi_klwr_oa,
+                    sum(oa.jml_pemakaian * oa.hrg_pemakaian) as pemakaian_oa
+                from (
+                    select 
+                        dss.noreg,
+                        dss.kode_trans,
+                        sum(dss.jumlah) as jml_beli,
+                        dss.oa as hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_siklus dss
+                    left join
+                        kirim_pakan kp
+                        on
+                            dss.kode_trans = kp.no_order
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dss.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        kp.jenis_kirim = 'opkg'
+                    group by
+                        dss.noreg, dss.kode_trans, dss.oa
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dss.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        sum(dss.jumlah) as jml_mutasi_msk,
+                        dss.oa as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_siklus dss
+                    left join
+                        kirim_pakan kp
+                        on
+                            dss.kode_trans = kp.no_order
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dss.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        kp.jenis_kirim = 'opkp'
+                    group by
+                        dss.noreg, dss.kode_trans, dss.oa
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dsts.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        sum(dsts.jumlah) as jml_mutasi_klwr,
+                        dss.oa as hrg_mutasi_klwr,
+                        0 as jml_pemakaian,
+                        0 as hrg_pemakaian
+                    from det_stok_trans_siklus dsts
+                    left join 
+                        det_stok_siklus dss
+                        on
+                            dsts.id_header = dss.id
+                    left join
+                        kirim_pakan kp
+                        on
+                            dsts.kode_trans = kp.no_order
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        kp.jenis_kirim = 'opkp'
+                    group by
+                        dss.noreg, dsts.kode_trans, dss.oa
+
+                    union all
+
+                    select 
+                        dss.noreg,
+                        dsts.kode_trans,
+                        0 as jml_beli,
+                        0 as hrg_beli,
+                        0 as jml_mutasi_msk,
+                        0 as hrg_mutasi_msk,
+                        0 as jml_mutasi_klwr,
+                        0 as hrg_mutasi_klwr,
+                        sum(dsts.jumlah) as jml_pemakaian,
+                        dss.oa as hrg_pemakaian
+                    from det_stok_trans_siklus dsts
+                    left join 
+                        det_stok_siklus dss
+                        on
+                            dsts.id_header = dss.id
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                        dsts.tbl_name = 'lhk'
+                    group by
+                        dss.noreg, dsts.kode_trans, dss.oa
+                ) oa
+                group by
+                    oa.noreg
             ) data
+            left join
+                rdim_submit rs
+                on
+                    data.noreg = rs.noreg
+            left join
+                (
+                    select mm1.* from mitra_mapping mm1
+                    right join
+                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        on
+                            mm1.id = mm2.id
+                ) mm
+                on
+                    mm.nim = rs.nim
+            left join
+                mitra m
+                on
+                    m.id = mm.id
+            left join
+                kandang k
+                on
+                    k.mitra_mapping = mm.id and
+                    k.kandang = cast(SUBSTRING(data.noreg, 10, 2) as int)
+            left join
+                wilayah w
+                on
+                    k.unit = w.id
+            left join
+                (
+                    select od1.* from order_doc od1
+                    right join
+                        (select max(id) as id, no_order from order_doc group by no_order) od2
+                        on
+                            od1.id = od2.id
+                ) od
+                on
+                    data.noreg = od.noreg
+            left join
+                (
+                    select td1.* from terima_doc td1
+                    right join
+                        (select max(id) as id, no_order from terima_doc group by no_order) td2
+                        on
+                            td1.id = td2.id
+                ) td
+                on
+                    td.no_order = od.no_order
+            left join
+                (select * from rhpp where jenis = 'rhpp_plasma') rhpp_p
+                on
+                    data.noreg = rhpp_p.noreg
+            where
+            	m.id is not null
+                ".$sql_unit."
+            group by
+            	w.kode,
+                data.noreg,
+                m.nama,
+                td.datang,
+                rs.tgl_docin,
+                td.jml_ekor,
+                rs.populasi,
+                rhpp_p.pdpt_peternak_belum_pajak
+            order by
+				td.datang asc,
+				rs.tgl_docin asc
         ";
-        // cetak_r( $sql, 1 );
+        cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
