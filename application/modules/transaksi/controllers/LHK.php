@@ -148,6 +148,20 @@ class LHK extends Public_Controller
 
         $mitra = $d_rs['mitra']['d_mitra']['nama'];
 
+        $status = 1;
+
+        $m_lhk = new \Model\Storage\Lhk_model();
+        $d_lhk_cek = $m_lhk->where('noreg', $d_lhk['noreg'])->where('umur', '>', $d_lhk['umur'])->first();
+        if ( $d_lhk_cek ) {
+            $status = 2;
+        }
+
+        $m_ts = new \Model\Storage\TutupSiklus_model();
+        $d_ts = $m_ts->where('noreg', $d_lhk['noreg'])->first();
+        if ( $d_ts ) {
+            $status = 2;
+        }
+
         $data = array(
             'id' => $d_lhk['id'],
             'mitra' => $mitra,
@@ -172,7 +186,8 @@ class LHK extends Public_Controller
             'tanggal' => $d_lhk['tanggal'],
             'lat' => !empty($d_lhk['lat_long']) ? trim(explode(',', $d_lhk['lat_long'])[0]) : null,
             'long' => !empty($d_lhk['lat_long']) ? trim(explode(',', $d_lhk['lat_long'])[1]) : null,
-            'status' => $d_lhk['status']
+            'status' => $status
+            // ,'status' => $d_lhk['status']
         );
 
         $akses = hakAkses($this->url);
@@ -2145,9 +2160,9 @@ array('25091630101', 15, 39, 21, 184),
         //     $d_conf = $d_conf->toArray();
 
         //     foreach ($d_conf as $key => $value) {
-                $id = '5104';
-                $id_old = '5104';
-                $tanggal = '2025-11-09';
+                $id = '5113';
+                $id_old = '5113';
+                $tanggal = '2025-11-11';
         
                 $conf = new \Model\Storage\Conf();
                 $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
