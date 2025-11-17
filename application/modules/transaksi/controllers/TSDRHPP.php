@@ -3675,7 +3675,7 @@ class TSDRHPP extends Public_Controller {
                     $status = 0;
                     $message = 'Data LHK akhir siklus belum di submit, segera hubungi PPL yang bersangkutan untuk melakukan submit data LHK akhir siklus.';
                 } else {
-                    if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah'])) || ($d_conf['ekor_mati'] >= ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
+                    if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
                         $status = 0;
 
                         $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
