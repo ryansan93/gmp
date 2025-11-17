@@ -192,7 +192,7 @@ class TSDRHPP extends Public_Controller {
                                 lt1.id = lt2.id
                     ) lt
                     on
-                        lt.tbl_id = ts.id
+                        lt.tbl_id = cast(ts.id as varchar(15))
             ) data
             ".$sql_filter."
             group by

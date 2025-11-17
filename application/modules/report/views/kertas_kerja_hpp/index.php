@@ -97,7 +97,7 @@
 						</a>
 					</div>
 				</div>
-				<table class="table table-bordered" style="margin-bottom: 0px;" id="tbl_kkh">
+				<table class="table table-bordered table-hover" style="margin-bottom: 0px;" id="tbl_kkh">
 					<thead>
 						<tr>
 							<th rowspan="2" class="page0 text-center col-xs-1">Unit</th>

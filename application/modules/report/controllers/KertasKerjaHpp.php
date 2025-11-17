@@ -118,32 +118,32 @@ class KertasKerjaHpp extends Public_Controller {
                     else
                         rs.populasi
                 end as populasi,
-                sum(beli_pkn) as beli_pkn,
-                sum(mutasi_msk_pkn) as mutasi_msk_pkn,
-                sum(mutasi_klwr_pkn) as mutasi_klwr_pkn,
-                sum(pemakaian_pkn) as pemakaian_pkn,
-                sum(beli_ovk) as beli_ovk,
-                sum(mutasi_msk_ovk) as mutasi_msk_ovk,
-                sum(mutasi_klwr_ovk) as mutasi_klwr_ovk,
-                sum(pemakaian_ovk) as pemakaian_ovk,
-                sum(beli_doc) as beli_doc,
-                sum(mutasi_msk_doc) as mutasi_msk_doc,
-                sum(mutasi_klwr_doc) as mutasi_klwr_doc,
-                sum(pemakaian_doc) as pemakaian_doc,
-                sum(beli_oa) as beli_oa,
-                sum(mutasi_msk_oa) as mutasi_msk_oa,
-                sum(mutasi_klwr_oa) as mutasi_klwr_oa,
-                sum(pemakaian_oa) as pemakaian_oa,
-                rhpp_p.pdpt_peternak_belum_pajak as pdpt_peternak,
-                (sum(pemakaian_pkn) + (sum(pemakaian_ovk)-sum(mutasi_klwr_ovk)) + sum(pemakaian_doc) + sum(pemakaian_oa)) as total
+                sum(data.beli_pkn) as beli_pkn,
+                sum(data.mutasi_msk_pkn) as mutasi_msk_pkn,
+                sum(data.mutasi_klwr_pkn) as mutasi_klwr_pkn,
+                sum(data.pemakaian_pkn) as pemakaian_pkn,
+                sum(data.beli_ovk) as beli_ovk,
+                sum(data.mutasi_msk_ovk) as mutasi_msk_ovk,
+                sum(data.mutasi_klwr_ovk) as mutasi_klwr_ovk,
+                sum(data.pemakaian_ovk) as pemakaian_ovk,
+                sum(data.beli_doc) as beli_doc,
+                sum(data.mutasi_msk_doc) as mutasi_msk_doc,
+                sum(data.mutasi_klwr_doc) as mutasi_klwr_doc,
+                sum(data.pemakaian_doc) as pemakaian_doc,
+                sum(data.beli_oa) as beli_oa,
+                sum(data.mutasi_msk_oa) as mutasi_msk_oa,
+                sum(data.mutasi_klwr_oa) as mutasi_klwr_oa,
+                sum(data.pemakaian_oa) as pemakaian_oa,
+                isnull(rhpp_p.pdpt_peternak_belum_pajak, 0) as pdpt_peternak,
+                isnull(rhpp_p.pdpt_peternak_belum_pajak, 0) + sum(data.pemakaian_pkn) + sum(data.pemakaian_ovk) + sum(data.pemakaian_doc) + sum(data.pemakaian_oa) as total
             from
             (
                 select
                     pkn.noreg,
-                    sum(pkn.jml_beli * pkn.hrg_beli) as beli_pkn,
-                    sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk) as mutasi_msk_pkn,
-                    sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr) as mutasi_klwr_pkn,
-                    sum(pkn.jml_pemakaian * pkn.hrg_pemakaian) as pemakaian_pkn,
+                    isnull(sum(pkn.jml_beli * pkn.hrg_beli), 0) as beli_pkn,
+                    isnull(sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk), 0) as mutasi_msk_pkn,
+                    isnull(sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr), 0) as mutasi_klwr_pkn,
+                    isnull(sum(pkn.jml_beli * pkn.hrg_beli), 0) + isnull(sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk), 0) - isnull(sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr), 0) as pemakaian_pkn,
                     0 as beli_ovk,
                     0 as mutasi_msk_ovk,
                     0 as mutasi_klwr_ovk,
@@ -270,11 +270,10 @@ class KertasKerjaHpp extends Public_Controller {
                     0 as mutasi_msk_pkn,
                     0 as mutasi_klwr_pkn,
                     0 as pemakaian_pkn,
-                    sum(ovk.jml_beli * ovk.hrg_beli) as beli_ovk,
-                    sum(ovk.jml_mutasi_msk * ovk.hrg_mutasi_msk) as mutasi_msk_ovk,
-                    sum(ovk.jml_mutasi_klwr * ovk.hrg_mutasi_klwr) as mutasi_klwr_ovk,
-                    sum(ovk.jml_beli * ovk.hrg_beli) as pemakaian_ovk,
-                    -- sum(ovk.jml_pemakaian * ovk.hrg_pemakaian) as pemakaian_ovk,
+                    isnull(sum(ovk.jml_beli * ovk.hrg_beli), 0) as beli_ovk,
+                    isnull(sum(ovk.jml_mutasi_msk * ovk.hrg_mutasi_msk), 0) as mutasi_msk_ovk,
+                    isnull(sum(ovk.jml_mutasi_klwr * ovk.hrg_mutasi_klwr), 0) as mutasi_klwr_ovk,
+                    isnull(sum(ovk.jml_beli * ovk.hrg_beli), 0) + isnull(sum(ovk.jml_mutasi_msk * ovk.hrg_mutasi_msk), 0) - isnull(sum(ovk.jml_mutasi_klwr * ovk.hrg_mutasi_klwr), 0) as pemakaian_ovk,
                     0 as beli_doc,
                     0 as mutasi_msk_doc,
                     0 as mutasi_klwr_doc,
@@ -397,11 +396,10 @@ class KertasKerjaHpp extends Public_Controller {
                     0 as mutasi_msk_ovk,
                     0 as mutasi_klwr_ovk,
                     0 as pemakaian_ovk,
-                    sum(doc.jml_beli * doc.hrg_beli) as beli_doc,
-                    sum(doc.jml_mutasi_msk * doc.hrg_mutasi_msk) as mutasi_msk_doc,
-                    sum(doc.jml_mutasi_klwr * doc.hrg_mutasi_klwr) as mutasi_klwr_doc,
-                    sum(doc.jml_beli * doc.hrg_beli) as pemakaian_doc,
-                    -- sum(doc.jml_pemakaian * doc.hrg_pemakaian) as pemakaian_doc,
+                    isnull(sum(doc.jml_beli * doc.hrg_beli), 0) as beli_doc,
+                    isnull(sum(doc.jml_mutasi_msk * doc.hrg_mutasi_msk), 0) as mutasi_msk_doc,
+                    isnull(sum(doc.jml_mutasi_klwr * doc.hrg_mutasi_klwr), 0) as mutasi_klwr_doc,
+                    isnull(sum(doc.jml_beli * doc.hrg_beli), 0) + isnull(sum(doc.jml_mutasi_msk * doc.hrg_mutasi_msk), 0) - isnull(sum(doc.jml_mutasi_klwr * doc.hrg_mutasi_klwr), 0) as pemakaian_doc,
                     0 as beli_oa,
                     0 as mutasi_msk_oa,
                     0 as mutasi_klwr_oa,
@@ -444,10 +442,11 @@ class KertasKerjaHpp extends Public_Controller {
                     0 as mutasi_msk_doc,
                     0 as mutasi_klwr_doc,
                     0 as pemakaian_doc,
-                    sum(oa.jml_beli * oa.hrg_beli) as beli_oa,
-                    sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk) as mutasi_msk_oa,
-                    sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr) as mutasi_klwr_oa,
-                    sum(oa.jml_pemakaian * oa.hrg_pemakaian) as pemakaian_oa
+                    isnull(sum(oa.jml_beli * oa.hrg_beli), 0) as beli_oa,
+                    isnull(sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk), 0) as mutasi_msk_oa,
+                    isnull(sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr), 0) as mutasi_klwr_oa,
+                    isnull(sum(oa.jml_beli * oa.hrg_beli), 0) + isnull(sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk), 0) - isnull(sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr), 0) as pemakaian_oa
+                    -- sum(oa.jml_pemakaian * oa.hrg_pemakaian) as pemakaian_oa
                 from (
                     select 
                         dss.noreg,
@@ -602,11 +601,28 @@ class KertasKerjaHpp extends Public_Controller {
                 on
                     td.no_order = od.no_order
             left join
-                (select * from rhpp where jenis = 'rhpp_plasma') rhpp_p
+                (
+                    select r.noreg, r.pdpt_peternak_belum_pajak from rhpp r where jenis = 'rhpp_plasma' and not exists (select * from rhpp_group_noreg where noreg = r.noreg)
+	
+                    union all
+                    
+                    select rgn.noreg, rg.pdpt_peternak_belum_pajak from rhpp_group rg
+                    left join
+                        (
+                            select rgn.id_header, min(rgn.noreg) as noreg from rhpp_group_noreg rgn
+                            group by
+                                rgn.id_header
+                        ) rgn
+                        on
+                            rg.id = rgn.id_header
+                    where
+                        rg.jenis = 'rhpp_plasma'
+                ) rhpp_p
                 on
                     data.noreg = rhpp_p.noreg
             where
             	m.id is not null
+            	and td.id is not null
                 ".$sql_unit."
             group by
             	w.kode,
@@ -618,10 +634,9 @@ class KertasKerjaHpp extends Public_Controller {
                 rs.populasi,
                 rhpp_p.pdpt_peternak_belum_pajak
             order by
-				td.datang asc,
-				rs.tgl_docin asc
+                data.noreg asc,
+				td.datang asc
         ";
-        cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

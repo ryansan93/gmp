@@ -738,6 +738,6 @@ class VerifikasiPembayaran extends Public_Controller
         //     }
         // }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 330, 330, 2, null, '2025-11-12');
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 344, 344, 2, null, '2025-11-14');
     }
 }

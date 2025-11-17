@@ -70,6 +70,8 @@ var kkh = {
                 beforeSend : function(){ App.showLoaderInContent( $(dcontent) ); },
                 success : function(html){
                 	App.hideLoaderInContent( $(dcontent), html );
+
+					kkh.set_table_page('#tbl_kkh');
                 }
             });
 		}
