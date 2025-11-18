@@ -17,37 +17,41 @@ class ExportExcel extends Public_Controller {
         parent::__construct();
     }
 
-    public function exportExcelUsingSpreadSheet( $file_name, $arr_header, $arr_column, $start_row_header = 1 ) {
+    public function exportExcelUsingSpreadSheet( $file_name, $arr_header, $arr_column, $start_row_header = 1, $header = 1 ) {
         /* Spreadsheet Init */
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
         /* Excel Header */
-        for ($i=0; $i < count($arr_header); $i++) { 
-            $huruf = toAlpha($i+1);
-
-            $posisi = $huruf.$start_row_header;
-            $sheet->setCellValue($posisi, $arr_header[$i]);
-
-            $styleBold = [
-                'font' => [
-                    'bold' => true,
-                ],
-                'borders' => [
-                    'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
-                    'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
-                    'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
-                    'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
-                ],
-            ];
-            $spreadsheet->getActiveSheet()->getStyle($posisi)->applyFromArray($styleBold);
+        if ( $header == 1 ) {
+            for ($i=0; $i < count($arr_header); $i++) { 
+                $huruf = toAlpha($i+1);
+    
+                $posisi = $huruf.$start_row_header;
+                $sheet->setCellValue($posisi, $arr_header[$i]);
+    
+                $styleBold = [
+                    'font' => [
+                        'bold' => true,
+                    ],
+                    'borders' => [
+                        'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                        'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                        'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                        'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                    ],
+                ];
+                $spreadsheet->getActiveSheet()->getStyle($posisi)->applyFromArray($styleBold);
+            }
         }
 
         $baris = 1;
         if ( !empty($arr_column) && count($arr_column) ) {
             for ($i=0; $i < count($arr_column); $i++) {
-                if ( $baris == $start_row_header ) {
-                    $baris++;
+                if ( $header == 1 ) {
+                    if ( $baris == $start_row_header ) {
+                        $baris++;
+                    }
                 }
 
                 for ($j=0; $j < count($arr_header); $j++) {
@@ -105,12 +109,91 @@ class ExportExcel extends Public_Controller {
                                         ->setFormatCode(NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED2);
                         }
 
+                        if ( isset($data['rowspan']) ) {
+                            $sheet->setCellValue($data['rowspan'][0], $data['value']);
+                            if ( isset($data['rowspan'][1]) ) {
+                                $spreadsheet->getActiveSheet()->mergeCells($data['rowspan'][0].':'.$data['rowspan'][1]);
+                                if ( !isset($data['border']) || (isset($data['border']) && $data['border'] == 'border') ) {
+                                    $styleArray = [
+                                        'borders' => [
+                                            'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                        ],
+                                    ];
+                                    
+                                    $spreadsheet->getActiveSheet()->getStyle($data['rowspan'][0].':'.$data['rowspan'][1])->applyFromArray($styleArray, false);
+                                }
+                            } else {
+                                $spreadsheet->getActiveSheet()->mergeCells($data['rowspan'][0].':'.$data['rowspan'][0]);
+                                if ( !isset($data['border']) || (isset($data['border']) && $data['border'] == 'border') ) {
+                                    $styleArray = [
+                                        'borders' => [
+                                            'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                        ],
+                                    ];
+                                    
+                                    $spreadsheet->getActiveSheet()->getStyle($data['rowspan'][0].':'.$data['rowspan'][0])->applyFromArray($styleArray, false);
+                                }
+                            }
+
+                            if ( isset($data['align']) ) {
+                                if ( $data['align'] == 'left' ) {
+                                    $sheet->getStyle($data['rowspan'][0])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                                }
+                                if ( $data['align'] == 'right' ) {
+                                    $sheet->getStyle($data['rowspan'][0])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                                }
+                                if ( $data['align'] == 'center' ) {
+                                    $sheet->getStyle($data['rowspan'][0])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                                }
+                            } else {
+                                $sheet->getStyle($data['rowspan'][0])->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                            }
+
+                            if ( isset($data['text_style']) ) {
+                                if ( $data['text_style'] == 'bold' ) {
+                                    $sheet->getStyle($data['rowspan'][0])->getFont()->setBold(true);
+                                }
+                            }
+
+                            $sheet->getStyle($data['rowspan'][0])->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+                        }
+
                         if ( isset($data['colspan']) ) {
                             $sheet->setCellValue($data['colspan'][0].$baris, $data['value']);
                             if ( isset($data['colspan'][1]) ) {
                                 $spreadsheet->getActiveSheet()->mergeCells($data['colspan'][0].$baris.':'.$data['colspan'][1].$baris);
+                                if ( !isset($data['border']) || (isset($data['border']) && $data['border'] == 'border') ) {
+                                    $styleArray = [
+                                        'borders' => [
+                                            'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                        ],
+                                    ];
+                                    
+                                    $spreadsheet->getActiveSheet()->getStyle($data['colspan'][0].$baris.':'.$data['colspan'][1].$baris)->applyFromArray($styleArray, false);
+                                }
                             } else {
                                 $spreadsheet->getActiveSheet()->mergeCells($data['colspan'][0].$baris.':'.$data['colspan'][0].$baris);
+                                if ( !isset($data['border']) || (isset($data['border']) && $data['border'] == 'border') ) {
+                                    $styleArray = [
+                                        'borders' => [
+                                            'bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'right' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                            'left' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => '000000']],
+                                        ],
+                                    ];
+                                    
+                                    $spreadsheet->getActiveSheet()->getStyle($data['colspan'][0].$baris.':'.$data['colspan'][0].$baris)->applyFromArray($styleArray, false);
+                                }
                             }
 
                             if ( isset($data['align']) ) {

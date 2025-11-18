@@ -29,7 +29,7 @@ class KertasKerjaHpp extends Public_Controller {
     public function index($params = null)
     {
         $akses = $this->akses;
-        // if ( $akses['a_view'] == 1 ) {
+        if ( $akses['a_view'] == 1 ) {
             $this->add_external_js(array(
                 "assets/select2/js/select2.min.js",
                 "assets/jquery/tupage-table/jquery.tupage.table.js",
@@ -62,9 +62,9 @@ class KertasKerjaHpp extends Public_Controller {
             // Load Indexx
             $data['view'] = $this->load->view($this->pathView.'index', $content, TRUE);
             $this->load->view($this->template, $data);
-        // } else {
-        //     showErrorAkses();
-        // }
+        } else {
+            showErrorAkses();
+        }
     }
 
     public function getData($params) {
@@ -679,141 +679,104 @@ class KertasKerjaHpp extends Public_Controller {
     {
         $params = json_decode( exDecrypt($params_encrypt), true );
 
-        $kas = $params['kas'];
-        $bulan = $params['bulan'];
-        $tahun = substr($params['tahun'], 0, 4);
-
-        if ( $bulan != 'all' ) {
-            $i = $bulan;
-
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
-
-            $date = $tahun.'-'.$angka_bulan.'-01';
-            $start_date = date("Y-m-d", strtotime($date));
-            $end_date = date("Y-m-t", strtotime($date));
-        } else {
-            $i = 1;
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
-            $_start_date = $tahun.'-'.$angka_bulan.'-01';
-            $start_date = date("Y-m-d", strtotime($_start_date));
-
-            $i = 12;
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
-            $_end_date = $tahun.'-'.$angka_bulan.'-01';
-            $end_date = date("Y-m-t", strtotime($_end_date));
-        }
-
         $data = $this->getData( $params );
 
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select * from coa where coa = '".$kas."'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        $start_date = $params['start_date'];
+        $end_date = $params['end_date'];
 
-        $nama = null;
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray()[0];
-
-            $nama = $d_conf['nama_coa'];
-        }
-
-        $filename = strtoupper("LAPORAN_BANK_".str_replace(' ', '_', $d_conf['nama_coa'])."_");
+        $filename = strtoupper("KERTAS_KERJA_PERIODE_");
         $filename = $filename.str_replace('-', '', $start_date).'_'.str_replace('-', '', $end_date).'.xls';
 
         $arr_column = null;
 
         $idx = 0;
         $arr_column[ $idx ] = array(
-            'Saldo' => array('value' => 'LAPORAN BANK '.strtoupper($nama), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+            'A' => array('value' => 'KERTAS KERJA', 'data_type' => 'string', 'text_style' => 'bold')
         );
         $idx++;
         $arr_column[ $idx ] = array(
-            'Saldo' => array('value' => 'PERIODE '.str_replace('-', '/', $start_date).' - '.str_replace('-', '/', $end_date), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+            'A' => array('value' => 'PERIODE '.str_replace('-', '/', $start_date).' - '.str_replace('-', '/', $end_date), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+        );
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'A' => array('value' => 'UNIT', 'data_type' => 'string', 'rowspan' => array('A3','A4'), 'align' => 'center', 'text_style' => 'bold'),
+            'B' => array('value' => 'NOREG', 'data_type' => 'string', 'rowspan' => array('B3','B4'), 'align' => 'center', 'text_style' => 'bold'),
+            'C' => array('value' => 'NAMA', 'data_type' => 'string', 'rowspan' => array('C3','C4'), 'align' => 'center', 'text_style' => 'bold'),
+            'E' => array('value' => 'CHICK IN', 'data_type' => 'string', 'colspan' => array('D','E'), 'align' => 'center', 'text_style' => 'bold'),
+            'J' => array('value' => 'PAKAN', 'data_type' => 'string', 'colspan' => array('F','J'), 'align' => 'center', 'text_style' => 'bold'),
+            'O' => array('value' => 'OVK', 'data_type' => 'string', 'colspan' => array('K','O'), 'align' => 'center', 'text_style' => 'bold'),
+            'T' => array('value' => 'DOC', 'data_type' => 'string', 'colspan' => array('P','T'), 'align' => 'center', 'text_style' => 'bold'),
+            'Y' => array('value' => 'OA', 'data_type' => 'string', 'colspan' => array('U','Y'), 'align' => 'center', 'text_style' => 'bold'),
+            'Z' => array('value' => 'RHPP', 'data_type' => 'string','rowspan' => array('Z3','Z4'), 'align' => 'center', 'text_style' => 'bold'),
+            'AA' => array('value' => 'TOTAL', 'data_type' => 'string','rowspan' => array('AA3','AA4'), 'align' => 'center', 'text_style' => 'bold'),
+        );
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'D' => array('value' => 'TGL', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'E' => array('value' => 'POPULASI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'F' => array('value' => 'BELI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'G' => array('value' => 'MUTASI (+)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'H' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'I' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'J' => array('value' => 'PEMAKAIAN', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'K' => array('value' => 'BELI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'L' => array('value' => 'MUTASI (+)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'M' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'N' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'O' => array('value' => 'PEMAKAIAN', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'P' => array('value' => 'BELI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'Q' => array('value' => 'MUTASI (+)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'R' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'S' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'T' => array('value' => 'PEMAKAIAN', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'U' => array('value' => 'BELI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'V' => array('value' => 'MUTASI (+)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'W' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'X' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'Y' => array('value' => 'NET OA', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
         );
         $idx++;
 
-        $start_row_header = $idx+1;
+        $start_row_header = $idx;
 
-        $arr_header = array('Tanggal', 'No', 'Keterangan', 'Masuk', 'Keluar', 'Saldo');
+        $arr_header = array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA');
         if ( !empty($data) ) {
-            $kode_kas = null; 
-            $idx_kas = 0;
-            $saldo = 0;
-
-            $saldo_kas = 0;
-
-            $tot_debet_kas = 0;
-            $tot_kredit_kas = 0;
-
-            $gt_debet = 0;
-            $gt_kredit = 0;
-            $gt_saldo = 0;
             foreach ($data as $key => $value) {
-                if ( $kode_kas <> $value['kas'] ) {
-                    $idx_kas = 0;
-                    $saldo = 0;
-                    $kode_kas = $value['kas'];
-                    
-                    $tot_debet_kas = 0;
-                    $tot_kredit_kas = 0;
-                }
-
-                $tanggal = !empty($value['tanggal']) ? (($value['tanggal'] < '2000-01-01') ? null : $value['tanggal']) : null;
-                $kode_trans = $value['kode'];
-                $keterangan = $value['keterangan'];
-
-                $debet = $value['debet'];
-                $kredit = $value['kredit'];
-                $saldo = ($saldo+$debet)-$kredit;
-
-                $tot_debet_kas += $debet;
-                $tot_kredit_kas += $kredit;
-
-                $gt_debet += $debet;
-                $gt_kredit += $kredit;
-
-                if ( $idx_kas == 0 ) {
-                    if ( stristr($value['keterangan'], 'saldo awal') === false ) {
-                        $arr_column[ $idx ] = array(
-                            'Tanggal' => array('value' => '', 'data_type' => 'date'),
-                            'No' => array('value' => '', 'data_type' => 'string'),
-                            'Keterangan' => array('value' => 'Saldo Awal', 'data_type' => 'string'),
-                            'Masuk' => array('value' => 0, 'data_type' => 'decimal2'),
-                            'Keluar' => array('value' => 0, 'data_type' => 'decimal2'),
-                            'Saldo' => array('value' => 0, 'data_type' => 'decimal2')
-                        );
-
-                        $idx++;
-                    }
-                }
-
                 $arr_column[ $idx ] = array(
-                    'Tanggal' => array('value' => !empty($tanggal) ? $tanggal : '', 'data_type' => 'date'),
-                    'No' => array('value' => !empty($kode_trans) ? $kode_trans : '', 'data_type' => 'string'),
-                    'Keterangan' => array('value' => $keterangan, 'data_type' => 'string'),
-                    'Masuk' => array('value' => $debet, 'data_type' => 'decimal2'),
-                    'Keluar' => array('value' => $kredit, 'data_type' => 'decimal2'),
-                    'Saldo' => array('value' => $saldo, 'data_type' => 'decimal2')
+                    'A' => array('value' => ($value['unit']), 'data_type' => 'string'),
+                    'B' => array('value' => ($value['noreg']), 'data_type' => 'string'),
+                    'C' => array('value' => (strtoupper($value['nama'])), 'data_type' => 'string'),
+                    'D' => array('value' => ($value['tgl_chick_in']), 'data_type' => 'date'),
+                    'E' => array('value' => ($value['populasi']), 'data_type' => 'integer'),
+                    'F' => array('value' => ($value['beli_pkn']), 'data_type' => 'decimal2'),
+                    'G' => array('value' => ($value['mutasi_msk_pkn']), 'data_type' => 'decimal2'),
+                    'H' => array('value' => ($value['mutasi_klwr_pkn']), 'data_type' => 'decimal2'),
+                    'I' => array('value' => (0), 'data_type' => 'decimal2'),
+                    'J' => array('value' => ($value['pemakaian_pkn']), 'data_type' => 'decimal2'),
+                    'K' => array('value' => ($value['beli_ovk']), 'data_type' => 'decimal2'),
+                    'L' => array('value' => ($value['mutasi_msk_ovk']), 'data_type' => 'decimal2'),
+                    'M' => array('value' => ($value['mutasi_klwr_ovk']), 'data_type' => 'decimal2'),
+                    'N' => array('value' => (0), 'data_type' => 'decimal2'),
+                    'O' => array('value' => ($value['pemakaian_ovk']), 'data_type' => 'decimal2'),
+                    'P' => array('value' => ($value['beli_doc']), 'data_type' => 'decimal2'),
+                    'Q' => array('value' => ($value['mutasi_msk_doc']), 'data_type' => 'decimal2'),
+                    'R' => array('value' => ($value['mutasi_klwr_doc']), 'data_type' => 'decimal2'),
+                    'S' => array('value' => (0), 'data_type' => 'decimal2'),
+                    'T' => array('value' => ($value['pemakaian_doc']), 'data_type' => 'decimal2'),
+                    'U' => array('value' => ($value['beli_oa']), 'data_type' => 'decimal2'),
+                    'V' => array('value' => ($value['mutasi_msk_oa']), 'data_type' => 'decimal2'),
+                    'W' => array('value' => ($value['mutasi_klwr_oa']), 'data_type' => 'decimal2'),
+                    'X' => array('value' => (0), 'data_type' => 'decimal2'),
+                    'Y' => array('value' => ($value['pemakaian_oa']), 'data_type' => 'decimal2'),
+                    'Z' => array('value' => ($value['pdpt_peternak']), 'data_type' => 'decimal2'),
+                    'AA' => array('value' => ($value['total']), 'data_type' => 'decimal2'),
                 );
 
-                if ( !empty($kode_kas) && (!isset($data[$key+1]) || $kode_kas <> $data[$key+1]['kas']) ) {
-                    $idx++;
-
-                    $arr_column[ $idx ] = array(
-                        'Keterangan' => array('value' => 'Total', 'data_type' => 'string', 'colspan' => array('A','C'), 'align' => 'right', 'text_style' => 'bold'),
-                        'Masuk' => array('value' => $gt_debet, 'data_type' => 'decimal2', 'text_style' => 'bold'),
-                        'Keluar' => array('value' => $gt_kredit, 'data_type' => 'decimal2', 'text_style' => 'bold'),
-                        'Saldo' => array('value' => $saldo, 'data_type' => 'decimal2', 'text_style' => 'bold')
-                    );
-                }
-
                 $idx++;
-                $idx_kas++;
             }
         }
 
-        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column, $start_row_header );
+        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column, $start_row_header, 0 );
 
         $this->load->helper('download');
         force_download('export_excel/'.$filename.'.xlsx', NULL);

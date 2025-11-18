@@ -95,8 +95,10 @@ var kkh = {
 			var dcontent = $('table tbody');
 			var params = {
 				'unit': $('.unit').select2('val'),
-				'bulan': $('.bulan').select2().val(),
-				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
+				// 'bulan': $('.bulan').select2().val(),
+				// 'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
+				'start_date': dateSQL( $('#StartDate').data('DateTimePicker').date() ),
+				'end_date': dateSQL( $('#EndDate').data('DateTimePicker').date() )
 			};
 
 			$.ajax({
