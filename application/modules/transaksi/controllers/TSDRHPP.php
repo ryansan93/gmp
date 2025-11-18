@@ -3702,7 +3702,7 @@ class TSDRHPP extends Public_Controller {
         try {
             $m_conf = new \Model\Storage\Conf();
             $sql = "
-                select rs.noreg, l.tanggal as tgl_lhk, r_sj.tanggal as tgl_panen, (l.pakai_pakan * 50) as pakai_pakan, tp.jumlah as jml_terima, pp.jumlah as jml_pindah, l.ekor_mati, r_sj.jml_panen, td.jml_ekor as populasi from rdim_submit rs
+                select rs.noreg, l.tanggal as tgl_lhk, r_sj.tanggal as tgl_panen, (l.pakai_pakan * 50) as pakai_pakan, tp.jumlah as jml_terima, pp.jumlah as jml_pindah, rp.jumlah as jml_retur, l.ekor_mati, r_sj.jml_panen, td.jml_ekor as populasi from rdim_submit rs
                 left join
                     (
                         select l1.* from lhk l1
@@ -3757,6 +3757,20 @@ class TSDRHPP extends Public_Controller {
                     on
                         pp.noreg = rs.noreg
                 left join
+                    (
+                        select rp.id_asal as noreg, sum(drp.jumlah) as jumlah from det_retur_pakan drp
+                        left join
+                            retur_pakan rp
+                            on
+                                drp.id_header = rp.id
+                        where
+                            rp.jenis_retur = 'opkp'
+                        group by
+                            rp.id_asal
+                    ) rp
+                    on
+                        rp.noreg = rs.noreg
+                left join
                 	(
                 		select td.*, od.noreg from (
 	                		select td1.* from terima_doc td1
@@ -3798,15 +3812,15 @@ class TSDRHPP extends Public_Controller {
                     $status = 0;
                     $message = 'Data LHK akhir siklus belum di submit, segera hubungi PPL yang bersangkutan untuk melakukan submit data LHK akhir siklus.';
                 } else {
-                    if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
+                    if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah']-$d_conf['jml_retur'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
                         $status = 0;
 
                         $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
                         $message .= '<br>';
                         $message .= '<b><u>Pakan</u></b><br>';
                         $message .= 'Terima Pakan : '.angkaRibuan($d_conf['jml_terima']).'<br>';
-                        $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']).'<br>';
-                        $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-$d_conf['jml_pindah'])).'<br>';
+                        $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']+$d_conf['jml_retur']).'<br>';
+                        $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-($d_conf['jml_pindah']+$d_conf['jml_retur']))).'<br>';
                         $message .= 'Pemakaian Pakan LHK : '.angkaRibuan($d_conf['pakai_pakan']).'<br>';
                         $message .= '<br>';
                         $message .= '<b><u>Kematian</u></b><br>';
