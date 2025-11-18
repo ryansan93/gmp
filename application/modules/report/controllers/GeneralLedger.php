@@ -96,6 +96,233 @@ class GeneralLedger extends Public_Controller {
         }
 
         $m_conf = new \Model\Storage\Conf();
+        $sql_sa = "
+            /* SALDO AWAL */
+            select
+                sb.no_coa as no_coa,
+                sb.unit,
+                c.nama_coa,
+                case
+                    when sb.debet2 <> 0 then
+                        -- sb.debet2
+                        0
+                    else
+                        sb.debet1
+                end as saldo_awal,
+                -- sb.saldo_awal,
+                0 as kredit,
+                0 as debet
+            from (
+                select
+                    sa.no_coa,
+                    sa.unit,
+                    sum(sa.debet1) as debet1,
+                    sum(sa.kredit1) as kredit1,
+                    sum(sa.debet2) as debet2,
+                    sum(sa.kredit2) as kredit2
+                from
+                (
+                    select
+                        sb.coa as no_coa,
+                        sb.unit,
+                        isnull(sb.saldo_awal, 0) as debet1,
+                        0 as kredit1,
+                        0 as debet2,
+                        0 as kredit2
+                    from saldo_bulanan sb 
+                    where 
+                        sb.tanggal between '".$start_date."' and '".$end_date."'
+
+                    union all
+
+                    select
+                        sc.no_coa,
+                        sc.unit,
+                        0 as debet1,
+                        0 as kredit1,
+                        isnull(sc.debet, 0) as debet2,
+                        0 as kredit2
+                    from sacoa sc
+                    where
+                        sc.periode = '".substr($start_date, 0, 7)."' and
+                        sc.debet <> 0
+                ) sa
+                group by
+                    sa.no_coa,
+                    sa.unit
+            ) sb 
+            left join
+                coa c
+                on
+                    sb.no_coa = c.coa
+            /* END - SALDO AWAL */
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql_sa );
+        if ( $d_conf->count() <= 0 ) {
+            $end_date_new = prev_date($start_date);
+            $start_date_new = substr($end_date_new, 0, 7).'-01';
+
+            $sql_sa = "
+                select
+                    data.no_coa,
+                    data.unit,
+                    data.nama_coa,
+                    sum(isnull(data.saldo_awal, 0)) + sum(isnull(data.debet, 0)) + sum(isnull(data.kredit, 0)) as saldo_awal,
+                    0 as kredit,
+                    0 as debet
+                from
+                (
+                    select
+                        sb.no_coa as no_coa,
+                        sb.unit,
+                        c.nama_coa,
+                        case
+                            when sb.debet2 <> 0 then
+                                -- sb.debet2
+                                0
+                            else
+                                sb.debet1
+                        end as saldo_awal,
+                        -- sb.saldo_awal,
+                        0 as kredit,
+                        0 as debet
+                    from (
+                        select
+                            sa.no_coa,
+                            sa.unit,
+                            sum(sa.debet1) as debet1,
+                            sum(sa.kredit1) as kredit1,
+                            sum(sa.debet2) as debet2,
+                            sum(sa.kredit2) as kredit2
+                        from
+                        (
+                            select
+                                sb.coa as no_coa,
+                                sb.unit,
+                                isnull(sb.saldo_awal, 0) as debet1,
+                                0 as kredit1,
+                                0 as debet2,
+                                0 as kredit2
+                            from saldo_bulanan sb 
+                            where 
+                                sb.tanggal between '".$start_date_new."' and '".$end_date_new."'
+
+                            union all
+
+                            select
+                                sc.no_coa,
+                                sc.unit,
+                                0 as debet1,
+                                0 as kredit1,
+                                isnull(sc.debet, 0) as debet2,
+                                0 as kredit2
+                            from sacoa sc
+                            where
+                                sc.periode = '".substr($start_date_new, 0, 7)."' and
+                                sc.debet <> 0
+                        ) sa
+                        group by
+                            sa.no_coa,
+                            sa.unit
+                    ) sb 
+                    left join
+                        coa c
+                        on
+                            sb.no_coa = c.coa
+
+                    union all
+
+                    select
+                        sc.no_coa,
+                        sc.unit,
+                        c.nama_coa,
+                        0 as saldo_awal,
+                        case
+                            when isnull(sc.debet, 0) < 0 then
+                                isnull(sc.debet, 0)
+                            else
+                                0
+                        end as kredit,
+                        case
+                            when isnull(sc.debet, 0) >= 0 then
+                                isnull(sc.debet, 0)
+                            else
+                                0
+                        end as debet
+                    from sacoa sc
+                    left join
+                        coa c
+                        on
+                            sc.no_coa = c.coa
+                    where
+                        sc.periode = '".substr($start_date_new, 0, 7)."' and
+                        sc.debet <> 0
+
+                    union all
+
+                    select
+                        c.coa as no_coa,
+                        case
+                            when c.unit is not null and c.unit <> '' then
+                                c.unit
+                            else
+                                dj.unit
+                        end as unit,
+                        c.nama_coa,
+                        0 as saldo_awal,
+                        (0-isnull(dj.kredit, 0)) as kredit,
+                        isnull(dj.debet, 0) as debet
+                    from coa c
+                    left join
+                        (
+                            select no_coa, sum(kredit) as kredit, sum(debet) as debet, unit from (
+                                select 
+                                    dj.coa_asal as no_coa, 
+                                    sum(dj.nominal) as kredit, 
+                                    0 as debet, 
+                                    dj.unit
+                                from det_jurnal dj 
+                                where 
+                                    dj.tanggal between '".$start_date_new."' and '".$end_date_new."'
+                                    -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+                                group by dj.coa_asal, dj.unit
+                                
+                                union all
+                                
+                                select 
+                                    dj.coa_tujuan as no_coa, 
+                                    0 as kredit, 
+                                    sum(dj.nominal) as debet, 
+                                    case
+                                        when dj.unit_tujuan is not null then
+                                            dj.unit_tujuan
+                                        else
+                                            dj.unit
+                                    end as unit
+                                from det_jurnal dj 
+                                where 
+                                    dj.tanggal between '".$start_date_new."' and '".$end_date_new."'
+                                    -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+                                group by dj.coa_tujuan, dj.unit, dj.unit_tujuan
+                            ) data
+                            group by
+                                no_coa, unit
+                        ) dj
+                        on
+                            dj.no_coa = c.coa
+                    where
+                        (0-isnull(dj.kredit, 0)) <> 0 or
+                        isnull(dj.debet, 0) <> 0
+                ) data
+                ".$sql_unit."
+                group by
+                    data.no_coa,
+                    data.unit,
+                    data.nama_coa
+            ";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
                 data.no_coa,
@@ -107,6 +334,7 @@ class GeneralLedger extends Public_Controller {
                 sum(isnull(data.saldo_awal, 0)) + sum(isnull(data.debet, 0)) + sum(isnull(data.kredit, 0)) as saldo_akhir
             from
             (
+                /*
                 select
                     sb.no_coa as no_coa,
                     sb.unit,
@@ -164,6 +392,9 @@ class GeneralLedger extends Public_Controller {
                     coa c
                     on
                         sb.no_coa = c.coa
+                */
+
+                ".$sql_sa."
 
                 union all
 
