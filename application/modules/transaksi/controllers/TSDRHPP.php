@@ -1491,7 +1491,7 @@ class TSDRHPP extends Public_Controller {
                 on
                     brg.kode = dsts.kode_barang 
             where 
-                dsts.tbl_name <> 'lhk' and
+                (dsts.tbl_name <> 'lhk' and dsts.tbl_name <> 'retur_pakan') and
                 dss.jenis_barang = 'pakan' and
                 dss.noreg = '".$noreg."'
         ";
@@ -1961,6 +1961,560 @@ class TSDRHPP extends Public_Controller {
 
     public function get_data_retur_pakan($noreg)
     {
+        // $sapronak_kesepakatan = $this->get_harga_kontrak( $noreg );
+
+        // $harga_sapronak = null;
+        // if ( !empty($sapronak_kesepakatan) ) {
+        //     $harga_sapronak = $sapronak_kesepakatan['harga_sapronak'];
+        // }
+
+        // $data = null;
+
+        // $m_kp = new \Model\Storage\KirimPakan_model();
+        // $d_kp = $m_kp->where('tujuan', $noreg)->where('jenis_tujuan', 'peternak')->with(['detail'])->get();
+
+        // if ( $d_kp->count() > 0 ) {
+        //     $d_kp = $d_kp->toArray();
+
+        //     foreach ($d_kp as $k_kp => $v_kp) {
+        //         $m_rp = new \Model\Storage\ReturPakan_model();
+        //         $d_rp = $m_rp->where('no_order', $v_kp['no_order'])->with(['det_retur_pakan'])->get()->toArray();
+
+        //         if ( count($d_rp) > 0 ) {
+        //             foreach ($d_rp as $k_rp => $v_rp) {
+        //                 foreach ($v_rp['det_retur_pakan'] as $k_rpd => $v_rpd) {
+        //                     if ( $v_rpd['jumlah'] > 0 ) {
+        //                         $harga_kontrak_pakan_peternak = 0;
+        //                         $harga_kontrak_pakan_supplier = 0;
+        //                         if ( count($harga_sapronak) > 0 ) {
+        //                             foreach ($harga_sapronak as $k_hs => $v_hs) {
+        //                                 foreach ($v_hs['detail'] as $k_det => $v_det) {
+        //                                     if ( $v_det['kode_brg'] == $v_rpd['item'] ) {
+        //                                         $harga_kontrak_pakan_peternak = $v_det['hrg_peternak'];
+        //                                     }
+        //                                 }
+        //                             }
+        //                         }
+        //                         $harga_kontrak_pakan_supplier = ($v_rpd['nilai_beli'] > 0 && $v_rpd['jumlah'] > 0) ? $v_rpd['nilai_beli'] / $v_rpd['jumlah'] : 0;
+
+        //                         $key = str_replace('-', '', $v_rp['tgl_retur']).' | '.$v_kp['no_sj'].' | '.$v_rpd['item'];
+
+        //                         $jml_retur = $v_rpd['jumlah'];
+
+        //                         $total_jual = $harga_kontrak_pakan_peternak * $jml_retur;
+        //                         $data['plasma'][ $key ] = array(
+        //                             'tanggal' => $v_rp['tgl_retur'],
+        //                             'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                             'sj' => null,
+        //                             'barang' => $v_rpd['d_barang']['nama'],
+        //                             'jumlah' => $jml_retur,
+        //                             'harga' => $harga_kontrak_pakan_peternak,
+        //                             'total' => $total_jual,
+        //                             'decimal' => $v_rpd['d_barang']['desimal_harga']
+        //                         );
+
+        //                         if ( $v_kp['jenis_kirim'] == 'opkg' ) {
+        //                             $m_dst = new \Model\Storage\DetStokTrans_model();
+        //                             $sql = "
+        //                                 select dst.* from det_stok_trans dst
+        //                                 left join
+        //                                     det_stok ds
+        //                                     on
+        //                                         dst.id_header = ds.id
+        //                                 where
+        //                                     dst.kode_trans = '".$v_rp['no_order']."' and
+        //                                     ds.kode_barang = '".trim($v_rpd['item'])."'
+        //                                 order by
+        //                                     ds.tgl_trans desc
+                                        
+        //                             ";
+        //                             $d_dst = $m_dst->hydrateRaw( $sql );
+        //                             // $d_dst = $m_dst->where('kode_trans', $v_rp['no_order'])->where('kode_barang', trim($v_rpd['item']))->get();
+
+        //                             if ( $d_dst->count() > 0 ) {
+        //                                 $d_dst = $d_dst->toArray();
+        //                                 $_jml_retur = $jml_retur;
+        //                                 foreach ($d_dst as $k_dst => $v_dst) {
+        //                                     $m_ds = new \Model\Storage\DetStok_model();
+        //                                     $d_ds = $m_ds->where('id', $v_dst['id_header'])->first();
+        //                                     if ( $_jml_retur > $v_dst['jumlah'] ) {
+        //                                         $total_supplier = $d_ds->hrg_beli * $v_dst['jumlah'];
+
+        //                                         if ( !isset($data['inti'][ $key ]) ) {
+        //                                             $data['inti'][ $key ] = array(
+        //                                                 'tanggal' => $v_rp['tgl_retur'],
+        //                                                 'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                                 'sj' => null,
+        //                                                 'barang' => $v_rpd['d_barang']['nama'],
+        //                                                 'zak' => ceil($v_dst['jumlah'] / 50),
+        //                                                 'jumlah' => $v_dst['jumlah'],
+        //                                                 'harga' => $d_ds->hrg_beli,
+        //                                                 'total' => $total_supplier
+        //                                             );
+        //                                         } else {
+        //                                             $data['inti'][ $key ]['zak'] += ceil($v_dst['jumlah'] / 50);
+        //                                             $data['inti'][ $key ]['jumlah'] += $v_dst['jumlah'];
+        //                                             $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                         }
+
+        //                                         $_jml_retur = $_jml_retur-$v_dst['jumlah'];
+        //                                     } else {
+        //                                         $total_supplier = $d_ds->hrg_beli * $_jml_retur;
+
+        //                                         if ( !isset($data['inti'][ $key ]) ) {
+        //                                             $data['inti'][ $key ] = array(
+        //                                                 'tanggal' => $v_rp['tgl_retur'],
+        //                                                 'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                                 'sj' => null,
+        //                                                 'barang' => $v_rpd['d_barang']['nama'],
+        //                                                 'zak' => ceil($jml_retur / 50),
+        //                                                 'jumlah' => $_jml_retur,
+        //                                                 'harga' => $d_ds->hrg_beli,
+        //                                                 'total' => $total_supplier
+        //                                             );
+        //                                         } else {
+        //                                             $data['inti'][ $key ]['zak'] += ceil($_jml_retur / 50);
+        //                                             $data['inti'][ $key ]['jumlah'] += $_jml_retur;
+        //                                             $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                         }
+
+        //                                         $_jml_retur = 0;
+        //                                     }
+        //                                 }
+        //                             } else {
+        //                                 $harga_beli = 0;
+        //                                 $total_supplier = $harga_beli * $jml_retur;
+
+        //                                 if ( !isset($data['inti'][ $key ]) ) {
+        //                                     $data['inti'][ $key ] = array(
+        //                                         'tanggal' => $v_rp['tgl_retur'],
+        //                                         'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                         'sj' => null,
+        //                                         'barang' => $v_rpd['d_barang']['nama'],
+        //                                         'zak' => ceil($jml_retur / 50),
+        //                                         'jumlah' => $jml_retur,
+        //                                         'harga' => $harga_beli,
+        //                                         'total' => $total_supplier
+        //                                     );
+        //                                 } else {
+        //                                     $data['inti'][ $key ]['zak'] += ceil($jml_retur / 50);
+        //                                     $data['inti'][ $key ]['jumlah'] += $jml_retur;
+        //                                     $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                 }
+        //                             }
+        //                         } else {
+        //                             $m_kp = new \Model\Storage\KirimPakan_model();
+        //                             $sql = "
+        //                                 select 
+        //                                     kp.*,
+        //                                     dkp.item,
+        //                                     dkp.jumlah,
+        //                                     dkp.nilai_beli,
+        //                                     dkp.nilai_jual
+        //                                 from det_kirim_pakan dkp 
+        //                                 left join
+        //                                     kirim_pakan kp 
+        //                                     on
+        //                                         dkp.id_header = kp.id
+        //                                 left join
+        //                                     det_stok_trans dst 
+        //                                     on
+        //                                         dst.kode_trans = kp.no_order
+        //                                 left join
+        //                                     det_stok ds 
+        //                                     on
+        //                                         ds.id = dst.id_header
+        //                                 where
+        //                                     dkp.item = '".$v_rpd['item']."' and
+        //                                     kp.tujuan = '".$v_kp['asal']."' and
+        //                                     kp.tgl_kirim <= '".$v_kp['tgl_kirim']."'
+        //                                 order by
+        //                                     kp.tgl_kirim desc,
+        //                                     kp.no_order desc
+        //                             ";
+
+        //                             $d_kp_pindah = $m_kp->hydrateRaw($sql);
+        //                             if ( $d_kp_pindah->count() > 0 ) {
+        //                                 $d_kp_pindah = $d_kp_pindah->toArray();
+
+        //                                 $_jml_pindah = $jml_retur;
+
+        //                                 foreach ($d_kp_pindah as $k => $val) {
+        //                                     if ( $_jml_pindah > 0 ) {
+        //                                         $asal = $val['asal'];
+        //                                         $tgl_kirim = $val['tgl_kirim'];
+        //                                         $jenis_kirim = $val['jenis_kirim'];
+
+        //                                         if ( $jenis_kirim == 'opkg' ) {
+        //                                             $m_dst = new \Model\Storage\DetStokTrans_model();
+        //                                             $d_dst = $m_dst->where('kode_trans', $val['no_order'])->where('kode_barang', trim($v_rpd['item']))->get();
+
+        //                                             if ( $d_dst->count() > 0 ) {
+        //                                                 $d_dst = $d_dst->toArray();
+        //                                                 foreach ($d_dst as $k_dst => $v_dst) {
+        //                                                     $m_ds = new \Model\Storage\DetStok_model();
+        //                                                     $d_ds = $m_ds->where('id', $v_dst['id_header'])->first();
+        //                                                     if ( $_jml_pindah > $v_dst['jumlah'] ) {
+
+        //                                                         $total_supplier = $d_ds->hrg_beli * $v_dst['jumlah'];
+
+        //                                                         if ( !isset($data['inti'][ $key ]) ) {
+        //                                                             $data['inti'][ $key ] = array(
+        //                                                                 'tanggal' => $v_rp['tgl_retur'],
+        //                                                                 'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                                                 'sj' => null,
+        //                                                                 'barang' => $v_rpd['d_barang']['nama'],
+        //                                                                 'zak' => ceil($v_dst['jumlah'] / 50),
+        //                                                                 'jumlah' => $v_dst['jumlah'],
+        //                                                                 'harga' => $d_ds->hrg_beli,
+        //                                                                 'total' => $total_supplier
+        //                                                             );
+        //                                                         } else {
+        //                                                             $data['inti'][ $key ]['zak'] += ceil($v_dst['jumlah'] / 50);
+        //                                                             $data['inti'][ $key ]['jumlah'] += $v_dst['jumlah'];
+        //                                                             $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                                         }
+
+        //                                                         $_jml_pindah -= $v_dst['jumlah'];
+        //                                                     } else {
+        //                                                         $total_supplier = $d_ds->hrg_beli * $_jml_pindah;
+
+        //                                                         if ( !isset($data['inti'][ $key ]) ) {
+        //                                                             $data['inti'][ $key ] = array(
+        //                                                                 'tanggal' => $v_rp['tgl_retur'],
+        //                                                                 'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                                                 'sj' => null,
+        //                                                                 'barang' => $v_rpd['d_barang']['nama'],
+        //                                                                 'zak' => ceil($_jml_pindah / 50),
+        //                                                                 'jumlah' => $_jml_pindah,
+        //                                                                 'harga' => $d_ds->hrg_beli,
+        //                                                                 'total' => $total_supplier
+        //                                                             );
+        //                                                         } else {
+        //                                                             $data['inti'][ $key ]['zak'] += ceil($_jml_pindah / 50);
+        //                                                             $data['inti'][ $key ]['jumlah'] += $_jml_pindah;
+        //                                                             $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                                         }
+
+        //                                                         $_jml_pindah = 0;
+        //                                                     }
+        //                                                 }
+        //                                             } else {
+        //                                                 $harga_beli = $val['nilai_beli'] / $val['jumlah'];
+        //                                                 $total_supplier = $harga_beli * $_jml_pindah;
+
+        //                                                 if ( !isset($data['inti'][ $key ]) ) {
+        //                                                     $data['inti'][ $key ] = array(
+        //                                                         'tanggal' => $v_rp['tgl_retur'],
+        //                                                         'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                                         'sj' => null,
+        //                                                         'barang' => $v_rpd['d_barang']['nama'],
+        //                                                         'zak' => ceil($_jml_pindah / 50),
+        //                                                         'jumlah' => $_jml_pindah,
+        //                                                         'harga' => $harga_beli,
+        //                                                         'total' => $total_supplier
+        //                                                     );
+        //                                                 } else {
+        //                                                     $data['inti'][ $key ]['zak'] += ceil($_jml_pindah / 50);
+        //                                                     $data['inti'][ $key ]['jumlah'] += $_jml_pindah;
+        //                                                     $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                                 }
+
+        //                                                 $_jml_pindah = 0;
+        //                                             }
+        //                                         } else {
+        //                                             $_data = null;
+        //                                             while ($jenis_kirim == 'opkp') {
+        //                                                 $m_kp = new \Model\Storage\KirimPakan_model();
+        //                                                 $sql = "
+        //                                                     select 
+        //                                                         kp.*,
+        //                                                         dkp.item,
+        //                                                         dkp.jumlah,
+        //                                                         dkp.nilai_beli,
+        //                                                         dkp.nilai_jual
+        //                                                     from det_kirim_pakan dkp 
+        //                                                     left join
+        //                                                         kirim_pakan kp 
+        //                                                         on
+        //                                                             dkp.id_header = kp.id
+        //                                                     where
+        //                                                         dkp.item = '".$val['item']."' and
+        //                                                         kp.tujuan = '".$asal."' and
+        //                                                         kp.tgl_kirim <= '".$tgl_kirim."'
+        //                                                     order by
+        //                                                         kp.tgl_kirim desc,
+        //                                                         kp.no_order desc
+        //                                                 ";
+
+        //                                                 $d_kp_pindah = $m_kp->hydrateRaw($sql);
+        //                                                 if ( $d_kp_pindah->count() > 0 ) {
+        //                                                     $d_kp_pindah = $d_kp_pindah->toArray()[0];
+
+        //                                                     $asal = $d_kp_pindah['asal'];
+        //                                                     $jenis_kirim = $d_kp_pindah['jenis_kirim'];
+        //                                                     $tgl_kirim = $d_kp_pindah['tgl_kirim'];
+
+        //                                                     if ( $jenis_kirim == 'opkg' ) {
+        //                                                         $_data = $d_kp_pindah;
+        //                                                     }
+        //                                                 } else {
+        //                                                     $jenis_kirim = 'opkg';
+        //                                                 }
+        //                                             }
+
+        //                                             if ( !empty($_data) ) {
+        //                                                 $m_dst = new \Model\Storage\DetStokTrans_model();
+        //                                                 $d_dst = $m_dst->where('kode_trans', $_data['no_order'])->where('kode_barang', trim($_data['item']))->get();
+
+        //                                                 if ( $d_dst->count() > 0 ) {
+        //                                                     $d_dst = $d_dst->toArray();
+        //                                                     foreach ($d_dst as $k_dst => $v_dst) {
+        //                                                         $m_ds = new \Model\Storage\DetStok_model();
+        //                                                         $d_ds = $m_ds->where('id', $v_dst['id_header'])->first();
+        //                                                         if ( $_jml_pindah > $v_dst['jumlah'] ) {
+
+        //                                                             $total_supplier = $d_ds->hrg_beli * $v_dst['jumlah'];
+
+        //                                                             if ( !isset($data['inti'][ $key ]) ) {
+        //                                                                 $data['inti'][ $key ] = array(
+        //                                                                     'tanggal' => $v_rp['tgl_retur'],
+        //                                                                     'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                                                     'sj' => null,
+        //                                                                     'barang' => $v_rpd['d_barang']['nama'],
+        //                                                                     'zak' => ceil($v_dst['jumlah'] / 50),
+        //                                                                     'jumlah' => $v_dst['jumlah'],
+        //                                                                     'harga' => $d_ds->hrg_beli,
+        //                                                                     'total' => $total_supplier
+        //                                                                 );
+        //                                                             } else {
+        //                                                                 $data['inti'][ $key ]['zak'] += ceil($v_dst['jumlah'] / 50);
+        //                                                                 $data['inti'][ $key ]['jumlah'] += $v_dst['jumlah'];
+        //                                                                 $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                                             }
+
+        //                                                             $_jml_pindah -= $v_dst['jumlah'];
+        //                                                         } else {
+        //                                                             $total_supplier = $d_ds->hrg_beli * $_jml_pindah;
+
+        //                                                             if ( !isset($data['inti'][ $key ]) ) {
+        //                                                                 $data['inti'][ $key ] = array(
+        //                                                                     'tanggal' => $v_rp['tgl_retur'],
+        //                                                                     'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                                                     'sj' => null,
+        //                                                                     'barang' => $v_rpd['d_barang']['nama'],
+        //                                                                     'zak' => ceil($_jml_pindah / 50),
+        //                                                                     'jumlah' => $_jml_pindah,
+        //                                                                     'harga' => $d_ds->hrg_beli,
+        //                                                                     'total' => $total_supplier
+        //                                                                 );
+        //                                                             } else {
+        //                                                                 $data['inti'][ $key ]['zak'] += ceil($_jml_pindah / 50);
+        //                                                                 $data['inti'][ $key ]['jumlah'] += $_jml_pindah;
+        //                                                                 $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                                             }
+
+        //                                                             $_jml_pindah = 0;
+        //                                                         }
+        //                                                     }
+        //                                                 } else {
+        //                                                     $harga_beli = $val['nilai_beli'] / $val['jumlah'];
+        //                                                     $total_supplier = $harga_beli * $_jml_pindah;
+
+        //                                                 if ( !isset($data['inti'][ $key ]) ) {
+        //                                                         $data['inti'][ $key ] = array(
+        //                                                             'tanggal' => $v_rp['tgl_retur'],
+        //                                                             'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+        //                                                             'sj' => null,
+        //                                                             'barang' => $v_rpd['d_barang']['nama'],
+        //                                                             'zak' => ceil($_jml_pindah / 50),
+        //                                                             'jumlah' => $_jml_pindah,
+        //                                                             'harga' => $harga_beli,
+        //                                                             'total' => $total_supplier
+        //                                                         );
+        //                                                     } else {
+        //                                                         $data['inti'][ $key ]['zak'] += ceil($_jml_pindah / 50);
+        //                                                         $data['inti'][ $key ]['jumlah'] += $_jml_pindah;
+        //                                                         $data['inti'][ $key ]['total'] += $total_supplier;
+        //                                                     }
+
+        //                                                     $_jml_pindah = 0;
+        //                                                 }
+        //                                             }
+        //                                         }
+        //                                     }
+        //                                 }
+        //                             }
+        //                         }
+
+        //                         $sql = "
+        //                             select kp.no_order, kp.jenis_kirim, kp.ongkos_angkut, tp.tgl_terima, dkp.* 
+        //                             from det_kirim_pakan dkp 
+        //                             right join
+        //                                 kirim_pakan kp 
+        //                                 on
+        //                                     dkp.id_header = kp.id
+        //                             right join
+        //                                 terima_pakan tp 
+        //                                 on
+        //                                     kp.id = tp.id_kirim_pakan
+        //                             where
+        //                                 kp.no_sj = '".$v_kp['no_sj']."' and
+        //                                 dkp.item = '".$v_rpd['item']."'
+        //                             order by
+        //                                 tp.tgl_terima desc,
+        //                                 kp.no_order desc
+        //                         ";
+
+        //                         $m_kp = new \Model\Storage\KirimPakan_model();
+        //                         $d_kp = $m_kp->hydrateRaw( $sql );
+
+        //                         if ( $d_kp->count() > 0 ) {
+        //                             $d_kp = $d_kp->toArray();
+
+        //                             $idx_kp = 0;
+
+        //                             $jml_pindah = $jml_retur;
+        //                             while ( $jml_pindah > 0 && isset($d_kp[ $idx_kp ]) ) {
+        //                                 $jumlah = 0;
+        //                                 $hrg_oa = $d_kp[ $idx_kp ]['ongkos_angkut'];
+
+        //                                 if ( $hrg_oa == 0 ) {
+        //                                     if ( $v_kp['jenis_kirim'] == 'opkp' ) {
+        //                                         $m_kp = new \Model\Storage\KirimPakan_model();
+        //                                         $sql = "
+        //                                             EXEC get_data_oa_pakan_new @no_order = '".$v_kp['no_order']."', @item = '".$v_rpd['item']."', @jumlah = ".$jml_pindah.", @no_sj_asal = '".$d_kp[ $idx_kp ]['no_sj_asal']."', @retur = 1
+        //                                         ";
+        //                                         // cetak_r($sql);
+        //                                         $d_oa_pindah_pakan = $m_kp->hydrateRaw( $sql );
+
+        //                                         if ( $d_oa_pindah_pakan->count() > 0 ) {
+        //                                             $d_oa_pindah_pakan = $d_oa_pindah_pakan->toArray();
+
+        //                                             foreach ($d_oa_pindah_pakan as $key => $value) {
+        //                                                 if ( $jml_pindah <= $value['jumlah'] ) {
+        //                                                     $jumlah = $jml_pindah;
+        //                                                     $jml_pindah = 0;
+        //                                                     $value['jumlah'] = $value['jumlah'] - $jml_pindah;
+        //                                                 } else {
+        //                                                     $jumlah = $value['jumlah'];
+        //                                                     $jml_pindah = $jml_pindah - $value['jumlah'];
+        //                                                     $value['jumlah'] = 0;
+        //                                                 }
+
+        //                                                 if ( $jumlah > 0 ) {
+        //                                                     $hrg_oa = $value['oa'];
+
+        //                                                     $key = $v_kp['no_sj'].' | '.$v_det['d_barang']['kode'].' | '.$hrg_oa;
+
+        //                                                     if ( !isset( $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] ) ) {
+        //                                                         $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] = array(
+        //                                                             'nota' => $v_kp['no_sj'],
+        //                                                             'tanggal' => $v_rp['tgl_retur'],
+        //                                                             'nopol' => $v_kp['ekspedisi'].' - '.$v_kp['no_polisi'],
+        //                                                             'barang' => $v_rpd['d_barang']['nama'],
+        //                                                             'zak' => ceil($jumlah / 50),
+        //                                                             'jumlah' => $jumlah,
+        //                                                             'harga' => $hrg_oa,
+        //                                                             'total' => $hrg_oa * $jumlah
+        //                                                         );
+        //                                                     } else {
+        //                                                         $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['zak'] += ceil($jumlah / 50);
+        //                                                         $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['jumlah'] += $jumlah;
+        //                                                         $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['total'] += $hrg_oa * $jumlah;
+        //                                                     }
+
+        //                                                     if ( !empty($data['ongkos_angkut']) ) {
+        //                                                         ksort($data['ongkos_angkut']);
+        //                                                     }
+        //                                                 }
+        //                                             }
+        //                                         }
+        //                                     } else {
+        //                                         $m_conf = new \Model\Storage\Conf();
+        //                                         $sql = "
+        //                                             select
+        //                                                 kp.ongkos_angkut
+        //                                             from det_kirim_pakan dkp
+        //                                             left join
+        //                                                 kirim_pakan kp
+        //                                                 on
+        //                                                     dkp.id_header = kp.id
+        //                                             where
+        //                                                 kp.no_order = '".$v_kp['no_order']."'
+        //                                         ";
+        //                                         $d_kp = $m_conf->hydrateRaw( $sql );
+
+        //                                         $ongkos_angkut = 0;
+        //                                         if ( $d_kp->count() > 0 ) {
+        //                                             $ongkos_angkut = $d_kp->toArray()[0]['ongkos_angkut'];
+        //                                         }
+
+        //                                         $key = $v_kp['no_sj'].' | '.$v_det['d_barang']['kode'].' | '.$hrg_oa;
+        //                                         $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] = array(
+        //                                             'nota' => $v_kp['no_sj'],
+        //                                             'tanggal' => $v_rp['tgl_retur'],
+        //                                             'nopol' => $v_kp['ekspedisi'].' - '.$v_kp['no_polisi'],
+        //                                             'barang' => $v_rpd['d_barang']['nama'],
+        //                                             'zak' => ceil($jml_pindah / 50),
+        //                                             'jumlah' => $jml_pindah,
+        //                                             'harga' => $ongkos_angkut,
+        //                                             'total' => $ongkos_angkut * $jml_pindah
+        //                                         );
+
+        //                                         $jml_pindah = 0;
+        //                                     }
+
+        //                                     $idx_kp++;
+        //                                 } else {
+        //                                     if ( $jml_pindah <= $d_kp[ $idx_kp ]['jumlah'] ) {
+        //                                         $jumlah = $jml_pindah;
+        //                                         $jml_pindah = 0;
+        //                                         $d_kp[ $idx_kp ]['jumlah'] = $d_kp[ $idx_kp ]['jumlah'] - $jml_pindah;
+        //                                     } else {
+        //                                         $jumlah = $d_kp[ $idx_kp ]['jumlah'];
+        //                                         $jml_pindah -= $d_kp[ $idx_kp ]['jumlah'];
+        //                                         $d_kp[ $idx_kp ]['jumlah'] = 0;
+
+        //                                         $idx_kp++;
+        //                                     }
+
+        //                                     if ( $jumlah > 0 ) {
+        //                                         $key = $v_kp['no_sj'].' | '.$v_det['d_barang']['kode'].' | '.$hrg_oa;
+
+        //                                         if ( !isset( $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] ) ) {
+        //                                             $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] = array(
+        //                                                 'nota' => $v_kp['no_sj'],
+        //                                                 'tanggal' => $v_rp['tgl_retur'],
+        //                                                 'nopol' => $v_kp['ekspedisi'].' - '.$v_kp['no_polisi'],
+        //                                                 'barang' => $v_rpd['d_barang']['nama'],
+        //                                                 'zak' => ceil($jumlah / 50),
+        //                                                 'jumlah' => $jumlah,
+        //                                                 'harga' => $hrg_oa,
+        //                                                 'total' => $hrg_oa * $jumlah
+        //                                             );
+        //                                         } else {
+        //                                             $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['zak'] += ceil($jumlah / 50);
+        //                                             $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['jumlah'] += $jumlah;
+        //                                             $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['total'] += $hrg_oa * $jumlah;
+        //                                         }
+
+        //                                         if ( !empty($data['ongkos_angkut']) ) {
+        //                                             ksort($data['ongkos_angkut']);
+        //                                         }
+        //                                     }
+        //                                 }
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        
+        // return $data;
+
         $sapronak_kesepakatan = $this->get_harga_kontrak( $noreg );
 
         $harga_sapronak = null;
@@ -1968,551 +2522,120 @@ class TSDRHPP extends Public_Controller {
             $harga_sapronak = $sapronak_kesepakatan['harga_sapronak'];
         }
 
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select dsts.*, dss.oa, dss.hrg_beli, rp.no_retur, brg.nama as nama_barang, rp.ekspedisi, rp.no_polisi from det_stok_trans_siklus dsts
+            left join
+                det_stok_siklus dss 
+                on
+                    dsts.id_header = dss.id
+            left join
+                retur_pakan rp 
+                on
+                    dsts.kode_trans = rp.no_retur 
+            left join
+                (
+                    select brg1.* from barang brg1
+                    right join
+                        (select max(id) as id, kode from barang group by kode) brg2
+                        on
+                            brg1.id = brg2.id
+                ) brg
+                on
+                    brg.kode = dsts.kode_barang 
+            where 
+                (dsts.tbl_name = 'retur_pakan') and
+                dss.jenis_barang = 'pakan' and
+                dss.noreg = '".$noreg."'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
         $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-        $m_kp = new \Model\Storage\KirimPakan_model();
-        $d_kp = $m_kp->where('tujuan', $noreg)->where('jenis_tujuan', 'peternak')->with(['detail'])->get();
-
-        if ( $d_kp->count() > 0 ) {
-            $d_kp = $d_kp->toArray();
-
-            foreach ($d_kp as $k_kp => $v_kp) {
-                $m_rp = new \Model\Storage\ReturPakan_model();
-                $d_rp = $m_rp->where('no_order', $v_kp['no_order'])->with(['det_retur_pakan'])->get()->toArray();
-
-                if ( count($d_rp) > 0 ) {
-                    foreach ($d_rp as $k_rp => $v_rp) {
-                        foreach ($v_rp['det_retur_pakan'] as $k_rpd => $v_rpd) {
-                            if ( $v_rpd['jumlah'] > 0 ) {
-                                $harga_kontrak_pakan_peternak = 0;
-                                $harga_kontrak_pakan_supplier = 0;
-                                if ( count($harga_sapronak) > 0 ) {
-                                    foreach ($harga_sapronak as $k_hs => $v_hs) {
-                                        foreach ($v_hs['detail'] as $k_det => $v_det) {
-                                            if ( $v_det['kode_brg'] == $v_rpd['item'] ) {
-                                                $harga_kontrak_pakan_peternak = $v_det['hrg_peternak'];
-                                            }
-                                        }
-                                    }
-                                }
-                                $harga_kontrak_pakan_supplier = ($v_rpd['nilai_beli'] > 0 && $v_rpd['jumlah'] > 0) ? $v_rpd['nilai_beli'] / $v_rpd['jumlah'] : 0;
-
-                                $key = str_replace('-', '', $v_rp['tgl_retur']).' | '.$v_kp['no_sj'].' | '.$v_rpd['item'];
-
-                                $jml_retur = $v_rpd['jumlah'];
-
-                                $total_jual = $harga_kontrak_pakan_peternak * $jml_retur;
-                                $data['plasma'][ $key ] = array(
-                                    'tanggal' => $v_rp['tgl_retur'],
-                                    'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                    'sj' => null,
-                                    'barang' => $v_rpd['d_barang']['nama'],
-                                    'jumlah' => $jml_retur,
-                                    'harga' => $harga_kontrak_pakan_peternak,
-                                    'total' => $total_jual,
-                                    'decimal' => $v_rpd['d_barang']['desimal_harga']
-                                );
-
-                                if ( $v_kp['jenis_kirim'] == 'opkg' ) {
-                                    $m_dst = new \Model\Storage\DetStokTrans_model();
-                                    $sql = "
-                                        select dst.* from det_stok_trans dst
-                                        left join
-                                            det_stok ds
-                                            on
-                                                dst.id_header = ds.id
-                                        where
-                                            dst.kode_trans = '".$v_rp['no_order']."' and
-                                            ds.kode_barang = '".trim($v_rpd['item'])."'
-                                        order by
-                                            ds.tgl_trans desc
-                                        
-                                    ";
-                                    $d_dst = $m_dst->hydrateRaw( $sql );
-                                    // $d_dst = $m_dst->where('kode_trans', $v_rp['no_order'])->where('kode_barang', trim($v_rpd['item']))->get();
-
-                                    if ( $d_dst->count() > 0 ) {
-                                        $d_dst = $d_dst->toArray();
-                                        $_jml_retur = $jml_retur;
-                                        foreach ($d_dst as $k_dst => $v_dst) {
-                                            $m_ds = new \Model\Storage\DetStok_model();
-                                            $d_ds = $m_ds->where('id', $v_dst['id_header'])->first();
-                                            if ( $_jml_retur > $v_dst['jumlah'] ) {
-                                                $total_supplier = $d_ds->hrg_beli * $v_dst['jumlah'];
-
-                                                if ( !isset($data['inti'][ $key ]) ) {
-                                                    $data['inti'][ $key ] = array(
-                                                        'tanggal' => $v_rp['tgl_retur'],
-                                                        'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                        'sj' => null,
-                                                        'barang' => $v_rpd['d_barang']['nama'],
-                                                        'zak' => ceil($v_dst['jumlah'] / 50),
-                                                        'jumlah' => $v_dst['jumlah'],
-                                                        'harga' => $d_ds->hrg_beli,
-                                                        'total' => $total_supplier
-                                                    );
-                                                } else {
-                                                    $data['inti'][ $key ]['zak'] += ceil($v_dst['jumlah'] / 50);
-                                                    $data['inti'][ $key ]['jumlah'] += $v_dst['jumlah'];
-                                                    $data['inti'][ $key ]['total'] += $total_supplier;
-                                                }
-
-                                                $_jml_retur = $_jml_retur-$v_dst['jumlah'];
-                                            } else {
-                                                $total_supplier = $d_ds->hrg_beli * $_jml_retur;
-
-                                                if ( !isset($data['inti'][ $key ]) ) {
-                                                    $data['inti'][ $key ] = array(
-                                                        'tanggal' => $v_rp['tgl_retur'],
-                                                        'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                        'sj' => null,
-                                                        'barang' => $v_rpd['d_barang']['nama'],
-                                                        'zak' => ceil($jml_retur / 50),
-                                                        'jumlah' => $_jml_retur,
-                                                        'harga' => $d_ds->hrg_beli,
-                                                        'total' => $total_supplier
-                                                    );
-                                                } else {
-                                                    $data['inti'][ $key ]['zak'] += ceil($_jml_retur / 50);
-                                                    $data['inti'][ $key ]['jumlah'] += $_jml_retur;
-                                                    $data['inti'][ $key ]['total'] += $total_supplier;
-                                                }
-
-                                                $_jml_retur = 0;
-                                            }
-                                        }
-                                    } else {
-                                        $harga_beli = 0;
-                                        $total_supplier = $harga_beli * $jml_retur;
-
-                                        if ( !isset($data['inti'][ $key ]) ) {
-                                            $data['inti'][ $key ] = array(
-                                                'tanggal' => $v_rp['tgl_retur'],
-                                                'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                'sj' => null,
-                                                'barang' => $v_rpd['d_barang']['nama'],
-                                                'zak' => ceil($jml_retur / 50),
-                                                'jumlah' => $jml_retur,
-                                                'harga' => $harga_beli,
-                                                'total' => $total_supplier
-                                            );
-                                        } else {
-                                            $data['inti'][ $key ]['zak'] += ceil($jml_retur / 50);
-                                            $data['inti'][ $key ]['jumlah'] += $jml_retur;
-                                            $data['inti'][ $key ]['total'] += $total_supplier;
-                                        }
-                                    }
-                                } else {
-                                    $m_kp = new \Model\Storage\KirimPakan_model();
-                                    $sql = "
-                                        select 
-                                            kp.*,
-                                            dkp.item,
-                                            dkp.jumlah,
-                                            dkp.nilai_beli,
-                                            dkp.nilai_jual
-                                        from det_kirim_pakan dkp 
-                                        left join
-                                            kirim_pakan kp 
-                                            on
-                                                dkp.id_header = kp.id
-                                        left join
-                                            det_stok_trans dst 
-                                            on
-                                                dst.kode_trans = kp.no_order
-                                        left join
-                                            det_stok ds 
-                                            on
-                                                ds.id = dst.id_header
-                                        where
-                                            dkp.item = '".$v_rpd['item']."' and
-                                            kp.tujuan = '".$v_kp['asal']."' and
-                                            kp.tgl_kirim <= '".$v_kp['tgl_kirim']."'
-                                        order by
-                                            kp.tgl_kirim desc,
-                                            kp.no_order desc
-                                    ";
-
-                                    $d_kp_pindah = $m_kp->hydrateRaw($sql);
-                                    if ( $d_kp_pindah->count() > 0 ) {
-                                        $d_kp_pindah = $d_kp_pindah->toArray();
-
-                                        $_jml_pindah = $jml_retur;
-
-                                        foreach ($d_kp_pindah as $k => $val) {
-                                            if ( $_jml_pindah > 0 ) {
-                                                $asal = $val['asal'];
-                                                $tgl_kirim = $val['tgl_kirim'];
-                                                $jenis_kirim = $val['jenis_kirim'];
-
-                                                if ( $jenis_kirim == 'opkg' ) {
-                                                    $m_dst = new \Model\Storage\DetStokTrans_model();
-                                                    $d_dst = $m_dst->where('kode_trans', $val['no_order'])->where('kode_barang', trim($v_rpd['item']))->get();
-
-                                                    if ( $d_dst->count() > 0 ) {
-                                                        $d_dst = $d_dst->toArray();
-                                                        foreach ($d_dst as $k_dst => $v_dst) {
-                                                            $m_ds = new \Model\Storage\DetStok_model();
-                                                            $d_ds = $m_ds->where('id', $v_dst['id_header'])->first();
-                                                            if ( $_jml_pindah > $v_dst['jumlah'] ) {
-
-                                                                $total_supplier = $d_ds->hrg_beli * $v_dst['jumlah'];
-
-                                                                if ( !isset($data['inti'][ $key ]) ) {
-                                                                    $data['inti'][ $key ] = array(
-                                                                        'tanggal' => $v_rp['tgl_retur'],
-                                                                        'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                                        'sj' => null,
-                                                                        'barang' => $v_rpd['d_barang']['nama'],
-                                                                        'zak' => ceil($v_dst['jumlah'] / 50),
-                                                                        'jumlah' => $v_dst['jumlah'],
-                                                                        'harga' => $d_ds->hrg_beli,
-                                                                        'total' => $total_supplier
-                                                                    );
-                                                                } else {
-                                                                    $data['inti'][ $key ]['zak'] += ceil($v_dst['jumlah'] / 50);
-                                                                    $data['inti'][ $key ]['jumlah'] += $v_dst['jumlah'];
-                                                                    $data['inti'][ $key ]['total'] += $total_supplier;
-                                                                }
-
-                                                                $_jml_pindah -= $v_dst['jumlah'];
-                                                            } else {
-                                                                $total_supplier = $d_ds->hrg_beli * $_jml_pindah;
-
-                                                                if ( !isset($data['inti'][ $key ]) ) {
-                                                                    $data['inti'][ $key ] = array(
-                                                                        'tanggal' => $v_rp['tgl_retur'],
-                                                                        'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                                        'sj' => null,
-                                                                        'barang' => $v_rpd['d_barang']['nama'],
-                                                                        'zak' => ceil($_jml_pindah / 50),
-                                                                        'jumlah' => $_jml_pindah,
-                                                                        'harga' => $d_ds->hrg_beli,
-                                                                        'total' => $total_supplier
-                                                                    );
-                                                                } else {
-                                                                    $data['inti'][ $key ]['zak'] += ceil($_jml_pindah / 50);
-                                                                    $data['inti'][ $key ]['jumlah'] += $_jml_pindah;
-                                                                    $data['inti'][ $key ]['total'] += $total_supplier;
-                                                                }
-
-                                                                $_jml_pindah = 0;
-                                                            }
-                                                        }
-                                                    } else {
-                                                        $harga_beli = $val['nilai_beli'] / $val['jumlah'];
-                                                        $total_supplier = $harga_beli * $_jml_pindah;
-
-                                                        if ( !isset($data['inti'][ $key ]) ) {
-                                                            $data['inti'][ $key ] = array(
-                                                                'tanggal' => $v_rp['tgl_retur'],
-                                                                'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                                'sj' => null,
-                                                                'barang' => $v_rpd['d_barang']['nama'],
-                                                                'zak' => ceil($_jml_pindah / 50),
-                                                                'jumlah' => $_jml_pindah,
-                                                                'harga' => $harga_beli,
-                                                                'total' => $total_supplier
-                                                            );
-                                                        } else {
-                                                            $data['inti'][ $key ]['zak'] += ceil($_jml_pindah / 50);
-                                                            $data['inti'][ $key ]['jumlah'] += $_jml_pindah;
-                                                            $data['inti'][ $key ]['total'] += $total_supplier;
-                                                        }
-
-                                                        $_jml_pindah = 0;
-                                                    }
-                                                } else {
-                                                    $_data = null;
-                                                    while ($jenis_kirim == 'opkp') {
-                                                        $m_kp = new \Model\Storage\KirimPakan_model();
-                                                        $sql = "
-                                                            select 
-                                                                kp.*,
-                                                                dkp.item,
-                                                                dkp.jumlah,
-                                                                dkp.nilai_beli,
-                                                                dkp.nilai_jual
-                                                            from det_kirim_pakan dkp 
-                                                            left join
-                                                                kirim_pakan kp 
-                                                                on
-                                                                    dkp.id_header = kp.id
-                                                            where
-                                                                dkp.item = '".$val['item']."' and
-                                                                kp.tujuan = '".$asal."' and
-                                                                kp.tgl_kirim <= '".$tgl_kirim."'
-                                                            order by
-                                                                kp.tgl_kirim desc,
-                                                                kp.no_order desc
-                                                        ";
-
-                                                        $d_kp_pindah = $m_kp->hydrateRaw($sql);
-                                                        if ( $d_kp_pindah->count() > 0 ) {
-                                                            $d_kp_pindah = $d_kp_pindah->toArray()[0];
-
-                                                            $asal = $d_kp_pindah['asal'];
-                                                            $jenis_kirim = $d_kp_pindah['jenis_kirim'];
-                                                            $tgl_kirim = $d_kp_pindah['tgl_kirim'];
-
-                                                            if ( $jenis_kirim == 'opkg' ) {
-                                                                $_data = $d_kp_pindah;
-                                                            }
-                                                        } else {
-                                                            $jenis_kirim = 'opkg';
-                                                        }
-                                                    }
-
-                                                    if ( !empty($_data) ) {
-                                                        $m_dst = new \Model\Storage\DetStokTrans_model();
-                                                        $d_dst = $m_dst->where('kode_trans', $_data['no_order'])->where('kode_barang', trim($_data['item']))->get();
-
-                                                        if ( $d_dst->count() > 0 ) {
-                                                            $d_dst = $d_dst->toArray();
-                                                            foreach ($d_dst as $k_dst => $v_dst) {
-                                                                $m_ds = new \Model\Storage\DetStok_model();
-                                                                $d_ds = $m_ds->where('id', $v_dst['id_header'])->first();
-                                                                if ( $_jml_pindah > $v_dst['jumlah'] ) {
-
-                                                                    $total_supplier = $d_ds->hrg_beli * $v_dst['jumlah'];
-
-                                                                    if ( !isset($data['inti'][ $key ]) ) {
-                                                                        $data['inti'][ $key ] = array(
-                                                                            'tanggal' => $v_rp['tgl_retur'],
-                                                                            'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                                            'sj' => null,
-                                                                            'barang' => $v_rpd['d_barang']['nama'],
-                                                                            'zak' => ceil($v_dst['jumlah'] / 50),
-                                                                            'jumlah' => $v_dst['jumlah'],
-                                                                            'harga' => $d_ds->hrg_beli,
-                                                                            'total' => $total_supplier
-                                                                        );
-                                                                    } else {
-                                                                        $data['inti'][ $key ]['zak'] += ceil($v_dst['jumlah'] / 50);
-                                                                        $data['inti'][ $key ]['jumlah'] += $v_dst['jumlah'];
-                                                                        $data['inti'][ $key ]['total'] += $total_supplier;
-                                                                    }
-
-                                                                    $_jml_pindah -= $v_dst['jumlah'];
-                                                                } else {
-                                                                    $total_supplier = $d_ds->hrg_beli * $_jml_pindah;
-
-                                                                    if ( !isset($data['inti'][ $key ]) ) {
-                                                                        $data['inti'][ $key ] = array(
-                                                                            'tanggal' => $v_rp['tgl_retur'],
-                                                                            'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                                            'sj' => null,
-                                                                            'barang' => $v_rpd['d_barang']['nama'],
-                                                                            'zak' => ceil($_jml_pindah / 50),
-                                                                            'jumlah' => $_jml_pindah,
-                                                                            'harga' => $d_ds->hrg_beli,
-                                                                            'total' => $total_supplier
-                                                                        );
-                                                                    } else {
-                                                                        $data['inti'][ $key ]['zak'] += ceil($_jml_pindah / 50);
-                                                                        $data['inti'][ $key ]['jumlah'] += $_jml_pindah;
-                                                                        $data['inti'][ $key ]['total'] += $total_supplier;
-                                                                    }
-
-                                                                    $_jml_pindah = 0;
-                                                                }
-                                                            }
-                                                        } else {
-                                                            $harga_beli = $val['nilai_beli'] / $val['jumlah'];
-                                                            $total_supplier = $harga_beli * $_jml_pindah;
-
-                                                        if ( !isset($data['inti'][ $key ]) ) {
-                                                                $data['inti'][ $key ] = array(
-                                                                    'tanggal' => $v_rp['tgl_retur'],
-                                                                    'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
-                                                                    'sj' => null,
-                                                                    'barang' => $v_rpd['d_barang']['nama'],
-                                                                    'zak' => ceil($_jml_pindah / 50),
-                                                                    'jumlah' => $_jml_pindah,
-                                                                    'harga' => $harga_beli,
-                                                                    'total' => $total_supplier
-                                                                );
-                                                            } else {
-                                                                $data['inti'][ $key ]['zak'] += ceil($_jml_pindah / 50);
-                                                                $data['inti'][ $key ]['jumlah'] += $_jml_pindah;
-                                                                $data['inti'][ $key ]['total'] += $total_supplier;
-                                                            }
-
-                                                            $_jml_pindah = 0;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                $sql = "
-                                    select kp.no_order, kp.jenis_kirim, kp.ongkos_angkut, tp.tgl_terima, dkp.* 
-                                    from det_kirim_pakan dkp 
-                                    right join
-                                        kirim_pakan kp 
-                                        on
-                                            dkp.id_header = kp.id
-                                    right join
-                                        terima_pakan tp 
-                                        on
-                                            kp.id = tp.id_kirim_pakan
-                                    where
-                                        kp.no_sj = '".$v_kp['no_sj']."' and
-                                        dkp.item = '".$v_rpd['item']."'
-                                    order by
-                                        tp.tgl_terima desc,
-                                        kp.no_order desc
-                                ";
-
-                                $m_kp = new \Model\Storage\KirimPakan_model();
-                                $d_kp = $m_kp->hydrateRaw( $sql );
-
-                                if ( $d_kp->count() > 0 ) {
-                                    $d_kp = $d_kp->toArray();
-
-                                    $idx_kp = 0;
-
-                                    $jml_pindah = $jml_retur;
-                                    while ( $jml_pindah > 0 && isset($d_kp[ $idx_kp ]) ) {
-                                        $jumlah = 0;
-                                        $hrg_oa = $d_kp[ $idx_kp ]['ongkos_angkut'];
-
-                                        if ( $hrg_oa == 0 ) {
-                                            if ( $v_kp['jenis_kirim'] == 'opkp' ) {
-                                                $m_kp = new \Model\Storage\KirimPakan_model();
-                                                $sql = "
-                                                    EXEC get_data_oa_pakan_new @no_order = '".$v_kp['no_order']."', @item = '".$v_rpd['item']."', @jumlah = ".$jml_pindah.", @no_sj_asal = '".$d_kp[ $idx_kp ]['no_sj_asal']."', @retur = 1
-                                                ";
-                                                // cetak_r($sql);
-                                                $d_oa_pindah_pakan = $m_kp->hydrateRaw( $sql );
-
-                                                if ( $d_oa_pindah_pakan->count() > 0 ) {
-                                                    $d_oa_pindah_pakan = $d_oa_pindah_pakan->toArray();
-
-                                                    foreach ($d_oa_pindah_pakan as $key => $value) {
-                                                        if ( $jml_pindah <= $value['jumlah'] ) {
-                                                            $jumlah = $jml_pindah;
-                                                            $jml_pindah = 0;
-                                                            $value['jumlah'] = $value['jumlah'] - $jml_pindah;
-                                                        } else {
-                                                            $jumlah = $value['jumlah'];
-                                                            $jml_pindah = $jml_pindah - $value['jumlah'];
-                                                            $value['jumlah'] = 0;
-                                                        }
-
-                                                        if ( $jumlah > 0 ) {
-                                                            $hrg_oa = $value['oa'];
-
-                                                            $key = $v_kp['no_sj'].' | '.$v_det['d_barang']['kode'].' | '.$hrg_oa;
-
-                                                            if ( !isset( $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] ) ) {
-                                                                $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] = array(
-                                                                    'nota' => $v_kp['no_sj'],
-                                                                    'tanggal' => $v_rp['tgl_retur'],
-                                                                    'nopol' => $v_kp['ekspedisi'].' - '.$v_kp['no_polisi'],
-                                                                    'barang' => $v_rpd['d_barang']['nama'],
-                                                                    'zak' => ceil($jumlah / 50),
-                                                                    'jumlah' => $jumlah,
-                                                                    'harga' => $hrg_oa,
-                                                                    'total' => $hrg_oa * $jumlah
-                                                                );
-                                                            } else {
-                                                                $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['zak'] += ceil($jumlah / 50);
-                                                                $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['jumlah'] += $jumlah;
-                                                                $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['total'] += $hrg_oa * $jumlah;
-                                                            }
-
-                                                            if ( !empty($data['ongkos_angkut']) ) {
-                                                                ksort($data['ongkos_angkut']);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            } else {
-                                                $m_conf = new \Model\Storage\Conf();
-                                                $sql = "
-                                                    select
-                                                        kp.ongkos_angkut
-                                                    from det_kirim_pakan dkp
-                                                    left join
-                                                        kirim_pakan kp
-                                                        on
-                                                            dkp.id_header = kp.id
-                                                    where
-                                                        kp.no_order = '".$v_kp['no_order']."'
-                                                ";
-                                                $d_kp = $m_conf->hydrateRaw( $sql );
-
-                                                $ongkos_angkut = 0;
-                                                if ( $d_kp->count() > 0 ) {
-                                                    $ongkos_angkut = $d_kp->toArray()[0]['ongkos_angkut'];
-                                                }
-
-                                                $key = $v_kp['no_sj'].' | '.$v_det['d_barang']['kode'].' | '.$hrg_oa;
-                                                $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] = array(
-                                                    'nota' => $v_kp['no_sj'],
-                                                    'tanggal' => $v_rp['tgl_retur'],
-                                                    'nopol' => $v_kp['ekspedisi'].' - '.$v_kp['no_polisi'],
-                                                    'barang' => $v_rpd['d_barang']['nama'],
-                                                    'zak' => ceil($jml_pindah / 50),
-                                                    'jumlah' => $jml_pindah,
-                                                    'harga' => $ongkos_angkut,
-                                                    'total' => $ongkos_angkut * $jml_pindah
-                                                );
-
-                                                $jml_pindah = 0;
-                                            }
-
-                                            $idx_kp++;
-                                        } else {
-                                            if ( $jml_pindah <= $d_kp[ $idx_kp ]['jumlah'] ) {
-                                                $jumlah = $jml_pindah;
-                                                $jml_pindah = 0;
-                                                $d_kp[ $idx_kp ]['jumlah'] = $d_kp[ $idx_kp ]['jumlah'] - $jml_pindah;
-                                            } else {
-                                                $jumlah = $d_kp[ $idx_kp ]['jumlah'];
-                                                $jml_pindah -= $d_kp[ $idx_kp ]['jumlah'];
-                                                $d_kp[ $idx_kp ]['jumlah'] = 0;
-
-                                                $idx_kp++;
-                                            }
-
-                                            if ( $jumlah > 0 ) {
-                                                $key = $v_kp['no_sj'].' | '.$v_det['d_barang']['kode'].' | '.$hrg_oa;
-
-                                                if ( !isset( $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] ) ) {
-                                                    $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ] = array(
-                                                        'nota' => $v_kp['no_sj'],
-                                                        'tanggal' => $v_rp['tgl_retur'],
-                                                        'nopol' => $v_kp['ekspedisi'].' - '.$v_kp['no_polisi'],
-                                                        'barang' => $v_rpd['d_barang']['nama'],
-                                                        'zak' => ceil($jumlah / 50),
-                                                        'jumlah' => $jumlah,
-                                                        'harga' => $hrg_oa,
-                                                        'total' => $hrg_oa * $jumlah
-                                                    );
-                                                } else {
-                                                    $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['zak'] += ceil($jumlah / 50);
-                                                    $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['jumlah'] += $jumlah;
-                                                    $data['ongkos_angkut'][ $v_rp['tgl_retur'] ][ $v_kp['no_polisi'] ][ $key ]['total'] += $hrg_oa * $jumlah;
-                                                }
-
-                                                if ( !empty($data['ongkos_angkut']) ) {
-                                                    ksort($data['ongkos_angkut']);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+            foreach ($d_conf as $k => $value) {
+                $harga_kontrak_pakan_peternak = 0;
+                $harga_kontrak_pakan_supplier = 0;
+                if ( count($harga_sapronak) > 0 ) {
+                    foreach ($harga_sapronak as $k_hs => $v_hs) {
+                        foreach ($v_hs['detail'] as $k_det => $v_det) {
+                            if ( $v_det['kode_brg'] == $value['kode_barang'] ) {
+                                $harga_kontrak_pakan_peternak = $v_det['hrg_peternak'];
                             }
                         }
                     }
                 }
+
+                $total_plasma = $value['jumlah'] * $harga_kontrak_pakan_peternak;
+                $key_plasma = str_replace('-', '', $value['tgl_trans']).' | '.$value['no_retur'].' | '.$value['kode_barang'];
+                if ( !isset($data['plasma'][ $key_plasma ]) ) {
+                    // 'tanggal' => $v_rp['tgl_retur'],
+                    // 'nota' => empty($v_rp['no_retur']) ? '-' : $v_rp['no_retur'],
+                    // 'sj' => null,
+                    // 'barang' => $v_rpd['d_barang']['nama'],
+                    // 'zak' => ceil($jml_retur / 50),
+                    // 'jumlah' => $_jml_retur,
+                    // 'harga' => $d_ds->hrg_beli,
+                    // 'total' => $total_supplier
+
+                    $data['plasma'][ $key_plasma ] = array(
+                        'tanggal' => $value['tgl_trans'],
+                        'nota' => $value['no_retur'],
+                        'sj' => null,
+                        'barang' => $value['nama_barang'],
+                        'zak' => ceil($value['jumlah'] / 50),
+                        'jumlah' => $value['jumlah'],
+                        'harga' => $harga_kontrak_pakan_peternak,
+                        'total' => $total_plasma
+                    );
+                } else {
+                    $data['plasma'][ $key_plasma ]['zak'] += ceil($value['jumlah'] / 50);
+                    $data['plasma'][ $key_plasma ]['jumlah'] += $value['jumlah'];
+                    $data['plasma'][ $key_plasma ]['total'] += $total_plasma;
+                }
+
+                $total_inti = $value['jumlah'] * $value['hrg_beli'];
+                $key_inti = str_replace('-', '', $value['tgl_trans']).' | '.$value['no_retur'].' | '.$value['kode_barang'].' | '.$value['hrg_beli'];
+                if ( !isset($data['inti'][ $key_inti ]) ) {
+                    $data['inti'][ $key_inti ] = array(
+                        'tanggal' => $value['tgl_trans'],
+                        'nota' => $value['no_retur'],
+                        'sj' => null,
+                        'barang' => $value['nama_barang'],
+                        'zak' => ceil($value['jumlah'] / 50),
+                        'jumlah' => $value['jumlah'],
+                        'harga' => $value['hrg_beli'],
+                        'total' => $total_inti
+                    );
+                } else {
+                    $data['inti'][ $key_inti ]['zak'] += ceil($value['jumlah'] / 50);
+                    $data['inti'][ $key_inti ]['jumlah'] += $value['jumlah'];
+                    $data['inti'][ $key_inti ]['total'] += $total_inti;
+                }
+
+                $hrg_oa = $value['oa'];
+                $key = $value['no_retur'].' | '.$value['kode_barang'].' | '.$hrg_oa;
+
+                if ( !isset( $data['ongkos_angkut'][ $value['tgl_trans'] ][ $value['no_polisi'] ][ $key ] ) ) {
+                    $data['ongkos_angkut'][ $value['tgl_trans'] ][ $value['no_polisi'] ][ $key ] = array(
+                        'nota' => $value['no_retur'],
+                        'tanggal' => $value['tgl_trans'],
+                        'nopol' => $value['ekspedisi'].' - '.$value['no_polisi'],
+                        'barang' => $value['nama_barang'],
+                        'zak' => ceil($value['jumlah'] / 50),
+                        'jumlah' => $value['jumlah'],
+                        'harga' => $hrg_oa,
+                        'total' => $hrg_oa * $value['jumlah']
+                    );
+                } else {
+                    $data['ongkos_angkut'][ $value['tgl_trans'] ][ $value['no_polisi'] ][ $key ]['zak'] += ceil($value['jumlah'] / 50);
+                    $data['ongkos_angkut'][ $value['tgl_trans'] ][ $value['no_polisi'] ][ $key ]['jumlah'] += $value['jumlah'];
+                    $data['ongkos_angkut'][ $value['tgl_trans'] ][ $value['no_polisi'] ][ $key ]['total'] += $hrg_oa * $value['jumlah'];
+                }
             }
         }
-        
+
         return $data;
     }
 
