@@ -544,9 +544,9 @@ class Memorial extends Public_Controller {
 
     public function tes()
     {
-        $m_po = new \Model\Storage\Po_model();
-        $no_po = $m_po->getNextNoPo();
+        $tanggal = '2025-11-10';
+        $periode = substr(str_replace('-', '', $tanggal), 2, 6);
 
-        cetak_r( $no_po );
+        cetak_r( $periode );
     }
 }
