@@ -105,85 +105,86 @@
 								<button id="btn-add" type="button" data-href="action" class="col-sm-12 btn btn-success cursor-p pull-left" title="ADD" onclick="odvp.order_voadip_form()"><i class="fa fa-plus" aria-hidden="true"></i> ADD</button>
 							</div>
 							<div class="col-sm-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
-							<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
-								<div class="col-sm-6 no-padding" style="padding-right: 5px;">
-									<div class="col-sm-12 no-padding"><label class="control-label">Tgl Awal</label></div>
-									<div class="col-sm-12 no-padding">
-										<div class="input-group date datetimepicker" name="startDate" id="StartDate_VOADIP">
-											<input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
-											<span class="input-group-addon">
-												<span class="glyphicon glyphicon-calendar"></span>
-											</span>
-										</div>
-									</div>
-								</div>
-								<div class="col-sm-6 no-padding" style="padding-left: 5px;">
-									<div class="col-sm-12 no-padding"><label class="control-label">Tgl Akhir</label></div>
-									<div class="col-sm-12 no-padding">
-										<div class="input-group date datetimepicker" name="endDate" id="EndDate_VOADIP">
-											<input type="text" class="form-control text-center" placeholder="End Date" data-required="1" />
-											<span class="input-group-addon">
-												<span class="glyphicon glyphicon-calendar"></span>
-											</span>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-12 no-padding">
-								<button id="btn-tampil" type="button" data-href="action" class="col-sm-12 btn btn-primary cursor-p pull-left" title="TAMPIL" onclick="odvp.get_lists_voadip()">Tampilkan</button>
-							</div>
-							<div class="col-sm-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
-							<!-- <div class="col-lg-8 search no-padding d-flex align-items-center">
-								<div class="col-sm-1 no-padding">
-									<span> Periode </label>
-								</div>
-								<div class="col-sm-3">
-									<div class="input-group date datetimepicker" name="startDate" id="StartDate_VOADIP">
-								        <input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
-								        <span class="input-group-addon">
-								            <span class="glyphicon glyphicon-calendar"></span>
-								        </span>
-								    </div>
-								</div>
-								<div class="col-sm-1 text-center no-padding" style="max-width: 4%;">s/d</div>
-								<div class="col-sm-3">
-									<div class="input-group date datetimepicker" name="endDate" id="EndDate_VOADIP">
-								        <input type="text" class="form-control text-center" placeholder="End Date" data-required="1" />
-								        <span class="input-group-addon">
-								            <span class="glyphicon glyphicon-calendar"></span>
-								        </span>
-								    </div>
-								</div>
-								<div class="col-sm-2">
-									<button id="btn-tampil" type="button" data-href="action" class="btn btn-primary cursor-p pull-left" title="TAMPIL" onclick="odvp.get_lists_voadip()">Tampilkan</button>
-								</div>
-								<div class="col-sm-2">
-									<button id="btn-add" type="button" data-href="action" class="btn btn-primary cursor-p pull-left" title="ADD" onclick="odvp.order_voadip_form()"><i class="fa fa-plus" aria-hidden="true"></i> ADD</button>
-								</div>
-							</div> -->
-							<div class="col-sm-12 action no-padding">
-								<div class="col-sm-12 search left-inner-addon no-padding pull-right" style="margin-left: 10px;">
-									<i class="glyphicon glyphicon-search"></i><input class="form-control" type="search" data-table="tbl_odvp" placeholder="Search" onkeyup="filter_all(this)">
-								</div>
-							</div>
-							<table class="table table-bordered table-hover tbl_odvp" id="dataTable" width="100%" cellspacing="0">
-								<thead>
-									<tr class="v-center">
-										<th class="col-sm-1 text-center">Tanggal</th>
-										<th class="col-sm-1 text-center">No. Order</th>
-										<th class="col-sm-2 text-left">Supplier</th>
-										<th class="col-sm-4 text-left">Perusahaan</th>
-									</tr>
-								</thead>
-								<tbody class="list">
-									<tr>
-										<td class="text-left" colspan="4">Data tidak ditemukan.</td>
-									</tr>
-								</tbody>
-							</table>
-						<?php else: ?>
-							<h3>Data Kosong.</h3>
 						<?php endif ?>
+						<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
+							<div class="col-sm-6 no-padding" style="padding-right: 5px;">
+								<div class="col-sm-12 no-padding"><label class="control-label">Tgl Awal</label></div>
+								<div class="col-sm-12 no-padding">
+									<div class="input-group date datetimepicker" name="startDate" id="StartDate_VOADIP">
+										<input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
+										<span class="input-group-addon">
+											<span class="glyphicon glyphicon-calendar"></span>
+										</span>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-6 no-padding" style="padding-left: 5px;">
+								<div class="col-sm-12 no-padding"><label class="control-label">Tgl Akhir</label></div>
+								<div class="col-sm-12 no-padding">
+									<div class="input-group date datetimepicker" name="endDate" id="EndDate_VOADIP">
+										<input type="text" class="form-control text-center" placeholder="End Date" data-required="1" />
+										<span class="input-group-addon">
+											<span class="glyphicon glyphicon-calendar"></span>
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-12 no-padding">
+							<button id="btn-tampil" type="button" data-href="action" class="col-sm-12 btn btn-primary cursor-p pull-left" title="TAMPIL" onclick="odvp.get_lists_voadip()">Tampilkan</button>
+						</div>
+						<div class="col-sm-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
+						<!-- <div class="col-lg-8 search no-padding d-flex align-items-center">
+							<div class="col-sm-1 no-padding">
+								<span> Periode </label>
+							</div>
+							<div class="col-sm-3">
+								<div class="input-group date datetimepicker" name="startDate" id="StartDate_VOADIP">
+									<input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
+									<span class="input-group-addon">
+										<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
+							</div>
+							<div class="col-sm-1 text-center no-padding" style="max-width: 4%;">s/d</div>
+							<div class="col-sm-3">
+								<div class="input-group date datetimepicker" name="endDate" id="EndDate_VOADIP">
+									<input type="text" class="form-control text-center" placeholder="End Date" data-required="1" />
+									<span class="input-group-addon">
+										<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
+							</div>
+							<div class="col-sm-2">
+								<button id="btn-tampil" type="button" data-href="action" class="btn btn-primary cursor-p pull-left" title="TAMPIL" onclick="odvp.get_lists_voadip()">Tampilkan</button>
+							</div>
+							<div class="col-sm-2">
+								<button id="btn-add" type="button" data-href="action" class="btn btn-primary cursor-p pull-left" title="ADD" onclick="odvp.order_voadip_form()"><i class="fa fa-plus" aria-hidden="true"></i> ADD</button>
+							</div>
+						</div> -->
+						<div class="col-sm-12 action no-padding">
+							<div class="col-sm-12 search left-inner-addon no-padding pull-right" style="margin-left: 10px;">
+								<i class="glyphicon glyphicon-search"></i><input class="form-control" type="search" data-table="tbl_odvp" placeholder="Search" onkeyup="filter_all(this)">
+							</div>
+						</div>
+						<table class="table table-bordered table-hover tbl_odvp" id="dataTable" width="100%" cellspacing="0">
+							<thead>
+								<tr class="v-center">
+									<th class="col-sm-1 text-center">Tanggal</th>
+									<th class="col-sm-1 text-center">No. Order</th>
+									<th class="col-sm-2 text-left">Supplier</th>
+									<th class="col-sm-4 text-left">Perusahaan</th>
+								</tr>
+							</thead>
+							<tbody class="list">
+								<tr>
+									<td class="text-left" colspan="4">Data tidak ditemukan.</td>
+								</tr>
+							</tbody>
+						</table>
+						<?php // else: ?>
+							<!-- <h3>Data Kosong.</h3> -->
+						<?php // endif ?>
 					</div>
 					<div id="pakan" class="tab-pane fade">
 						<?php if ( $akses['a_submit'] == 1 ): ?>
@@ -191,72 +192,73 @@
 								<button id="btn-add" type="button" data-href="action" class="col-sm-12 btn btn-success cursor-p pull-left" title="ADD" onclick="odvp.order_pakan_form()"><i class="fa fa-plus" aria-hidden="true"></i> ADD</button>
 							</div>
 							<div class="col-sm-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
-							<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
-								<div class="col-sm-6 no-padding" style="padding-right: 5px;">
-									<div class="col-sm-12 no-padding"><label class="control-label">Tgl Awal</label></div>
-									<div class="col-sm-12 no-padding">
-										<div class="input-group date datetimepicker" name="startDate" id="StartDate_PAKAN">
-											<input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
-											<span class="input-group-addon">
-												<span class="glyphicon glyphicon-calendar"></span>
-											</span>
-										</div>
-									</div>
-								</div>
-								<div class="col-sm-6 no-padding" style="padding-left: 5px;">
-									<div class="col-sm-12 no-padding"><label class="control-label">Tgl Akhir</label></div>
-									<div class="col-sm-12 no-padding">
-										<div class="input-group date datetimepicker" name="endDate" id="EndDate_PAKAN">
-											<input type="text" class="form-control text-center" placeholder="End Date" data-required="1" />
-											<span class="input-group-addon">
-												<span class="glyphicon glyphicon-calendar"></span>
-											</span>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
-								<div class="col-sm-12 no-padding"><label class="control-label">Perusahaan</label></div>
-								<div class="col-sm-12 no-padding">
-									<select class="form-control perusahaan" multiple="multiple" data-required="1">
-										<option value="all">ALL</option>
-										<?php if ( isset($perusahaan) && !empty($perusahaan) ) { ?>
-											<?php foreach ($perusahaan as $k_prs => $v_prs) { ?>
-												<option value="<?php echo $v_prs['kode']; ?>"><?php echo strtoupper($v_prs['perusahaan']); ?></option>
-											<?php } ?>
-										<?php } ?>
-									</select>
-								</div>
-							</div>
-							<div class="col-sm-12 no-padding">
-								<button id="btn-tampil" type="button" data-href="action" class="col-sm-12 btn btn-primary cursor-p pull-left" title="TAMPIL" onclick="odvp.get_lists_pakan()">Tampilkan</button>
-							</div>
-							<div class="col-sm-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
-							<div class="col-sm-12 action no-padding">
-								<div class="col-sm-12 search left-inner-addon no-padding pull-right">
-									<i class="glyphicon glyphicon-search"></i><input class="form-control" type="search" data-table="tbl_odvp" placeholder="Search" onkeyup="filter_all(this)">
-								</div>
-							</div>
-							<table class="table table-bordered table-hover tbl_odvp" id="dataTable" width="100%" cellspacing="0">
-								<thead>
-									<tr class="v-center">
-										<th class="text-center col-sm-1">Tanggal</th>
-										<th class="text-center col-sm-2">Supplier</th>
-										<th class="text-center col-sm-2">Perusahaan</th>
-										<th class="text-center col-sm-1">Rencana Kirim</th>
-										<th class="text-center col-sm-1">No Order</th>
-										<th class="text-center col-sm-1">Action</th>
-									</tr>
-								</thead>
-								<tbody class="list">
-									<tr>
-										<td class="text-left" colspan="6">Data tidak ditemukan.</td>
-									</tr>
-								</tbody>
-							</table>
-						<?php else: ?>
-							<h3>Data Kosong.</h3>
 						<?php endif ?>
+						<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
+							<div class="col-sm-6 no-padding" style="padding-right: 5px;">
+								<div class="col-sm-12 no-padding"><label class="control-label">Tgl Awal</label></div>
+								<div class="col-sm-12 no-padding">
+									<div class="input-group date datetimepicker" name="startDate" id="StartDate_PAKAN">
+										<input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
+										<span class="input-group-addon">
+											<span class="glyphicon glyphicon-calendar"></span>
+										</span>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-6 no-padding" style="padding-left: 5px;">
+								<div class="col-sm-12 no-padding"><label class="control-label">Tgl Akhir</label></div>
+								<div class="col-sm-12 no-padding">
+									<div class="input-group date datetimepicker" name="endDate" id="EndDate_PAKAN">
+										<input type="text" class="form-control text-center" placeholder="End Date" data-required="1" />
+										<span class="input-group-addon">
+											<span class="glyphicon glyphicon-calendar"></span>
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
+							<div class="col-sm-12 no-padding"><label class="control-label">Perusahaan</label></div>
+							<div class="col-sm-12 no-padding">
+								<select class="form-control perusahaan" multiple="multiple" data-required="1">
+									<option value="all">ALL</option>
+									<?php if ( isset($perusahaan) && !empty($perusahaan) ) { ?>
+										<?php foreach ($perusahaan as $k_prs => $v_prs) { ?>
+											<option value="<?php echo $v_prs['kode']; ?>"><?php echo strtoupper($v_prs['perusahaan']); ?></option>
+										<?php } ?>
+									<?php } ?>
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-12 no-padding">
+							<button id="btn-tampil" type="button" data-href="action" class="col-sm-12 btn btn-primary cursor-p pull-left" title="TAMPIL" onclick="odvp.get_lists_pakan()">Tampilkan</button>
+						</div>
+						<div class="col-sm-12 no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
+						<div class="col-sm-12 action no-padding">
+							<div class="col-sm-12 search left-inner-addon no-padding pull-right">
+								<i class="glyphicon glyphicon-search"></i><input class="form-control" type="search" data-table="tbl_odvp" placeholder="Search" onkeyup="filter_all(this)">
+							</div>
+						</div>
+						<table class="table table-bordered table-hover tbl_odvp" id="dataTable" width="100%" cellspacing="0">
+							<thead>
+								<tr class="v-center">
+									<th class="text-center col-sm-1">Tanggal</th>
+									<th class="text-center col-sm-2">Supplier</th>
+									<th class="text-center col-sm-2">Perusahaan</th>
+									<th class="text-center col-sm-1">Rencana Kirim</th>
+									<th class="text-center col-sm-1">No Order</th>
+									<th class="text-center col-sm-1">Action</th>
+								</tr>
+							</thead>
+							<tbody class="list">
+								<tr>
+									<td class="text-left" colspan="6">Data tidak ditemukan.</td>
+								</tr>
+							</tbody>
+						</table>
+						<?php // else: ?>
+							<!-- <h3>Data Kosong.</h3> -->
+						<?php // endif ?>
 					</div>
 				</div>
 			</div>
