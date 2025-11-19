@@ -9,15 +9,15 @@
                 <div class="col-xs-12 no-padding">
                     <div class="col-xs-12 no-padding">
                         <div class="col-xs-3 no-padding">ATAS NAMA</div>
-                        <div class="col-xs-9 no-padding">: <?php echo strtoupper($atas_nama); ?></div>
+                        <div class="col-xs-9 no-padding">: <span class="atasnama"><?php echo strtoupper($atas_nama); ?></span></div>
                     </div>
                     <div class="col-xs-12 no-padding">
                         <div class="col-xs-3 no-padding">BANK</div>
-                        <div class="col-xs-9 no-padding">: <?php echo strtoupper($bank); ?></div>
+                        <div class="col-xs-9 no-padding">: <span class="bank"><?php echo strtoupper($bank); ?></span></div>
                     </div>
                     <div class="col-xs-12 no-padding">
                         <div class="col-xs-3 no-padding">NO. REKENING</div>
-                        <div class="col-xs-9 no-padding">: <?php echo strtoupper($no_rek); ?></div>
+                        <div class="col-xs-9 no-padding">: <span class="norek"><?php echo strtoupper($no_rek); ?></span></div>
                     </div>
                 </div>
                 <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
@@ -77,6 +77,10 @@
                         </table>
                     </small>
 				</div>
+                <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+                <div class="col-xs-12 no-padding">
+                    <button type="button" class="col-xs-12 btn btn-default" onclick="vp.encryptParams(this)" data-id="<?php echo $id; ?>"><i class="fa fa-file-excel-o"></i> Export Excel</button>
+                </div>
 			</form>
 		</div>
 	</div>

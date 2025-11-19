@@ -156,6 +156,40 @@ var vp = {
         },'html');
     }, // end - formDetail
 
+    encryptParams: function(elm) {
+        var modal = $(elm).closest('.modal-body');
+
+        var params = {
+            'id': $(elm).attr('data-id'),
+            'no_rek': $(modal).find('span.norek').text(),
+            'atas_nama': $(modal).find('span.atasnama').text(),
+            'bank': $(modal).find('span.bank').text()
+        };
+
+        $.ajax({
+            url: 'pembayaran/VerifikasiPembayaran/encryptParams',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() { showLoading(); },
+            success: function(data) {
+                hideLoading();
+
+                if ( data.status == 1 ) {
+                    vp.exportExcel(data.content);
+                } else {
+                    bootbox.alert( data.message );
+                }
+            }
+        });
+	}, // end - encryptParams
+
+	exportExcel : function (params) {
+		goToURL('pembayaran/VerifikasiPembayaran/exportExcel/'+params);
+	}, // end - exportExcel
+
     formRealisasiBayar: function(elm) {
         var params = {
             'id': $(elm).attr('data-id')

@@ -310,20 +310,34 @@ class VerifikasiPembayaran extends Public_Controller
         echo $html;
     }
 
-    public function formDetail() {
-        $params = $this->input->get('params');
-
+    public function getDataDetail($params) {
         $id = $params['id'];
-        $no_rek = $params['no_rek'];
-        $atas_nama = $params['atas_nama'];
-        $bank = $params['bank'];
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select data.*
+            select 
+                data.*,
+                supl.nama_supl
             from
             (
                 select
+                    case
+                        when rpd.transaksi like 'OA PAKAN' then
+                            'ekspedisi'
+                        when rpd.transaksi like 'PLASMA' then
+                            'mitra'
+                        else
+                            'supplier'
+                    end as jenis_supl,
+                    case
+                        when rpd.transaksi like 'OA PAKAN' then
+                            rp.ekspedisi
+                        when rpd.transaksi like 'PLASMA' then
+                            rp.peternak
+                        else
+                            rp.supplier
+                    end as kode_supl,
+                    rp.tgl_bayar as tgl_pengajuan,
                     rpd.id_header,
                     rpd.transaksi,
                     rpd.no_bayar,
@@ -351,7 +365,8 @@ class VerifikasiPembayaran extends Public_Controller
                         else
                             konfir_pembayaran.lampiran
                     end as lampiran,
-                    konfir_pembayaran.tanggal
+                    konfir_pembayaran.tanggal,
+                    konfir_pembayaran.jenis
                 from realisasi_pembayaran_det rpd
                 left join
                     realisasi_pembayaran rp
@@ -366,7 +381,8 @@ class VerifikasiPembayaran extends Public_Controller
                             td.no_sj as no_sj,
                             kpdd.total as bruto,
                             kpdd.total * (0.25/100) as pph,
-                            '' as lampiran
+                            '' as lampiran,
+                            'DOC' as jenis
                         from konfirmasi_pembayaran_doc_det kpdd
                         left join
                             konfirmasi_pembayaran_doc kpd
@@ -392,7 +408,8 @@ class VerifikasiPembayaran extends Public_Controller
                             kpp.invoice as no_sj,
                             kpp.total as bruto,
                             0 as pph,
-                            '' as lampiran
+                            '' as lampiran,
+                            'PAKAN' as jenis
                         from konfirmasi_pembayaran_pakan kpp
     
                         union all
@@ -404,7 +421,8 @@ class VerifikasiPembayaran extends Public_Controller
                             kpvd.no_sj as no_sj,
                             kpvd.total as bruto,
                             0 as pph,
-                            '' as lampiran
+                            '' as lampiran,
+                            'OVK' as jenis
                         from konfirmasi_pembayaran_voadip_det kpvd
                         left join
                             konfirmasi_pembayaran_voadip kpv
@@ -420,7 +438,8 @@ class VerifikasiPembayaran extends Public_Controller
                             null as no_sj,
                             (kpop.total+kpop.potongan_pph_23) as bruto,
                             kpop.potongan_pph_23 as pph,
-                            kpop.lampiran
+                            kpop.lampiran,
+                            'OA PAKAN' as jenis
                         from konfirmasi_pembayaran_oa_pakan kpop
     
                         union all
@@ -432,7 +451,8 @@ class VerifikasiPembayaran extends Public_Controller
                             null as no_sj,
                             kpp.total as bruto,
                             0 as pph,
-                            kpp.lampiran
+                            kpp.lampiran,
+                            'RHPP' as jenis
                         from konfirmasi_pembayaran_peternak kpp
                     ) konfir_pembayaran
                     on
@@ -440,6 +460,35 @@ class VerifikasiPembayaran extends Public_Controller
                 where
                     rp.id = ".$id."
             ) data
+            left join
+                (
+                    select plg1.nomor as kode_supl, plg1.nama as nama_supl, 'supplier' as jenis, null as no_rek, null as atas_nama, null as bank from pelanggan plg1
+                    right join
+                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) plg2
+                        on
+                            plg1.id = plg2.id
+                    where
+                        plg1.mstatus = 1
+
+                    union all
+
+                    select eks1.nomor as kode_supl, eks1.nama as nama_supl, 'ekspedisi' as jenis, null as no_rek, null as atas_nama, null as bank from ekspedisi eks1
+                    right join
+                        (select max(id) as id, nomor from ekspedisi group by nomor) eks2
+                        on
+                            eks1.id = eks2.id
+
+                    union all
+                    
+                    select mtr1.nomor as kode_supl, mtr1.nama as nama_supl, 'mitra' as jenis, mtr1.rekening_nomor as no_rek, mtr1.rekening_pemilik as atas_nama, mtr1.bank from mitra mtr1
+                    right join 
+                        (select max(id) as id, nomor from mitra group by nomor) mtr2
+                        on
+                            mtr1.id = mtr2.id
+                ) supl
+                on
+                    data.jenis_supl = supl.jenis and
+                    data.kode_supl = supl.kode_supl
             order by
                 data.tanggal asc,
                 data.no_inv asc
@@ -451,6 +500,20 @@ class VerifikasiPembayaran extends Public_Controller
             $data = $d_conf->toArray();
         }
 
+        return $data;
+    }
+
+    public function formDetail() {
+        $params = $this->input->get('params');
+
+        $id = $params['id'];
+        $no_rek = $params['no_rek'];
+        $atas_nama = $params['atas_nama'];
+        $bank = $params['bank'];
+
+        $data = $this->getDataDetail( $params );
+
+        $content['id'] = $id;
         $content['data'] = $data;
         $content['no_rek'] = $no_rek;
         $content['atas_nama'] = $atas_nama;
@@ -458,6 +521,119 @@ class VerifikasiPembayaran extends Public_Controller
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/form_detail', $content, true);
 
         echo $html;
+    }
+
+    public function encryptParams()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $params_encrypt = exEncrypt( json_encode($params) );
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params_encrypt;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function exportExcel($params_encrypt)
+    {
+        $params = json_decode( exDecrypt($params_encrypt), true );
+
+        $id = $params['id'];
+        $no_rek = $params['no_rek'];
+        $atas_nama = $params['atas_nama'];
+        $bank = $params['bank'];
+
+        $data = $this->getDataDetail( $params );
+            
+        $filename = 'DETAIL_PENGAJUAN';
+
+        $tot_bruto = 0;
+        $tot_pph = 0;
+        $tot_netto = 0;
+        $tot_transfer = 0;
+
+        $arr_header = array('A', 'B', 'C', 'D', 'E', 'F');
+        $arr_column = null;
+        if ( !empty($data) ) {
+            $idx = 0;
+
+            $arr_column[ $idx ] = array(
+                'A' => array('value' => 'SUPPLIER', 'data_type' => 'string', 'border' => 'none'),
+                'B' => array('value' => strtoupper($data[0]['nama_supl']), 'data_type' => 'string', 'border' => 'none')
+            );
+            $idx++;
+            $arr_column[ $idx ] = array(
+                'A' => array('value' => 'TGL PENGAJUAN', 'data_type' => 'string', 'border' => 'none'),
+                'B' => array('value' => $data[0]['tgl_pengajuan'], 'data_type' => 'date', 'border' => 'none')
+            );
+            $idx++;
+            $arr_column[ $idx ] = array(
+                'A' => array('value' => 'ATAS NAMA', 'data_type' => 'string', 'border' => 'none'),
+                'B' => array('value' => strtoupper($atas_nama), 'data_type' => 'string', 'border' => 'none')
+            );
+            $idx++;
+            $arr_column[ $idx ] = array(
+                'A' => array('value' => 'BANK', 'data_type' => 'string', 'border' => 'none'),
+                'B' => array('value' => strtoupper($bank), 'data_type' => 'string', 'border' => 'none')
+            );
+            $idx++;
+            $arr_column[ $idx ] = array(
+                'A' => array('value' => 'NO. REKENING', 'data_type' => 'string', 'border' => 'none'),
+                'B' => array('value' => strtoupper($no_rek), 'data_type' => 'string', 'border' => 'none')
+            );
+            $idx++;
+            $arr_column[ $idx ] = array(
+                'A' => array('value' => '', 'data_type' => 'string', 'border' => 'none')
+            );
+            $idx++;
+            $arr_column[ $idx ] = array(
+                'A' => array('value' => 'TANGGAL', 'data_type' => 'string'),
+                'B' => array('value' => 'NO. BAYAR / NO. INVOICE', 'data_type' => 'string'),
+                'C' => array('value' => 'BRUTO', 'data_type' => 'string'),
+                'D' => array('value' => 'POTONGAN PPH', 'data_type' => 'string'),
+                'E' => array('value' => 'NETTO', 'data_type' => 'string'),
+                'F' => array('value' => 'PENGAJUAN TRANSFER', 'data_type' => 'string'),
+            );
+            $idx++;
+
+            foreach ($data as $key => $value) {
+                $arr_column[ $idx ] = array(
+                    'A' => array('value' => $value['tanggal'], 'data_type' => 'date'),
+                    'B' => array('value' => $value['no_inv'], 'data_type' => 'string'),
+                    'C' => array('value' => $value['bruto'], 'data_type' => 'decimal2'),
+                    'D' => array('value' => $value['pph'], 'data_type' => 'decimal2'),
+                    'E' => array('value' => $value['netto'], 'data_type' => 'decimal2'),
+                    'F' => array('value' => $value['transfer'], 'data_type' => 'decimal2'),
+                );
+
+                $tot_bruto =+ $value['bruto'];
+                $tot_pph =+ $value['pph'];
+                $tot_netto =+ $value['netto'];
+                $tot_transfer =+ $value['transfer'];
+
+                $idx++;
+            }
+
+            $arr_column[] = array(
+                'B' => array('value' => 'TOTAL', 'data_type' => 'string', 'colspan' => array('A','B'), 'align' => 'right', 'text_style' => 'bold'),
+                'C' => array('value' => $tot_bruto, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+                'D' => array('value' => $tot_pph, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+                'E' => array('value' => $tot_netto, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+                'F' => array('value' => $tot_transfer, 'data_type' => 'decimal2', 'text_style' => 'bold'),
+            );
+        }
+
+        // $this->exportExcelUsingSpreadSheet( $filename, $arr_header, $arr_column );
+
+        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column, 1, 0 );
+
+        $this->load->helper('download');
+        force_download('export_excel/'.$filename.'.xlsx', NULL);
     }
 
     public function formRealisasiBayar() {
