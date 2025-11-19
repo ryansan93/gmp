@@ -216,7 +216,7 @@ class Memorial extends Public_Controller {
             $m_mm = new \Model\Storage\Mm_model();
             $now = $m_mm->getDate();
 
-            $no_mm = $m_mm->getKode('MM');
+            $no_mm = $m_mm->getKode('MM', $params['tgl_mm']);
 
             $m_mm->no_mm = $no_mm;
             $m_mm->tgl_mm = $params['tgl_mm'];
