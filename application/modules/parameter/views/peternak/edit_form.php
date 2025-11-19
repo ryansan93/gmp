@@ -102,7 +102,7 @@
 								<tr>
 									<td>
 										<!-- <input class="form-control" type="text" name="telepon" value="<?php echo $telp['nomor'] ?>" placeholder="telepon"> -->
-										<input class="form-control" type="text" name="telepon" value="<?php echo $telp['nomor'] ?>" placeholder="telepon" data-tipe="phone" required>
+										<input class="form-control" type="text" name="telepon" value="<?php echo $telp['nomor'] ?>" placeholder="telepon" data-tipe="phone" maxlength="13" required>
 									</td>
 									<td>
 										<button type="button" class="btn btn-danger" onclick="ptk.removeRowTable(this)"><i class="fa fa-minus"></i></button>

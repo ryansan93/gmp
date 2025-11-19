@@ -14,7 +14,7 @@ var ptk = {
 		});
 
 		$('[data-tipe=ktp]').mask("999999-999999-9999");
-		$('[data-tipe=phone]').mask("9999 9999 9??999");
+		// $('[data-tipe=phone]').mask("9999 9999 99999");
 
 		$('#tglHbsBerlaku').datetimepicker({
             locale: 'id',
@@ -84,7 +84,7 @@ var ptk = {
 				// $(div_action).html(html);
 
 				$('[data-tipe=ktp]').mask("999999-999999-9999");
-				$('[data-tipe=phone]').mask("9999 9999 9??999");
+				// $('[data-tipe=phone]').mask("9999 9999 9??999");
 
 				$('#tglHbsBerlaku').datetimepicker({
 					locale: 'id',
@@ -274,7 +274,7 @@ var ptk = {
 		row_clone.find('select, input').val('');
 		var tbody = $(elm).closest("tbody");
 		tbody.append(row_clone);
-		$('[data-tipe=phone]').mask("9999 9999 9??999");
+		// $('[data-tipe=phone]').mask("9999 9999 9??999");
 		App.format();
 	}, // end - addRowTelepon
 
@@ -509,7 +509,7 @@ var ptk = {
 
 	setLokasiUpdate : function(elm){
 		$(elm).find('[data-tipe=ktp]').mask("999999-999999-9999");
-		$(elm).find('[data-tipe=phone]').mask("9999 9999 9??999");
+		// $(elm).find('[data-tipe=phone]').mask("9999 9999 9??999");
 		ptk.setBindSHA1();
 
 		$.map( $(elm).find('div.form-lokasi'), function(div){
@@ -630,7 +630,8 @@ var ptk = {
 					var skb = $(div_mitra).find('input[name=skb]').val().trim();
 					var tgl_habis_skb = !empty($(div_mitra).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_mitra).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var telepons = $.map( $(div_mitra).find('input[name=telepon]'), function(ipt){
-						var telp = $(ipt).mask();
+						// var telp = $(ipt).mask();
+						var telp = $(ipt).val();
 						if (!empty(telp)) {
 							return telp;
 						}
@@ -875,8 +876,8 @@ var ptk = {
 					var skb = $(div_mitra).find('input[name=skb]').val().trim();
 					var tgl_habis_skb = !empty($(div_mitra).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_mitra).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var telepons = $.map( $(div_mitra).find('input[name=telepon]'), function(ipt){
-						var telp = $(ipt).mask();
-
+						// var telp = $(ipt).mask();
+						var telp = $(ipt).val();
 						if (!empty(telp)) {
 							return telp;
 						}

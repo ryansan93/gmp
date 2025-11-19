@@ -8,6 +8,7 @@ class NoBbk_model extends Conf{
 
 	public function getKode($kode, $tanggal){
 		$periode = substr(str_replace('-', '', $tanggal), 2, 6);
+		
 		$id = $this->whereRaw("SUBSTRING(kode, 0, ".((strlen($kode)+1)+6).") = '".$kode."'+'".$periode."'")
 								->selectRaw("'".$kode."'+'".$periode."'+replace(str(substring(coalesce(max(kode),'0000'), ".((strlen($kode)+1)+6).", 4)+1, 4), ' ', '0') as nextId")
 								->first();
