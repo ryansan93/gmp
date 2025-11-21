@@ -5,8 +5,6 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Container\Container;
 
-include 'env.php';
-
 /*
 | -------------------------------------------------------------------
 | DATABASE CONNECTIVITY SETTINGS
@@ -65,44 +63,52 @@ include 'env.php';
 | the query builder class.
 */
 
-$aktif_server = 'default';
-$server = $config['connection'];
+$active_group = 'default';
+$query_builder = TRUE;
 
-foreach ($server as $key => $value) {
-	$server_aktif = $server[$key];
+$aktif_server = 'local';
+$server = array(
+	'server' => array('ip' => '10.100.2.248',
+					'dbname' => 'mus_ekspedisi',
+					'username' => 'fm_app',
+					'password' => 'Gempol123'
+	),
 
-	$serverName = $server_aktif['host'];
-	$database = $server_aktif['database'];
-	$port = $server_aktif['port'];
-	$uid = $server_aktif['username'];
-	$pwd = $server_aktif['password'];
+	'local' => array('ip' => '127.0.0.1',
+					'dbname' => 'pos',
+					'username' => 'sa',
+					'password' => 'triangle'
+	),
+);
 
-	$dsn = "sqlsrv:Server=".$serverName.",".$port.";Database=".$database.""; // e.g., "sqlsrv:Server=localhost,1433;Database=testdb"
+$server_aktif = $server[$aktif_server];
 
-	$db[$key] = array(
-		'dsn'	=> $dsn,
-		'username' => $uid,
-		'password' => $pwd,
-		// 'hostname' => 'localhost',
-		// 'username' => 'root',
-		// 'password' => '',
-		// 'database' => '',
-		'dbdriver' => 'pdo',
-		'dbprefix' => '',
-		'pconnect' => FALSE,
-		'db_debug' => TRUE,
-		'cache_on' => FALSE,
-		'cachedir' => '',
-		'char_set' => 'utf8',
-		'dbcollat' => 'utf8_general_ci',
-		'swap_pre' => '',
-		'encrypt' => FALSE,
-		'compress' => FALSE,
-		'stricton' => FALSE,
-		'failover' => array(),
-		'save_queries' => TRUE
-	);
-}
+
+$dsn = strtoupper ( substr ( PHP_OS, 0, 3 ) ) === 'WIN' ? 'sqlsrv:server=' . $server_aktif['ip'] . ';database='.$server_aktif['dbname'].'' : 'dblib:host=' . $server_aktif['ip'] . ';dbname='.$server_aktif['dbname'];
+
+$db['default'] = array(
+	'dsn'	=> $dsn,
+	'username' => $server_aktif['username'],
+	'password' => $server_aktif['password'],
+	// 'hostname' => 'localhost',
+	// 'username' => 'root',
+	// 'password' => '',
+	// 'database' => '',
+	'dbdriver' => 'pdo',
+	'dbprefix' => '',
+	'pconnect' => FALSE,
+	'db_debug' => TRUE,
+	'cache_on' => FALSE,
+	'cachedir' => '',
+	'char_set' => 'utf8',
+	'dbcollat' => 'utf8_general_ci',
+	'swap_pre' => '',
+	'encrypt' => FALSE,
+	'compress' => FALSE,
+	'stricton' => FALSE,
+	'failover' => array(),
+	'save_queries' => TRUE
+);
 
 // $capsule = new Capsule;
 

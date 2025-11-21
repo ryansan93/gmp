@@ -222,9 +222,9 @@ class GeneralLedgerLengkap extends Public_Controller {
                     from
                     (
                         select
-                            '' as tanggal,
-                            'Saldo Awal' as keterangan,
-                            '' as kode_trans,
+                            -- '' as tanggal,
+                            -- 'Saldo Awal' as keterangan,
+                            -- '' as kode_trans,
                             sb.no_coa as no_coa,
                             sb.unit,
                             c.nama_coa,

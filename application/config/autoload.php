@@ -62,7 +62,6 @@ $autoload['packages'] = array();
 
 $autoload['libraries'] = array('session', 'form_validation', 'pagination', 'email');
 
-
 /*
 | -------------------------------------------------------------------
 |  Auto-load Drivers

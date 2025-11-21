@@ -678,9 +678,12 @@ class PenerimaanPakanMobile extends Public_Controller {
             $delete = $params['delete'];
             $status_jurnal = $params['status_jurnal'];
 
-            $conf = new \Model\Storage\Conf();
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+            // $d_conf = $conf->hydrateRaw($sql);
+
             $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
             $this->result['status'] = 1;
             $this->result['content'] = $params;
@@ -699,9 +702,12 @@ class PenerimaanPakanMobile extends Public_Controller {
             $tanggal = $params['tanggal'];
             $status = $params['status'];
 
-            $conf = new \Model\Storage\Conf();
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
+            // $d_conf = $conf->hydrateRaw($sql);
+
             $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
             $this->result['status'] = 1;
             $this->result['content'] = $params;

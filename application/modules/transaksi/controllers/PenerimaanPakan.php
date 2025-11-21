@@ -1,4 +1,5 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
 
 class PenerimaanPakan extends Public_Controller {
 
@@ -10,6 +11,8 @@ class PenerimaanPakan extends Public_Controller {
         parent::__construct();
         $this->url = $this->current_base_uri;
         $this->hakAkses = hakAkses($this->url);
+
+        // $this->load->library('eloquent');
     }
 
     /**************************************************************************************
@@ -843,9 +846,13 @@ class PenerimaanPakan extends Public_Controller {
         $status_jurnal = $params['status_jurnal'];
 
         try {
-            $conf = new \Model\Storage\Conf();
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+            // // $d_conf = $conf->hydrateRaw($sql);
+            // $d_conf = $conf::select($sql);
+
             $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
             $this->result['status'] = 1;
             $this->result['content'] = $params;
@@ -864,9 +871,13 @@ class PenerimaanPakan extends Public_Controller {
             $tanggal = $params['tanggal'];
             $status = $params['status'];
 
-            $conf = new \Model\Storage\Conf();
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
+            // // $d_conf = $conf->hydrateRaw($sql);
+            // $d_conf = $conf::select($sql);
+
             $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
             $this->result['status'] = 1;
             $this->result['content'] = $params;
@@ -1098,36 +1109,61 @@ class PenerimaanPakan extends Public_Controller {
         //     }
         // }
 
-        $id = '6885';
-        $id_old = '6885';
-        $tanggal = '2025-11-13';
+        // $this->load->library('eloquent');
 
-        $conf = new \Model\Storage\Conf();
-        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
-        $d_conf = $conf->hydrateRaw($sql);
-        
-        Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
-        
+        // $id = '8175';
+        // $id_old = '8175';
+        // $tanggal = '2025-11-20';
+
+        // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', 0, 2";
+        // Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
         // $conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select tp.id from terima_pakan tp
-        //     left join
-        //         kirim_pakan kp
-        //         on
-        //             tp.id_kirim_pakan = kp.id
-        //     where 
-        //         kp.jenis_kirim = 'opkp' and 
-        //         tp.tgl_terima > '2025-09-30' 
-        //     order by tp.tgl_terima asc
-        // ";
-        // $d_conf = $conf->hydrateRaw($sql);
+        // // // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
+        // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', 0, 2";
+        // // $sql = "EXEC hitung_stok_pakan_by_transaksi ?, ?, ?, ?, ?";
+        // // // $d_conf = $conf->hydrateRaw($sql);
 
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
+        // $db = DB::connection('default')->table('barang')->get();;
+        // // $d_conf = DB::select($sql);
 
-        //     foreach ($d_conf as $key => $value) {
-        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
-        //     }
-        // }
+        // cetak_r( $db );
+
+        // $bind = array('terima_pakan', $id, $tanggal, 0, 2);
+        // $coba = $conf->runSp($sql, $bind);
+        // // $d_conf = $conf->fromQuery($sql);
+        
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+        
+        $conf = new \Model\Storage\Conf();
+        $sql = "
+            select tp.* from terima_pakan tp 
+            left join
+                det_jurnal dj 
+                on
+                    cast(tp.id as varchar(15)) = dj.tbl_id 
+            where
+                dj.id is null
+            order by
+                tp.tgl_terima asc
+        ";
+        $d_conf = $conf->hydrateRaw($sql);
+
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+            }
+        }
+
+        // $id = '8128';
+        // $tanggal = '2025-11-18';
+        // $delete = 0;
+        // $status_jurnal = 2;
+
+        // $conf = new \Model\Storage\Conf();
+        // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+        // $d_conf = $conf::select($sql);
     }
 }

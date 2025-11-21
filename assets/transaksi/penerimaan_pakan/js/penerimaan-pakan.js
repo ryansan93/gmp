@@ -425,7 +425,8 @@ var pp = {
 			},
 			success: function(data) {
 				if ( data.status == 1 ) {
-					pp.hitungStokByTransaksi(data.content);
+					// pp.hitungStokByTransaksi(data.content);
+					pp.execInsertKonfirmasi(data.content);
 				} else {
 					hideLoading();
 					bootbox.alert(data.message);
@@ -453,11 +454,12 @@ var pp = {
 					},
 					success: function(data) {
 						if ( data.status == 1 ) {
-							pp.hitungStokByTransaksi(data.content);
+							// pp.hitungStokByTransaksi(data.content);
 							// bootbox.alert(data.message, function() {
 							// 	pp.get_lists();
 							// 	pp.load_form();
 							// });
+							pp.execInsertKonfirmasi(data.content);
 						} else {
 							hideLoading();
 							bootbox.alert(data.message);
@@ -479,7 +481,7 @@ var pp = {
             type: 'POST',
             dataType: 'JSON',
             beforeSend: function() {
-                $('span.txt-msg-loading').text('Buat konfirmasi . . .');
+                $('span.txt-msg-loading').text('Cek konfirmasi . . .');
             },
             success: function(data) {
                 if ( data.status == 1 ) {

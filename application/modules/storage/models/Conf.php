@@ -1,6 +1,8 @@
 <?php
 namespace Model\Storage;
+use \Illuminate\Support\Facades\DB as DB;
 use \Illuminate\Database\Eloquent\Model as Eloquent;
+use \Illuminate\Support\Facades\Facade as Facade;
 
 class Conf extends Eloquent
 {
@@ -62,4 +64,25 @@ class Conf extends Eloquent
 
 		return $id->nextId;
 	}
+
+	public function runSp($sp, $bind): void
+    {
+        // --- Synchronous execution happens *inside* the background job ---
+
+        $sqlQuery = $sp;
+
+        // Execute the query and get raw results (stdClass objects)
+        $rawResults = DB::select($sqlQuery, $bind);
+
+        // Hydrate those raw results into full Eloquent Models
+        $query = $this->hydrateRaw($sqlQuery, $bind);
+
+        // --- Now you can work with $users as Eloquent models asynchronously ---
+
+        // foreach ($users as $user) {
+        //     // Perform background tasks with the hydrated model
+        //     \Log::info('Processing user ID: ' . $user->id);
+        //     // Example: $user->update(['processed' => true]);
+        // }
+    }
 }
