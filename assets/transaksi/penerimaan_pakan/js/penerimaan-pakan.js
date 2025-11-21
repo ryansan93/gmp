@@ -550,7 +550,7 @@ var pp = {
         var params = content;
 
         $.ajax({
-            url: 'transaksi/PenerimaanPakan/execHitStokSiklus',
+            url: 'transaksi/PenerimaanPakan/execInsertJurnal',
             data: {
                 'params': params
             },

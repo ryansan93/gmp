@@ -141,6 +141,7 @@ class InsertJurnal extends Public_Controller {
             $d_conf = $m_conf->hydrateRaw( $sql );
     
             $result['status'] = 1;
+            $result['content'] = $d_conf;
         } else {
             $result['message'] = 'Setting automatic jurnal belum tersedia, harap hubungi tim IT.';
         }

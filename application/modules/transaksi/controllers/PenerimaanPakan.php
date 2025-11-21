@@ -852,9 +852,10 @@ class PenerimaanPakan extends Public_Controller {
             // $d_conf = $conf::select($sql);
 
             $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-            Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
-            $this->result['status'] = 1;
+            $this->result['status'] = $return['status'];
+            $this->result['message'] = json_encode($return);
             $this->result['content'] = $params;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
@@ -877,9 +878,10 @@ class PenerimaanPakan extends Public_Controller {
             // $d_conf = $conf::select($sql);
 
             $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
-            Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
-            $this->result['status'] = 1;
+            $this->result['status'] = $return['status'];
+            $this->result['message'] = json_encode($return);
             $this->result['content'] = $params;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
@@ -896,9 +898,10 @@ class PenerimaanPakan extends Public_Controller {
             $id_old = $params['id'];
             $status = $params['status'];
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+            $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
 
-            $this->result['status'] = 1;
+            $this->result['status'] = $return['status'];
+            $this->result['message'] = json_encode($return);
             $this->result['content'] = $params;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();

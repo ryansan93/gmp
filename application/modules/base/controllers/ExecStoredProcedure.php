@@ -17,6 +17,7 @@ class ExecStoredProcedure extends Public_Controller {
         $reports = $query2->result();
 
         $result['status'] = 1;
+        $result['content'] = $reports;
     } catch (Exception $e) {
         $result['message'] = $e->getMessage();
     }
