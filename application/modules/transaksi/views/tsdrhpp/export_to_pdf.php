@@ -417,6 +417,7 @@
 	</ol>
 	<br>
 	<hr>
+	<label><b>NO. REK : <?php echo strtoupper($data['bank'].' '.$data['rekening_nomor'].' a/n '.$data['rekening_pemilik']); ?></b></label>
 	<table style="width: 100%; margin-bottom: 0px;">
 		<tbody>
 			<tr>

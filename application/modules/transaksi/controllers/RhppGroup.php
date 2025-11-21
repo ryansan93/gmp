@@ -2505,6 +2505,10 @@ class RhppGroup extends Public_Controller {
 
             $unit = str_replace('Kota ', '', str_replace('Kab ', '', $d_rs['d_kandang']['d_unit']['nama']));
 
+            
+            $data_header['rekening_nomor'] = $d_rs['mitra']['d_mitra']['rekening_nomor'];
+            $data_header['rekening_pemilik'] = $d_rs['mitra']['d_mitra']['rekening_pemilik'];
+            $data_header['bank'] = $d_rs['mitra']['d_mitra']['bank'];
             $data_header['npwp'] = $npwp;
             $data_header['alamat_mitra'] = $alamat_mitra;
             $data_header['alamat_kdg'][ $alamat_kdg ] = $alamat_kdg;

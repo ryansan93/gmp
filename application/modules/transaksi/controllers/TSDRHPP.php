@@ -5081,6 +5081,10 @@ class TSDRHPP extends Public_Controller {
 
         $alamat_mitra = $d_rs['mitra']['d_mitra']['alamat_jalan'] . $rt_mitra . $rw_mitra . $kelurahan_mitra . $kecamatan_mitra . $kab_kota_mitra;
 
+        $rekening_nomor = $d_rs['mitra']['d_mitra']['rekening_nomor'];
+        $rekening_pemilik = $d_rs['mitra']['d_mitra']['rekening_pemilik'];
+        $bank = $d_rs['mitra']['d_mitra']['bank'];
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select mm.* from mitra_mapping mm
@@ -5525,7 +5529,10 @@ class TSDRHPP extends Public_Controller {
                 'biaya_produksi' => $biaya_produksi,
                 'hasil_produksi' => $hasil_produksi,
                 'catatan' => trim($catatan),
-                'perusahaan' => $perusahaan
+                'perusahaan' => $perusahaan,
+                'rekening_nomor' => $rekening_nomor,
+                'rekening_pemilik' => $rekening_pemilik,
+                'bank' => $bank,
             );
         }
 
