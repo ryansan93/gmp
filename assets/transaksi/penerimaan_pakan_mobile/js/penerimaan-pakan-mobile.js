@@ -434,7 +434,7 @@ var ppm = {
         var params = content;
 
         $.ajax({
-            url: 'transaksi/PenerimaanPakanMobile/execHitStokSiklus',
+            url: 'transaksi/PenerimaanPakanMobile/execInsertJurnal',
             data: {
                 'params': params
             },
