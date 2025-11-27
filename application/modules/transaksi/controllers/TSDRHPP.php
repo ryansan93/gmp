@@ -3716,7 +3716,7 @@ class TSDRHPP extends Public_Controller {
                         l.noreg = rs.noreg
                 left join
                     (
-                        select noreg, max(tgl_panen) as tanggal, sum(netto_ekor) as jml_panen from real_sj group by noreg
+                        select noreg, max(tgl_panen) as tanggal, sum(netto_ekor) as jml_panen from real_sj where g_status = 1 group by noreg
                     ) r_sj
                     on
                         r_sj.noreg = rs.noreg
