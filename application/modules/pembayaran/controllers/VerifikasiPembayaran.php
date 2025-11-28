@@ -58,7 +58,7 @@ class VerifikasiPembayaran extends Public_Controller
         return $html;
     }
 
-    public function getData($id = null, $status = 1, $start_date = null, $end_date = null, $jenis = null, $bank = null) {
+    public function getData($id = null, $status = 1, $start_date = null, $end_date = null, $jenis = null, $bank = null, $tbl_name = null) {
         $sql_condition = null;
 
         $sql_id = null;
@@ -98,6 +98,16 @@ class VerifikasiPembayaran extends Public_Controller
                 $sql_condition .= " and ".$sql_bank;
             } else {
                 $sql_condition .= "where ".$sql_bank;
+            }
+        }
+
+        $sql_tbl_name = null;
+        if ( !empty($tbl_name) && $tbl_name != 'all' ) {
+            $sql_tbl_name = "data.tbl_name = '".$tbl_name."'";
+            if ( !empty($sql_condition) ) {
+                $sql_condition .= " and ".$sql_tbl_name;
+            } else {
+                $sql_condition .= "where ".$sql_tbl_name;
             }
         }
 
@@ -183,7 +193,8 @@ class VerifikasiPembayaran extends Public_Controller
                     cast(rp.ket_realisasi as varchar(max)) as ket_realisasi,
                     rp.no_bukti,
                     nb.kode as kode_trans,
-                    rp.no_rek
+                    rp.no_rek,
+                    'realisasi_pembayaran' as tbl_name
                 from realisasi_pembayaran_det rpd
                 left join
                     realisasi_pembayaran rp
@@ -213,6 +224,43 @@ class VerifikasiPembayaran extends Public_Controller
                     rp.no_bukti,
                     nb.kode,
                     rp.no_rek
+
+                union all
+
+                select
+                    'PIUTANG PLASMA' as jenis_transaksi,
+                    'mitra' as jenis_supl,
+                    case
+                        when p.jenis like 'mitra' then
+                            p.mitra
+                        else
+                            p.karyawan
+                    end as kode_supl,
+                    p.tanggal as tgl_pengajuan,
+                    p.nominal as jml_transfer,
+                    p.nominal as jml_bayar,
+                    cast(p.path as varchar(max)) as lampiran,
+                    p.tf_bank as coa_bank,
+                    c.nama_coa as nama_bank,
+                    p.id,
+                    p.tgl_realisasi as tgl_bayar,
+                    cast(p.lampiran_realisasi as varchar(max)) as lampiran_realisasi,
+                    cast(p.ket_realisasi as varchar(max)) as ket_realisasi,
+                    p.no_bukti,
+                    nb.kode as kode_trans,
+                    '' as no_rek,
+                    'piutang' as tbl_name
+                from piutang p
+                left join
+                    coa c
+                    on
+                        p.tf_bank = c.coa
+                left join
+                    no_bbk nb
+                    on
+                        nb.tbl_id = p.kode
+                where
+                    p.status = ".$status."
             ) data
             left join
                 (
@@ -247,12 +295,13 @@ class VerifikasiPembayaran extends Public_Controller
                 (
                     select lt1.* from log_tables lt1
                     right join
-                        (select min(id) as id, tbl_name, tbl_id from log_tables where tbl_name = 'realisasi_pembayaran' group by tbl_name, tbl_id) lt2
+                        (select min(id) as id, tbl_name, tbl_id from log_tables where tbl_name in ('realisasi_pembayaran', 'piutang') group by tbl_name, tbl_id) lt2
                         on
                             lt1.id = lt2.id
                 ) lt
                 on
-                    cast(data.id as varchar(20)) = lt.tbl_id
+                    cast(data.id as varchar(20)) = lt.tbl_id and
+                    data.tbl_name = lt.tbl_name
             left join
                 coa c
                 on
@@ -312,6 +361,7 @@ class VerifikasiPembayaran extends Public_Controller
 
     public function getDataDetail($params) {
         $id = $params['id'];
+        $tbl_name = $params['tbl_name'];
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
@@ -320,145 +370,194 @@ class VerifikasiPembayaran extends Public_Controller
                 supl.nama_supl
             from
             (
-                select
-                    case
-                        when rpd.transaksi like 'OA PAKAN' then
-                            'ekspedisi'
-                        when rpd.transaksi like 'PLASMA' then
-                            'mitra'
-                        else
-                            'supplier'
-                    end as jenis_supl,
-                    case
-                        when rpd.transaksi like 'OA PAKAN' then
-                            rp.ekspedisi
-                        when rpd.transaksi like 'PLASMA' then
-                            rp.peternak
-                        else
-                            rp.supplier
-                    end as kode_supl,
-                    rp.tgl_bayar as tgl_pengajuan,
-                    rpd.id_header,
-                    rpd.transaksi,
-                    rpd.no_bayar,
-                    rpd.tagihan,
-                    rpd.bayar,
-                    rpd.cn,
-                    rpd.potongan,
-                    rpd.transfer,
-                    rpd.uang_muka,
-                    rpd.dn,
-                    rpd.id,
-                    case
-                        when konfir_pembayaran.no_inv is not null then
-                            konfir_pembayaran.no_inv
-                        else
-                            rp.no_invoice
-                    end as no_inv,
-                    konfir_pembayaran.no_sj,
-                    konfir_pembayaran.bruto,
-                    konfir_pembayaran.pph,
-                    konfir_pembayaran.bruto - konfir_pembayaran.pph as netto,
-                    case
-                        when rp.lampiran is not null then
-                            rp.lampiran
-                        else
-                            konfir_pembayaran.lampiran
-                    end as lampiran,
-                    konfir_pembayaran.tanggal,
-                    konfir_pembayaran.jenis
-                from realisasi_pembayaran_det rpd
-                left join
-                    realisasi_pembayaran rp
-                    on
-                        rpd.id_header = rp.id
-                left join
-                    (
-                        select
-                            kpd.tgl_bayar as tanggal,
-                            kpd.nomor as kode_trans,
-                            td.no_sj as no_inv,
-                            td.no_sj as no_sj,
-                            kpdd.total as bruto,
-                            kpdd.total * (0.25/100) as pph,
-                            '' as lampiran,
-                            'DOC' as jenis
-                        from konfirmasi_pembayaran_doc_det kpdd
-                        left join
-                            konfirmasi_pembayaran_doc kpd
-                            on
-                                kpdd.id_header = kpd.id
-                        left join
-                            (
-                                select td1.* from terima_doc td1
-                                right join
-                                    (select max(id) as id, no_order from terima_doc group by no_order) td2
-                                    on
-                                        td1.id = td2.id
-                            ) td
-                            on
-                                td.no_order = kpdd.no_order
-    
-                        union all
-    
-                        select
-                            kpp.tgl_bayar as tanggal,
-                            kpp.nomor as kode_trans,
-                            kpp.invoice as no_inv,
-                            kpp.invoice as no_sj,
-                            kpp.total as bruto,
-                            0 as pph,
-                            '' as lampiran,
-                            'PAKAN' as jenis
-                        from konfirmasi_pembayaran_pakan kpp
-    
-                        union all
-    
-                        select
-                            kpv.tgl_bayar as tanggal,
-                            kpv.nomor as kode_trans,
-                            null as no_inv,
-                            kpvd.no_sj as no_sj,
-                            kpvd.total as bruto,
-                            0 as pph,
-                            '' as lampiran,
-                            'OVK' as jenis
-                        from konfirmasi_pembayaran_voadip_det kpvd
-                        left join
-                            konfirmasi_pembayaran_voadip kpv
-                            on
-                                kpvd.id_header = kpv.id
-    
-                        union all
-    
-                        select
-                            kpop.tgl_bayar as tanggal,
-                            kpop.nomor as kode_trans,
-                            kpop.invoice as no_inv,
-                            null as no_sj,
-                            (kpop.total+kpop.potongan_pph_23) as bruto,
-                            kpop.potongan_pph_23 as pph,
-                            kpop.lampiran,
-                            'OA PAKAN' as jenis
-                        from konfirmasi_pembayaran_oa_pakan kpop
-    
-                        union all
-    
-                        select
-                            kpp.tgl_bayar as tanggal,
-                            kpp.nomor as kode_trans,
-                            kpp.invoice as no_inv,
-                            null as no_sj,
-                            kpp.total as bruto,
-                            0 as pph,
-                            kpp.lampiran,
-                            'RHPP' as jenis
-                        from konfirmasi_pembayaran_peternak kpp
-                    ) konfir_pembayaran
-                    on
-                        rpd.no_bayar = konfir_pembayaran.kode_trans
+                select * from
+                (
+                    select
+                        case
+                            when rpd.transaksi like 'OA PAKAN' then
+                                'ekspedisi'
+                            when rpd.transaksi like 'PLASMA' then
+                                'mitra'
+                            else
+                                'supplier'
+                        end as jenis_supl,
+                        case
+                            when rpd.transaksi like 'OA PAKAN' then
+                                rp.ekspedisi
+                            when rpd.transaksi like 'PLASMA' then
+                                rp.peternak
+                            else
+                                rp.supplier
+                        end as kode_supl,
+                        rp.tgl_bayar as tgl_pengajuan,
+                        rpd.id_header,
+                        rpd.transaksi,
+                        rpd.no_bayar,
+                        rpd.tagihan,
+                        rpd.bayar,
+                        rpd.cn,
+                        rpd.potongan,
+                        rpd.transfer,
+                        rpd.uang_muka,
+                        rpd.dn,
+                        rpd.id,
+                        case
+                            when konfir_pembayaran.no_inv is not null then
+                                konfir_pembayaran.no_inv
+                            else
+                                rp.no_invoice
+                        end as no_inv,
+                        konfir_pembayaran.no_sj,
+                        konfir_pembayaran.bruto,
+                        konfir_pembayaran.pph,
+                        konfir_pembayaran.bruto - konfir_pembayaran.pph as netto,
+                        case
+                            when rp.lampiran is not null then
+                                rp.lampiran
+                            else
+                                konfir_pembayaran.lampiran
+                        end as lampiran,
+                        konfir_pembayaran.tanggal,
+                        konfir_pembayaran.jenis,
+                        'realisasi_pembayaran' as tbl_name
+                    from realisasi_pembayaran_det rpd
+                    left join
+                        realisasi_pembayaran rp
+                        on
+                            rpd.id_header = rp.id
+                    left join
+                        (
+                            select
+                                kpd.tgl_bayar as tanggal,
+                                kpd.nomor as kode_trans,
+                                td.no_sj as no_inv,
+                                td.no_sj as no_sj,
+                                kpdd.total as bruto,
+                                kpdd.total * (0.25/100) as pph,
+                                '' as lampiran,
+                                'DOC' as jenis
+                            from konfirmasi_pembayaran_doc_det kpdd
+                            left join
+                                konfirmasi_pembayaran_doc kpd
+                                on
+                                    kpdd.id_header = kpd.id
+                            left join
+                                (
+                                    select td1.* from terima_doc td1
+                                    right join
+                                        (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                        on
+                                            td1.id = td2.id
+                                ) td
+                                on
+                                    td.no_order = kpdd.no_order
+        
+                            union all
+        
+                            select
+                                kpp.tgl_bayar as tanggal,
+                                kpp.nomor as kode_trans,
+                                kpp.invoice as no_inv,
+                                kpp.invoice as no_sj,
+                                kpp.total as bruto,
+                                0 as pph,
+                                '' as lampiran,
+                                'PAKAN' as jenis
+                            from konfirmasi_pembayaran_pakan kpp
+        
+                            union all
+        
+                            select
+                                kpv.tgl_bayar as tanggal,
+                                kpv.nomor as kode_trans,
+                                null as no_inv,
+                                kpvd.no_sj as no_sj,
+                                kpvd.total as bruto,
+                                0 as pph,
+                                '' as lampiran,
+                                'OVK' as jenis
+                            from konfirmasi_pembayaran_voadip_det kpvd
+                            left join
+                                konfirmasi_pembayaran_voadip kpv
+                                on
+                                    kpvd.id_header = kpv.id
+        
+                            union all
+        
+                            select
+                                kpop.tgl_bayar as tanggal,
+                                kpop.nomor as kode_trans,
+                                kpop.invoice as no_inv,
+                                null as no_sj,
+                                (kpop.total+kpop.potongan_pph_23) as bruto,
+                                kpop.potongan_pph_23 as pph,
+                                kpop.lampiran,
+                                'OA PAKAN' as jenis
+                            from konfirmasi_pembayaran_oa_pakan kpop
+        
+                            union all
+        
+                            select
+                                kpp.tgl_bayar as tanggal,
+                                kpp.nomor as kode_trans,
+                                kpp.invoice as no_inv,
+                                null as no_sj,
+                                kpp.total as bruto,
+                                0 as pph,
+                                kpp.lampiran,
+                                'RHPP' as jenis
+                            from konfirmasi_pembayaran_peternak kpp
+                        ) konfir_pembayaran
+                        on
+                            rpd.no_bayar = konfir_pembayaran.kode_trans
+                    where
+                        rp.id = ".$id."
+
+                    union all
+
+                    select
+                        'mitra' as jenis_supl,
+                        case
+                            when p.jenis like 'mitra' then
+                                p.mitra
+                            else
+                                p.karyawan
+                        end as kode_supl,
+                        p.tanggal as tgl_pengajuan,
+                        p.id as id_header,
+                        'PIUTANG PLASMA' as transaksi,
+                        p.kode as no_bayar,
+                        p.nominal as tagihan,
+                        p.nominal as bayar,
+                        0 as cn,
+                        0 as potongan,
+                        p.nominal as transfer,
+                        0 as uang_muka,
+                        0 as dn,
+                        p.id,
+                        p.kode as no_inv,
+                        p.kode as no_sj,
+                        p.nominal as bruto,
+                        0 as pph,
+                        p.nominal as netto,
+                        p.path as lampiran,
+                        p.tanggal as tanggal,
+                        'PIUTANG PLASMA' as jenis,
+                        'piutang' as tbl_name
+                    from piutang p
+                    left join
+                        coa c
+                        on
+                            p.tf_bank = c.coa
+                    left join
+                        no_bbk nb
+                        on
+                            nb.tbl_id = p.no_bukti
+                    where
+                        p.id = ".$id."
+                ) data
                 where
-                    rp.id = ".$id."
+                    data.tbl_name = '".$tbl_name."'
             ) data
             left join
                 (
@@ -640,8 +739,9 @@ class VerifikasiPembayaran extends Public_Controller
         $params = $this->input->get('params');
 
         $id = $params['id'];
+        $tbl_name = $params['tbl_name'];
 
-        $data = $this->getData($id)[0];
+        $data = $this->getData($id, 1, null, null, null, null, $tbl_name)[0];
 
         $content['data'] = $data;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/form_realisasi_bayar', $content, true);
@@ -653,8 +753,9 @@ class VerifikasiPembayaran extends Public_Controller
         $params = $this->input->get('params');
 
         $id = $params['id'];
+        $tbl_name = $params['tbl_name'];
 
-        $data = $this->getData($id, 2)[0];
+        $data = $this->getData($id, 2, null, null, null, null, $tbl_name)[0];
 
         $content['data'] = $data;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/form_realisasi_bayar_detail', $content, true);
@@ -666,8 +767,9 @@ class VerifikasiPembayaran extends Public_Controller
         $params = $this->input->get('params');
 
         $id = $params['id'];
+        $tbl_name = $params['tbl_name'];
 
-        $data = $this->getData($id, 2)[0];
+        $data = $this->getData($id, 2, null, null, null, null, $tbl_name)[0];
 
         $content['data'] = $data;
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/form_realisasi_bayar_edit', $content, true);
@@ -690,36 +792,71 @@ class VerifikasiPembayaran extends Public_Controller
                 $path_name = $moved['path'];
             }
 
-            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-            $d_rp = $m_rp->where('id', $data['id'])->first();
+            if ( $data['tbl_name'] == 'realisasi_pembayaran' ) {
+                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+                $d_rp = $m_rp->where('id', $data['id'])->first();
 
-            $m_coa = new \Model\Storage\Coa_model();
-            $d_coa = $m_coa->where('coa', $d_rp->coa_bank)->orderBy('id', 'desc')->first();
+                $m_coa = new \Model\Storage\Coa_model();
+                $d_coa = $m_coa->where('coa', $d_rp->coa_bank)->orderBy('id', 'desc')->first();
 
-            $m_nbbk = new \Model\Storage\NoBbk_model();
-            $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
+                $m_nbbk = new \Model\Storage\NoBbk_model();
+                $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
 
-            $m_nbbk->tbl_name = $m_rp->getTable();
-            $m_nbbk->tbl_id = $d_rp->nomor;
-            $m_nbbk->kode = $no_kk;
-            $m_nbbk->save();
+                $m_nbbk->tbl_name = $m_rp->getTable();
+                $m_nbbk->tbl_id = $d_rp->nomor;
+                $m_nbbk->kode = $no_kk;
+                $m_nbbk->save();
 
-            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-            $m_rp->where('id', $data['id'])->update(
-                array(
-                    'no_bukti' => $no_kk,
-                    'tgl_realisasi' => $data['tgl_bayar'],
-                    'lampiran_realisasi' => $path_name,
-                    'ket_realisasi' => $data['ket_bayar'],
-                    'status' => 2
-                )
-            );
+                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+                $m_rp->where('id', $data['id'])->update(
+                    array(
+                        'no_bukti' => $no_kk,
+                        'tgl_realisasi' => $data['tgl_bayar'],
+                        'lampiran_realisasi' => $path_name,
+                        'ket_realisasi' => $data['ket_bayar'],
+                        'status' => 2
+                    )
+                );
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $data['tgl_bayar']);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, $data['tbl_name'], $data['tgl_bayar']);
 
-            $_d_rp = $m_rp->where('id', $data['id'])->first();
-            $deskripsi_log = 'di-bayar oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
+                $_d_rp = $m_rp->where('id', $data['id'])->first();
+                $deskripsi_log = 'di-bayar oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
+            }
+
+            if ( $data['tbl_name'] == 'piutang' ) {
+                $m_piutang = new \Model\Storage\Piutang_model();
+                $d_piutang = $m_piutang->where('id', $data['id'])->first();
+
+                $m_coa = new \Model\Storage\Coa_model();
+                $d_coa = $m_coa->where('coa', $d_piutang->tf_bank)->orderBy('id', 'desc')->first();
+
+                $m_nbbk = new \Model\Storage\NoBbk_model();
+                $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
+
+                $m_nbbk->tbl_name = $m_piutang->getTable();
+                $m_nbbk->tbl_id = $d_piutang->kode;
+                $m_nbbk->kode = $no_kk;
+                $m_nbbk->save();
+
+                $m_piutang = new \Model\Storage\Piutang_model();
+                $m_piutang->where('id', $data['id'])->update(
+                    array(
+                        'no_bukti' => $no_kk,
+                        'tgl_realisasi' => $data['tgl_bayar'],
+                        'lampiran_realisasi' => $path_name,
+                        'ket_realisasi' => $data['ket_bayar'],
+                        'status' => 2
+                    )
+                );
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, $data['tbl_name'], $data['tgl_bayar']);
+
+                $_d_piutang = $m_piutang->where('id', $data['id'])->first();
+                $deskripsi_log = 'di-bayar oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $_d_piutang, $deskripsi_log);
+            }
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data pembayaran berhasil di simpan.';
@@ -800,28 +937,55 @@ class VerifikasiPembayaran extends Public_Controller
         $params = $this->input->post('params');
 
         try {
-            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-            $d_rp = $m_rp->where('id', $params['id'])->first();
+            if ( $params['tbl_name'] == 'realisasi_pembayaran' ) {
+                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+                $d_rp = $m_rp->where('id', $params['id'])->first();
+    
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 3, $params['tbl_name'], $d_rp->tgl_realisasi);
+    
+                $m_nbbk = new \Model\Storage\NoBbk_model();
+                $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->delete();
+    
+                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+                $m_rp->where('id', $params['id'])->update(
+                    array(
+                        'no_bukti' => null,
+                        'tgl_realisasi' => null,
+                        'lampiran_realisasi' => null,
+                        'ket_realisasi' => null,
+                        'status' => 1
+                    )
+                );
+    
+                $_d_rp = $m_rp->where('id', $params['id'])->first();
+                $deskripsi_log = 'hapus pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
+            }
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 3, null, $d_rp->tgl_realisasi);
-
-            $m_nbbk = new \Model\Storage\NoBbk_model();
-            $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->delete();
-
-            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-            $m_rp->where('id', $params['id'])->update(
-                array(
-                    'no_bukti' => null,
-                    'tgl_realisasi' => null,
-                    'lampiran_realisasi' => null,
-                    'ket_realisasi' => null,
-                    'status' => 1
-                )
-            );
-
-            $_d_rp = $m_rp->where('id', $params['id'])->first();
-            $deskripsi_log = 'hapus pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
+            if ( $params['tbl_name'] == 'piutang' ) {
+                $m_piutang = new \Model\Storage\Piutang_model();
+                $d_piutang = $m_piutang->where('id', $params['id'])->first();
+    
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 3, $params['tbl_name'], $d_piutang->tgl_realisasi);
+    
+                $m_nbbk = new \Model\Storage\NoBbk_model();
+                $m_nbbk->where('tbl_name', $m_piutang->getTable())->where('tbl_id', $d_piutang->kode)->delete();
+    
+                $m_piutang = new \Model\Storage\Piutang_model();
+                $m_piutang->where('id', $params['id'])->update(
+                    array(
+                        'no_bukti' => null,
+                        'tgl_realisasi' => null,
+                        'lampiran_realisasi' => null,
+                        'ket_realisasi' => null,
+                        'status' => 1
+                    )
+                );
+    
+                $_d_piutang = $m_piutang->where('id', $params['id'])->first();
+                $deskripsi_log = 'hapus pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $_d_piutang, $deskripsi_log);
+            }
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data pembayaran berhasil di hapus.';
@@ -849,71 +1013,6 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function tes() {
-        // $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     /*
-        //     select rp.id, rp.tgl_realisasi from realisasi_pembayaran_det rpd
-        //     left join
-        //         realisasi_pembayaran rp 
-        //         on
-        //             rpd.id_header = rp.id
-        //     where
-        //         rpd.transaksi = 'DOC' and 
-        //         rp.tgl_realisasi is not null
-        //     group by
-        //         rp.id, rp.tgl_realisasi
-        //     */
-
-        //     /*
-        //     select
-        //         rp.id
-        //     from realisasi_pembayaran rp 
-        //     left join
-        //         (
-        //             select
-        //                 id_header, sum(transfer) as jml_transfer, max(id) as id, transaksi
-        //             from realisasi_pembayaran_det rpd
-        //             group by
-        //                 id_header, transaksi
-        //         ) rpd
-        //         on
-        //             rp.id = rpd.id_header
-        //     where 
-        //         rp.tgl_bayar >= '2025-10-01'
-        //     */
-
-        //     select rp.id, rp.tgl_bayar from realisasi_pembayaran_det rpd 
-        //     left join
-        //         (
-        //             select kpop.*, kpopd.unit from konfirmasi_pembayaran_oa_pakan kpop
-        //             left join
-        //                 (select id_header, SUBSTRING(no_sj, 4, 3) as unit from konfirmasi_pembayaran_oa_pakan_det group by id_header, SUBSTRING(no_sj, 4, 3)) kpopd
-        //                 on
-        //                     kpop.id = kpopd.id_header
-        //         ) kpop 
-        //         on
-        //             rpd.no_bayar = kpop.nomor
-        //     left join
-        //         realisasi_pembayaran rp 
-        //         on
-        //             rpd.id_header = rp.id
-        //     where
-        //         rpd.transaksi like '%oa pakan%' and
-        //         kpop.id is not null and
-        //         rp.tgl_bayar >= '2025-10-01'
-        //     order by
-        //         rp.tgl_bayar asc
-        // ";
-        // $d_conf = $m_conf->hydrateRaw( $sql );
-
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
-
-        //     foreach ($d_conf as $key => $value) {
-        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, null, null);
-        //     }
-        // }
-
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 344, 344, 2, null, '2025-11-14');
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 386, 386, 2);
     }
 }

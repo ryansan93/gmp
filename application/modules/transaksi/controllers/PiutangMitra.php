@@ -169,18 +169,20 @@ class PiutangMitra extends Public_Controller
             select 
                 p.*,
                 mtr.nama as nama_mitra,
-                mtr.kode_unit,
-                prs.perusahaan as nama_perusahaan
+                mtr.kode_unit
             from piutang p
-            right join
+            left join
                 (
-                    select m1.*, w.kode as kode_unit from mitra m1
-                    right join
-                        (
-                            select max(id) as id, nomor from mitra group by nomor
-                        ) m2
-                        on
-                            m1.id = m2.id
+                    select m1.*, w.kode as kode_unit 
+                    from (
+                        select m1.* from mitra m1
+                        right join
+                            (
+                                select max(id) as id, nomor from mitra group by nomor
+                            ) m2
+                            on
+                                m1.id = m2.id
+                    ) m1
                     left join
                         mitra_mapping mm
                         on
@@ -202,20 +204,6 @@ class PiutangMitra extends Public_Controller
                 ) mtr
                 on
                     mtr.nomor = p.mitra
-            right join
-                (
-                    select 
-                        p1.*
-                    from perusahaan p1
-                    right join
-                        (
-                            select max(id) as id, kode from perusahaan group by kode
-                        ) p2
-                        on
-                            p1.id = p2.id
-                ) prs
-                on
-                    prs.kode = p.perusahaan
             where
                 p.tanggal between '".$start_date."' and '".$end_date."' and
                 p.jenis = '".$this->jenis."'
@@ -246,8 +234,10 @@ class PiutangMitra extends Public_Controller
     }
 
     public function addForm() {
+        $m_coa = new \Model\Storage\Coa_model();
+
+        $content['bank'] = $m_coa->getDataBank();
         $content['mitra'] = $this->getMitra();
-        $content['perusahaan'] = $this->getPerusahaan();
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
 
         return $html;
@@ -260,17 +250,20 @@ class PiutangMitra extends Public_Controller
                 p.*,
                 mtr.nama as nama_mitra,
                 mtr.kode_unit,
-                prs.perusahaan as nama_perusahaan
+                c.nama_coa as nama_bank
             from piutang p
-            right join
+            left join
                 (
-                    select m1.*, w.kode as kode_unit from mitra m1
-                    right join
-                        (
-                            select max(id) as id, nomor from mitra group by nomor
-                        ) m2
-                        on
-                            m1.id = m2.id
+                    select m1.*, w.kode as kode_unit 
+                    from (
+                        select m1.* from mitra m1
+                        right join
+                            (
+                                select max(id) as id, nomor from mitra group by nomor
+                            ) m2
+                            on
+                                m1.id = m2.id
+                    ) m1
                     left join
                         mitra_mapping mm
                         on
@@ -292,20 +285,10 @@ class PiutangMitra extends Public_Controller
                 ) mtr
                 on
                     mtr.nomor = p.mitra
-            right join
-                (
-                    select 
-                        p1.*
-                    from perusahaan p1
-                    right join
-                        (
-                            select max(id) as id, kode from perusahaan group by kode
-                        ) p2
-                        on
-                            p1.id = p2.id
-                ) prs
+            left join
+                coa c
                 on
-                    prs.kode = p.perusahaan
+                    c.coa = p.tf_bank
             where
                 p.id = ".$id."
         ";
@@ -330,17 +313,20 @@ class PiutangMitra extends Public_Controller
                 p.*,
                 mtr.nama as nama_mitra,
                 mtr.kode_unit,
-                prs.perusahaan as nama_perusahaan
+                c.nama_coa as nama_bank
             from piutang p
-            right join
+            left join
                 (
-                    select m1.*, w.kode as kode_unit from mitra m1
-                    right join
-                        (
-                            select max(id) as id, nomor from mitra group by nomor
-                        ) m2
-                        on
-                            m1.id = m2.id
+                    select m1.*, w.kode as kode_unit 
+                    from (
+                        select m1.* from mitra m1
+                        right join
+                            (
+                                select max(id) as id, nomor from mitra group by nomor
+                            ) m2
+                            on
+                                m1.id = m2.id
+                    ) m1
                     left join
                         mitra_mapping mm
                         on
@@ -362,20 +348,10 @@ class PiutangMitra extends Public_Controller
                 ) mtr
                 on
                     mtr.nomor = p.mitra
-            right join
-                (
-                    select 
-                        p1.*
-                    from perusahaan p1
-                    right join
-                        (
-                            select max(id) as id, kode from perusahaan group by kode
-                        ) p2
-                        on
-                            p1.id = p2.id
-                ) prs
+            left join
+                coa c
                 on
-                    prs.kode = p.perusahaan
+                    c.coa = p.tf_bank
             where
                 p.id = ".$id."
         ";
@@ -386,9 +362,11 @@ class PiutangMitra extends Public_Controller
             $data = $d_conf->toArray()[0];
         }
 
+        $m_coa = new \Model\Storage\Coa_model();
+
         $content['data'] = $data;
+        $content['bank'] = $m_coa->getDataBank();
         $content['mitra'] = $this->getMitra();
-        $content['perusahaan'] = $this->getPerusahaan();
         $html = $this->load->view($this->pathView . 'editForm', $content, TRUE);
 
         return $html;
@@ -417,17 +395,16 @@ class PiutangMitra extends Public_Controller
             $m_pm->kode = $kode;
             $m_pm->tanggal = $data['tanggal'];
             $m_pm->mitra = $data['mitra'];
-            $m_pm->perusahaan = $data['perusahaan'];
             $m_pm->nominal = $data['nominal'];
             $m_pm->keterangan = $data['keterangan'];
             $m_pm->path = $path_name;
             $m_pm->tf_bank = $data['tf_bank'];
+            $m_pm->status = 1;
             $m_pm->save();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, ".$data['nominal'].", 'piutang', ".$m_pm->id.", NULL, 1";
-
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, ".$data['nominal'].", 'piutang', ".$m_pm->id.", NULL, 1";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_pm, $deskripsi_log );
@@ -469,7 +446,6 @@ class PiutangMitra extends Public_Controller
                 array(
                     'tanggal' => $data['tanggal'],
                     'mitra' => $data['mitra'],
-                    'perusahaan' => $data['perusahaan'],
                     'nominal' => $data['nominal'],
                     'keterangan' => $data['keterangan'],
                     'path' => $path_name,
@@ -480,10 +456,9 @@ class PiutangMitra extends Public_Controller
             $m_pm = new \Model\Storage\Piutang_model();
             $d_pm_new = $m_pm->where('id', $id)->first();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, ".$data['nominal'].", 'piutang', ".$id.", ".$id.", 2";
-
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, ".$data['nominal'].", 'piutang', ".$id.", ".$id.", 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_pm_new, $deskripsi_log );
@@ -512,10 +487,9 @@ class PiutangMitra extends Public_Controller
             $m_pm = new \Model\Storage\Piutang_model();
             $m_pm->where('id', $id)->delete();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'piutang', ".$id.", ".$id.", 3";
-
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, 0, 'piutang', ".$id.", ".$id.", 3";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_pm, $deskripsi_log );

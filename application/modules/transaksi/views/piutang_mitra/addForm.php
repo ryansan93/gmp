@@ -23,31 +23,23 @@
                 <select class="form-control mitra" data-required="1">
                     <option>-- Pilih Plasma --</option>
                     <?php foreach( $mitra as $key => $value ) : ?>
-                        <option value="<?php echo $value['nomor']; ?>"><?php echo strtoupper($value['kode'].' | '.$value['nama'].' ('.$value['kode_perusahaan'].')'); ?></option>
+                        <option value="<?php echo $value['nomor']; ?>"><?php echo strtoupper($value['kode'].' | '.$value['nama']); ?></option>
                     <?php endforeach ?>
                 </select>
             </div>
         </div>
         <div class="col-xs-6 no-padding" style="padding-left: 5px;">
-            <div class="col-xs-12 no-padding"><label class="label-control">Perusahaan</label></div>
+            <div class="col-xs-12 no-padding"><label class="label-control">Asal Piutang</label></div>
             <div class="col-xs-12 no-padding">
-                <select class="form-control perusahaan" data-required="1">
-                    <option>-- Pilih Perusahaan --</option>
-                    <?php foreach( $perusahaan as $key => $value ) : ?>
-                        <option value="<?php echo $value['nomor']; ?>"><?php echo strtoupper($value['nama']); ?></option>
-                    <?php endforeach ?>
+                <select class="form-control tf_bank" data-required="1">
+                    <option>-- Pilih Asal Piutang --</option>
+                    <?php foreach ($bank as $key => $value) { ?>
+                        <option value="<?php echo $value['no_coa'] ?>"><?php echo $value['nama_coa']; ?></option>
+                    <?php } ?>
+                    <!-- <option value="1"><?php echo 'BANK'; ?></option> -->
+                    <!-- <option value="0"><?php echo 'NON BANK'; ?></option> -->
                 </select>
             </div>
-        </div>
-    </div>
-    <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-        <div class="col-xs-12 no-padding"><label class="label-control">Asal Piutang</label></div>
-        <div class="col-xs-12 no-padding">
-            <select class="form-control tf_bank" data-required="1">
-                <option>-- Pilih Asal Piutang --</option>
-                <option value="1"><?php echo 'BANK'; ?></option>
-                <option value="0"><?php echo 'NON BANK'; ?></option>
-            </select>
         </div>
     </div>
     <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

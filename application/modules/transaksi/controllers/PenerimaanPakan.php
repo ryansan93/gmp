@@ -1160,8 +1160,9 @@ class PenerimaanPakan extends Public_Controller {
             }
         }
 
-        // $id = '8128';
-        // $tanggal = '2025-11-18';
+        // $id = '7499';
+        // $id_old = '7499';
+        // $tanggal = '2025-11-13';
         // $delete = 0;
         // $status_jurnal = 2;
 

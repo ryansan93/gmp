@@ -618,7 +618,7 @@ class PenerimaanDocMobile extends Public_Controller {
 
             $tgl_stok = $params['tiba'];
             if ( $d_terima_doc->datang < $tgl_stok ) {
-                $tgl_stok = $params['tiba'];
+                $tgl_stok = $d_terima_doc->datang;
             }
 
             // $id = $d_terima_doc->id;
@@ -859,10 +859,11 @@ class PenerimaanDocMobile extends Public_Controller {
         // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
         // $conf->hydrateRaw($sql);
 
-        $conf = new \Model\Storage\Conf();
-        $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '330', '2025-10-15', 2, null, null";
-        $conf->hydrateRaw($sql);
+        // $conf = new \Model\Storage\Conf();
+        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '758', '2025-11-21', 2, null, null";
+        // $conf->hydrateRaw($sql);
 
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 286, 286, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 730, 730, 3, null, '2025-11-21');
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 758, 758, 2, null, '2025-11-21');
     }
 }

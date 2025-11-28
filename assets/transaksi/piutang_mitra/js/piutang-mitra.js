@@ -147,7 +147,6 @@ var pm = {
                     var data = {
                         'tanggal': dateSQL($(dcontent).find('#Tanggal').data('DateTimePicker').date()),
                         'mitra': $(dcontent).find('.mitra').select2('val'),
-                        'perusahaan': $(dcontent).find('.perusahaan').select2('val'),
                         'nominal': numeral.unformat($(dcontent).find('.nominal').val()),
                         'keterangan': $(dcontent).find('.keterangan').val(),
                         'tf_bank': $(dcontent).find('.tf_bank').select2('val'),
@@ -208,7 +207,6 @@ var pm = {
                         'id': $(elm).attr('data-id'),
                         'tanggal': dateSQL($(dcontent).find('#Tanggal').data('DateTimePicker').date()),
                         'mitra': $(dcontent).find('.mitra').select2('val'),
-                        'perusahaan': $(dcontent).find('.perusahaan').select2('val'),
                         'nominal': numeral.unformat($(dcontent).find('.nominal').val()),
                         'keterangan': $(dcontent).find('.keterangan').val(),
                         'tf_bank': $(dcontent).find('.tf_bank').select2('val'),

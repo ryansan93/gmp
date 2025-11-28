@@ -4,7 +4,6 @@
             <td class="text-center"><?php echo strtoupper( $value['kode'] ); ?></td>
             <td class="text-center"><?php echo strtoupper( tglIndonesia($value['tanggal'], '-', ' ') ); ?></td>
             <td class="text-left"><?php echo strtoupper( $value['nama_mitra'] ); ?></td>
-            <td class="text-left"><?php echo strtoupper( $value['nama_perusahaan'] ); ?></td>
             <td class="text-right"><?php echo strtoupper( angkaDecimal($value['nominal']) ); ?></td>
         </tr>
     <?php endforeach ?>

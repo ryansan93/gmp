@@ -16,9 +16,9 @@ class InsertJurnal extends Public_Controller {
         $query = null;
 
         $sql_table = null;
-        if ( !empty($table) ) {
-            $sql_table = "and saj.tbl_name = '".$table."'";
-        }
+        // if ( !empty($table) ) {
+        //     $sql_table = "and saj.tbl_name = '".$table."'";
+        // }
 
         $sql_tgl = null;
         if ( !empty($tgl_trans) ) {
@@ -50,7 +50,7 @@ class InsertJurnal extends Public_Controller {
 
             $id_saj = $d_saj['id'];
             $query = $d_saj['_query'];
-            $tbl_name = $d_saj['tbl_name'];
+            $tbl_name = !empty($table) ? $table : $d_saj['tbl_name'];
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "

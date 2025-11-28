@@ -2160,9 +2160,9 @@ array('25091630101', 15, 39, 21, 184),
         //     $d_conf = $d_conf->toArray();
 
         //     foreach ($d_conf as $key => $value) {
-                $id = '5113';
-                $id_old = '5113';
-                $tanggal = '2025-11-11';
+                $id = '6849';
+                $id_old = '6849';
+                $tanggal = '2025-11-12';
         
                 $conf = new \Model\Storage\Conf();
                 $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";

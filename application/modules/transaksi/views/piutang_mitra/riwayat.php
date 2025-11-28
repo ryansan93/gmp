@@ -46,14 +46,13 @@
 			<tr>
 				<th class="col-xs-1">Kode</th>
 				<th class="col-xs-2">Tgl Hutang</th>
-				<th class="col-xs-4">Nama</th>
-				<th class="col-xs-3">Perusahaan</th>
-				<th class="col-xs-2">Nominal (Rp.)</th>
+				<th class="col-xs-6">Nama</th>
+				<th class="col-xs-3">Nominal (Rp.)</th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr>
-				<td colspan="5">Data tidak ditemukan.</td>
+				<td colspan="4">Data tidak ditemukan.</td>
 			</tr>
 		</tbody>
 	</table>

@@ -114,6 +114,7 @@ var vp = {
 
         var params = {
             'id': $(elm).attr('data-id'),
+            'tbl_name': $(elm).attr('data-table'),
             'no_rek': $(tr).attr('data-norek'),
             'atas_nama': $(tr).attr('data-atasnama'),
             'bank': $(tr).attr('data-bank')
@@ -192,7 +193,8 @@ var vp = {
 
     formRealisasiBayar: function(elm) {
         var params = {
-            'id': $(elm).attr('data-id')
+            'id': $(elm).attr('data-id'),
+            'tbl_name': $(elm).attr('data-table')
         };
 
         $.get('pembayaran/VerifikasiPembayaran/formRealisasiBayar',{
@@ -234,7 +236,8 @@ var vp = {
 
     formRealisasiBayarDetail: function(elm) {
         var params = {
-            'id': $(elm).attr('data-id')
+            'id': $(elm).attr('data-id'),
+            'tbl_name': $(elm).attr('data-table')
         };
 
         $.get('pembayaran/VerifikasiPembayaran/formRealisasiBayarDetail',{
@@ -278,7 +281,8 @@ var vp = {
         $('.modal').modal('hide');
 
         var params = {
-            'id': $(elm).attr('data-id')
+            'id': $(elm).attr('data-id'),
+            'tbl_name': $(elm).attr('data-table')
         };
 
         $.get('pembayaran/VerifikasiPembayaran/formRealisasiBayarEdit',{
@@ -349,6 +353,7 @@ var vp = {
                 if ( result ) {
                     var data = {
                         'id': $(elm).attr('data-id'),
+                        'tbl_name': $(elm).attr('data-table'),
                         'tgl_bayar': dateSQL($(modal_body).find('#tglBayar').data('DateTimePicker').date()),
                         'no_bukti': $(modal_body).find('.no_bukti').val(),
                         'ket_bayar': $(modal_body).find('.ket_bayar').val()
@@ -418,6 +423,7 @@ var vp = {
                 if ( result ) {
                     var data = {
                         'id': $(elm).attr('data-id'),
+                        'tbl_name': $(elm).attr('data-table'),
                         'tgl_bayar': dateSQL($(modal_body).find('#tglBayar').data('DateTimePicker').date()),
                         'no_bukti': $(modal_body).find('.no_bukti').val(),
                         'ket_bayar': $(modal_body).find('.ket_bayar').val()
@@ -460,7 +466,8 @@ var vp = {
         bootbox.confirm('Apakah anda yakin ingin meng-hapus data pembayaran ?', function(result) {
             if ( result ) {
                 var params = {
-                    'id': $(elm).attr('data-id')
+                    'id': $(elm).attr('data-id'),
+                    'tbl_name': $(elm).attr('data-table'),
                 };
     
                 $.ajax({

@@ -15,11 +15,11 @@
             <td><?php echo strtoupper($value['deskripsi'].' '.$value['waktu']); ?></td>
             <td><?php echo strtoupper($value['nama_bank']); ?></td>
             <td>
-                <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>
+                <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" data-table="<?php echo $value['tbl_name']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>
             </td>
             <td>
                 <?php if ( $akses['a_ack'] == 1 && $value['verifikasi'] == 1 ) { ?>
-                    <button type="button" class="col-xs-12 btn btn-primary" data-id="<?php echo $value['id']; ?>" onclick="vp.formRealisasiBayar(this)"><i class="fa fa-check"></i> BAYAR</button>
+                    <button type="button" class="col-xs-12 btn btn-primary" data-id="<?php echo $value['id']; ?>" data-table="<?php echo $value['tbl_name']; ?>" onclick="vp.formRealisasiBayar(this)"><i class="fa fa-check"></i> BAYAR</button>
                 <?php } ?>
             </td>
         </tr>

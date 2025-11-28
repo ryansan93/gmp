@@ -79,7 +79,7 @@
 				</div>
 				<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 				<div class="col-xs-12 no-padding">
-                    <button type="button" class="col-xs-12 btn btn-primary pull-right" onclick="vp.save(this)" data-id="<?php echo $data['id']; ?>"><i class="fa fa-save"></i> Simpan</button>
+                    <button type="button" class="col-xs-12 btn btn-primary pull-right" onclick="vp.save(this)" data-id="<?php echo $data['id']; ?>" data-table="<?php echo $data['tbl_name']; ?>"><i class="fa fa-save"></i> Simpan</button>
 				</div>
 			</form>
 		</div>
