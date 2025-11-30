@@ -290,6 +290,8 @@ var pp = {
 		} else {
 			bootbox.confirm('Apakah anda yakin ingin menyimpan data ?', function(result) {
 				if ( result ) {
+					showLoading();
+
 					var detail = $.map( $(div_penerimaan).find('tbody tr'), function(tr) {
 						var _detail = {
 							'barang': $(tr).find('td.barang').data('kode'),
@@ -333,9 +335,7 @@ var pp = {
             processData: false,
             contentType: false,
             data: formData,
-			beforeSend: function() {
-				showLoading();
-			},
+			beforeSend: function() {},
 			success: function(data) {
 				if ( data.status == 1 ) {
 					// pp.hitungStokByTransaksi(data.content);
@@ -376,6 +376,8 @@ var pp = {
 		} else {
 			bootbox.confirm('Apakah anda yakin ingin menyimpan data ?', function(result) {
 				if ( result ) {
+					showLoading();
+
 					var detail = $.map( $(div_penerimaan).find('tbody tr'), function(tr) {
 						var _detail = {
 							'barang': $(tr).find('td.barang').data('kode'),
@@ -420,9 +422,7 @@ var pp = {
             processData: false,
             contentType: false,
             data: formData,
-			beforeSend: function() {
-				showLoading();
-			},
+			beforeSend: function() {},
 			success: function(data) {
 				if ( data.status == 1 ) {
 					// pp.hitungStokByTransaksi(data.content);
@@ -442,6 +442,8 @@ var pp = {
 
 		bootbox.confirm('Apakah anda yakin ingin menghapus data ?', function(result) {
 			if ( result ) {
+				showLoading();
+				
 				$.ajax({
 					url: 'transaksi/PenerimaanPakan/delete',
 					data: {
@@ -449,9 +451,7 @@ var pp = {
 					},
 					type: 'POST',
 					dataType: 'JSON',
-					beforeSend: function() {
-						showLoading();
-					},
+					beforeSend: function() { },
 					success: function(data) {
 						if ( data.status == 1 ) {
 							// pp.hitungStokByTransaksi(data.content);

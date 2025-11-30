@@ -317,6 +317,8 @@ var ppm = {
         } else {
             bootbox.confirm( 'Apakah anda yakin ingin menyimpan data ?', function(result) {
                 if ( result ) {
+                    showLoading();
+
                     let data_brg = $.map( $(div).find('table.data_brg tbody tr'), function(tr) {
                         let _data = {
                             'kode_brg': $(tr).find('td.brg').data('kode'),
@@ -340,7 +342,7 @@ var ppm = {
 			            dataType: 'JSON',
 			            type: 'POST',
 			            data: {'params': data},
-			            beforeSend : function(){ showLoading() },
+			            beforeSend : function(){},
 			            success : function(data){
 			                if ( data.status == 1 ) {
                                 ppm.execInsertKonfirmasi(data.content);
