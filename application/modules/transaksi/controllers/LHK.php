@@ -1946,197 +1946,6 @@ class LHK extends Public_Controller
         }
     }
 
-    public function hitPakaiPakanByNoreg($sep, $noreg = null) {
-        if ( $sep == 1 ) {
-            $sql_noreg = null;
-            if ( !empty($noreg) ) {
-                $sql_noreg = "and l.noreg = '".$noreg."'";
-            }
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select l.* from 
-                (select min(l.tanggal) as tanggal, l.noreg from lhk l where l.tanggal < '2025-10-01' ".$sql_noreg." group by l.noreg) data
-                left join
-                    lhk l
-                    on
-                        data.tanggal = l.tanggal and
-                        data.noreg = l.noreg
-                where
-                    l.tanggal < '2025-10-01'
-                order by
-                    data.tanggal
-            ";
-            // cetak_r( $sql, 1 );
-            $d_conf = $m_conf->hydrateRaw( $sql );
-    
-            if ( $d_conf->count() > 0 ) {
-                $d_conf = $d_conf->toArray();
-    
-                foreach ($d_conf as $key => $value) {
-                    $id = $value['id'];
-                    $id_old = $value['id'];
-                    $tanggal = $value['tanggal'];
-    
-                    // $conf = new \Model\Storage\Conf();
-                    // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$d_lhk->tanggal."', 2, null, null";
-                    // $d_conf = $conf->hydrateRaw($sql);
-            
-                    $conf = new \Model\Storage\Conf();
-                    $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
-                    $d_conf = $conf->hydrateRaw($sql);
-            
-                    // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
-                }
-            }
-        }
-
-        if ( $sep == 0 ) {
-            $sql_noreg = null;
-            if ( !empty($noreg) ) {
-                $sql_noreg = "and l.noreg = '".$noreg."'";
-            }
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select l.* from 
-                (select min(l.tanggal) as tanggal, l.noreg from lhk l where l.tanggal >= '2025-10-01' ".$sql_noreg." group by l.noreg) data
-                left join
-                    lhk l
-                    on
-                        data.tanggal = l.tanggal and
-                        data.noreg = l.noreg
-                where
-                    l.tanggal >= '2025-10-01'
-                order by
-                    data.tanggal
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-    
-            if ( $d_conf->count() > 0 ) {
-                $d_conf = $d_conf->toArray();
-    
-                foreach ($d_conf as $key => $value) {
-                    $id = $value['id'];
-                    $id_old = $value['id'];
-                    $tanggal = $value['tanggal'];
-
-                    // cetak_r( $value['id'] );
-    
-                    // $conf = new \Model\Storage\Conf();
-                    // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$d_lhk->tanggal."', 2, null, null";
-                    // $d_conf = $conf->hydrateRaw($sql);
-            
-                    $conf = new \Model\Storage\Conf();
-                    $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
-                    $d_conf = $conf->hydrateRaw($sql);
-            
-                    // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
-                }
-            }
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select l.* from lhk l where l.tanggal >= '2025-10-01' ".$sql_noreg."
-                order by
-                    l.tanggal
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-            if ( $d_conf->count() > 0 ) {
-                $d_conf = $d_conf->toArray();
-    
-                foreach ($d_conf as $key => $value) {
-                    $id = $value['id'];
-                    $id_old = $value['id'];
-            
-                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
-                }
-            }
-        }
-    }
-
-    public function updateDataLHK() {
-        $arr = array(
-            array('25100570101', 1, 3, 57, 20),
-array('25100570101', 3, 9, 51, 69),
-array('25100570101', 6, 29, 31, 109),
-array('25100570101', 9, 54, 106, 145),
-array('25091180101', 3, 17, 143, 33),
-array('25091180101', 5, 33, 287, 55),
-array('25091180101', 7, 51, 269, 80),
-array('25091180101', 10, 81, 239, 160),
-array('25091180101', 12, 119, 201, 209),
-array('25091180101', 14, 160, 320, 242),
-array('25091180101', 17, 235, 245, 300),
-array('25091180101', 20, 323, 317, 353),
-array('25101170101', 2, 14, 146, 42),
-array('25100590101', 2, 2, 18, 11),
-array('25100590101', 4, 5, 15, 22),
-array('25091170101', 2, 10, 60, 32),
-array('25091170101', 4, 21, 49, 63),
-array('25091170101', 6, 33, 37, 90),
-array('25091170101', 10, 62, 108, 151),
-array('25091170101', 12, 78, 92, 170),
-array('25091170101', 14, 102, 68, 190),
-array('25091170101', 18, 166, 104, 225),
-array('25091610101', 2, 10, 150, 40),
-array('25091610101', 4, 22, 138, 71),
-array('25091610101', 6, 46, 114, 104),
-array('25091610101', 9, 93, 227, 174),
-array('25091610101', 12, 149, 331, 231),
-array('25091160101', 2, 5, 35, 11),
-array('25091160101', 4, 9, 31, 35),
-array('25091160101', 6, 18, 122, 51),
-array('25091160101', 8, 27, 113, 67),
-array('25091160101', 11, 44, 96, 82),
-array('25091160101', 13, 60, 80, 92),
-array('25091160101', 15, 78, 122, 101),
-array('25091160101', 18, 112, 88, 116),
-array('25091160101', 20, 136, 64, 127),
-array('25091160101', 22, 162, 98, 137),
-array('25091600102', 1, 3, 37, 10),
-array('25091600102', 3, 7, 33, 43),
-array('25091600102', 6, 16, 24, 70),
-array('25091600102', 8, 24, 76, 87),
-array('25091600102', 10, 35, 65, 105),
-array('25091600102', 13, 55, 45, 129),
-array('25091600102', 15, 71, 29, 139),
-array('25091600102', 17, 91, 69, 149),
-array('25100580101', 2, 4, 36, 17),
-array('25100580101', 4, 9, 31, 31),
-array('25091620101', 3, 11, 49, 52),
-array('25091620101', 5, 21, 39, 77),
-array('25091620101', 7, 33, 127, 96),
-array('25091620101', 10, 53, 107, 125),
-array('25091620101', 13, 76, 184, 154),
-array('25100560101', 3, 8, 32, 46),
-array('25100560101', 5, 15, 25, 64),
-array('25100560101', 7, 24, 116, 77),
-array('25091630101', 2, 4, 16, 62),
-array('25091630101', 5, 10, 10, 115),
-array('25091630101', 7, 14, 6, 132),
-array('25091630101', 9, 20, 40, 152),
-array('25091630101', 12, 28, 32, 181),
-array('25091630101', 15, 39, 21, 184),
-        );
-
-        foreach ($arr as $k_arr => $v_arr) {
-            $m_lhk = new \Model\Storage\Lhk_model();
-            $d_lhk = $m_lhk->where('noreg', $v_arr[0])->where('umur', $v_arr[1])->first();
-
-            if ( $d_lhk ) {
-                $m_lhk = new \Model\Storage\Lhk_model();
-                $m_lhk->where('id', $d_lhk->id)->update(
-                    array(
-                        'pakai_pakan' => $v_arr[2],
-                        'sisa_pakan' => $v_arr[3],
-                        'ekor_mati' => $v_arr[4],
-                    )
-                );
-            }
-        }
-    }
-
     public function tes() {
         //  cetak_r( $this->url );
 
@@ -2160,15 +1969,15 @@ array('25091630101', 15, 39, 21, 184),
         //     $d_conf = $d_conf->toArray();
 
         //     foreach ($d_conf as $key => $value) {
-                $id = '6849';
-                $id_old = '6849';
-                $tanggal = '2025-11-12';
+                $id = '9688';
+                $id_old = '9688';
+                $tanggal = '2025-11-30';
         
                 $conf = new \Model\Storage\Conf();
                 $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
                 $d_conf = $conf->hydrateRaw($sql);
         
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 3);
         //     }
         // }
     }

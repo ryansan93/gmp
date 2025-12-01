@@ -109,7 +109,7 @@ var pdm = {
             var tgl = $(ipt).find('input').data('tgl');
             if ( !empty(tgl) ) {
                 $(ipt).data("DateTimePicker").date(new Date(tgl));
-                $(ipt).data("DateTimePicker").minDate(moment(tgl).subtract(3, 'days'));
+                $(ipt).data("DateTimePicker").minDate(moment(tgl).subtract(14, 'days'));
                 // $(ipt).data("DateTimePicker").maxDate(moment(tgl).endOf('day'));
                 $(ipt).data("DateTimePicker").maxDate(moment(tgl).add(3, 'days').endOf('day'));
             }

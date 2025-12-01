@@ -1067,82 +1067,13 @@ class PenerimaanPakan extends Public_Controller {
         echo $html;
     }
 
-    public function tes()
-    {
-        // $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select tp.* from terima_pakan tp
-        //     left join
-        //         (select * from det_jurnal where tbl_name = 'terima_pakan') dj 
-        //         on
-        //             tp.id = dj.tbl_id
-        //     left join
-        //         kirim_pakan kp 
-        //         on
-        //             kp.id = tp.id_kirim_pakan 
-        //     left join
-        //         (select kode_trans from det_stok_siklus dss where jenis_barang = 'pakan' group by kode_trans) dss
-        //         on
-        //             dss.kode_trans = kp.no_order 
-        //     where
-        //         tp.tgl_terima >= '2025-11-01' and
-        //     --	kp.jenis_kirim <> 'opks' and
-        //         dj.id is null
-        //     --	dss.kode_trans is null
-        //     order by
-        //         tp.tgl_terima asc,
-        //         tp.id asc
-        // ";
-        // $d_conf = $m_conf->hydrateRaw( $sql );
-
-        // if ( $d_conf->count() > 0 ) {
-        //     $data = $d_conf->toArray();
-
-        //     $idx = 1;
-        //     foreach ($data as $key => $value) {
-        //         // $conf = new \Model\Storage\Conf();
-        //         // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$value['id']."', '".$value['tgl_terima']."', 2, null, null";
-        //         // $d_conf = $conf->hydrateRaw($sql);
-
-        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
-
-        //         cetak_r( $idx.' : '.$value['id'].' | '.$value['tgl_terima'] );
-
-        //         $idx++;
-        //     }
-        // }
-
-        // $this->load->library('eloquent');
-
-        // $id = '8175';
-        // $id_old = '8175';
-        // $tanggal = '2025-11-20';
-
-        // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', 0, 2";
-        // Modules::run( 'base/ExecStoredProcedure/exec', $sql);
-
-        // $conf = new \Model\Storage\Conf();
-        // // // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', 2, null, null";
-        // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', 0, 2";
-        // // $sql = "EXEC hitung_stok_pakan_by_transaksi ?, ?, ?, ?, ?";
-        // // // $d_conf = $conf->hydrateRaw($sql);
-
-        // $db = DB::connection('default')->table('barang')->get();;
-        // // $d_conf = DB::select($sql);
-
-        // cetak_r( $db );
-
-        // $bind = array('terima_pakan', $id, $tanggal, 0, 2);
-        // $coba = $conf->runSp($sql, $bind);
-        // // $d_conf = $conf->fromQuery($sql);
-        
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
-        
+    public function insertJurnal()
+    {        
         $conf = new \Model\Storage\Conf();
         $sql = "
             select tp.* from terima_pakan tp 
             left join
-                det_jurnal dj 
+                (select * from det_jurnal dj where dj.tbl_name = 'terima_pakan') dj
                 on
                     cast(tp.id as varchar(15)) = dj.tbl_id 
             where
@@ -1159,15 +1090,30 @@ class PenerimaanPakan extends Public_Controller {
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
             }
         }
+    }
 
-        // $id = '7499';
-        // $id_old = '7499';
-        // $tanggal = '2025-11-13';
-        // $delete = 0;
-        // $status_jurnal = 2;
+    public function deleteJurnal()
+    {        
+        $conf = new \Model\Storage\Conf();
+        $sql = "
+            select dj.* from (select * from det_jurnal dj where dj.tbl_name = 'terima_pakan') dj
+            left join
+                terima_pakan tp 
+                on
+                    cast(tp.id as varchar(15)) = dj.tbl_id
+            where
+                tp.id is null
+            order by
+                dj.tanggal asc
+        ";
+        $d_conf = $conf->hydrateRaw($sql);
 
-        // $conf = new \Model\Storage\Conf();
-        // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-        // $d_conf = $conf::select($sql);
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['tbl_id'], $value['tbl_id'], 3);
+            }
+        }
     }
 }
