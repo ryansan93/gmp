@@ -131,7 +131,8 @@ class GeneralLedger extends Public_Controller {
                         0 as kredit2
                     from saldo_bulanan sb 
                     where 
-                        sb.tanggal between '".$start_date."' and '".$end_date."'
+                        sb.tanggal between '".$start_date."' and '".$end_date."' and
+                        isnull(sb.saldo_awal, 0) <> 0
 
                     union all
 
@@ -205,7 +206,8 @@ class GeneralLedger extends Public_Controller {
                                 0 as kredit2
                             from saldo_bulanan sb 
                             where 
-                                sb.tanggal between '".$start_date_new."' and '".$end_date_new."'
+                                sb.tanggal between '".$start_date_new."' and '".$end_date_new."' and
+                                isnull(sb.saldo_awal, 0) <> 0
 
                             union all
 
