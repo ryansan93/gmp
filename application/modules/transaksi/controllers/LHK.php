@@ -1814,7 +1814,7 @@ class LHK extends Public_Controller
         display_json( $this->result );
     }
 
-    public function hitStokTanpaJurnal($noreg) {
+    public function hitStokTanpaJurnal($tanggal = null, $noreg) {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select data.*, saj.path from 

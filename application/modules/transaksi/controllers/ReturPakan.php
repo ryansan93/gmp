@@ -1100,9 +1100,26 @@ class ReturPakan extends Public_Controller
 
     public function tes()
     {
-        $m_rp = new \Model\Storage\ReturPakan_model();
-        $no_retur = $m_rp->getNextId();
+        $conf = new \Model\Storage\Conf();
+        $sql = "
+            select rp.* from retur_pakan rp 
+            left join
+                (select * from det_jurnal dj where dj.tbl_name = 'retur_pakan') dj
+                on
+                    cast(rp.id as varchar(15)) = dj.tbl_id 
+            where
+                dj.id is null
+            order by
+                rp.tgl_retur asc
+        ";
+        $d_conf = $conf->hydrateRaw($sql);
 
-        cetak_r( $no_retur );
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+            }
+        }
     }
 }

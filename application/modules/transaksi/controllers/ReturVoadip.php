@@ -1098,7 +1098,7 @@ class ReturVoadip extends Public_Controller
     {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select * from retur_voadip rv where tgl_retur >= '2025-10-01'
+            select * from retur_voadip rv where tgl_retur >= '2025-11-01'
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 

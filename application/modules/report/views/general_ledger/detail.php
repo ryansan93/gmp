@@ -45,7 +45,13 @@
                                     <?php foreach ($detail as $key => $value) { ?>
                                         <?php
                                             if ( stristr($value['keterangan'], 'saldo awal') !== false ) {
-                                                $tot_saldo_awal += $value['debet'];
+                                                if ( $value['debet'] <> 0 ) {
+                                                    $tot_saldo_awal += $value['debet'];
+                                                }
+
+                                                if ( $value['kredit'] <> 0 ) {
+                                                    $tot_saldo_awal += $value['kredit'];
+                                                }
                                             } else {
                                                 $tot_debet += $value['debet'];
                                                 $tot_kredit += $value['kredit'];

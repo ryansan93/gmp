@@ -57,9 +57,31 @@ class TutupBulan extends Public_Controller
 	                    tutup_siklus ts
 	                    on
 	                        ts.noreg = rs.noreg
+                    left join
+                        (
+                            select l.* from lhk l
+                            right join
+                                (
+                                    select 
+                                        rs.noreg, 
+                                        max(rs.tgl_panen) as tgl_panen 
+                                    from real_sj rs
+                                    where
+                                        rs.tgl_panen <= '".$end_date."'
+                                    group by 
+                                        rs.noreg
+                                ) rs
+                                on
+                                    l.noreg = rs.noreg and
+                                    l.tanggal >= rs.tgl_panen
+                            where
+                                l.id is not null
+                        ) l_tutup_siklus
+                        on
+                            l_tutup_siklus.noreg = rs.noreg
 	                where
-	                    ts.id is null
-                	
+	                    ts.id is null and
+                        l_tutup_siklus.id is null
                 ) rs
                 left join
                     kandang k
@@ -115,20 +137,35 @@ class TutupBulan extends Public_Controller
                 on
                     td.no_order = od.no_order
             left join
-                (select * from lhk where tanggal = '".$end_date."') l
+                (
+                    select * from lhk 
+                    where 
+                        tanggal = '".$end_date."'
+                ) l
                 on
                     l.noreg = data.noreg
             where
                 l.id is null and
                 td.id is not null and
-                td.datang < '".next_date($end_date)."'
+                td.datang < '".next_date($end_date)."' 
+                and
+                (
+                    '".$end_date."' < '2025-11-01' and 
+                    data.noreg not in (
+                        '25091460102',
+                        '25091460103',
+                        '25101600101',
+                        '25101350101',
+                        '25101590101',
+                        '25101330101'
+                    )
+                )
             order by
                 data.unit asc,
                 data.nama_ppl asc,
                 data.nama_mitra asc,
                 data.kandang asc
         ";
-        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
@@ -203,6 +240,7 @@ class TutupBulan extends Public_Controller
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "
+                /*
                 select
                     d_jurnal.coa,
                     -- d_jurnal.kode_trans,
@@ -333,8 +371,167 @@ class TutupBulan extends Public_Controller
                     -- ,
                     -- d_jurnal.kode_trans,
                     -- d_jurnal.kode_jurnal
+                */
+
+                select
+                    data.no_coa as coa,
+                    data.unit,
+                    data.nama_coa,
+                    -- sum(isnull(data.saldo_awal, 0)) as saldo_awal,
+                    -- sum(isnull(data.kredit, 0)) as kredit,
+                    -- sum(isnull(data.debet, 0)) as debet,
+                    sum(isnull(data.saldo_awal, 0)) + sum(isnull(data.debet, 0)) + sum(isnull(data.kredit, 0)) as saldo_akhir
+                from
+                (
+                    /* SALDO AWAL */
+                    select
+                        sb.no_coa as no_coa,
+                        sb.unit,
+                        c.nama_coa,
+                        case
+                            when sb.debet2 <> 0 then
+                                -- sb.debet2
+                                0
+                            else
+                                sb.debet1
+                        end as saldo_awal,
+                        -- sb.saldo_awal,
+                        0 as kredit,
+                        0 as debet
+                    from (
+                        select
+                            sa.no_coa,
+                            sa.unit,
+                            sum(sa.debet1) as debet1,
+                            sum(sa.kredit1) as kredit1,
+                            sum(sa.debet2) as debet2,
+                            sum(sa.kredit2) as kredit2
+                        from
+                        (
+                            select
+                                sb.coa as no_coa,
+                                sb.unit,
+                                isnull(sb.saldo_awal, 0) as debet1,
+                                0 as kredit1,
+                                0 as debet2,
+                                0 as kredit2
+                            from saldo_bulanan sb 
+                            where 
+                                sb.tanggal between '".$start_date."' and '".$end_date."'
+
+                            union all
+
+                            select
+                                sc.no_coa,
+                                sc.unit,
+                                0 as debet1,
+                                0 as kredit1,
+                                isnull(sc.debet, 0) as debet2,
+                                0 as kredit2
+                            from sacoa sc
+                            where
+                                sc.periode = '".substr($start_date, 0, 7)."' and
+                                sc.debet <> 0
+                        ) sa
+                        group by
+                            sa.no_coa,
+                            sa.unit
+                    ) sb 
+                    left join
+                        coa c
+                        on
+                            sb.no_coa = c.coa
+                    /* END - SALDO AWAL */
+
+                    union all
+
+                    select
+                        sc.no_coa,
+                        sc.unit,
+                        c.nama_coa,
+                        0 as saldo_awal,
+                        case
+                            when isnull(sc.debet, 0) < 0 then
+                                isnull(sc.debet, 0)
+                            else
+                                0
+                        end as kredit,
+                        case
+                            when isnull(sc.debet, 0) >= 0 then
+                                isnull(sc.debet, 0)
+                            else
+                                0
+                        end as debet
+                    from sacoa sc
+                    left join
+                        coa c
+                        on
+                            sc.no_coa = c.coa
+                    where
+                        sc.periode = '".substr($start_date, 0, 7)."' and
+                        sc.debet <> 0
+
+                    union all
+
+                    select
+                        c.coa as no_coa,
+                        case
+                            when c.unit is not null and c.unit <> '' then
+                                c.unit
+                            else
+                                dj.unit
+                        end as unit,
+                        c.nama_coa,
+                        0 as saldo_awal,
+                        (0-isnull(dj.kredit, 0)) as kredit,
+                        isnull(dj.debet, 0) as debet
+                    from coa c
+                    left join
+                        (
+                            select no_coa, sum(kredit) as kredit, sum(debet) as debet, unit from (
+                                select 
+                                    dj.coa_asal as no_coa, 
+                                    sum(dj.nominal) as kredit, 
+                                    0 as debet, 
+                                    dj.unit
+                                from det_jurnal dj 
+                                where 
+                                    dj.tanggal between '".$start_date."' and '".$end_date."'
+                                    -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+                                group by dj.coa_asal, dj.unit
+                                
+                                union all
+                                
+                                select 
+                                    dj.coa_tujuan as no_coa, 
+                                    0 as kredit, 
+                                    sum(dj.nominal) as debet, 
+                                    case
+                                        when dj.unit_tujuan is not null then
+                                            dj.unit_tujuan
+                                        else
+                                            dj.unit
+                                    end as unit
+                                from det_jurnal dj 
+                                where 
+                                    dj.tanggal between '".$start_date."' and '".$end_date."'
+                                    -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+                                group by dj.coa_tujuan, dj.unit, dj.unit_tujuan
+                            ) data
+                            group by
+                                no_coa, unit
+                        ) dj
+                        on
+                            dj.no_coa = c.coa
+                    where
+                        (0-isnull(dj.kredit, 0)) <> 0 or
+                        isnull(dj.debet, 0) <> 0
+                ) data
+                group by
+                    data.no_coa,
+                    data.unit,
+                    data.nama_coa
             ";
-            // cetak_r( $sql, 1 );
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             if ( $d_conf->count() > 0 ) {
@@ -352,98 +549,12 @@ class TutupBulan extends Public_Controller
                     $m_sb->tgl_trans = $now['waktu'];
                     $m_sb->coa = $v_conf['coa'];
                     $m_sb->tanggal = $tgl_next_saldo;
-                    $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
+                    // $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
+                    $m_sb->saldo_awal = $v_conf['saldo_akhir'];
                     $m_sb->saldo_akhir = 0;
-                    // $m_sb->kode_trans = $v_conf['kode_trans'];
-                    // $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
                     $m_sb->periode_fiskal = $start_date;
                     $m_sb->unit = $v_conf['unit'];
                     $m_sb->save();
-
-                    // $m_conf = new \Model\Storage\Conf();
-                    // $sql = "select * from saldo_bulanan where tanggal = '".$start_date."' and coa = '".$v_conf['coa']."' and kode_trans = '".$v_conf['kode_trans']."'";
-                    // $d_sb_now = $m_conf->hydrateRaw( $sql );
-
-                    // $m_conf = new \Model\Storage\Conf();
-                    // $sql = "select * from saldo_bulanan where tanggal = '".$tgl_next_saldo."' and coa = '".$v_conf['coa']."' and kode_trans = '".$v_conf['kode_trans']."'";
-                    // $d_sb_next = $m_conf->hydrateRaw( $sql );
-
-                    // if ( $d_sb_now->count() > 0 ) {
-                    //     $d_sb_now = $d_sb_now->toArray()[0];
-
-                    //     $m_sb = new \Model\Storage\SaldoBulanan_model();
-                    //     $m_sb->where('id', $d_sb_now['id'])->where('coa', $v_conf['coa'])->update(
-                    //         array(
-                    //             'saldo_akhir' => $v_conf['debet']-$v_conf['kredit'],
-                    //             'kode_trans' => $v_conf['kode_trans'],
-                    //             'kode_jurnal' => $v_conf['kode_jurnal'],
-                    //             'periode_fiskal' => $tgl_next_saldo
-                    //         )
-                    //     );
-    
-                    //     if ( $d_sb_next->count() > 0 ) {
-                    //         $d_sb_next = $d_sb_next->toArray()[0];
-
-                    //         $m_sb = new \Model\Storage\SaldoBulanan_model();
-                    //         $m_sb->where('id', $d_sb_next['id'])->update(
-                    //             array(
-                    //                 'saldo_awal' => $v_conf['debet']-$v_conf['kredit'],
-                    //                 'kode_trans' => $v_conf['kode_trans'],
-                    //                 'kode_jurnal' => $v_conf['kode_jurnal']
-                    //             )
-                    //         );
-                    //     } else {
-                    //         $m_sb = new \Model\Storage\SaldoBulanan_model();
-                    //         $now = $m_conf->getDate();
-
-                    //         $m_sb->tgl_trans = $now['waktu'];
-                    //         $m_sb->coa = $v_conf['coa'];
-                    //         $m_sb->tanggal = $tgl_next_saldo;
-                    //         $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
-                    //         $m_sb->saldo_akhir = 0;
-                    //         $m_sb->kode_trans = $v_conf['kode_trans'];
-                    //         $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
-                    //         $m_sb->save();
-                    //     }
-                    // } else {
-                    //     $m_sb = new \Model\Storage\SaldoBulanan_model();
-                    //     $now = $m_conf->getDate();
-    
-                    //     $m_sb->tgl_trans = $now['waktu'];
-                    //     $m_sb->coa = $v_conf['coa'];
-                    //     $m_sb->tanggal = $start_date;
-                    //     $m_sb->saldo_awal = 0;
-                    //     $m_sb->saldo_akhir = $v_conf['debet']-$v_conf['kredit'];
-                    //     $m_sb->kode_trans = $v_conf['kode_trans'];
-                    //     $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
-                    //     $m_sb->periode_fiskal = $tgl_next_saldo;
-                    //     $m_sb->save();
-
-                    //     if ( $d_sb_next->count() > 0 ) {
-                    //         $d_sb_next = $d_sb_next->toArray()[0];
-
-                    //         $m_sb = new \Model\Storage\SaldoBulanan_model();
-                    //         $m_sb->where('id', $d_sb_next['id'])->update(
-                    //             array(
-                    //                 'saldo_awal' => $v_conf['debet']-$v_conf['kredit'],
-                    //                 'kode_trans' => $v_conf['kode_trans'],
-                    //                 'kode_jurnal' => $v_conf['kode_jurnal']
-                    //             )
-                    //         );
-                    //     } else {
-                    //         $m_sb = new \Model\Storage\SaldoBulanan_model();
-                    //         $now = $m_conf->getDate();
-
-                    //         $m_sb->tgl_trans = $now['waktu'];
-                    //         $m_sb->coa = $v_conf['coa'];
-                    //         $m_sb->tanggal = $tgl_next_saldo;
-                    //         $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
-                    //         $m_sb->saldo_akhir = 0;
-                    //         $m_sb->kode_trans = $v_conf['kode_trans'];
-                    //         $m_sb->kode_jurnal = $v_conf['kode_jurnal'];
-                    //         $m_sb->save();
-                    //     }
-                    // }
                 }
             }
 
