@@ -609,7 +609,60 @@ class KertasKerjaHpp extends Public_Controller {
                     select rgn.noreg, rg.pdpt_peternak_belum_pajak from rhpp_group rg
                     left join
                         (
+                            /*
                             select rgn.id_header, min(rgn.noreg) as noreg from rhpp_group_noreg rgn
+                            left join
+                                (
+                                    select l1.* from lhk l1
+                                    right join
+                                        (select noreg, max(umur) as umur from lhk l group by noreg) l2
+                                        on
+                                            l1.noreg = l2.noreg and
+                                            l1.umur = l2.umur
+                                ) lhk
+                                on
+                                    lhk.noreg = rgn.noreg
+                            group by
+                                rgn.id_header
+                            */
+
+                            select 
+                                rgn.id_header, min(rgn.noreg) as noreg
+                            from 
+                            (
+                                select rgn.*, lhk.tanggal from rhpp_group_noreg rgn
+                                left join
+                                    (
+                                        select l1.* from lhk l1
+                                        right join
+                                            (select noreg, max(umur) as umur from lhk l group by noreg) l2
+                                            on
+                                                l1.noreg = l2.noreg and
+                                                l1.umur = l2.umur
+                                    ) lhk
+                                    on
+                                        lhk.noreg = rgn.noreg
+                            ) rgn
+                            right join
+                                (
+                                    select rgn.id_header, max(lhk.tanggal) as tgl_akhir_siklus from rhpp_group_noreg rgn
+                                    left join
+                                        (
+                                            select l1.* from lhk l1
+                                            right join
+                                                (select noreg, max(umur) as umur from lhk l group by noreg) l2
+                                                on
+                                                    l1.noreg = l2.noreg and
+                                                    l1.umur = l2.umur
+                                        ) lhk
+                                        on
+                                            lhk.noreg = rgn.noreg
+                                    group by
+                                        rgn.id_header
+                                ) rgn_max
+                                on
+                                    rgn.id_header = rgn_max.id_header and
+                                    rgn.tanggal = rgn_max.tgl_akhir_siklus
                             group by
                                 rgn.id_header
                         ) rgn
