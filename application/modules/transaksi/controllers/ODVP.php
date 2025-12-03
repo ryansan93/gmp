@@ -1083,7 +1083,7 @@ class ODVP extends Public_Controller {
             }
 
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-            $d_terima_doc = $m_terima_doc->where('no_terima', $params['no_terima'])->orderBy('id', 'desc')->first();
+            $d_terima_doc = $m_terima_doc->where('id', $params['id'])->orderBy('id', 'desc')->first();
 
             $path_name = $d_terima_doc->path;
             $id_old = $d_terima_doc->id;
@@ -1094,7 +1094,7 @@ class ODVP extends Public_Controller {
                     $tgl_stok = $d_terima_doc->datang;
                 }
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $d_terima_doc->id, $d_terima_doc->id, 3);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_old, $id_old, 3);
 
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
                 $now = $m_terima_doc->getDate();
@@ -1133,7 +1133,7 @@ class ODVP extends Public_Controller {
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
                 // $d_conf = $m_conf->hydrateRaw( $sql );
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_terima, $id_old, 2);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_terima, $id_terima, 2);
 
                 $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/update', $m_terima_doc, $deskripsi_log);
@@ -2003,22 +2003,5 @@ class ODVP extends Public_Controller {
 
     public function tes()
     {
-        $arr = array(
-            'ODC/BJN/25/09010',
-            'ODC/MJK/25/09012',
-            'ODC/MJK/25/09011',
-            'ODC/BWI/25/09013',
-            'ODC/MGT/25/09010',
-            'ODC/KDR/25/09005',
-            'ODC/LMG/25/09001',
-            'ODC/MLG/25/09019',
-            'ODC/MLG/25/09020'
-        );
-
-        foreach ($arr as $key => $value) {
-            cetak_r( $value );
-
-            $this->insertKonfirmasi( $value );
-        }
     }
 }

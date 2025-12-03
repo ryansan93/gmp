@@ -92,10 +92,13 @@ class KartuPiutangRingkas extends Public_Controller {
                 (
                     /* SALDO AWAL */
                     select 
+                        '".$start_date."' as tanggal,
                         inv.pelanggan,
-                        sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) ) as saldo_awal,
+                        'Saldo Awal' as jenis_trans,
                         0 as debet,
-                        0 as kredit
+                        0 as kredit,
+                        sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) ) as saldo_awal,
+                        1 as urut
                     from (
                         select
                             drsi.no_inv as nomor,
@@ -118,7 +121,7 @@ class KartuPiutangRingkas extends Public_Controller {
                         select
                             c.nomor,
                             c.pelanggan,
-                            0 - ((c.tot_cn - isnull(rpc.pakai, 0))) as total
+                            0 - (c.tot_cn - isnull(rpc.pakai, 0)) as total
                         from cn c
                         left join
                             (
@@ -333,15 +336,18 @@ class KartuPiutangRingkas extends Public_Controller {
                     group by
                         inv.pelanggan
                     /* END - SALDO AWAL */
-    
+
                     union all
-    
+
                     /* TRANSAKSI DI BULAN ITU */
                     select 
+                        inv.tanggal as tanggal,
                         inv.pelanggan, 
-                        0 as saldo_awal,
-                        sum(inv.total) as debet,
-                        0 as kredit
+                        inv.kode_trans as jenis_trans,
+                        inv.total as debet,
+                        0 as kredit,
+                        0 as saldo,
+                        2 as urut
                     from (
                         select
                             rs.tgl_panen as tanggal,
@@ -374,17 +380,18 @@ class KartuPiutangRingkas extends Public_Controller {
                             d.tanggal between '".$start_date."' and '".$end_date."' and
                             (d.pelanggan is not null and d.pelanggan <> '')
                     ) inv
-                    group by
-                        inv.pelanggan
                     /* END - TRANSAKSI DI BULAN ITU */
-    
+
                     union all
-    
+
                     select
-                        byr.pelanggan,
-                        0 as saldo_awal,
-                        0 as debet,
-                        sum(byr.kredit) as kredit
+                        byr.tanggal as tanggal,
+                        byr.pelanggan, 
+                        byr.kode_trans as jenis_trans,
+                        byr.debet as debet,
+                        byr.kredit as kredit,
+                        0 as saldo,
+                        2 as urut
                     from
                     (
                         select 
@@ -417,8 +424,6 @@ class KartuPiutangRingkas extends Public_Controller {
                             c.tanggal between '".$start_date."' and '".$end_date."' and
                             (c.pelanggan is not null and c.pelanggan <> '')
                     ) byr
-                    group by
-                        byr.pelanggan
                 ) d
                 group by
                     d.pelanggan
@@ -430,22 +435,6 @@ class KartuPiutangRingkas extends Public_Controller {
                         (select max(id) as id, nomor from pelanggan p where tipe = 'pelanggan' group by nomor) p2
                         on
                             p1.id = p2.id
-
-                    union all
-                            
-                    select e1.nomor, e1.nama from ekspedisi e1
-                    right join
-                        (select max(id) as id, nomor from ekspedisi e group by nomor) e2
-                        on
-                            e1.id = e2.id
-
-                    union all
-
-                    select m1.nomor, m1.nama from mitra m1
-                    right join
-                        (select max(id) as id, nomor from mitra group by nomor) m2
-                        on
-                            m1.id = m2.id
                 ) plg
                 on
                     plg.nomor = data.pelanggan

@@ -5,7 +5,7 @@
 <div class="modal-body body">
 	<div class="row detailed">
 		<div class="col-lg-12 detailed">
-			<input type="hidden" data-terima="<?php echo $data_terima_doc['no_terima']; ?>" data-version="<?php echo $data_terima_doc['version']; ?>">
+			<input type="hidden" data-terima="<?php echo $data_terima_doc['no_terima']; ?>" data-version="<?php echo $data_terima_doc['version']; ?>" data-id="<?php echo $data_terima_doc['id']; ?>">
 			<form role="form" class="form-horizontal">
 				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-2">No BBM</div>

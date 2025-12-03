@@ -1090,6 +1090,7 @@ var odvp = {
 			bootbox.confirm('Apakah anda yakin ingin menyimpan data Terima DOC ?', function(result) {
 				if ( result ) {
 					var data = {
+						'id' : $(div).find('input[type=hidden]').data('id'),
 						'no_terima' : $(div).find('input[type=hidden]').data('terima'),
 						'no_order' : $(div).find('input.no_order').val(),
 						'no_sj' : $(div).find('input.no_sj').val(),
