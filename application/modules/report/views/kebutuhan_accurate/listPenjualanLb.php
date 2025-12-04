@@ -22,10 +22,11 @@
             <td><?php echo $value['nama_plasma']; ?></td>
             <td class="text-center"><?php echo $value['kandang_plasma']; ?></td>
             <td><?php echo $value['npwp_plasma']; ?></td>
+            <td><?php echo $value['noreg']; ?></td>
         </tr>
     <?php } ?>
 <?php } else { ?>
     <tr>
-        <td colspan="21">Data tidak ditemukan.</td>
+        <td colspan="22">Data tidak ditemukan.</td>
     </tr>
 <?php } ?>

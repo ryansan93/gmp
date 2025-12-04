@@ -137,8 +137,13 @@ class Coa_model extends Conf{
 		return $data;
 	}
 
-	public function getDataKas($byUser = 0, $userId = null) {
+	public function getDataKas($byUser = 0, $userId = null, $internal = null) {
 		$sql_unit = null;
+
+		$sql_internal = null;
+		if ( !empty($internal) ) {
+			$sql_internal = "and c.nama_coa like '%internal%'";
+		}
 
 		if ( $byUser == 1 ) {
 			$sql_det_user = "
@@ -215,6 +220,7 @@ class Coa_model extends Conf{
 				c.kas = 1 and
 				c.status = 1
 				".$sql_unit."
+				".$sql_internal."
 			order by
 				c.coa
 		";

@@ -25,7 +25,15 @@ class Km_model extends Conf{
 		$sql = "
 			select 
 				k.*,
-				jt.nama as jurnal_trans_nama
+				jt.nama as jurnal_trans_nama,
+				m.nama as nama_mitra,
+				cast(SUBSTRING(k.noreg, 10, 2) as int) as kandang,
+				case
+					when td.datang is not null then
+						td.datang
+					else
+						rs.tgl_docin
+				end as tgl_docin
 			from km k
 			left join
 				(
@@ -37,6 +45,44 @@ class Km_model extends Conf{
 				) jt
 				on
 					k.jurnal_trans = jt.kode
+			left join
+				rdim_submit rs
+				on
+					k.noreg = rs.noreg
+			left join
+				(
+					select mm1.* from mitra_mapping mm1
+					right join
+						(select max(id) as id, nim from mitra_mapping group by nim) mm2
+						on
+							mm1.id = mm2.id
+				) mm
+				on
+					mm.nim = rs.nim
+			left join
+				mitra m
+				on
+					m.id = mm.mitra
+			left join
+				(
+					select od1.* from order_doc od1
+					right join
+						(select max(id) as id, no_order from order_doc group by no_order) od2
+						on
+							od1.id = od2.id
+				) od
+				on
+					od.noreg = rs.noreg
+			left join
+				(
+					select td1.* from terima_doc td1
+					right join
+						(select max(id) as id, no_order from terima_doc group by no_order) td2
+						on
+							td1.id = td2.id
+				) td
+				on
+					td.no_order = od.no_order
 			".$sql_id."
 			order by
 				k.tgl_km desc,
@@ -94,7 +140,8 @@ class Km_model extends Conf{
 
 		$sql = "
 			select 
-				k.*
+				k.*,
+				m.nama as nama_mitra
 			from km k
 			left join
 				(
@@ -110,6 +157,24 @@ class Km_model extends Conf{
 				coa c
 				on
 					k.coa_bank = c.coa
+			left join
+				rdim_submit rs
+				on
+					k.noreg = rs.noreg
+			left join
+				(
+					select mm1.* from mitra_mapping mm1
+					right join
+						(select max(id) as id, nim from mitra_mapping group by nim) mm2
+						on
+							mm1.id = mm2.id
+				) mm
+				on
+					mm.nim = rs.nim
+			left join
+				mitra m
+				on
+					m.id = mm.mitra
 			where
 				k.tgl_km between '".$start_date."' and '".$end_date."' and
 				k.coa_bank = '".$bank."' and

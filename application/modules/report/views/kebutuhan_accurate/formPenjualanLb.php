@@ -82,7 +82,7 @@
                         <td></td>
                         <td class="total text-right" data-target="jml_ekor" data-jenis="integer"><b>0</b></td>
                         <td class="total text-right" data-target="total" data-jenis="decimal"><b>0</b></td>
-                        <td colspan="7"></td>
+                        <td colspan="8"></td>
                     </tr>
                     <tr>
                         <th>Kode Bakul</th>
@@ -106,11 +106,12 @@
                         <th>Nama Plasma</th>
                         <th>Kandang Plasma</th>
                         <th>NPWP Plasma</th>
+                        <th>Noreg</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="21">Data tidak ditemukan.</td>
+                        <td colspan="22">Data tidak ditemukan.</td>
                     </tr>
                 </tbody>
             </table>

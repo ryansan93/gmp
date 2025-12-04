@@ -39,6 +39,7 @@
                     <th>Nama Plasma</th>
                     <th>Kandang Plasma</th>
                     <th>NPWP Plasma</th>
+                    <th>Noreg</th>
                 </tr>
             </thead>
             <tbody>
@@ -65,11 +66,12 @@
                             <td class="str"><?php echo $value['nama_plasma']; ?></td>
                             <td class="str"><?php echo $value['kandang_plasma']; ?></td>
                             <td class="str"><?php echo $value['npwp_plasma']; ?></td>
+                            <td class="str"><?php echo $value['noreg']; ?></td>
                         </tr>
                     <?php } ?>
                 <?php } else { ?>
                     <tr>
-                        <td colspan="20">Data tidak ditemukan.</td>
+                        <td colspan="22">Data tidak ditemukan.</td>
                     </tr>
                 <?php } ?>
             </tbody>

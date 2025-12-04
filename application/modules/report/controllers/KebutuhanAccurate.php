@@ -3161,7 +3161,7 @@ class KebutuhanAccurate extends Public_Controller {
             $filename = "PENJUALAN_LB_";
             $filename = $filename.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xls';
 
-            $arr_header = array('DO', 'Unit', 'Unit - Nama Plasma - Periode', 'Periode', 'No. Invoice', 'Tgl Invoice', 'ID Pelanggan', 'Kode Pelanggan (NIK)', 'Nama Pelanggan', 'No. Nota Timbang', 'Kode Barang', 'Nama Barang', 'Kuantitas Barang (Kg)', 'Jumlah Ekor', 'Harga Satuan Barang', 'Total Invoice', 'Keterangan di Bagian kolom Deskripsi');
+            $arr_header = array('DO', 'Unit', 'Unit - Nama Plasma - Periode', 'Periode', 'No. Invoice', 'Tgl Invoice', 'ID Pelanggan', 'Kode Pelanggan (NIK)', 'Nama Pelanggan', 'No. Nota Timbang', 'Kode Barang', 'Nama Barang', 'Kuantitas Barang (Kg)', 'Jumlah Ekor', 'Harga Satuan Barang', 'Total Invoice', 'Keterangan di Bagian kolom Deskripsi', 'Noreg');
             $arr_column = null;
             if ( !empty($data) ) {
                 $idx = 0;
@@ -3184,6 +3184,7 @@ class KebutuhanAccurate extends Public_Controller {
                         'Harga Satuan Barang' => array('value' => $value['harga_per_satuan_kuantitas'], 'data_type' => 'decimal2'),
                         'Total Invoice' => array('value' => ($value['kuantitas'] * $value['harga_per_satuan_kuantitas']), 'data_type' => 'decimal2'),
                         'Keterangan di Bagian kolom Deskripsi' => array('value' => strtoupper($value['unit'].'-'.$value['nama_plasma'].'-'.$value['kandang_plasma'].' Periode '.$value['periode_chickin']), 'data_type' => 'string'),
+                        'Noreg' => array('value' => $value['noreg'], 'data_type' => 'string'),
                     );
 
                     $idx++;

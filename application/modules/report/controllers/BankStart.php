@@ -310,7 +310,7 @@ class BankStart extends Public_Controller {
                             select 
                                 'realisasi_pembayaran' as tbl_name,
                                 rp.nomor as tbl_id,
-                                rp.tgl_bayar as tanggal,
+                                rp.tgl_realisasi as tanggal,
                                 -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
                                 cast(rp.ket_realisasi as varchar(max)) as keterangan,
                                 0 as debet,
@@ -384,13 +384,28 @@ class BankStart extends Public_Controller {
                                 on
                                     rpd.id_header = rp.id
                             where 
-                                rp.tgl_bayar between '".$start_date_new."' and '".$end_date_new."'
+                                rp.tgl_realisasi between '".$start_date_new."' and '".$end_date_new."'
                             group by
                                 rp.nomor,
-                                rp.tgl_bayar,
+                                rp.tgl_realisasi,
                                 cast(rp.ket_realisasi as varchar(max)),
                                 rp.jml_transfer,
                                 rp.coa_bank
+
+                            union all
+
+                            select
+                                'piutang' as tbl_name,
+                                kode as tbl_id,
+                                tgl_realisasi as tanggal,
+                                -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
+                                cast(ket_realisasi as varchar(max)) as keterangan,
+                                0 as debet,
+                                nominal as kredit,
+                                tf_bank as kas
+                            from piutang
+                            where
+                                tgl_realisasi between '".$start_date_new."' and '".$end_date_new."'
                         ) data
                         on
                             nb.tbl_id = data.tbl_id
@@ -664,6 +679,21 @@ class BankStart extends Public_Controller {
                             rm.tanggal,
                             plg.nama,
                             rm.bank
+
+                        union all
+
+                        select
+                            'piutang' as tbl_name,
+                            kode as tbl_id,
+                            tgl_realisasi as tanggal,
+                            -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
+                            cast(ket_realisasi as varchar(max)) as keterangan,
+                            0 as debet,
+                            nominal as kredit,
+                            tf_bank as kas
+                        from piutang
+                        where
+                            tgl_realisasi between '".$start_date."' and '".$end_date."'
                     ) data
                     on
                         nb.tbl_id = data.tbl_id
