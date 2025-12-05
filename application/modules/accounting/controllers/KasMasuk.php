@@ -112,7 +112,7 @@ class KasMasuk extends Public_Controller {
 
         $content['start_date'] = $start_date;
         $content['end_date'] = $end_date;
-        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid, 2);
         $content['akses'] = $this->hakAkses;
         $html = $this->load->view($this->pathView . 'riwayat', $content, TRUE);
 
@@ -128,7 +128,7 @@ class KasMasuk extends Public_Controller {
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
         $content['coa'] = $m_coa->getDataCoa();
-        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid, 2);
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
@@ -175,7 +175,7 @@ class KasMasuk extends Public_Controller {
         $d_kmi = $m_kmi->getKmItem( $kode );
         
         $content['coa'] = $m_coa->getDataCoa();
-        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid, 2);
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );

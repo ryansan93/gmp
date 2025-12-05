@@ -43,9 +43,9 @@
 				<div class="col-xs-12 no-padding"><label class="control-label">Kas</label></div>
 				<div class="col-xs-12 no-padding">
 					<select class="form-control kas" data-required="1">
-						<option value="all">ALL</option>
+						<option value="all" data-unit="all">ALL</option>
 						<?php foreach ($kas as $k_kas => $v_kas): ?>
-							<option value="<?php echo $v_kas['no_coa']; ?>"><?php echo strtoupper($v_kas['nama_coa']); ?></option>
+							<option value="<?php echo $v_kas['no_coa']; ?>" data-unit="<?php echo $v_kas['unit']; ?>"><?php echo strtoupper($v_kas['nama_coa']); ?></option>
 						<?php endforeach ?>
 					</select>
 				</div>
@@ -67,6 +67,14 @@
 						<?php endforeach ?>
 					</select>
 				</div>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Plasma</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control noreg" data-required="1">
+					<option value="all">ALL</option>
+				</select>
 			</div>
 		</div>
 		<div class="col-xs-12 no-padding">

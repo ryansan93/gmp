@@ -142,7 +142,13 @@ class Coa_model extends Conf{
 
 		$sql_internal = null;
 		if ( !empty($internal) ) {
-			$sql_internal = "and c.nama_coa like '%internal%'";
+			if ( $internal == 1 ) {
+				$sql_internal = "and c.nama_coa like '%internal%'";
+			}
+
+			if ( $internal == 2 ) {
+				$sql_internal = "and c.nama_coa not like '%internal%'";
+			}
 		}
 
 		if ( $byUser == 1 ) {

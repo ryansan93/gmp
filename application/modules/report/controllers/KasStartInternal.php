@@ -1,8 +1,8 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-class KasStart extends Public_Controller {
+class KasStartInternal extends Public_Controller {
 
-    private $pathView = 'report/kas_start/';
+    private $pathView = 'report/kas_start_internal/';
     private $url;
     private $akses;
 
@@ -25,11 +25,11 @@ class KasStart extends Public_Controller {
         if ( $akses['a_view'] == 1 ) {
             $this->add_external_js(array(
                 'assets/select2/js/select2.min.js',
-                "assets/report/kas_start/js/kas-start.js",
+                "assets/report/kas_start_internal/js/kas-start-internal.js",
             ));
             $this->add_external_css(array(
                 'assets/select2/css/select2.min.css',
-                "assets/report/kas_start/css/kas-start.css",
+                "assets/report/kas_start_internal/css/kas-start-internal.css",
             ));
 
             $data = $this->includes;
@@ -46,10 +46,10 @@ class KasStart extends Public_Controller {
 
             $m_coa = new \Model\Storage\Coa_model();
 
-            $content['kas'] = $m_coa->getDataKas(1, $this->userid, 2);
+            $content['kas'] = $m_coa->getDataKas(1, $this->userid, 1);
             $content['periode'] = $periode;
             $content['perusahaan'] = $this->getPerusahaan();
-            $content['title_menu'] = 'Laporan Kas';
+            $content['title_menu'] = 'Laporan Kas Internal';
 
             // Load Indexx
             $data['view'] = $this->load->view($this->pathView.'index', $content, TRUE);
@@ -85,7 +85,124 @@ class KasStart extends Public_Controller {
         return $data;
     }
 
+    public function getNoreg() {
+        $params = $this->input->get('params');
+
+        $unit = $params['unit'];
+
+        $sql_unit = null;
+        if ( stristr($unit, 'all') === false ) {
+            $sql_unit = "where w.kode = '".$unit."'";
+        } else {
+            $m_coa = new \Model\Storage\Coa_model();
+            $kas = $m_coa->getDataKas(1, $this->userid, 1);
+
+            $arr_unit = null;
+            foreach ($kas as $key => $value) {
+                $arr_unit[] = $value['unit'];
+            }
+
+            $sql_unit = "where w.kode in ('".implode("', '", $arr_unit)."')";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from
+            (
+                select
+                    data.noreg,
+                    data.nama_mitra,
+                    data.kandang,
+                    case
+                        when td.datang is not null then
+                            td.datang
+                        else
+                            data.tgl_docin
+                    end as tgl_docin
+                from
+                (
+                    select
+                        rs.noreg,
+                        m.nama as nama_mitra,
+                        k.kandang,
+                        rs.tgl_docin
+                    from 
+                    (
+                        select m.* from 
+                        (
+                            select m1.* from mitra m1
+                            right join
+                                (select max(id) as id, nomor from mitra  group by nomor) m2
+                                on
+                                    m1.id = m2.id
+                        ) m
+                        left join
+                            jenis j
+                            on
+                                m.jenis = j.kode
+                        where
+                            j.nama like '%internal%'
+                    ) m
+                    left join
+                        mitra_mapping mm
+                        on
+                            m.id = mm.mitra
+                    left join
+                        rdim_submit rs
+                        on
+                            rs.nim = mm.nim
+                    left join
+                        kandang k
+                        on
+                            k.id = rs.kandang
+                    left join
+                        wilayah w
+                        on
+                            w.id = k.unit
+                    ".$sql_unit."
+                ) data
+                left join
+                    (
+                        select od1.* from order_doc od1
+                        right join
+                            (select max(id) as id, no_order from order_doc group by no_order) od2
+                            on
+                                od1.id = od2.id
+                    ) od
+                    on
+                        od.noreg = data.noreg
+                left join
+                    (
+                        select td1.* from terima_doc td1
+                        right join
+                            (select max(id) as id, no_order from terima_doc group by no_order) td2
+                            on
+                                td1.id = td2.id
+                    ) td
+                    on
+                        td.no_order = od.no_order
+            ) data
+            order by
+                data.tgl_docin asc,
+                data.nama_mitra asc,
+                data.kandang asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $opt = "<option value='all'>ALL</option>";
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                $opt .= "<option value='".$value['noreg']."'>".tglIndonesia($value['tgl_docin'], '-', ' ')." | ".$value['nama_mitra']." (KDG:".$value['kandang'].")"."</option>";
+            }
+        }
+
+        echo $opt;
+    }
+
     public function getData($params) {
+        $noreg = $params['noreg'];
         $kas = $params['kas'];
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
@@ -115,7 +232,7 @@ class KasStart extends Public_Controller {
             $sql_kas = "where data.kas = '".$kas."'";
         } else {
             $m_coa = new \Model\Storage\Coa_model();
-            $kas = $m_coa->getDataKas(1, $this->userid, 2);
+            $kas = $m_coa->getDataKas(1, $this->userid, 1);
 
             $arr_kas = null;
             foreach ($kas as $key => $value) {
@@ -123,6 +240,11 @@ class KasStart extends Public_Controller {
             }
 
             $sql_kas = "where data.kas in ('".implode("', '", $arr_kas)."')";
+        }
+
+        $sql_noreg = null;
+        if ( stristr($noreg, 'all') === false ) {
+            $sql_noreg = "and data.noreg = '".$noreg."'";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -140,7 +262,8 @@ class KasStart extends Public_Controller {
                         sa.debet1
                 end as debet,
                 0 as kredit,
-                sa.kas
+                sa.kas,
+                sa.noreg
             from
             (
                 select
@@ -148,7 +271,8 @@ class KasStart extends Public_Controller {
                     sum(sa.kredit1) as kredit1,
                     sum(sa.debet2) as debet2,
                     sum(sa.kredit2) as kredit2,
-                    sa.kas
+                    sa.kas,
+                    sa.noreg
                 from
                 (
                     select
@@ -156,7 +280,8 @@ class KasStart extends Public_Controller {
                         0 as kredit1,
                         0 as debet2,
                         0 as kredit2,
-                        sb.coa as kas
+                        sb.coa as kas,
+                        sb.noreg
                     from saldo_bulanan sb 
                     where
                         sb.tanggal = '".$start_date."'
@@ -168,13 +293,15 @@ class KasStart extends Public_Controller {
                         0 as kredit1,
                         sc.debet as debet2,
                         0 as kredit2,
-                        sc.no_coa as kas
+                        sc.no_coa as kas,
+                        null as noreg
                     from sacoa sc
                     where
                         sc.periode = '".substr($start_date, 0, 7)."'
                 ) sa
                 group by
-                    sa.kas
+                    sa.kas,
+                    sa.noreg
             ) sa
             /* END - SALDO AWAL */
         ";
@@ -190,7 +317,8 @@ class KasStart extends Public_Controller {
                     'Saldo Awal' as keterangan,
                     sum(isnull(data.debet, 0)) - sum(isnull(data.kredit, 0)) as debet,
                     0 as kredit,
-                    data.kas
+                    data.kas,
+                    data.noreg
                 from
                 (
                     /* SALDO AWAL */
@@ -205,7 +333,8 @@ class KasStart extends Public_Controller {
                                 sa.debet1
                         end as debet,
                         0 as kredit,
-                        sa.kas
+                        sa.kas,
+                        sa.noreg
                     from
                     (
                         select
@@ -213,7 +342,8 @@ class KasStart extends Public_Controller {
                             sum(sa.kredit1) as kredit1,
                             sum(sa.debet2) as debet2,
                             sum(sa.kredit2) as kredit2,
-                            sa.kas
+                            sa.kas,
+                            sa.noreg
                         from
                         (
                             select
@@ -221,7 +351,8 @@ class KasStart extends Public_Controller {
                                 0 as kredit1,
                                 0 as debet2,
                                 0 as kredit2,
-                                sb.coa as kas
+                                sb.coa as kas,
+                                sb.noreg
                             from saldo_bulanan sb 
                             where
                                 sb.tanggal = '".$start_date_new."'
@@ -233,13 +364,15 @@ class KasStart extends Public_Controller {
                                 0 as kredit1,
                                 sc.debet as debet2,
                                 0 as kredit2,
-                                sc.no_coa as kas
+                                sc.no_coa as kas,
+                                null as noreg
                             from sacoa sc
                             where
                                 sc.periode = '".substr($start_date_new, 0, 7)."'
                         ) sa
                         group by
-                            sa.kas
+                            sa.kas,
+                            sa.noreg
                     ) sa
                     /* END - SALDO AWAL */
 
@@ -252,7 +385,8 @@ class KasStart extends Public_Controller {
                         data.keterangan,
                         data.debet,
                         data.kredit,
-                        data.kas
+                        data.kas,
+                        data.noreg
                     from (
                         select * from no_bbk nb 
 
@@ -269,7 +403,8 @@ class KasStart extends Public_Controller {
                                 ki.keterangan,
                                 0 as debet,
                                 ki.nilai as kredit,
-                                k.coa_bank as kas
+                                k.coa_bank as kas,
+                                k.noreg
                             from kkitem ki 
                             left join
                                 kk k
@@ -288,7 +423,8 @@ class KasStart extends Public_Controller {
                                 ki.keterangan,
                                 ki.nilai as debet,
                                 0 as kredit,
-                                k.coa_bank as kas
+                                k.coa_bank as kas,
+                                k.noreg
                             from kmitem ki 
                             left join
                                 km k
@@ -306,7 +442,8 @@ class KasStart extends Public_Controller {
                 ) data
                 ".$sql_kas."
                 group by
-                    data.kas
+                    data.kas,
+                    data.noreg
             ";
         }
 
@@ -314,7 +451,15 @@ class KasStart extends Public_Controller {
         $sql = "
             select
                 data.*,
-                c.nama_coa as nama_kas
+                c.nama_coa as nama_kas,
+                m.nama as nama_mitra,
+				cast(SUBSTRING(data.noreg, 10, 2) as int) as kandang,
+				case
+					when td.datang is not null then
+						td.datang
+					else
+						rs.tgl_docin
+				end as tgl_docin
             from
             (
                 /* SALDO AWAL */
@@ -345,7 +490,8 @@ class KasStart extends Public_Controller {
                     'Initial Balance' as keterangan,
                     sc.debet as debet,
                     0 as kredit,
-                    sc.no_coa as kas
+                    sc.no_coa as kas,
+                    null as noreg
                 from sacoa sc
                 where
                     sc.periode = '".substr($start_date, 0, 7)."' and
@@ -361,7 +507,8 @@ class KasStart extends Public_Controller {
                     data.keterangan,
                     data.debet,
                     data.kredit,
-                    data.kas
+                    data.kas,
+                    data.noreg
                 from (
                     select * from no_bbk nb 
 
@@ -378,7 +525,8 @@ class KasStart extends Public_Controller {
                             ki.keterangan,
                             0 as debet,
                             ki.nilai as kredit,
-                            k.coa_bank as kas
+                            k.coa_bank as kas,
+                            k.noreg
                         from kkitem ki 
                         left join
                             kk k
@@ -397,7 +545,8 @@ class KasStart extends Public_Controller {
                             ki.keterangan,
                             ki.nilai as debet,
                             0 as kredit,
-                            k.coa_bank as kas
+                            k.coa_bank as kas,
+                            k.noreg
                         from kmitem ki 
                         left join
                             km k
@@ -417,7 +566,46 @@ class KasStart extends Public_Controller {
                 coa c
                 on
                     c.coa = data.kas
+            left join
+				rdim_submit rs
+				on
+					data.noreg = rs.noreg
+			left join
+				(
+					select mm1.* from mitra_mapping mm1
+					right join
+						(select max(id) as id, nim from mitra_mapping group by nim) mm2
+						on
+							mm1.id = mm2.id
+				) mm
+				on
+					mm.nim = rs.nim
+			left join
+				mitra m
+				on
+					m.id = mm.mitra
+			left join
+				(
+					select od1.* from order_doc od1
+					right join
+						(select max(id) as id, no_order from order_doc group by no_order) od2
+						on
+							od1.id = od2.id
+				) od
+				on
+					od.noreg = rs.noreg
+			left join
+				(
+					select td1.* from terima_doc td1
+					right join
+						(select max(id) as id, no_order from terima_doc group by no_order) td2
+						on
+							td1.id = td2.id
+				) td
+				on
+					td.no_order = od.no_order
             ".$sql_kas."
+            ".$sql_noreg."
             order by
                 data.kas asc,
                 data.tanggal asc,

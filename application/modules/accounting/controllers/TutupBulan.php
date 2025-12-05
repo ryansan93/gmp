@@ -377,6 +377,7 @@ class TutupBulan extends Public_Controller
                     data.no_coa as coa,
                     data.unit,
                     data.nama_coa,
+                    data.noreg,
                     -- sum(isnull(data.saldo_awal, 0)) as saldo_awal,
                     -- sum(isnull(data.kredit, 0)) as kredit,
                     -- sum(isnull(data.debet, 0)) as debet,
@@ -387,6 +388,7 @@ class TutupBulan extends Public_Controller
                     select
                         sb.no_coa as no_coa,
                         sb.unit,
+                        sb.noreg,
                         c.nama_coa,
                         case
                             when sb.debet2 <> 0 then
@@ -402,6 +404,7 @@ class TutupBulan extends Public_Controller
                         select
                             sa.no_coa,
                             sa.unit,
+                            sa.noreg,
                             sum(sa.debet1) as debet1,
                             sum(sa.kredit1) as kredit1,
                             sum(sa.debet2) as debet2,
@@ -411,6 +414,7 @@ class TutupBulan extends Public_Controller
                             select
                                 sb.coa as no_coa,
                                 sb.unit,
+                                sb.noreg,
                                 isnull(sb.saldo_awal, 0) as debet1,
                                 0 as kredit1,
                                 0 as debet2,
@@ -424,6 +428,7 @@ class TutupBulan extends Public_Controller
                             select
                                 sc.no_coa,
                                 sc.unit,
+                                null as noreg,
                                 0 as debet1,
                                 0 as kredit1,
                                 isnull(sc.debet, 0) as debet2,
@@ -435,7 +440,8 @@ class TutupBulan extends Public_Controller
                         ) sa
                         group by
                             sa.no_coa,
-                            sa.unit
+                            sa.unit,
+                            sa.noreg
                     ) sb 
                     left join
                         coa c
@@ -448,6 +454,7 @@ class TutupBulan extends Public_Controller
                     select
                         sc.no_coa,
                         sc.unit,
+                        null as noreg,
                         c.nama_coa,
                         0 as saldo_awal,
                         case
@@ -481,6 +488,7 @@ class TutupBulan extends Public_Controller
                             else
                                 dj.unit
                         end as unit,
+                        dj.noreg,
                         c.nama_coa,
                         0 as saldo_awal,
                         (0-isnull(dj.kredit, 0)) as kredit,
@@ -488,8 +496,9 @@ class TutupBulan extends Public_Controller
                     from coa c
                     left join
                         (
-                            select no_coa, sum(kredit) as kredit, sum(debet) as debet, unit from (
-                                select 
+                            select noreg, no_coa, sum(kredit) as kredit, sum(debet) as debet, unit from (
+                                select
+                                    dj.noreg,
                                     dj.coa_asal as no_coa, 
                                     sum(dj.nominal) as kredit, 
                                     0 as debet, 
@@ -498,11 +507,12 @@ class TutupBulan extends Public_Controller
                                 where 
                                     dj.tanggal between '".$start_date."' and '".$end_date."'
                                     -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
-                                group by dj.coa_asal, dj.unit
+                                group by dj.noreg, dj.coa_asal, dj.unit
                                 
                                 union all
                                 
                                 select 
+                                    dj.noreg,
                                     dj.coa_tujuan as no_coa, 
                                     0 as kredit, 
                                     sum(dj.nominal) as debet, 
@@ -516,10 +526,10 @@ class TutupBulan extends Public_Controller
                                 where 
                                     dj.tanggal between '".$start_date."' and '".$end_date."'
                                     -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
-                                group by dj.coa_tujuan, dj.unit, dj.unit_tujuan
+                                group by dj.noreg, dj.coa_tujuan, dj.unit, dj.unit_tujuan
                             ) data
                             group by
-                                no_coa, unit
+                                noreg, no_coa, unit
                         ) dj
                         on
                             dj.no_coa = c.coa
@@ -530,14 +540,13 @@ class TutupBulan extends Public_Controller
                 group by
                     data.no_coa,
                     data.unit,
-                    data.nama_coa
+                    data.nama_coa,
+                    data.noreg
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             if ( $d_conf->count() > 0 ) {
                 $d_conf = $d_conf->toArray();
-
-                // cetak_r( $d_conf, 1 );
 
                 $m_sb = new \Model\Storage\SaldoBulanan_model();
                 $m_sb->where('periode_fiskal', $start_date)->delete();
@@ -554,6 +563,7 @@ class TutupBulan extends Public_Controller
                     $m_sb->saldo_akhir = 0;
                     $m_sb->periode_fiskal = $start_date;
                     $m_sb->unit = $v_conf['unit'];
+                    $m_sb->noreg = $v_conf['noreg'];
                     $m_sb->save();
                 }
             }
@@ -562,7 +572,9 @@ class TutupBulan extends Public_Controller
             $m_bo = new \Model\Storage\PeriodeFiskal_model();
             $m_bo->where('start_date', $start_date)->update(
                 array(
-                    'status' => 0
+                    'status' => 0,
+                    'opr' => 0,
+                    'kas_bank' => 0
                 )
             );
 
@@ -581,7 +593,9 @@ class TutupBulan extends Public_Controller
                 $m_bo = new \Model\Storage\PeriodeFiskal_model();
                 $m_bo->where('id', $d_pf_next['id'])->update(
                     array(
-                        'status' => 1
+                        'status' => 1,
+                        'opr' => 1,
+                        'kas_bank' => 1
                     )
                 );
                 $d_bo = $m_bo->where('id', $d_pf_next['id'])->first();
@@ -594,6 +608,8 @@ class TutupBulan extends Public_Controller
                 $m_bo->start_date = $tgl_next_saldo;
                 $m_bo->end_date = date("Y-m-t", strtotime($tgl_next_saldo));
                 $m_bo->status = 1;
+                $m_bo->opr = 1;
+                $m_bo->kas_bank = 1;
                 $m_bo->save();
 
                 $deskripsi_log = 'di-aktifkan oleh ' . $this->userdata['detail_user']['nama_detuser'];
