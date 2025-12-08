@@ -229,8 +229,11 @@ class DistribusiBarang extends Public_Controller {
                         left join
                             det_stok_siklus dss
                             on
+                                dsts.id_header = dss.id
+                                /*
                                 dsts.kode_trans = dss.kode_trans and
                                 dsts.kode_barang = dss.kode_barang
+                                */
                         where
                             dsts.tbl_name <> 'lhk'
                     ) dss
