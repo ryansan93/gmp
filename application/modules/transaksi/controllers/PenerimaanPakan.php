@@ -683,6 +683,34 @@ class PenerimaanPakan extends Public_Controller {
             $deskripsi_log_terima_pakan = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_terima_pakan, $deskripsi_log_terima_pakan);
 
+            $noreg1 = null;
+            $noreg2 = null;
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select tp.id, kp.jenis_kirim, kp.jenis_tujuan, kp.asal, kp.tujuan from terima_pakan tp
+                left join
+                    kirim_pakan kp
+                    on
+                        tp.id_kirim_pakan = kp.id
+                where
+                    tp.id = '".$id_terima."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                if ( $d_conf['jenis_kirim'] == 'opkg' ) {
+                    if ( $d_conf['jenis_tujuan'] == 'peternak' ) {
+                        $noreg1 = $d_conf['tujuan'];
+                    }
+                }
+
+                if ( $d_conf['jenis_kirim'] == 'opkp' ) {
+                    $noreg1 = $d_conf['asal'];
+                    $noreg2 = $d_conf['tujuan'];
+                }
+            }
+
             $this->result['status'] = 1;
             // $this->result['content'] = array('id_terima' => $id_terima);
             $this->result['content'] = array(
@@ -691,7 +719,9 @@ class PenerimaanPakan extends Public_Controller {
                 'delete' => 0,
                 'message' => 'Data Penerimaan Pakan berhasil di simpan.',
                 'status_jurnal' => 2,
-                'status' => 2
+                'status' => 2,
+                'noreg1' => $noreg1,
+                'noreg2' => $noreg2
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -757,10 +787,33 @@ class PenerimaanPakan extends Public_Controller {
                     $tgl_trans = $d_terima_pakan_old->tgl_terima;
                 }
 
-                // $conf = new \Model\Storage\Conf();
-                // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$d_terima_pakan->id."', '".$tgl_trans."', 0";
+                $noreg1 = null;
+                $noreg2 = null;
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select tp.id, kp.jenis_kirim, kp.jenis_tujuan, kp.asal, kp.tujuan from terima_pakan tp
+                    left join
+                        kirim_pakan kp
+                        on
+                            tp.id_kirim_pakan = kp.id
+                    where
+                        tp.id = '".$params['id']."'
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+                if ( $d_conf->count() > 0 ) {
+                    $d_conf = $d_conf->toArray()[0];
 
-                // $d_conf = $conf->hydrateRaw($sql);
+                    if ( $d_conf['jenis_kirim'] == 'opkg' ) {
+                        if ( $d_conf['jenis_tujuan'] == 'peternak' ) {
+                            $noreg1 = $d_conf['tujuan'];
+                        }
+                    }
+
+                    if ( $d_conf['jenis_kirim'] == 'opkp' ) {
+                        $noreg1 = $d_conf['asal'];
+                        $noreg2 = $d_conf['tujuan'];
+                    }
+                }
 
                 $deskripsi_log_terima_pakan = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
@@ -772,7 +825,9 @@ class PenerimaanPakan extends Public_Controller {
                     'delete' => 0,
                     'message' => 'Data Penerimaan Pakan berhasil di ubah.',
                     'status_jurnal' => 2,
-                    'status' => 2
+                    'status' => 2,
+                    'noreg1' => $noreg1,
+                    'noreg2' => $noreg2
                 );
             }
         } catch (\Illuminate\Database\QueryException $e) {
@@ -795,10 +850,33 @@ class PenerimaanPakan extends Public_Controller {
             $deskripsi_log_terima_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
 
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$d_terima_pakan->id."', '".$d_terima_pakan->tgl_terima."', 1";
+            $noreg1 = null;
+            $noreg2 = null;
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select tp.id, kp.jenis_kirim, kp.jenis_tujuan, kp.asal, kp.tujuan from terima_pakan tp
+                left join
+                    kirim_pakan kp
+                    on
+                        tp.id_kirim_pakan = kp.id
+                where
+                    tp.id = '".$params['id']."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
 
-            // $d_conf = $conf->hydrateRaw($sql);
+                if ( $d_conf['jenis_kirim'] == 'opkg' ) {
+                    if ( $d_conf['jenis_tujuan'] == 'peternak' ) {
+                        $noreg1 = $d_conf['tujuan'];
+                    }
+                }
+
+                if ( $d_conf['jenis_kirim'] == 'opkp' ) {
+                    $noreg1 = $d_conf['asal'];
+                    $noreg2 = $d_conf['tujuan'];
+                }
+            }
 
             $this->result['status'] = 1;
             $this->result['content'] = array(
@@ -807,7 +885,9 @@ class PenerimaanPakan extends Public_Controller {
                 'delete' => 1,
                 'message' => 'Data Penerimaan Pakan berhasil di hapus.',
                 'status_jurnal' => 3,
-                'status' => 3
+                'status' => 3,
+                'noreg1' => $noreg1,
+                'noreg2' => $noreg2
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -846,11 +926,6 @@ class PenerimaanPakan extends Public_Controller {
         $status_jurnal = $params['status_jurnal'];
 
         try {
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-            // // $d_conf = $conf->hydrateRaw($sql);
-            // $d_conf = $conf::select($sql);
-
             $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
             $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
@@ -871,13 +946,10 @@ class PenerimaanPakan extends Public_Controller {
             $id = $params['id'];
             $tanggal = $params['tanggal'];
             $status = $params['status'];
+            $noreg1 = $params['noreg1'];
+            $noreg2 = $params['noreg2'];
 
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
-            // // $d_conf = $conf->hydrateRaw($sql);
-            // $d_conf = $conf::select($sql);
-
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", null, null";
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
             $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
             $this->result['status'] = $return['status'];
@@ -1115,5 +1187,10 @@ class PenerimaanPakan extends Public_Controller {
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $value['tbl_id'], $value['tbl_id'], 3);
             }
         }
+    }
+
+    public function hitStokSiklus() {
+        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '11071', '2025-12-04', 2, '25090690202', '25102590102'";
+        $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
     }
 }
