@@ -104,7 +104,7 @@ class SisaStokAyam extends Public_Controller {
                 (
                     select l1.tanggal, l1.noreg, l1.umur, l1.pakai_pakan, l1.sisa_pakan, l1.ekor_mati, l1.bb from lhk l1
                     right join
-                        (select max(umur) as umur, noreg from lhk where tanggal < '".$tanggal."' group by noreg) l2
+                        (select max(umur) as umur, noreg from lhk where tanggal <= '".$tanggal."' group by noreg) l2
                         on
                             l1.umur = l2.umur and
                             l1.noreg = l2.noreg
@@ -113,7 +113,7 @@ class SisaStokAyam extends Public_Controller {
                     lhk.noreg = od.noreg
             left join
                 (
-                    select noreg, sum(netto_ekor) as ekor, sum(netto_kg) as tonase, max(tgl_panen) as tgl_panen_terakhir from real_sj rs where tgl_panen < '".$tanggal."' group by noreg
+                    select noreg, sum(netto_ekor) as ekor, sum(netto_kg) as tonase, max(tgl_panen) as tgl_panen_terakhir from real_sj rs where tgl_panen <= '".$tanggal."' group by noreg
                 ) panen
                 on
                     panen.noreg = od.noreg
@@ -134,7 +134,7 @@ class SisaStokAyam extends Public_Controller {
                 on
                     w.id = k.unit
             where
-                td.datang < '".$tanggal."' and
+                td.datang <= '".$tanggal."' and
                 ts.id is null and
                 td.jml_ekor - isnull(lhk.ekor_mati, 0) - isnull(panen.ekor, 0) > 0
                 ".$sql_unit."
