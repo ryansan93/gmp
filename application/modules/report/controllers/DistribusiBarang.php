@@ -216,7 +216,16 @@ class DistribusiBarang extends Public_Controller {
                         union all
 
                         select
-                            dss.jenis_trans,
+                            case
+                                when dsts.tbl_name like 'terima_pakan' then
+                                    'mutasi'
+                                when dsts.tbl_name like 'retur_pakan' then
+                                    'retur'
+                                when dsts.tbl_name like 'retur_voadip' then
+                                    'retur'
+                                else
+                                    dss.jenis_trans
+                            end as jenis_trans,
                             dss.jenis_barang,
                             dsts.tgl_trans,
                             dsts.kode_barang,
@@ -265,6 +274,14 @@ class DistribusiBarang extends Public_Controller {
                         union all
     
                         select cast(asal as varchar(20)) as asal, cast(tujuan as varchar(20)) as tujuan, 'voadip' as jenis, no_order as kode_trans, no_polisi, sopir, ekspedisi, no_sj from kirim_voadip kv
+
+                        union all
+
+                        select cast(id_asal as varchar(20)) as asal, cast(id_tujuan as varchar(20)) as tujuan, 'pakan' as jenis, no_retur as kode_trans, no_polisi, sopir, ekspedisi, no_retur as no_sj from retur_pakan rp
+    
+                        union all
+    
+                        select cast(id_asal as varchar(20)) as asal, cast(id_tujuan as varchar(20)) as tujuan, 'voadip' as jenis, no_retur as kode_trans, null as no_polisi, null as sopir, null as ekspedisi, no_retur as no_sj from retur_voadip rv
                     ) krm
                     on
                         dss.kode_trans = krm.kode_trans and

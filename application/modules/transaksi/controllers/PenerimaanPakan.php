@@ -1190,7 +1190,7 @@ class PenerimaanPakan extends Public_Controller {
     }
 
     public function hitStokSiklus() {
-        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '11071', '2025-12-04', 2, '25090690202', '25102590102'";
+        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '11456', '2025-12-04', 2, '25102450101', '25110400101'";
         $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
     }
 }
