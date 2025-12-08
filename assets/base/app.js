@@ -283,7 +283,7 @@ var App = {
 
                         if ( !empty(val) && val < data.content.minDate ) {
                             $(div).find('label').remove();
-                            $(div).find('button').remove();
+                            $(div).find('button:not(.cetak)').remove();
                             $(div).find('a.edit').remove();
                             $(div).find('div.edit').remove();
                         }
