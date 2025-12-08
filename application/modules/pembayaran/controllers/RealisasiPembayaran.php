@@ -714,6 +714,11 @@ class RealisasiPembayaran extends Public_Controller
     {
         $data = array();
 
+        $sql_unit = "";
+        if ( !in_array('all', $params['kode_unit_ovk']) ) {
+            $sql_unit = "and kpdd.kode_unit in ('".implode("', '", $params['kode_unit_ovk'])."')";
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select kpd.*, kpdd.kode_unit, supl.nama as nama_supplier, td.path as lampiran, cpd.tot_cn as cn from konfirmasi_pembayaran_doc_det kpdd
@@ -755,6 +760,7 @@ class RealisasiPembayaran extends Public_Controller
                 kpd.tgl_bayar between '".$params['start_date']."' and '".$params['end_date']."' and
                 kpd.supplier = '".$params['supplier']."' and
                 kpd.perusahaan = '".$params['perusahaan']."'
+                ".$sql_unit."
             group by
                 kpd.id,
                 kpd.nomor,
@@ -856,6 +862,11 @@ class RealisasiPembayaran extends Public_Controller
     {
         $data = array();
 
+        $sql_unit = "";
+        if ( !in_array('all', $params['kode_unit_ovk']) ) {
+            $sql_unit = "and kppd.kode_unit in ('".implode("', '", $params['kode_unit_ovk'])."')";
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select kpp.*, kppd.kode_unit, supl.nama as nama_supplier, cpd.tot_cn as cn from konfirmasi_pembayaran_pakan_det kppd
@@ -887,6 +898,7 @@ class RealisasiPembayaran extends Public_Controller
                 kpp.tgl_bayar between '".$params['start_date']."' and '".$params['end_date']."' and
                 kpp.supplier = '".$params['supplier']."' and
                 kpp.perusahaan = '".$params['perusahaan']."'
+                ".$sql_unit."
             group by
                 kpp.id,
                 kpp.nomor,

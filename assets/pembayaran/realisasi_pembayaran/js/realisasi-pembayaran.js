@@ -121,14 +121,12 @@ var rp = {
                 var option = $(e);
                 var last_select = option[0].params.data.id;
 
-                $(div).find('div.ovk').addClass('hide');
-                $(div).find('div.ovk select, input').removeAttr('data-required');
-                if ( last_select == 'voadip' ) {
-                    console.log('coba');
-
-                    $(div).find('div.ovk').removeClass('hide');
-                    $(div).find('div.ovk select.unit_ovk').attr('data-required', 1);
-                }
+                // $(div).find('div.ovk').addClass('hide');
+                // $(div).find('div.ovk select, input').removeAttr('data-required');
+                // if ( last_select == 'voadip' ) {
+                //     $(div).find('div.ovk').removeClass('hide');
+                //     $(div).find('div.ovk select.unit_ovk').attr('data-required', 1);
+                // }
 
                 // var jenis_transaksi = $(div).find('select.jenis_transaksi').select2('val');
 
@@ -194,9 +192,9 @@ var rp = {
 
         var jenis_transaksi = $('div.'+jenis).find('select.jenis_transaksi').select2('val');
 
-        if ( !empty(jenis_transaksi) && jenis_transaksi.indexOf('voadip') === -1 ) {
-            $('div.ovk').find('input:not(.select2-search__field), select').removeAttr('data-required');
-        }
+        // if ( !empty(jenis_transaksi) && jenis_transaksi.indexOf('voadip') === -1 ) {
+        //     $('div.ovk').find('input:not(.select2-search__field), select').removeAttr('data-required');
+        // }
     }, // end - jenis_pembayaran
 
     changeTabActive: function(elm) {

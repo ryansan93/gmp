@@ -54,7 +54,7 @@
 				</select>
 			</div>
 		</div>
-		<div class="col-xs-12 no-padding jns_trans ovk hide" style="margin-bottom: 5px; padding: 0px 5px 0px 0px;">
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px; padding: 0px 5px 0px 0px;">
 			<div class="col-xs-12 no-padding"><label class="control-label text-left">Unit</label></div>
 			<div class="col-xs-12 no-padding">
 				<select class="unit_ovk" multiple="multiple" width="100%">
