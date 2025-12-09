@@ -278,7 +278,7 @@ class SisaStokAyamMinMax extends Public_Controller {
             for ($i=0; $i <= 50; $i++) {
                 $idx_kolom = 1;
                 $alphaCol = toAlpha($idx_kolom);
-                $arr_column[ $idx ][ $alphaCol ] = array('value' => $i+1, 'data_type' => 'integer', 'align' => 'right', 'border' => 'border');
+                $arr_column[ $idx ][ $alphaCol ] = array('value' => $i, 'data_type' => 'integer', 'align' => 'right', 'border' => 'border');
                 $idx_kolom++;
                 foreach ($d_unit as $k_unit => $v_unit) {
                     if ( $v_unit['kode'] != 'JTM' && $v_unit['kode'] != 'PST' ) {
