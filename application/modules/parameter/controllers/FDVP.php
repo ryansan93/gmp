@@ -608,6 +608,8 @@ class FDVP extends Public_Controller {
                     $m_brg->g_status = $g_status;
                     $m_brg->tipe = 'obat';
                     $m_brg->version = 1;
+                    $m_brg->hit_hrg_jual = 1;
+                    $m_brg->desimal_harga = 2;
                     $m_brg->save();
 
                     $deskripsi_log_voadip = 'di-'. $status .' oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -632,6 +634,7 @@ class FDVP extends Public_Controller {
             if ( !empty($params) ) {
                 foreach ($params as $key => $v_data) {
                     $m_brg = new \Model\Storage\Barang_model();
+                    $d_brg = $m_brg->where('kode', $v_data['kode'])->orderBy('id', 'desc')->first();
 
                     $m_brg->kode = $v_data['kode'];
                     $m_brg->kode_supplier = $v_data['supl'];
@@ -647,6 +650,8 @@ class FDVP extends Public_Controller {
                     $m_brg->g_status = $v_data['status'];
                     $m_brg->tipe = 'obat';
                     $m_brg->version = $v_data['version'] + 1;
+                    $m_brg->hit_hrg_jual = $d_brg->hit_hrg_jual;
+                    $m_brg->desimal_harga = $d_brg->desimal_harga;
                     $m_brg->save();
 
                     $deskripsi_log_voadip = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
