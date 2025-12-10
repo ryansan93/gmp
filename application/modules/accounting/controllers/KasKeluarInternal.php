@@ -344,7 +344,7 @@ class KasKeluarInternal extends Public_Controller {
                 $m_djurnal->invoice = $v_det['no_invoice'];
                 $m_djurnal->kode_trans = $no_kk;
                 $m_djurnal->kode_jurnal = $no_kk;
-                // $m_djurnal->pelanggan = 
+                $m_djurnal->noreg = $params['noreg'];
                 $m_djurnal->save();
             }
 
@@ -433,7 +433,7 @@ class KasKeluarInternal extends Public_Controller {
                 $m_djurnal->invoice = $v_det['no_invoice'];
                 $m_djurnal->kode_trans = $no_kk;
                 $m_djurnal->kode_jurnal = $no_kk;
-                // $m_djurnal->pelanggan = 
+                $m_djurnal->noreg = $params['noreg'];
                 $m_djurnal->save();
             }
 

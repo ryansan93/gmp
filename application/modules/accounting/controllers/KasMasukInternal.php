@@ -346,6 +346,7 @@ class KasMasukInternal extends Public_Controller {
                 $m_djurnal->kode_trans = $no_km;
                 $m_djurnal->kode_jurnal = $no_km;
                 $m_djurnal->pelanggan = $params['no_pelanggan'];
+                $m_djurnal->noreg = $params['noreg'];
                 $m_djurnal->save();
             }
 
@@ -436,6 +437,7 @@ class KasMasukInternal extends Public_Controller {
                 $m_djurnal->kode_trans = $no_km;
                 $m_djurnal->kode_jurnal = $no_km;
                 $m_djurnal->pelanggan = $params['no_pelanggan'];
+                $m_djurnal->noreg = $params['noreg'];
                 $m_djurnal->save();
             }
 
