@@ -50,9 +50,7 @@ class UmurKartuPiutang extends Public_Controller {
         }
     }
 
-    public function getData() {
-        $params = $this->input->get('params');
-
+    public function getData( $params ) {
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
 
@@ -553,6 +551,7 @@ class UmurKartuPiutang extends Public_Controller {
                         on
                             p1.id = p2.id
 
+                    /*
                     union all
                             
                     select e1.nomor, e1.nama from ekspedisi e1
@@ -568,13 +567,13 @@ class UmurKartuPiutang extends Public_Controller {
                         (select max(id) as id, nomor from mitra group by nomor) m2
                         on
                             m1.id = m2.id
+                    */
                 ) plg
                 on
                     plg.nomor = data.pelanggan
             order by
                 data.pelanggan asc
         ";
-        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
@@ -582,11 +581,171 @@ class UmurKartuPiutang extends Public_Controller {
             $data = $d_conf->toArray();
         }
 
-        // cetak_r( $data, 1 );
+        return $data;
+    }
+
+    public function getLists() {
+        $params = $this->input->get('params');
+
+        $data = $this->getData( $params );
 
         $content['data'] = $data;
         $html = $this->load->view($this->pathView.'list', $content, TRUE);
 
         echo $html;
+    }
+
+    public function excryptParams()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $params_encrypt = exEncrypt( json_encode($params) );
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params_encrypt;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function exportExcel($params_encrypt)
+    {
+        $params = json_decode( exDecrypt($params_encrypt), true );
+
+        $data = $this->getData( $params );
+
+        $bulan = $params['bulan'];
+        $tahun = substr($params['tahun'], 0, 4);
+
+        if ( $bulan != 'all' ) {
+            $i = $bulan;
+
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+
+            $date = $tahun.'-'.$angka_bulan.'-01';
+            $start_date = date("Y-m-d", strtotime($date));
+            $end_date = date("Y-m-t", strtotime($date));
+        } else {
+            $i = 1;
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+            $_start_date = $tahun.'-'.$angka_bulan.'-01';
+            $start_date = date("Y-m-d", strtotime($_start_date));
+
+            $i = 12;
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+            $_end_date = $tahun.'-'.$angka_bulan.'-01';
+            $end_date = date("Y-m-t", strtotime($_end_date));
+        }
+
+        $text_tgl = str_replace(' ', '_', substr(tglIndonesia( $end_date, '-', ' ', true ), 3, strlen(tglIndonesia( $end_date, '-', ' ', true ))));
+
+        $filename = strtoupper("LAPORAN_UMUR_PIUTANG_PER_".$text_tgl).".xls";
+
+        $gt_saldo_awal = 0;
+        $gt_debet = 0;
+        $gt_kredit = 0;
+        $gt_saldo_akhir = 0;
+        $gt_current = 0;
+        $gt_umur1 = 0;
+        $gt_umur2 = 0;
+        $gt_umur3 = 0;
+        $gt_umur4 = 0;
+        $gt_umur5 = 0;
+        $gt_umur6 = 0;
+        $gt_umur7 = 0;
+
+        for ($i=1; $i <= 16; $i++) {
+            $arr_header[] = toAlpha($i);
+        }
+
+        $arr_column = null;
+
+        $idx = 0;
+        $arr_column[ $idx ] = array(
+            'A' => array('value' => 'LAPORAN UMUR PIUTANG', 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+        );
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'A' => array('value' => 'PER '.strtoupper(substr(tglIndonesia( $end_date, '-', ' ', true ), 3, strlen(tglIndonesia( $end_date, '-', ' ', true )))), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+        );
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'A' => array('value' => strtoupper('ID Customer'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'B' => array('value' => strtoupper('Nama Customer'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'C' => array('value' => strtoupper('Plafon (Juta)'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'D' => array('value' => strtoupper('JaTem (Hari)'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'E' => array('value' => strtoupper('Saldo Awal'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'F' => array('value' => strtoupper('Debet'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'G' => array('value' => strtoupper('Kredit'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'H' => array('value' => strtoupper('Saldo Akhir'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'I' => array('value' => strtoupper('Current'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'J' => array('value' => strtoupper('Umur 1-7 Hari'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'K' => array('value' => strtoupper('Umur 8-14 Hari'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'L' => array('value' => strtoupper('Umur 15-21 Hari'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'M' => array('value' => strtoupper('Umur 22-30 Hari'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'N' => array('value' => strtoupper('Umur 31-60 Hari'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'O' => array('value' => strtoupper('Umur 61-90 Hari'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'P' => array('value' => strtoupper('Umur > 90 Hari'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+        );
+
+        foreach ($data as $key => $value) {
+            $idx++;
+            $arr_column[ $idx ] = array(
+                'A' => array('value' => strtoupper($value['pelanggan']), 'data_type' => 'string', 'align' => 'left', 'border' => 'border'),
+                'B' => array('value' => strtoupper($value['nama_pelanggan']), 'data_type' => 'string', 'align' => 'left', 'border' => 'border'),
+                'C' => array('value' => null, 'data_type' => 'string', 'align' => 'left', 'border' => 'border'),
+                'D' => array('value' => null, 'data_type' => 'string', 'align' => 'left', 'border' => 'border'),
+                'E' => array('value' => $value['saldo_awal'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'F' => array('value' => $value['debet'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'G' => array('value' => $value['kredit'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'H' => array('value' => $value['saldo_akhir'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'I' => array('value' => $value['_current'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'J' => array('value' => $value['umur1'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'K' => array('value' => $value['umur2'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'L' => array('value' => $value['umur3'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'M' => array('value' => $value['umur4'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'N' => array('value' => $value['umur5'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'O' => array('value' => $value['umur6'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+                'P' => array('value' => $value['umur7'], 'data_type' => 'decimal2', 'align' => 'right', 'border' => 'border'),
+            );
+
+            $gt_saldo_awal += $value['saldo_awal'];
+            $gt_debet += $value['debet'];
+            $gt_kredit += $value['kredit'];
+            $gt_saldo_akhir += $value['saldo_akhir'];
+            $gt_current += $value['_current'];
+            $gt_umur1 += $value['umur1'];
+            $gt_umur2 += $value['umur2'];
+            $gt_umur3 += $value['umur3'];
+            $gt_umur4 += $value['umur4'];
+            $gt_umur5 += $value['umur5'];
+            $gt_umur6 += $value['umur6'];
+            $gt_umur7 += $value['umur7'];
+        }
+
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'D' => array('value' => strtoupper('total keseluruhan'), 'colspan' => array('A', 'D'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold', 'border' => 'border'),
+            'E' => array('value' => $gt_saldo_awal, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'F' => array('value' => $gt_debet, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'G' => array('value' => $gt_kredit, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'H' => array('value' => $gt_saldo_akhir, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'I' => array('value' => $gt_current, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'J' => array('value' => $gt_umur1, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'K' => array('value' => $gt_umur2, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'L' => array('value' => $gt_umur3, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'M' => array('value' => $gt_umur4, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'N' => array('value' => $gt_umur5, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'O' => array('value' => $gt_umur6, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+            'P' => array('value' => $gt_umur7, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold', 'border' => 'border'),
+        );
+
+        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column, 1, 0 );
+
+        $this->load->helper('download');
+        force_download('export_excel/'.$filename.'.xlsx', NULL);
     }
 }

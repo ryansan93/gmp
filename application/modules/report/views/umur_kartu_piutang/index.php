@@ -40,7 +40,7 @@
         </div>
 		<div class="col-xs-12 no-padding">
 			<div class="col-xs-12 no-padding">
-				<button type="button" class="col-xs-12 btn btn-primary" onclick="khl.getData()"><i class="fa fa-search"></i> Tampilkan</button>
+				<button type="button" class="col-xs-12 btn btn-primary" onclick="khl.getLists()"><i class="fa fa-search"></i> Tampilkan</button>
 			</div>
 		</div>
 		<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
@@ -52,9 +52,9 @@
                 </table>
             </small>
 		</div>
-		<!-- <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+		<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 		<div class="col-xs-12 no-padding">
-			<button type="button" class="btn btn-default pull-right" onclick="bank.excryptParams(this)"><i class="fa fa-file-excel-o"></i> Export Excel</button>
-		</div> -->
+			<button type="button" class="btn btn-default pull-right" onclick="khl.excryptParams(this)"><i class="fa fa-file-excel-o"></i> Export Excel</button>
+		</div>
 	</div>
 </div>

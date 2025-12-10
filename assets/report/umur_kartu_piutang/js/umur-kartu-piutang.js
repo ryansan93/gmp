@@ -12,7 +12,7 @@ var khl = {
         });
     }, // end - khl
 
-    getData: function() {
+    getLists: function() {
         var err = 0;
         $.map( $('[data-required=1]'), function (ipt) {
             if ( empty( $(ipt).val() ) ) {
@@ -33,7 +33,7 @@ var khl = {
 			};
 
 			$.ajax({
-                url : 'report/UmurKartuPiutang/getData',
+                url : 'report/UmurKartuPiutang/getLists',
                 data : {
                     'params' : params
                 },
@@ -46,6 +46,51 @@ var khl = {
             });
 		}
     }, // end - getData
+
+    excryptParams: function() {
+		var err = 0;
+
+		$.map( $('[data-required=1]'), function (ipt) {
+			if ( empty( $(ipt).val() ) ) {
+				$(ipt).parent().addClass('has-error');
+				err++;
+			} else {
+				$(ipt).parent().removeClass('has-error');
+			}
+		});
+
+		if ( err > 0 ) {
+			bootbox.alert('Harap lengkapi data terlebih dahulu.');
+		} else {
+			var params = {
+				'bulan': $('.bulan').select2().val(),
+				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
+			};
+
+			$.ajax({
+	            url: 'report/UmurKartuPiutang/excryptParams',
+	            data: {
+	                'params': params
+	            },
+	            type: 'POST',
+	            dataType: 'JSON',
+	            beforeSend: function() { showLoading(); },
+	            success: function(data) {
+	                hideLoading();
+
+	                if ( data.status == 1 ) {
+						khl.exportExcel(data.content);
+	                } else {
+	                	bootbox.alert( data.message );
+	                }
+	            }
+	        });
+		}
+	}, // end - excryptParams
+
+    exportExcel : function (params) {
+		goToURL('report/UmurKartuPiutang/exportExcel/'+params);
+	}, // end - exportExcel
 };
 
 khl.startUp();
