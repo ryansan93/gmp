@@ -23,17 +23,6 @@
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 		<div class="col-xs-2 no-padding">
-			<label class="label-control">Mitra</label>
-		</div>
-		<div class="col-xs-1 no-padding text-center">
-			<label class="label-control">:</label>
-		</div>
-		<div class="col-xs-9 no-padding">
-			<label class="label-control"><?php echo $data['nama_mitra']; ?></label>
-		</div>
-	</div>
-	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
-		<div class="col-xs-2 no-padding">
 			<label class="label-control">Supplier</label>
 		</div>
 		<div class="col-xs-1 no-padding text-center">
@@ -41,6 +30,28 @@
 		</div>
 		<div class="col-xs-9 no-padding">
 			<label class="label-control"><?php echo $data['nama_supplier']; ?></label>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+		<div class="col-xs-2 no-padding">
+			<label class="label-control">Mitra</label>
+		</div>
+		<div class="col-xs-1 no-padding text-center">
+			<label class="label-control">:</label>
+		</div>
+		<div class="col-xs-9 no-padding">
+			<label class="label-control"><?php echo !empty($data['mitra']) ? $data['nama_mitra'] : '-'; ?></label>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+		<div class="col-xs-2 no-padding">
+			<label class="label-control">Unit</label>
+		</div>
+		<div class="col-xs-1 no-padding text-center">
+			<label class="label-control">:</label>
+		</div>
+		<div class="col-xs-9 no-padding">
+			<label class="label-control"><?php echo !empty($data['unit']) ? $data['nama_unit'] : '-'; ?></label>
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">

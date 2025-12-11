@@ -13,17 +13,36 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+		<div class="col-xs-12 no-padding">
+			<label class="label-control">Supplier</label>
+		</div>
+		<div class="col-xs-12 no-padding">
+			<select class="form-control supplier" data-required="1">
+				<option value="">-- Pilih Supplier --</option>
+				<?php foreach ($supplier as $key => $value): ?>
+					<?php
+						$selected = null;
+						if ( $value['nomor'] == $data['supplier'] ) {
+							$selected = 'selected';
+						}
+					?>
+					<option value="<?php echo $value['nomor']; ?>" <?php echo $selected; ?> ><?php echo $value['nomor'].' | '.$value['nama']; ?></option>
+				<?php endforeach ?>
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 		<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 			<div class="col-xs-12 no-padding">
 				<label class="label-control">Mitra</label>
 			</div>
 			<div class="col-xs-12 no-padding">
-				<select class="form-control mitra" data-required="1">
+				<select class="form-control mitra">
 					<option value="">-- Pilih Mitra --</option>
 					<?php foreach ($mitra as $key => $value): ?>
 						<?php
 							$selected = null;
-							if ( $value['nomor'] == $data['mitra'] ) {
+							if ( !empty($data['mitra']) && $value['nomor'] == $data['mitra'] ) {
 								$selected = 'selected';
 							}
 						?>
@@ -34,19 +53,19 @@
 		</div>
 		<div class="col-xs-6 no-padding" style="padding-left: 5px;">
 			<div class="col-xs-12 no-padding">
-				<label class="label-control">Supplier</label>
+				<label class="label-control">Unit</label>
 			</div>
 			<div class="col-xs-12 no-padding">
-				<select class="form-control supplier" data-required="1">
-					<option value="">-- Pilih Supplier --</option>
-					<?php foreach ($supplier as $key => $value): ?>
+				<select class="form-control unit">
+					<option value="">-- Pilih Unit --</option>
+					<?php foreach ($unit as $key => $value): ?>
 						<?php
 							$selected = null;
-							if ( $value['nomor'] == $data['supplier'] ) {
+							if ( !empty($data['unit']) && $value['kode'] == $data['unit'] ) {
 								$selected = 'selected';
 							}
 						?>
-						<option value="<?php echo $value['nomor']; ?>" <?php echo $selected; ?> ><?php echo $value['nomor'].' | '.$value['nama']; ?></option>
+						<option value="<?php echo $value['kode']; ?>" <?php echo $selected; ?> ><?php echo strtoupper($value['nama']); ?></option>
 					<?php endforeach ?>
 				</select>
 			</div>
@@ -57,7 +76,7 @@
 			<label class="label-control">Grand Total</label>
 		</div>
 		<div class="col-xs-12 no-padding">
-			<input type="text" class="form-control text-right grand_total" placeholder="Grand Total" data-tipe="decimal" readonly data-required="1" value="<?php echo angkaDecimal( $data['total'] ); ?>">
+			<input type="text" class="form-control text-right grand_total" placeholder="Grand Total" data-tipe="decimal" readonly data-required="1" value="<?php echo angkaDecimal( $data['grand_total'] ); ?>">
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>

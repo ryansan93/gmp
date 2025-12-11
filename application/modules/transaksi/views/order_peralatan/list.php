@@ -5,11 +5,12 @@
 			<td class="text-center"><?php echo $v_data['no_order']; ?></td>
 			<td><?php echo $v_data['nama_supplier']; ?></td>
 			<td><?php echo $v_data['nama_mitra']; ?></td>
+			<td><?php echo $v_data['nama_unit']; ?></td>
 			<td class="text-right"><?php echo angkaDecimal($v_data['total']); ?></td>
 		</tr>
 	<?php endforeach ?>
 <?php else: ?>
 	<tr>
-		<td colspan="5">Data tidak ditemukan.</td>
+		<td colspan="6">Data tidak ditemukan.</td>
 	</tr>
 <?php endif ?>

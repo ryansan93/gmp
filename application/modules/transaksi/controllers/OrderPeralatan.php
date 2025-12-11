@@ -54,18 +54,27 @@ class OrderPeralatan extends Public_Controller {
         $params = $this->input->get('params');
 
         $sql_query_supplier = null;
-        if (  stristr($params['supplier'], 'all') === FALSE  ) {
+        if ( stristr($params['supplier'], 'all') === FALSE ) {
             $sql_query_supplier = "and op.supplier = '".$params['supplier']."'";
         }
         $sql_query_mitra = null;
-        if (  stristr($params['mitra'], 'all') === FALSE  ) {
+        if ( isset($params['mitra']) && !empty($params['mitra']) && stristr($params['mitra'], 'all') === FALSE ) {
             $sql_query_mitra = "and op.mitra = '".$params['mitra']."'";
+        }
+        $sql_query_unit = null; 
+        if ( isset($params['unit']) && !empty($params['unit']) && stristr($params['unit'], 'all') === FALSE ) {
+            $sql_query_unit = "and op.unit = '".$params['unit']."'";
         }
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select op.*, mtr.nama as nama_mitra, supl.nama as nama_supplier from order_peralatan op
-            right join
+            select
+                op.*, 
+                supl.nama as nama_supplier,
+                mtr.nama as nama_mitra,
+                w.nama as nama_unit 
+            from order_peralatan op
+            left join
                 (
                     select mtr1.* from mitra mtr1
                     right join
@@ -75,7 +84,7 @@ class OrderPeralatan extends Public_Controller {
                 ) mtr
                 on
                     mtr.nomor = op.mitra
-            right join
+            left join
                 (
                     select supl1.* from pelanggan supl1
                     right join
@@ -85,10 +94,21 @@ class OrderPeralatan extends Public_Controller {
                 ) supl
                 on
                     supl.nomor = op.supplier
+            left join
+                (
+                    select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
+                    right join
+                    (select max(id) as id, kode from wilayah group by kode) w2
+                    on
+                        w1.id = w2.id
+                ) w
+                on
+                    op.unit = w.kode
             where
                 op.tgl_order between '".$params['start_date']."' and '".$params['end_date']."'
                 ".$sql_query_supplier."
                 ".$sql_query_mitra."
+                ".$sql_query_unit."
         ";
         $d_op = $m_conf->hydrateRaw( $sql );
 
@@ -213,11 +233,11 @@ class OrderPeralatan extends Public_Controller {
                         ) mm
                         on
                             mm.id = k.mitra_mapping
-                    right join
+                    left join
                         mitra m 
                         on
                             mm.mitra = m.id
-                    right join
+                    left join
                         wilayah w
                         on
                             w.id = k.unit
@@ -294,31 +314,7 @@ class OrderPeralatan extends Public_Controller {
         return $data;
     }
 
-    public function riwayat()
-    {
-        $html = null;
-
-        $content['mitra'] = $this->getMitra();
-
-        $html = $this->load->view($this->path.'riwayat', $content, TRUE);
-
-        return $html;
-    }
-
-    public function addForm()
-    {
-        $html = null;
-
-        $content['supplier'] = $this->getSupplier();
-        $content['mitra'] = $this->getMitra();
-        $content['barang'] = $this->getBarang();
-
-        $html = $this->load->view($this->path.'addForm', $content, TRUE);
-
-        return $html;
-    }
-
-    public function viewForm( $id )
+    public function getData($id)
     {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
@@ -327,7 +323,11 @@ class OrderPeralatan extends Public_Controller {
                 op.no_order,
                 op.tgl_order,
                 op.total as grand_total,
-                mtr.nama as nama_mitra, 
+                op.supplier,
+                op.mitra,
+                op.unit,
+                mtr.nama as nama_mitra,
+                w.nama as nama_unit,
                 supl.nama as nama_supplier,
                 opd.*, 
                 brg.nama as nama_barang
@@ -366,6 +366,16 @@ class OrderPeralatan extends Public_Controller {
                 ) supl
                 on
                     supl.nomor = op.supplier
+            left join
+                (
+                    select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
+                    right join
+                    (select max(id) as id, kode from wilayah group by kode) w2
+                    on
+                        w1.id = w2.id
+                ) w
+                on
+                    op.unit = w.kode
             where
                 op.id = ".$id."
         ";
@@ -373,13 +383,59 @@ class OrderPeralatan extends Public_Controller {
 
         $data = null;
         if ( $d_op->count() > 0 ) {
-            $d_op = $d_op->toArray();
+            $data = $d_op->toArray();
+        }
+
+        return $data;
+    }
+
+    public function riwayat()
+    {
+        $html = null;
+
+        $m_wil = new \Model\Storage\Wilayah_model();
+
+        $content['mitra'] = $this->getMitra();
+        $content['unit'] = $m_wil->getDataUnit(1, $this->userid);
+        $content['supplier'] = $this->getSupplier();
+
+        $html = $this->load->view($this->path.'riwayat', $content, TRUE);
+
+        return $html;
+    }
+
+    public function addForm()
+    {
+        $html = null;
+
+        $m_wil = new \Model\Storage\Wilayah_model();
+
+        $content['supplier'] = $this->getSupplier();
+        $content['mitra'] = $this->getMitra();
+        $content['unit'] = $m_wil->getDataUnit(1, $this->userid);
+        $content['barang'] = $this->getBarang();
+
+        $html = $this->load->view($this->path.'addForm', $content, TRUE);
+
+        return $html;
+    }
+
+    public function viewForm( $id )
+    {
+        $data = null;
+
+        $d_op = $this->getData( $id );
+
+        if ( !empty($d_op) ) {
             foreach ($d_op as $k_op => $v_op) {
                 $data['id'] = $v_op['id'];
                 $data['no_order'] = $v_op['no_order'];
                 $data['tgl_order'] = $v_op['tgl_order'];
                 $data['grand_total'] = $v_op['grand_total'];
+                $data['mitra'] = $v_op['mitra'];
                 $data['nama_mitra'] = $v_op['nama_mitra'];
+                $data['unit'] = $v_op['unit'];
+                $data['nama_unit'] = $v_op['nama_unit'];
                 $data['nama_supplier'] = $v_op['nama_supplier'];
                 $data['detail'][] = $v_op;
             }
@@ -394,75 +450,31 @@ class OrderPeralatan extends Public_Controller {
 
     public function editForm( $id )
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select 
-                op.id,
-                op.no_order,
-                op.tgl_order,
-                op.total,
-                op.mitra, 
-                op.supplier,
-                opd.*, 
-                brg.nama as nama_barang
-            from 
-                order_peralatan_detail opd
-            right join
-                (
-                    select brg1.* from barang brg1
-                    right join
-                        (select max(id) as id, kode from barang group by kode) brg2
-                        on
-                            brg1.id = brg2.id
-                ) brg
-                on
-                    brg.kode = opd.kode_barang
-            right join
-                order_peralatan op
-                on
-                    op.id = opd.id_header
-            right join
-                (
-                    select mtr1.* from mitra mtr1
-                    right join
-                        (select max(id) as id, nomor from mitra group by nomor) mtr2
-                        on
-                            mtr1.id = mtr2.id
-                ) mtr
-                on
-                    mtr.nomor = op.mitra
-            right join
-                (
-                    select supl1.* from pelanggan supl1
-                    right join
-                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) supl2
-                        on
-                            supl1.id = supl2.id
-                ) supl
-                on
-                    supl.nomor = op.supplier
-            where
-                op.id = ".$id."
-        ";
-        $d_op = $m_conf->hydrateRaw( $sql );
-
         $data = null;
-        if ( $d_op->count() > 0 ) {
-            $d_op = $d_op->toArray();
+
+        $d_op = $this->getData( $id );
+        if ( !empty($d_op) ) {
             foreach ($d_op as $k_op => $v_op) {
                 $data['id'] = $v_op['id'];
                 $data['no_order'] = $v_op['no_order'];
                 $data['tgl_order'] = $v_op['tgl_order'];
-                $data['total'] = $v_op['total'];
-                $data['mitra'] = $v_op['mitra'];
+                $data['grand_total'] = $v_op['grand_total'];
                 $data['supplier'] = $v_op['supplier'];
+                $data['mitra'] = $v_op['mitra'];
+                $data['nama_mitra'] = $v_op['nama_mitra'];
+                $data['unit'] = $v_op['unit'];
+                $data['nama_unit'] = $v_op['nama_unit'];
+                $data['nama_supplier'] = $v_op['nama_supplier'];
                 $data['detail'][] = $v_op;
             }
         }
 
+        $m_wil = new \Model\Storage\Wilayah_model();
+
         $content['data'] = $data;
         $content['supplier'] = $this->getSupplier();
         $content['mitra'] = $this->getMitra();
+        $content['unit'] = $m_wil->getDataUnit(1, $this->userid);
         $content['barang'] = $this->getBarang();
 
         $html = $this->load->view($this->path.'editForm', $content, TRUE);
@@ -477,11 +489,14 @@ class OrderPeralatan extends Public_Controller {
         try {
             $m_op = new \Model\Storage\OrderPeralatan_model();
 
-            $no_order = $m_op->getNextNomor('OPR/'.$params['kode_unit']);
+            $kode_unit = (isset($params['unit']) && !empty($params['unit'])) ? $params['unit'] : $params['kode_unit'];
+
+            $no_order = $m_op->getNextNomor('OPR/'.$kode_unit);
 
             $m_op->no_order = $no_order;
             $m_op->tgl_order = $params['tgl_order'];
-            $m_op->mitra = $params['mitra'];
+            $m_op->mitra = (isset($params['mitra']) && !empty($params['mitra'])) ? $params['mitra'] : null;
+            $m_op->unit = (isset($params['unit']) && !empty($params['unit'])) ? $params['unit'] : null;
             $m_op->supplier = $params['supplier'];
             $m_op->total = $params['grand_total'];
             $m_op->save();
@@ -522,7 +537,8 @@ class OrderPeralatan extends Public_Controller {
             $m_op->where('id', $id)->update(
                 array(
                     'tgl_order' => $params['tgl_order'],
-                    'mitra' => $params['mitra'],
+                    'mitra' => (isset($params['mitra']) && !empty($params['mitra'])) ? $params['mitra'] : null,
+                    'unit' => (isset($params['unit']) && !empty($params['unit'])) ? $params['unit'] : null,
                     'supplier' => $params['supplier'],
                     'total' => $params['grand_total']
                 )

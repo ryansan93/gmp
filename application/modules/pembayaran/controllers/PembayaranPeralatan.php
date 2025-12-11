@@ -28,7 +28,7 @@ class PembayaranPeralatan extends Public_Controller
 
             $data = $this->includes;
 
-            $data['title_menu'] = 'Pembayaran Peralatan';
+            $data['title_menu'] = 'Pengajuan Pembayaran Peralatan';
 
             $mitra = null;
 
@@ -75,6 +75,7 @@ class PembayaranPeralatan extends Public_Controller
         $end_date = $params['endDate'];
         $supplier = $params['supplier'];
         $mitra = $params['mitra'];
+        $unit = $params['unit'];
 
         $sql_supplier = null;
         if ( stristr($supplier[0], 'all') === false ) {
@@ -82,8 +83,13 @@ class PembayaranPeralatan extends Public_Controller
         }
 
         $sql_mitra = null;
-        if ( stristr($mitra[0], 'all') === false ) {
+        if ( !empty($mitra) && stristr($mitra[0], 'all') === false ) {
             $sql_mitra = "and op.mitra in ('".implode("', '", $mitra)."')";
+        }
+
+        $sql_unit = null;
+        if ( !empty($unit) && stristr($unit[0], 'all') === false ) {
+            $sql_unit = "and op.unit in ('".implode("', '", $unit)."')";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -94,24 +100,15 @@ class PembayaranPeralatan extends Public_Controller
                 bp.tgl_bayar, 
                 supl.nama as nama_supplier, 
                 mtr.nama as nama_mitra,
+                w.nama as nama_unit,
                 bp.jml_tagihan,
                 bp.tot_bayar
             from bayar_peralatan bp
-            right join
+            left join
                 order_peralatan op
                 on
                     bp.no_order = op.no_order
-            right join
-                (
-                    select mtr1.* from mitra mtr1
-                    right join
-                        (select max(id) as id, nomor from mitra group by nomor) mtr2
-                        on
-                            mtr1.id = mtr2.id
-                ) mtr
-                on
-                    op.mitra = mtr.nomor
-            right join
+            left join
                 (
                     select p2.* from pelanggan p2
                     right join
@@ -121,10 +118,31 @@ class PembayaranPeralatan extends Public_Controller
                 ) supl
                 on
                     op.supplier = supl.nomor
+            left join
+                (
+                    select mtr1.* from mitra mtr1
+                    right join
+                        (select max(id) as id, nomor from mitra group by nomor) mtr2
+                        on
+                            mtr1.id = mtr2.id
+                ) mtr
+                on
+                    op.mitra = mtr.nomor
+            left join
+                (
+                    select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
+                    right join
+                    (select max(id) as id, kode from wilayah group by kode) w2
+                    on
+                        w1.id = w2.id
+                ) w
+                on
+                    op.unit = w.kode
             where
                 bp.tgl_bayar between '".$start_date."' and '".$end_date."'
                 ".$sql_supplier."
                 ".$sql_mitra."
+                ".$sql_unit."
             order by
                 bp.tgl_bayar desc,
                 mtr.nama asc
@@ -300,8 +318,12 @@ class PembayaranPeralatan extends Public_Controller
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "
-                select op.*, mtr.nama as nama_mitra from order_peralatan op
-                right join
+                select 
+                    op.*,
+                    mtr.nama as nama_mitra,
+                    w.nama as nama_unit
+                from order_peralatan op
+                left join
                     (
                         select mtr1.* from mitra mtr1
                         right join
@@ -311,6 +333,16 @@ class PembayaranPeralatan extends Public_Controller
                     ) mtr
                     on
                         op.mitra = mtr.nomor
+                left join
+                    (
+                        select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
+                        right join
+                        (select max(id) as id, kode from wilayah group by kode) w2
+                        on
+                            w1.id = w2.id
+                    ) w
+                    on
+                        op.unit = w.kode
                 where
                     op.supplier = '".$supplier."'
                 order by
@@ -331,7 +363,8 @@ class PembayaranPeralatan extends Public_Controller
                         'supplier' => $value['supplier'],
                         'mitra' => $value['mitra'],
                         'total' => $value['total'],
-                        'nama_mitra' => $value['nama_mitra']
+                        'nama_mitra' => $value['nama_mitra'],
+                        'nama_unit' => $value['nama_unit']
                     );
                 }
             }
@@ -543,14 +576,28 @@ class PembayaranPeralatan extends Public_Controller
         $sql = "
             select
                 bp.*,
-                mtr.nama as nama_mitra,
                 supl.nomor as supplier,
-                supl.nama as nama_supplier
+                supl.nama as nama_supplier,
+                mtr.nama as nama_mitra,
+                w.nama as nama_unit,
+                bank_p.rekening_nomor,
+                bank_p.rekening_pemilik,
+                bank_p.bank
             from bayar_peralatan bp
             left join
                 order_peralatan op
                 on
                     bp.no_order = op.no_order
+            left join
+                (
+                    select p2.* from pelanggan p2
+                    right join
+                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p1
+                        on
+                            p2.id = p1.id
+                ) supl
+                on
+                    op.supplier = supl.nomor
             left join
                 (
                     select mtr1.* from mitra mtr1
@@ -563,14 +610,18 @@ class PembayaranPeralatan extends Public_Controller
                     op.mitra = mtr.nomor
             left join
                 (
-                    select p2.* from pelanggan p2
+                    select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
                     right join
-                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p1
-                        on
-                            p2.id = p1.id
-                ) supl
+                    (select max(id) as id, kode from wilayah group by kode) w2
+                    on
+                        w1.id = w2.id
+                ) w
                 on
-                    op.supplier = supl.nomor
+                    op.unit = w.kode
+            left join
+                bank_pelanggan bank_p
+                on
+                    bp.no_rek = bank_p.id
             where
                 bp.id = ".$id."
         ";
@@ -656,10 +707,39 @@ class PembayaranPeralatan extends Public_Controller
         return $data;
     }
 
+    public function getRekening()
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select bp.*, plg.nomor from bank_pelanggan bp
+            right join
+                (
+                    select plg1.* from pelanggan plg1
+                    right join
+                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' group by nomor) plg2
+                        on
+                            plg1.id = plg2.id
+                ) plg
+                on
+                    bp.pelanggan = plg.id
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        return $data;
+    }
+
     public function riwayat()
     {
-        $content['mitra'] = $this->getMitra();
+        $m_wil = new \Model\Storage\Wilayah_model();
+
         $content['supplier'] = $this->getSupplier();
+        $content['mitra'] = $this->getMitra();
+        $content['unit'] = $m_wil->getDataUnit(1, $this->userid);
 
         $html = $this->load->view($this->path.'riwayat', $content, true);
 
@@ -668,7 +748,11 @@ class PembayaranPeralatan extends Public_Controller
 
     public function addForm()
     {
+        $m_coa = new \Model\Storage\Coa_model();
+
+        $content['bank'] = $m_coa->getDataBank();
         $content['supplier'] = $this->getSupplier();
+        $content['rekening'] = $this->getRekening();
 
         $html = $this->load->view($this->path.'addForm', $content, true);
 
@@ -690,7 +774,11 @@ class PembayaranPeralatan extends Public_Controller
     {
         $data = $this->getData( $id );
 
+        $m_coa = new \Model\Storage\Coa_model();
+
+        $content['bank'] = $m_coa->getDataBank();
         $content['supplier'] = $this->getSupplier();
+        $content['rekening'] = $this->getRekening();
         $content['data'] = $data;
 
         $html = $this->load->view($this->path.'editForm', $content, true);
@@ -727,17 +815,13 @@ class PembayaranPeralatan extends Public_Controller
                 $m_bp->tot_dn = $data['tot_dn'];
                 $m_bp->tot_cn = $data['tot_cn'];
                 $m_bp->tot_tagihan = $data['tot_tagihan'];
+                $m_bp->mstatus = 1;
+                $m_bp->coa_bank = $data['coa_bank'];
+                $m_bp->nama_bank = $data['nama_bank'];
+                $m_bp->no_rek = $data['rekening'];
                 $m_bp->save();
 
                 $id = $m_bp->id;
-
-                $m_nbbm = new \Model\Storage\NoBbm_model();
-                $no_km = $m_nbbm->getKode('BBK');
-
-                $m_nbbm->tbl_name = $m_bp->getTable();
-                $m_nbbm->tbl_id = $id;
-                $m_nbbm->kode = $no_km;
-                $m_nbbm->save();
 
                 if ( isset($data['dn']) && !empty($data['dn']) ) {
                     foreach ($data['dn'] as $k_dn => $v_dn) {
@@ -763,9 +847,9 @@ class PembayaranPeralatan extends Public_Controller
                     }
                 }
 
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'PERALATAN', '".$data['no_order']."', NULL, 0, 'bayar_peralatan', ".$m_bp->id.", NULL, 1";
-                $d_conf = $m_conf->hydrateRaw( $sql );
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal 'PERALATAN', '".$data['no_order']."', NULL, 0, 'bayar_peralatan', ".$m_bp->id.", NULL, 1";
+                // $d_conf = $m_conf->hydrateRaw( $sql );
 
                 $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $m_bp, $deskripsi_log);
@@ -822,6 +906,9 @@ class PembayaranPeralatan extends Public_Controller
                     'tot_dn' => $data['tot_dn'],
                     'tot_cn' => $data['tot_cn'],
                     'tot_tagihan' => $data['tot_tagihan'],
+                    'coa_bank' => $data['coa_bank'],
+                    'nama_bank' => $data['nama_bank'],
+                    'no_rek' => $data['rekening'],
                 )
             );
 
@@ -855,10 +942,6 @@ class PembayaranPeralatan extends Public_Controller
                 }
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'PERALATAN', '".$data['no_order']."', NULL, 0, 'bayar_peralatan', ".$id.", ".$id.", 2";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-
             $deskripsi_log = 'di-ubah oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $m_bp, $deskripsi_log);
 
@@ -887,9 +970,9 @@ class PembayaranPeralatan extends Public_Controller
 
             $m_bp->where('id', $params['id'])->delete();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'bayar_peralatan', ".$params['id'].", ".$params['id'].", 3";
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'bayar_peralatan', ".$params['id'].", ".$params['id'].", 3";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'di-ubah oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_bp, $deskripsi_log);

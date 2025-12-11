@@ -105,18 +105,38 @@ var pp = {
                     i = mitra.length;
                 }
             }
+
+			$(div_riwayat).find('.unit').select2().val('').trigger('change');
+        });
+
+		$(div_riwayat).find('.unit').select2({placeholder: 'Pilih Unit'}).on("select2:select", function (e) {
+            var unit = $(div_riwayat).find('.unit').select2().val();
+
+            for (var i = 0; i < unit.length; i++) {
+                if ( unit[i] == 'all' ) {
+                    $(div_riwayat).find('.unit').select2().val('all').trigger('change');
+
+                    i = unit.length;
+                }
+            }
+
+			$(div_riwayat).find('.mitra').select2().val('').trigger('change');
         });
 
         $(div_action).find('.supplier').select2().on("select2:select", function (e) {
         	var supplier = $(div_action).find('.supplier').select2().val();
 
         	pp.getNoOrder( supplier );
+        	pp.getRekening();
         });
         $(div_action).find('select.no_order').select2();
+        $(div_action).find('select.bank').select2();
 
         $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
             $(this).priceFormat(Config[$(this).data('tipe')]);
         });
+
+		pp.getRekening();
 	}, // end - settingUp
 
 	changeTabActive: function(elm) {
@@ -415,7 +435,8 @@ var pp = {
 				'startDate': dateSQL( $(div).find('#StartDate').data('DateTimePicker').date() ),
 				'endDate': dateSQL( $(div).find('#EndDate').data('DateTimePicker').date() ),
 				'supplier': $(div).find('.supplier').select2('val'),
-				'mitra': $(div).find('.mitra').select2('val')
+				'mitra': $(div).find('.mitra').select2('val'),
+				'unit': $(div).find('.unit').select2('val')
 			};
 
 			$.ajax({
@@ -458,7 +479,12 @@ var pp = {
             					selected = 'selected';
             				}
 
-            				option += '<option value="'+data.content[i].no_order+'" data-namamitra="'+data.content[i].nama_mitra+'" data-jmltagihan="'+data.content[i].total+'"	'+selected+' >'+data.content[i].tgl_order+' | '+data.content[i].no_order+'</option>';
+							var nama_mitra = data.content[i].nama_mitra;
+							if ( !empty( data.content[i].nama_unit ) ) {
+								nama_mitra = data.content[i].nama_unit;
+							}
+
+            				option += '<option value="'+data.content[i].no_order+'" data-namamitra="'+nama_mitra+'" data-jmltagihan="'+data.content[i].total+'"	'+selected+' >'+data.content[i].tgl_order+' | '+data.content[i].no_order+'</option>';
             			}
             			$(div).find('select.no_order').html(option);
             			$(div).find('select.no_order').select2().on('select2:select', function (e) {
@@ -489,6 +515,23 @@ var pp = {
             }
         });
 	}, // end - getNoOrder
+
+	getRekening: function () {
+		var supplier = $('#action').find('.supplier').select2().val();
+
+		$('.rekening').find('option[data-supl="'+supplier+'"]').removeAttr('disabled');
+		if ( !empty(supplier) ) {
+			$('.rekening').find('option:not([data-supl="'+supplier+'"])').attr('disabled', 'disabled');
+		}
+
+		$('.rekening').select2();
+		var rek = $('.rekening').attr('data-val');
+		if ( !empty(rek) ) {
+			$('.rekening').select2().val(rek).trigger('change');
+		} else {
+			$('.rekening').select2().val('').trigger('change');
+		}
+	}, // end - getRekening
 
 	getDetailOrder: function (no_order) {
 		var div = $('#action');
@@ -573,6 +616,9 @@ var pp = {
 						'jml_bayar':  numeral.unformat($(div).find('.jumlah_bayar').val()),
 						'tot_bayar': tot_bayar,
 						'no_faktur': $(div).find('.no_faktur').val(),
+						'coa_bank': $(div).find('.bank').val(),
+						'nama_bank': $(div).find('.bank option:selected').attr('data-nama'),
+						'rekening': $(div).find('.rekening').val(),
 						'dn': !empty(dn) ? dn : null,
             			'cn': !empty(cn) ? cn : null,
 					};
@@ -645,6 +691,9 @@ var pp = {
 						'jml_bayar':  numeral.unformat($(div).find('.jumlah_bayar').val()),
 						'tot_bayar': tot_bayar,
 						'no_faktur': $(div).find('.no_faktur').val(),
+						'coa_bank': $(div).find('.bank').val(),
+						'nama_bank': $(div).find('.bank option:selected').attr('data-nama'),
+						'rekening': $(div).find('.rekening').val(),
 						'dn': !empty(dn) ? dn : null,
             			'cn': !empty(cn) ? cn : null,
 					};

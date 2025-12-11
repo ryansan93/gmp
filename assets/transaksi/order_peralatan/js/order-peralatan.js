@@ -18,8 +18,31 @@ var op = {
             }
         });
 
-        $('.mitra').select2();
         $('.supplier').select2();
+        $('#riwayat').find('.mitra').select2({placeholder: 'Pilih Plasma'}).on("select2:select", function (e) {
+			var mitra = $('#riwayat').find('.mitra').select2().val();
+            if ( !empty(mitra) ) {
+                $('#riwayat').find('.unit').select2().val('').trigger('change');
+            }
+		});
+        $('#riwayat').find('.unit').select2({placeholder: 'Pilih Unit'}).on("select2:select", function (e) {
+			var unit = $('#riwayat').find('.unit').select2().val();
+            if ( !empty(unit) ) {
+                $('#riwayat').find('.mitra').select2().val('').trigger('change');
+            }
+		});
+        $('#action').find('.mitra').select2({placeholder: 'Pilih Plasma'}).on("select2:select", function (e) {
+			var mitra = $('#action').find('.mitra').select2().val();
+            if ( !empty(mitra) ) {
+                $('#action').find('.unit').select2().val('').trigger('change');
+            }
+		});
+        $('#action').find('.unit').select2({placeholder: 'Pilih Unit'}).on("select2:select", function (e) {
+			var unit = $('#action').find('.unit').select2().val();
+            if ( !empty(unit) ) {
+                $('#action').find('.mitra').select2().val('').trigger('change');
+            }
+		});
         $('.barang').select2();
 
         $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
@@ -48,8 +71,9 @@ var op = {
             var params = {
                 'start_date': dateSQL( $(div).find('#StartDate').data('DateTimePicker').date() ),
                 'end_date': dateSQL( $(div).find('#EndDate').data('DateTimePicker').date() ),
+                'supplier': $(div).find('.supplier').select2('val'),
                 'mitra': $(div).find('.mitra').select2('val'),
-                'supplier': $(div).find('.supplier').select2('val')
+                'unit': $(div).find('.unit').select2('val')
             };
 
             $.ajax({
@@ -198,9 +222,10 @@ var op = {
 
                     var data = {
                         'tgl_order': dateSQL( $(div).find('#tanggal').data('DateTimePicker').date() ),
-                        'mitra': $(div).find('.mitra').select2('val'),
-                        'kode_unit': $(div).find('.mitra').select2().find(':selected').data('kodeunit'),
                         'supplier': $(div).find('.supplier').select2('val'),
+                        'kode_unit': $(div).find('.mitra').select2().find(':selected').data('kodeunit'),
+                        'mitra': $(div).find('.mitra').select2('val'),
+                        'unit': $(div).find('.unit').select2('val'),
                         'grand_total': numeral.unformat( $(div).find('.grand_total').val() ),
                         'detail': detail
                     };
@@ -261,9 +286,10 @@ var op = {
                     var data = {
                         'id': $(elm).attr('data-id'),
                         'tgl_order': dateSQL( $(div).find('#tanggal').data('DateTimePicker').date() ),
-                        'mitra': $(div).find('.mitra').select2('val'),
-                        'kode_unit': $(div).find('.mitra').select2().find(':selected').data('kodeunit'),
                         'supplier': $(div).find('.supplier').select2('val'),
+                        'kode_unit': $(div).find('.mitra').select2().find(':selected').data('kodeunit'),
+                        'mitra': $(div).find('.mitra').select2('val'),
+                        'unit': $(div).find('.unit').select2('val'),
                         'grand_total': numeral.unformat( $(div).find('.grand_total').val() ),
                         'detail': detail
                     };

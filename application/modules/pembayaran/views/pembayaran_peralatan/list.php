@@ -5,12 +5,13 @@
 			<td><?php echo $value['no_faktur']; ?></td>
 			<td><?php echo $value['nama_supplier']; ?></td>
 			<td><?php echo $value['nama_mitra']; ?></td>
+			<td><?php echo $value['nama_unit']; ?></td>
 			<td class="text-right"><?php echo angkaDecimal($value['jml_tagihan']); ?></td>
 			<td class="text-right"><?php echo angkaDecimal($value['tot_bayar']); ?></td>
 		</tr>
 	<?php endforeach ?>
 <?php else: ?>
 	<tr>
-		<td colspan="6">Data tidak ditemukan.</td>
+		<td colspan="7">Data tidak ditemukan.</td>
 	</tr>
 <?php endif ?>

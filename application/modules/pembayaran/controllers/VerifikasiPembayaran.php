@@ -261,6 +261,38 @@ class VerifikasiPembayaran extends Public_Controller
                         nb.tbl_id = p.kode
                 where
                     p.status = ".$status."
+
+                union all
+
+                select
+                    'PERALATAN' as jenis_transaksi,
+                    'supplier' as jenis_supl,
+                    op.supplier as kode_supl,
+                    bp.tgl_bayar as tgl_pengajuan,
+                    bp.jml_bayar as jml_transfer,
+                    bp.jml_bayar as jml_bayar,
+                    cast(bp.lampiran as varchar(max)) as lampiran,
+                    bp.coa_bank as coa_bank,
+                    bp.nama_bank as nama_bank,
+                    bp.id,
+                    bp.tgl_realisasi as tgl_bayar,
+                    cast(bp.lampiran_realisasi as varchar(max)) as lampiran_realisasi,
+                    cast(bp.ket_realisasi as varchar(max)) as ket_realisasi,
+                    bp.no_bukti,
+                    nb.kode as kode_trans,
+                    cast(bp.no_rek as varchar(50)) as no_rek,
+                    'bayar_peralatan' as tbl_name
+                from bayar_peralatan bp
+                left join
+                    order_peralatan op
+                    on
+                        bp.no_order = bp.no_order
+                left join
+                    no_bbk nb
+                    on
+                        nb.tbl_id = cast(bp.id as varchar(50))
+                where
+                    bp.mstatus = ".$status."
             ) data
             left join
                 (
@@ -295,7 +327,7 @@ class VerifikasiPembayaran extends Public_Controller
                 (
                     select lt1.* from log_tables lt1
                     right join
-                        (select min(id) as id, tbl_name, tbl_id from log_tables where tbl_name in ('realisasi_pembayaran', 'piutang') group by tbl_name, tbl_id) lt2
+                        (select min(id) as id, tbl_name, tbl_id from log_tables where tbl_name in ('realisasi_pembayaran', 'piutang', 'bayar_peralatan') group by tbl_name, tbl_id) lt2
                         on
                             lt1.id = lt2.id
                 ) lt
@@ -321,7 +353,6 @@ class VerifikasiPembayaran extends Public_Controller
             order by
                 lt.waktu asc
         ";
-        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
@@ -555,6 +586,44 @@ class VerifikasiPembayaran extends Public_Controller
                             nb.tbl_id = p.no_bukti
                     where
                         p.id = ".$id."
+
+                    union all
+
+                    select
+                        'supplier' as jenis_supl,
+                        op.supplier as kode_supl,
+                        bp.tgl_bayar as tgl_pengajuan,
+                        bp.id as id_header,
+                        'PERALATAN' as transaksi,
+                        bp.no_faktur as no_bayar,
+                        bp.jml_bayar as tagihan,
+                        bp.jml_bayar as bayar,
+                        0 as cn,
+                        0 as potongan,
+                        bp.jml_bayar as transfer,
+                        0 as uang_muka,
+                        0 as dn,
+                        bp.id,
+                        bp.no_faktur as no_inv,
+                        bp.no_faktur as no_sj,
+                        bp.jml_tagihan as bruto,
+                        0 as pph,
+                        bp.jml_tagihan as netto,
+                        bp.lampiran as lampiran,
+                        bp.tgl_bayar as tanggal,
+                        'PERALATAN' as jenis,
+                        'bayar_peralatan' as tbl_name
+                    from bayar_peralatan bp
+                    left join
+                        order_peralatan op
+                        on
+                            bp.no_order = op.no_order
+                    left join
+                        no_bbk nb
+                        on
+                            nb.tbl_id = cast(bp.id as varchar(50))
+                    where
+                        bp.id = ".$id."
                 ) data
                 where
                     data.tbl_name = '".$tbl_name."'
@@ -858,6 +927,39 @@ class VerifikasiPembayaran extends Public_Controller
                 Modules::run( 'base/event/update', $_d_piutang, $deskripsi_log);
             }
 
+            if ( $data['tbl_name'] == 'bayar_peralatan' ) {
+                $m_bp = new \Model\Storage\BayarPeralatan_model();
+                $d_bp = $m_bp->where('id', $data['id'])->first();
+
+                $m_coa = new \Model\Storage\Coa_model();
+                $d_coa = $m_coa->where('coa', $d_bp->coa_bank)->orderBy('id', 'desc')->first();
+
+                $m_nbbk = new \Model\Storage\NoBbk_model();
+                $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
+
+                $m_nbbk->tbl_name = $m_bp->getTable();
+                $m_nbbk->tbl_id = $d_bp->id;
+                $m_nbbk->kode = $no_kk;
+                $m_nbbk->save();
+
+                $m_bp = new \Model\Storage\BayarPeralatan_model();
+                $m_bp->where('id', $data['id'])->update(
+                    array(
+                        'no_bukti' => $no_kk,
+                        'tgl_realisasi' => $data['tgl_bayar'],
+                        'lampiran_realisasi' => $path_name,
+                        'ket_realisasi' => $data['ket_bayar'],
+                        'mstatus' => 2
+                    )
+                );
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, $data['tbl_name'], $data['tgl_bayar']);
+
+                $_d_bp = $m_bp->where('id', $data['id'])->first();
+                $deskripsi_log = 'di-bayar oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $_d_bp, $deskripsi_log);
+            }
+
             $this->result['status'] = 1;
             $this->result['message'] = 'Data pembayaran berhasil di simpan.';
         } catch (Exception $e) {
@@ -985,6 +1087,31 @@ class VerifikasiPembayaran extends Public_Controller
                 $_d_piutang = $m_piutang->where('id', $params['id'])->first();
                 $deskripsi_log = 'hapus pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/update', $_d_piutang, $deskripsi_log);
+            }
+
+            if ( $params['tbl_name'] == 'bayar_peralatan' ) {
+                $m_bp = new \Model\Storage\BayarPeralatan_model();
+                $d_bp = $m_bp->where('id', $params['id'])->first();
+    
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 3, $params['tbl_name'], $d_bp->tgl_realisasi);
+    
+                $m_nbbk = new \Model\Storage\NoBbk_model();
+                $m_nbbk->where('tbl_name', $m_bp->getTable())->where('tbl_id', $d_bp->id)->delete();
+    
+                $m_bp = new \Model\Storage\BayarPeralatan_model();
+                $m_bp->where('id', $params['id'])->update(
+                    array(
+                        'no_bukti' => null,
+                        'tgl_realisasi' => null,
+                        'lampiran_realisasi' => null,
+                        'ket_realisasi' => null,
+                        'mstatus' => 1
+                    )
+                );
+    
+                $_d_bp = $m_bp->where('id', $params['id'])->first();
+                $deskripsi_log = 'hapus pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $_d_bp, $deskripsi_log);
             }
 
             $this->result['status'] = 1;

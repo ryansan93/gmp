@@ -13,28 +13,41 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+		<div class="col-xs-12 no-padding">
+			<label class="label-control">Supplier</label>
+		</div>
+		<div class="col-xs-12 no-padding">
+			<select class="form-control supplier" data-required="1">
+				<option value="">-- Pilih Supplier --</option>
+				<?php foreach ($supplier as $key => $value): ?>
+					<option value="<?php echo $value['nomor']; ?>"><?php echo $value['nomor'].' | '.$value['nama']; ?></option>
+				<?php endforeach ?>
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 		<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 			<div class="col-xs-12 no-padding">
 				<label class="label-control">Mitra</label>
 			</div>
 			<div class="col-xs-12 no-padding">
-				<select class="form-control mitra" data-required="1">
-					<option value="">-- Pilih Mitra --</option>
+				<select class="form-control mitra">
+					<option value="">-- Pilih Plasma --</option>
 					<?php foreach ($mitra as $key => $value): ?>
-						<option value="<?php echo $value['nomor']; ?>" data-kodeunit="<?php echo $value['kode_unit'] ?>" ><?php echo $value['nomor'].' | '.$value['nama']; ?></option>
+						<option value="<?php echo $value['nomor']; ?>" data-kodeunit="<?php echo $value['kode_unit']; ?>" ><?php echo strtoupper($value['nomor'].' | '.$value['nama']); ?></option>
 					<?php endforeach ?>
 				</select>
 			</div>
 		</div>
 		<div class="col-xs-6 no-padding" style="padding-left: 5px;">
 			<div class="col-xs-12 no-padding">
-				<label class="label-control">Supplier</label>
+				<label class="label-control">Unit</label>
 			</div>
 			<div class="col-xs-12 no-padding">
-				<select class="form-control supplier" data-required="1">
-					<option value="">-- Pilih Supplier --</option>
-					<?php foreach ($supplier as $key => $value): ?>
-						<option value="<?php echo $value['nomor']; ?>"><?php echo $value['nomor'].' | '.$value['nama']; ?></option>
+				<select class="form-control unit">
+					<option value="">-- Pilih Unit --</option>
+					<?php foreach ($unit as $key => $value): ?>
+						<option value="<?php echo $value['kode']; ?>" ><?php echo strtoupper($value['nama']); ?></option>
 					<?php endforeach ?>
 				</select>
 			</div>

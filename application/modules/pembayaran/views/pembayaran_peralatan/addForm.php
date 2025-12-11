@@ -8,8 +8,30 @@
         </span>
     </div>
 </div>
-<div class="col-xs-12 no-padding">
-	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-12 no-padding"><label class="control-label text-left">Bank</label></div>
+	<div class="col-xs-12 no-padding">
+		<!-- <input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" data-required="1"> -->
+		<select class="form-control bank" data-required="1">
+			<!-- <option value="">Pilih Bank</option> -->
+			<?php if ( !empty($bank) ): ?>
+				<?php foreach ($bank as $k_bank => $v_bank): ?>
+					<?php
+						// $selected = null;
+						// if ( isset($data['coa_bank']) && !empty($data['coa_bank']) ) {
+						// 	if ( $v_bank['no_coa'] == $data['coa_bank'] ) {
+						// 		$selected = 'selected';
+						// 	}
+						// }	
+					?>
+					<option value="<?php echo $v_bank['no_coa']; ?>" data-nama="<?php echo strtoupper($v_bank['nama_coa']); ?>" data-unit="<?php echo $v_bank['unit']; ?>" data-kode="<?php echo $v_bank['kode'] ?>" <?php // echo $selected; ?> ><?php echo strtoupper($v_bank['no_coa'].' | '.$v_bank['nama_coa']); ?></option>
+				<?php endforeach ?>
+			<?php endif ?>
+		</select>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-7 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-12 no-padding"><label class="control-label text-left">Supplier</label></div>
 		<div class="col-xs-12 no-padding">
 			<select class="form-control supplier" data-required="1">
@@ -17,6 +39,28 @@
 				<?php if ( isset($supplier) && !empty($supplier) ): ?>
 					<?php foreach ($supplier as $k => $val): ?>
 						<option data-tokens="<?php echo $val['nama']; ?>" value="<?php echo $val['nomor']; ?>"><?php echo strtoupper($val['nama']); ?></option>
+					<?php endforeach ?>
+				<?php endif ?>
+			</select>
+		</div>
+	</div>
+	<div class="col-xs-5 no-padding" style="padding-left: 5px;">
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">No. Rek</label></div>
+		<div class="col-xs-12 no-padding">
+			<!-- <input type="text" class="col-xs-12 form-control nama_bank uppercase" placeholder="Nama Bank" maxlength="20" data-required="1"> -->
+			<select class="form-control rekening" data-required="1">
+				<option value="">Pilih Rekening</option>
+				<?php if ( !empty($rekening) ): ?>
+					<?php foreach ($rekening as $k_rekening => $v_rekening): ?>
+						<?php
+							// $selected = null;
+							// if ( isset($data['coa_bank']) && !empty($data['coa_bank']) ) {
+							// 	if ( $v_bank['no_coa'] == $data['coa_bank'] ) {
+							// 		$selected = 'selected';
+							// 	}
+							// }	
+						?>
+						<option value="<?php echo $v_rekening['id']; ?>" data-supl="<?php echo $v_rekening['nomor']; ?>" data-rek="<?php echo strtoupper($v_rekening['rekening_nomor']); ?>" data-pemilik="<?php echo strtoupper($v_rekening['rekening_pemilik']); ?>" data-bank="<?php echo strtoupper($v_rekening['bank']); ?>" ><?php echo strtoupper($v_rekening['bank'].' | '.$v_rekening['rekening_nomor']); ?></option>
 					<?php endforeach ?>
 				<?php endif ?>
 			</select>
@@ -33,7 +77,7 @@
 		</div>
 	</div>
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-		<div class="col-xs-12 no-padding"><label class="control-label text-left">Plasma</label></div>
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">Plasma / Unit</label></div>
 	    <div class="col-xs-12 no-padding">
 	    	<input type="text" class="form-control text-left mitra" data-required="1" placeholder="Plasma" readonly />
 	    </div>

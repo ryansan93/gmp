@@ -22,7 +22,7 @@
 		</div>
 	</div>
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-		<div class="col-xs-12 no-padding"><label class="control-label text-left">Plasma</label></div>
+		<div class="col-xs-12 no-padding"><label class="control-label text-left">Plasma / Unit</label></div>
 	    <div class="col-xs-12 no-padding">
 	    	<input type="text" class="form-control text-left mitra" data-required="1" placeholder="Plasma" readonly />
 	    </div>

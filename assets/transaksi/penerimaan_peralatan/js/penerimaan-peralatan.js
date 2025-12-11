@@ -103,6 +103,22 @@ var pp = {
                     i = mitra.length;
                 }
             }
+
+			$(div_riwayat).find('.unit').select2().val('').trigger('change');
+        });
+
+		$(div_riwayat).find('.unit').select2({placeholder: 'Pilih Unit'}).on("select2:select", function (e) {
+            var unit = $(div_riwayat).find('.unit').select2().val();
+
+            for (var i = 0; i < unit.length; i++) {
+                if ( unit[i] == 'all' ) {
+                    $(div_riwayat).find('.unit').select2().val('all').trigger('change');
+
+                    i = unit.length;
+                }
+            }
+
+			$(div_riwayat).find('.mitra').select2().val('').trigger('change');
         });
 
         $(div_action).find('.supplier').select2().on("select2:select", function (e) {
@@ -181,7 +197,8 @@ var pp = {
 				'startDate': dateSQL( $(div).find('#StartDate').data('DateTimePicker').date() ),
 				'endDate': dateSQL( $(div).find('#EndDate').data('DateTimePicker').date() ),
 				'supplier': $(div).find('.supplier').select2('val'),
-				'mitra': $(div).find('.mitra').select2('val')
+				'mitra': $(div).find('.mitra').select2('val'),
+				'unit': $(div).find('.unit').select2('val')
 			};
 
 			$.ajax({
@@ -224,7 +241,12 @@ var pp = {
             					selected = 'selected';
             				}
 
-            				option += '<option value="'+data.content[i].no_order+'" data-namamitra="'+data.content[i].nama_mitra+'" data-jmltagihan="'+data.content[i].total+'"	'+selected+' >'+data.content[i].tgl_order+' | '+data.content[i].no_order+'</option>';
+							var nama_mitra = data.content[i].nama_mitra;
+							if ( !empty( data.content[i].nama_unit ) ) {
+								nama_mitra = data.content[i].nama_unit;
+							}
+
+            				option += '<option value="'+data.content[i].no_order+'" data-namamitra="'+nama_mitra+'" data-jmltagihan="'+data.content[i].total+'"	'+selected+' >'+data.content[i].tgl_order+' | '+data.content[i].no_order+'</option>';
             			}
             			$(div).find('select.no_order').html(option);
             			$(div).find('select.no_order').select2().on('select2:select', function (e) {
@@ -322,14 +344,10 @@ var pp = {
 			            dataType: 'JSON',
 			            beforeSend: function(){ showLoading('Simpan Penerimaan ...') },
 			            success: function(data){
-			            	hideLoading();
-
-			            	if ( data.status == 1 ) {
-			            		pp.savePenjualanPeralatan( data.content.id );
-			            		// bootbox.alert(data.message, function() {
-			            		// 	// location.reload();
-			            		// });
-			            	} else {
+							if ( data.status == 1 ) {
+			            		pp.execInsertJurnal( data.content );
+							} else {
+								hideLoading();
 			            		bootbox.alert(data.message);
 			            	}
 			            },
@@ -339,35 +357,6 @@ var pp = {
 				}
 			});
 		}
-	}, // end - save
-
-	savePenjualanPeralatan: function(id_terima) {
-		var div = $('#action');
-
-		var params = {
-			'id_terima': id_terima
-		};
-
-		$.ajax({
-            url: 'transaksi/PenerimaanPeralatan/savePenjualanPeralatan',
-            data: {
-            	'params': params
-            },
-            type: 'POST',
-            dataType: 'JSON',
-            beforeSend: function(){ showLoading('Simpan Tagihan Plasma') },
-            success: function(data){
-            	hideLoading();
-
-            	if ( data.status == 1 ) {
-            		bootbox.alert(data.message, function() {
-            			pp.loadForm(id_terima, null, 'action');
-            		});
-            	} else {
-            		bootbox.alert(data.message);
-            	}
-            }
-        });
 	}, // end - save
 
 	edit: function(elm) {
@@ -413,16 +402,12 @@ var pp = {
 			            data: formData,
 			            type: 'POST',
 			            dataType: 'JSON',
-			            beforeSend: function(){ showLoading() },
+			            beforeSend: function(){ showLoading('Edit Penerimaan ...'); },
 			            success: function(data){
-			            	hideLoading();
-
-			            	if ( data.status == 1 ) {
-			            		bootbox.alert(data.message, function() {
-			            			pp.loadForm(data.content.id, null, 'action');
-			            			// location.reload();
-			            		});
+							if ( data.status == 1 ) {
+								pp.execInsertJurnal( data.content );
 			            	} else {
+								hideLoading();
 			            		bootbox.alert(data.message);
 			            	}
 			            },
@@ -446,16 +431,12 @@ var pp = {
 		            data: {'params': params},
 		            type: 'POST',
 		            dataType: 'JSON',
-		            beforeSend: function(){ showLoading() },
+		            beforeSend: function(){ showLoading('Delete Penerimaan ...'); },
 		            success: function(data){
-		            	hideLoading();
-
-		            	if ( data.status == 1 ) {
-		            		bootbox.alert(data.message, function() {
-		            			pp.loadForm(null, null, 'action');
-		            			// location.reload();
-		            		});
+						if ( data.status == 1 ) {
+							pp.execInsertJurnal( data.content );
 		            	} else {
+							hideLoading();
 		            		bootbox.alert(data.message);
 		            	}
 		            }
@@ -463,6 +444,69 @@ var pp = {
 			}
 		});
 	}, // end - delete
+
+	execInsertJurnal: function(content) {
+        var params = content;
+
+        $.ajax({
+            url: 'transaksi/PenerimaanPeralatan/execInsertJurnal',
+            data: {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function() {
+                $('span.txt-msg-loading').text('Jurnal . . .');
+            },
+            success: function(data) {
+				if ( data.status == 1 ) {
+					pp.execPenjualanPeralatan( data.content );
+                } else {
+					hideLoading();
+                    bootbox.alert(data.message);
+                };
+            },
+        });
+    }, // end - execInsertJurnal
+
+	execPenjualanPeralatan: function(params) {
+		var div = $('#action');
+
+		var params = {
+			'id_terima': params.id,
+			'status': params.status,
+			'message': params.message,
+			'no_sj': params.no_sj
+		};
+
+		$.ajax({
+            url: 'transaksi/PenerimaanPeralatan/execPenjualanPeralatan',
+            data: {
+            	'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend: function(){ 
+				// showLoading('Simpan Tagihan Plasma') 
+				$('span.txt-msg-loading').text('Tagihan Plasma . . .');
+			},
+            success: function(data){
+            	hideLoading();
+
+            	if ( data.status == 1 ) {
+            		bootbox.alert(data.message, function() {
+						if ( data.content.status != 3 ) {
+							pp.loadForm(data.content.id, null, 'action');
+						} else {
+							pp.loadForm(null, null, 'action');
+						}
+            		});
+            	} else {
+            		bootbox.alert(data.message);
+            	}
+            }
+        });
+	}, // end - execPenjualanPeralatan
 };
 
 pp.startUp();

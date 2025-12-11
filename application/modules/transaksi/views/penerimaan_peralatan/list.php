@@ -5,10 +5,11 @@
 			<td><?php echo $value['no_sj']; ?></td>
 			<td><?php echo $value['nama_supplier']; ?></td>
 			<td><?php echo $value['nama_mitra']; ?></td>
+			<td><?php echo $value['nama_unit']; ?></td>
 		</tr>
 	<?php endforeach ?>
 <?php else: ?>
 	<tr>
-		<td colspan="4">Data tidak ditemukan.</td>
+		<td colspan="5">Data tidak ditemukan.</td>
 	</tr>
 <?php endif ?>

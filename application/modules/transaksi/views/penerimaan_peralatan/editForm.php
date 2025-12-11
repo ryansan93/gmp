@@ -46,7 +46,7 @@
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">
 		<div class="col-xs-12 no-padding"><label class="control-label text-left">No. SJ</label></div>
 		<div class="col-xs-10 no-padding">
-			<input type="text" class="form-control text-right no_sj" data-required="1" placeholder="No. SJ" value="<?php echo $data['no_sj']; ?>" />
+			<input type="text" class="form-control text-right no_sj" data-required="1" placeholder="No. SJ" value="<?php echo $data['no_sj']; ?>" disabled />
 		</div>
 		<div class="col-xs-2 no-padding" style="padding-left: 10px;">
 			<div class="col-xs-12 text-right" style="padding: 7px 0px 0px 0px;">

@@ -12,7 +12,7 @@
 		<div class="col-xs-8 no-padding"><label class="control-label"><?php echo $data['nama_supplier']; ?></label></div>
 	</div>
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Plasma</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">Plasma / Unit</label></div>
 		<div class="col-xs-1 no-padding text-center"><label class="control-label">:</label></div>
 		<div class="col-xs-8 no-padding"><label class="control-label"><?php echo $data['nama_mitra']; ?></label></div>
 	</div>

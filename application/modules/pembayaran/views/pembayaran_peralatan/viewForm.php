@@ -7,9 +7,23 @@
 </div>
 <div class="col-xs-12 no-padding">
 	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">Bank</label></div>
+		<div class="col-xs-1 no-padding text-center"><label class="control-label">:</label></div>
+		<div class="col-xs-8 no-padding"><label class="control-label"><?php echo strtoupper($data['nama_bank']) ?></label></div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding">
+	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Supplier</label></div>
 		<div class="col-xs-1 no-padding text-center"><label class="control-label">:</label></div>
 		<div class="col-xs-8 no-padding"><label class="control-label"><?php echo $data['nama_supplier']; ?></label></div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding">
+	<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+		<div class="col-xs-3 no-padding"><label class="control-label">No. Rek</label></div>
+		<div class="col-xs-1 no-padding text-center"><label class="control-label">:</label></div>
+		<div class="col-xs-8 no-padding"><label class="control-label"><?php echo $data['rekening_nomor'].' ('.$data['bank'].')'; ?></label></div>
 	</div>
 </div>
 <div class="col-xs-12 no-padding">
@@ -19,9 +33,9 @@
 		<div class="col-xs-8 no-padding"><label class="control-label"><?php echo $data['no_order']; ?></label></div>
 	</div>
 	<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-		<div class="col-xs-3 no-padding"><label class="control-label">Plasma</label></div>
+		<div class="col-xs-3 no-padding"><label class="control-label">Plasma / Unit</label></div>
 		<div class="col-xs-1 no-padding text-center"><label class="control-label">:</label></div>
-		<div class="col-xs-8 no-padding"><label class="control-label"><?php echo $data['nama_mitra']; ?></label></div>
+		<div class="col-xs-8 no-padding"><label class="control-label"><?php echo !empty($data['nama_mitra']) ? $data['nama_mitra'] : $data['nama_unit']; ?></label></div>
 	</div>
 </div>
 <div class="col-xs-12 no-padding">

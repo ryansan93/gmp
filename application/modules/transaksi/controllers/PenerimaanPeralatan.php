@@ -75,6 +75,7 @@ class PenerimaanPeralatan extends Public_Controller
         $end_date = $params['endDate'];
         $supplier = $params['supplier'];
         $mitra = $params['mitra'];
+        $unit = $params['unit'];
 
         $sql_supplier = null;
         if ( stristr($supplier[0], 'all') === false ) {
@@ -82,8 +83,13 @@ class PenerimaanPeralatan extends Public_Controller
         }
 
         $sql_mitra = null;
-        if ( stristr($mitra[0], 'all') === false ) {
+        if ( !empty($mitra) && stristr($mitra[0], 'all') === false ) {
             $sql_mitra = "and op.mitra in ('".implode("', '", $mitra)."')";
+        }
+
+        $sql_unit = null;
+        if ( !empty($unit) && stristr($unit[0], 'all') === false ) {
+            $sql_unit = "and op.unit in ('".implode("', '", $unit)."')";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -93,13 +99,14 @@ class PenerimaanPeralatan extends Public_Controller
                 tp.no_sj, 
                 tp.tgl_terima, 
                 supl.nama as nama_supplier, 
-                mtr.nama as nama_mitra
+                mtr.nama as nama_mitra,
+                w.nama as nama_unit
             from terima_peralatan tp
             right join
                 order_peralatan op
                 on
                     tp.no_order = op.no_order
-            right join
+            left join
                 (
                     select mtr1.* from mitra mtr1
                     right join
@@ -109,7 +116,7 @@ class PenerimaanPeralatan extends Public_Controller
                 ) mtr
                 on
                     op.mitra = mtr.nomor
-            right join
+            left join
                 (
                     select p2.* from pelanggan p2
                     right join
@@ -119,10 +126,21 @@ class PenerimaanPeralatan extends Public_Controller
                 ) supl
                 on
                     op.supplier = supl.nomor
+            left join
+                (
+                    select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
+                    right join
+                    (select max(id) as id, kode from wilayah group by kode) w2
+                    on
+                        w1.id = w2.id
+                ) w
+                on
+                    op.unit = w.kode
             where
                 tp.tgl_terima between '".$start_date."' and '".$end_date."'
                 ".$sql_supplier."
                 ".$sql_mitra."
+                ".$sql_unit."
             order by
                 tp.tgl_terima desc,
                 mtr.nama asc
@@ -298,8 +316,12 @@ class PenerimaanPeralatan extends Public_Controller
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "
-                select op.*, mtr.nama as nama_mitra from order_peralatan op
-                right join
+                select 
+                    op.*, 
+                    mtr.nama as nama_mitra,
+                    w.nama as nama_unit
+                from order_peralatan op
+                left join
                     (
                         select mtr1.* from mitra mtr1
                         right join
@@ -309,6 +331,16 @@ class PenerimaanPeralatan extends Public_Controller
                     ) mtr
                     on
                         op.mitra = mtr.nomor
+                left join
+                    (
+                        select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
+                        right join
+                        (select max(id) as id, kode from wilayah group by kode) w2
+                        on
+                            w1.id = w2.id
+                    ) w
+                    on
+                        op.unit = w.kode
                 where
                     op.supplier = '".$supplier."'
                 order by
@@ -328,8 +360,10 @@ class PenerimaanPeralatan extends Public_Controller
                         'tgl_order' => tglIndonesia($value['tgl_order'], '-', ' '),
                         'supplier' => $value['supplier'],
                         'mitra' => $value['mitra'],
+                        'unit' => $value['unit'],
                         'total' => $value['total'],
-                        'nama_mitra' => $value['nama_mitra']
+                        'nama_mitra' => $value['nama_mitra'],
+                        'nama_unit' => $value['nama_unit']
                     );
                 }
             }
@@ -394,8 +428,11 @@ class PenerimaanPeralatan extends Public_Controller
 
     public function riwayat()
     {
+        $m_wil = new \Model\Storage\Wilayah_model();
+
         $content['mitra'] = $this->getMitra();
         $content['supplier'] = $this->getSupplier();
+        $content['unit'] = $m_wil->getDataUnit(1, $this->userid);
 
         $html = $this->load->view($this->path.'riwayat', $content, true);
 
@@ -420,6 +457,7 @@ class PenerimaanPeralatan extends Public_Controller
                 tp.tgl_terima,
                 supl.nama as nama_supplier,
                 mtr.nama as nama_mitra,
+                w.nama as nama_unit,
                 tp.no_order,
                 tp.no_sj,
                 tp.lampiran,
@@ -444,7 +482,7 @@ class PenerimaanPeralatan extends Public_Controller
                 order_peralatan op
                 on
                     tp.no_order = op.no_order
-            right join
+            left join
                 (
                     select mtr1.* from mitra mtr1
                     right join
@@ -454,7 +492,7 @@ class PenerimaanPeralatan extends Public_Controller
                 ) mtr
                 on
                     op.mitra = mtr.nomor
-            right join
+            left join
                 (
                     select p2.* from pelanggan p2
                     right join
@@ -463,7 +501,17 @@ class PenerimaanPeralatan extends Public_Controller
                             p2.id = p1.id
                 ) supl
                 on
-                    op.supplier = supl.nomor            
+                    op.supplier = supl.nomor
+            left join
+                (
+                    select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
+                    right join
+                    (select max(id) as id, kode from wilayah group by kode) w2
+                    on
+                        w1.id = w2.id
+                ) w
+                on
+                    op.unit = w.kode
             where
                 tp.id = '".$id."'
             order by
@@ -479,7 +527,7 @@ class PenerimaanPeralatan extends Public_Controller
                 'id' => $d_pp[0]['id'],
                 'tgl_terima' => $d_pp[0]['tgl_terima'],
                 'nama_supplier' => $d_pp[0]['nama_supplier'],
-                'nama_mitra' => $d_pp[0]['nama_mitra'],
+                'nama_mitra' => !empty($d_pp[0]['nama_mitra']) ? $d_pp[0]['nama_mitra'] : $d_pp[0]['nama_unit'],
                 'no_order' => $d_pp[0]['no_order'],
                 'no_sj' => $d_pp[0]['no_sj'],
                 'lampiran' => $d_pp[0]['lampiran'],
@@ -513,6 +561,7 @@ class PenerimaanPeralatan extends Public_Controller
                 op.mitra,
                 supl.nama as nama_supplier,
                 mtr.nama as nama_mitra,
+                w.nama as nama_unit,
                 tp.no_order,
                 tp.no_sj,
                 tp.lampiran,
@@ -537,7 +586,7 @@ class PenerimaanPeralatan extends Public_Controller
                 order_peralatan op
                 on
                     tp.no_order = op.no_order
-            right join
+            left join
                 (
                     select mtr1.* from mitra mtr1
                     right join
@@ -547,7 +596,7 @@ class PenerimaanPeralatan extends Public_Controller
                 ) mtr
                 on
                     op.mitra = mtr.nomor
-            right join
+            left join
                 (
                     select p2.* from pelanggan p2
                     right join
@@ -556,7 +605,17 @@ class PenerimaanPeralatan extends Public_Controller
                             p2.id = p1.id
                 ) supl
                 on
-                    op.supplier = supl.nomor            
+                    op.supplier = supl.nomor
+            left join
+                (
+                    select UPPER(REPLACE(REPLACE(w1.nama, 'Kota ', ''), 'Kab ', '')) as nama, w1.kode from wilayah w1
+                    right join
+                    (select max(id) as id, kode from wilayah group by kode) w2
+                    on
+                        w1.id = w2.id
+                ) w
+                on
+                    op.unit = w.kode
             where
                 tp.id = '".$id."'
             order by
@@ -574,7 +633,7 @@ class PenerimaanPeralatan extends Public_Controller
                 'supplier' => $d_pp[0]['supplier'],
                 'mitra' => $d_pp[0]['mitra'],
                 'nama_supplier' => $d_pp[0]['nama_supplier'],
-                'nama_mitra' => $d_pp[0]['nama_mitra'],
+                'nama_mitra' => !empty($d_pp[0]['nama_mitra']) ? $d_pp[0]['nama_mitra'] : $d_pp[0]['nama_unit'],
                 'no_order' => $d_pp[0]['no_order'],
                 'no_sj' => $d_pp[0]['no_sj'],
                 'lampiran' => $d_pp[0]['lampiran'],
@@ -630,109 +689,19 @@ class PenerimaanPeralatan extends Public_Controller
                     $m_tpd->save();
                 }
 
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "exec insert_jurnal 'PERALATAN', '".$data['no_order']."', NULL, 0, 'terima_peralatan', ".$m_tp->id.", NULL, 1";
-                $d_conf = $m_conf->hydrateRaw($sql);
-
                 $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $m_tp, $deskripsi_log);
 
                 $this->result['status'] = 1;
-                $this->result['content'] = array('id' => $m_tp->id);
+                $this->result['content'] = array(
+                    'id' => $m_tp->id,
+                    'status' => 2,
+                    'message' => 'Data berhasil di simpan.',
+                    'no_sj' => $data['no_sj']
+                );
             } else {
                 $this->result['message'] = 'Error, segera hubungi tim IT.';
             }
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
-    }
-
-    public function savePenjualanPeralatan()
-    {
-        $params = $this->input->post('params');
-
-        try {
-            $id_terima = $params['id_terima'];
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select
-                    tp.no_sj,
-                    op.mitra,
-                    tp.tgl_terima as tanggal,
-                    dtp.kode_barang,
-                    dtp.jml_terima as jumlah,
-                    opd.harga as harga,
-                    (dtp.jml_terima * opd.harga) as total,
-                    0 as sisa,
-                    'BELUM' as status
-                from det_terima_peralatan dtp
-                right join
-                    terima_peralatan tp
-                    on
-                        dtp.id_header = tp.id
-                right join
-                    order_peralatan op
-                    on
-                        tp.no_order = op.no_order
-                right join
-                    order_peralatan_detail opd
-                    on
-                        op.id = opd.id_header and
-                        opd.kode_barang = dtp.kode_barang
-                where
-                    dtp.id_header = ".$id_terima."
-            ";
-            $d_terima = $m_conf->hydrateRaw( $sql );
-
-            if ( $d_terima->count() > 0 ) {
-                $d_terima = $d_terima->toArray();
-
-                $m_pp = new \Model\Storage\PenjualanPeralatan_model();
-
-                $nomor = $m_pp->getNextNomor();
-
-                $m_pp->nomor = $nomor;
-                $m_pp->mitra = $d_terima[0]['mitra'];
-                $m_pp->tanggal = $d_terima[0]['tanggal'];
-                $m_pp->no_sj = $d_terima[0]['no_sj'];
-                $m_pp->status = 'BELUM';
-                $m_pp->save();
-
-                $id_header = $m_pp->id;
-
-                $grand_total = 0;
-
-                foreach ($d_terima as $k_detail => $v_detail) {
-                    $m_ppd = new \Model\Storage\PenjualanPeralatanDetail_model();
-                    $m_ppd->id_header = $id_header;
-                    $m_ppd->item = $v_detail['kode_barang'];
-                    $m_ppd->jumlah = $v_detail['jumlah'];
-                    $m_ppd->harga = $v_detail['harga'];
-                    $m_ppd->total = $v_detail['total'];
-                    $m_ppd->save();
-
-                    $grand_total += $v_detail['total'];
-                }
-
-                $m_pp->where('nomor', $nomor)->update(
-                    array(
-                        'total' => $grand_total,
-                        'sisa' => $grand_total
-                    )
-                );
-
-                $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/save', $m_pp, $deskripsi_log);
-
-                $this->result['status'] = 1;
-                $this->result['message'] = 'Data berhasil di simpan.';
-            } else {
-                $this->result['message'] = 'Data penerimaan tidak ditemukan.';
-            }
-
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -784,16 +753,16 @@ class PenerimaanPeralatan extends Public_Controller
                 $m_tpd->save();
             }
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'PERALATAN', '".$data['no_order']."', NULL, 0, 'terima_peralatan', ".$data['id'].", ".$data['id'].", 2";
-            $d_conf = $m_conf->hydrateRaw($sql);
-
             $deskripsi_log = 'di-ubah oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $m_tp, $deskripsi_log);
 
             $this->result['status'] = 1;
-            $this->result['content'] = array('id' => $data['id']);
-            $this->result['message'] = 'Data berhasil di ubah.';
+            $this->result['content'] = array(
+                'id' => $data['id'],
+                'status' => 2,
+                'message' => 'Data berhasil di ubah.',
+                'no_sj' => $d_tp->no_sj
+            );
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -806,8 +775,6 @@ class PenerimaanPeralatan extends Public_Controller
         $params = $this->input->post('params');
 
         try {
-            $path_name = null;
-
             $m_tp = new \Model\Storage\TerimaPeralatan_model();
             $d_tp = $m_tp->where('id', $params['id'])->first();
 
@@ -816,19 +783,201 @@ class PenerimaanPeralatan extends Public_Controller
 
             $m_tp->where('id', $params['id'])->delete();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_peralatan', ".$params['id'].", ".$params['id'].", 3";
-            $d_conf = $m_conf->hydrateRaw($sql);
-
             $deskripsi_log = 'di-ubah oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_tp, $deskripsi_log);
 
             $this->result['status'] = 1;
-            $this->result['message'] = 'Data berhasil di hapus.';
+            $this->result['content'] = array(
+                'id' => $params['id'],
+                'status' => 3,
+                'message' => 'Data berhasil di hapus.',
+                'no_sj' => $d_tp->no_sj
+            );
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
 
         display_json( $this->result );
+    }
+
+    public function execInsertJurnal() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $id_old = $params['id'];
+            $status = $params['status'];
+
+            $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+
+            $this->result['status'] = $return['status'];
+            $this->result['message'] = json_encode($return);
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function execPenjualanPeralatan()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $id_terima = $params['id_terima'];
+            $status = $params['status'];
+            $message = $params['message'];
+            $no_sj = $params['no_sj'];
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    tp.no_sj,
+                    op.mitra,
+                    tp.tgl_terima as tanggal,
+                    dtp.kode_barang,
+                    dtp.jml_terima as jumlah,
+                    opd.harga as harga,
+                    (dtp.jml_terima * opd.harga) as total,
+                    0 as sisa,
+                    'BELUM' as status
+                from det_terima_peralatan dtp
+                right join
+                    terima_peralatan tp
+                    on
+                        dtp.id_header = tp.id
+                left join
+                    order_peralatan op
+                    on
+                        tp.no_order = op.no_order
+                left join
+                    order_peralatan_detail opd
+                    on
+                        op.id = opd.id_header and
+                        opd.kode_barang = dtp.kode_barang
+                where
+                    dtp.id_header = ".$id_terima."
+            ";
+            $d_terima = $m_conf->hydrateRaw( $sql );
+
+            if ( $status == 2 ) {
+                if ( $d_terima->count() > 0 ) {
+                    $d_terima = $d_terima->toArray();
+                    if ( !empty($d_terima['mitra']) ) {
+                        $m_pp = new \Model\Storage\PenjualanPeralatan_model();
+                        $d_pp = $m_pp->where('no_sj', $d_terima[0]['no_sj'])->first();
+    
+                        if ( $d_pp ) {
+                            $m_pp = new \Model\Storage\PenjualanPeralatan_model();
+                            $m_pp->where('no_sj', $d_terima[0]['no_sj'])->update(
+                                array(
+                                    'mitra' => $d_terima[0]['mitra'],
+                                    'tanggal' => $d_terima[0]['tanggal'],
+                                    'no_sj' => $d_terima[0]['no_sj'],
+                                    'status' => 'BELUM'
+                                )
+                            );
+    
+                            $id_header = $d_pp->id;
+    
+                            $m_ppd = new \Model\Storage\PenjualanPeralatanDetail_model();
+                            $m_ppd->where('id_header', $id_header)->delete();
+    
+                            $grand_total = 0;
+                            foreach ($d_terima as $k_detail => $v_detail) {
+                                $m_ppd = new \Model\Storage\PenjualanPeralatanDetail_model();
+                                $m_ppd->id_header = $id_header;
+                                $m_ppd->item = $v_detail['kode_barang'];
+                                $m_ppd->jumlah = $v_detail['jumlah'];
+                                $m_ppd->harga = $v_detail['harga'];
+                                $m_ppd->total = $v_detail['total'];
+                                $m_ppd->save();
+            
+                                $grand_total += $v_detail['total'];
+                            }
+            
+                            $m_pp->where('nomor', $d_pp->nomor)->update(
+                                array(
+                                    'total' => $grand_total,
+                                    'sisa' => $grand_total
+                                )
+                            );
+    
+                            $d_pp = $m_pp->where('id', $d_pp->id)->first();
+    
+                            $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                            Modules::run( 'base/event/update', $d_pp, $deskripsi_log);
+                        } else {
+                            $m_pp = new \Model\Storage\PenjualanPeralatan_model();
+                            $nomor = $m_pp->getNextNomor();
+            
+                            $m_pp->nomor = $nomor;
+                            $m_pp->mitra = $d_terima[0]['mitra'];
+                            $m_pp->tanggal = $d_terima[0]['tanggal'];
+                            $m_pp->no_sj = $d_terima[0]['no_sj'];
+                            $m_pp->status = 'BELUM';
+                            $m_pp->save();
+            
+                            $id_header = $m_pp->id;
+            
+                            $grand_total = 0;
+                            foreach ($d_terima as $k_detail => $v_detail) {
+                                $m_ppd = new \Model\Storage\PenjualanPeralatanDetail_model();
+                                $m_ppd->id_header = $id_header;
+                                $m_ppd->item = $v_detail['kode_barang'];
+                                $m_ppd->jumlah = $v_detail['jumlah'];
+                                $m_ppd->harga = $v_detail['harga'];
+                                $m_ppd->total = $v_detail['total'];
+                                $m_ppd->save();
+            
+                                $grand_total += $v_detail['total'];
+                            }
+            
+                            $m_pp->where('nomor', $nomor)->update(
+                                array(
+                                    'total' => $grand_total,
+                                    'sisa' => $grand_total
+                                )
+                            );
+    
+                            $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                            Modules::run( 'base/event/save', $m_pp, $deskripsi_log);
+                        }
+                    }
+                }
+            }
+
+            if ( $status == 3 ) {
+                $m_pp = new \Model\Storage\PenjualanPeralatan_model();
+                $d_pp = $m_pp->where('no_sj', $no_sj)->first();
+
+                if ($d_pp) {
+                    $m_ppd = new \Model\Storage\PenjualanPeralatanDetail_model();
+                    $m_ppd->where('id_header', $d_pp->id)->delete();
+
+                    $m_pp = new \Model\Storage\PenjualanPeralatan_model();
+                    $m_pp->where('id', $d_pp->id)->delete();
+
+                    $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                    Modules::run( 'base/event/delete', $d_pp, $deskripsi_log);
+                }
+            }
+
+            $this->result['status'] = 1;
+            $this->result['content'] = array(
+                'id' => $id_terima,
+                'status' => $status
+            );
+            $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+    
+    public function tes () {
+        $return = Modules::run( 'base/InsertJurnal/exec', $this->url, 3, 3, 2);
     }
 }
