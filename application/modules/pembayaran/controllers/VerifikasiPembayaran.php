@@ -286,7 +286,7 @@ class VerifikasiPembayaran extends Public_Controller
                 left join
                     order_peralatan op
                     on
-                        bp.no_order = bp.no_order
+                        bp.no_order = op.no_order
                 left join
                     no_bbk nb
                     on
