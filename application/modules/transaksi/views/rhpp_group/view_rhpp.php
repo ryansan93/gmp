@@ -587,14 +587,14 @@
 															// if ( $populasi > 0 && $total_ekor > 0 ) {
 															// 	$deplesi = abs((($populasi - $total_ekor) / $populasi) * 100);
 															// }
-															$deplesi = $data['deplesi'];
+															$deplesi = $data_plasma['detail']['deplesi'];
 														?>
 														<?php
 															// $ip = 0;
 															// if ( $deplesi > 0 && $bb > 0 && $fcr > 0 && $rata_umur_panen > 0 ) {
 															// 	$ip = ((100 - $deplesi) * $bb) / ($fcr * $rata_umur_panen) * 100;
 															// }
-															$ip = $data['ip'];
+															$ip = $data_plasma['detail']['ip'];
 														?>
 														<?php
 															$bonus_kematian = ($deplesi <= 5) ? 25 * $total_tonase : 0;
@@ -1570,14 +1570,14 @@
 															// if ( $populasi > 0 && $total_ekor > 0 ) {
 															// 	$deplesi = abs((($populasi - $total_ekor) / $populasi) * 100);
 															// }
-															$deplesi = $data['deplesi'];
+															$deplesi = $data_inti['detail']['deplesi'];
 														?>
 														<?php
 															// $ip = 0;
 															// if ( $deplesi > 0 && $bb > 0 && $fcr > 0 && $rata_umur_panen > 0 ) {
 															// 	$ip = ((100 - $deplesi) * $bb) / ($fcr * $rata_umur_panen) * 100;
 															// }
-															$ip = $data['ip'];
+															$ip = $data_inti['detail']['ip'];
 														?>
 														<?php
 															$bonus_kematian = ($deplesi <= 5) ? 25 * $total_tonase : 0;

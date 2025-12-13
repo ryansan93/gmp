@@ -72,26 +72,6 @@ var tsdrhpp = {
 	filter: function (elm) {
 		let filter = $(elm).val();
 		let div = $(elm).closest('div.action');
-
-		// if ( filter == 1 ) {
-		// 	$(div).find('div[name=startDate] input').parent().removeClass('has-error');
-		// 	$(div).find('div[name=endDate] input').parent().removeClass('has-error');
-
-		// 	$(div).find('div[name=startDate] input').val(null);
-		// 	$(div).find('div[name=endDate] input').val(null);
-
-		// 	$(div).find('div[name=startDate] input').attr('readonly', true);
-		// 	$(div).find('div[name=endDate] input').attr('readonly', true);
-
-		// 	$(div).find('div[name=startDate] input').removeAttr('data-required');
-		// 	$(div).find('div[name=endDate] input').removeAttr('data-required');
-		// } else {
-		// 	$(div).find('div[name=startDate] input').removeAttr('readonly', true);
-		// 	$(div).find('div[name=endDate] input').removeAttr('readonly', true);
-
-		// 	$(div).find('div[name=startDate] input').attr('data-required', 1);
-		// 	$(div).find('div[name=endDate] input').attr('data-required', 1);
-		// };
 	}, // end - filter
 
 	get_lists: function() {
@@ -234,6 +214,81 @@ var tsdrhpp = {
         }
     }, // end - cek_jumlah_bayar
 
+	hitPerformaPlasma: function(elm) {
+		showLoading('Hitung performa plasma . . .');
+
+		var tr = $(elm).closest('tr.data_doc');
+		var div_rhpp_plasma = $(elm).closest('div#rhpp_plasma');
+
+		var populasi = numeral.unformat($(elm).val());
+		var box_zak = Math.ceil(populasi / 100);
+		var harga = $(tr).find('td.harga').attr('data-val');
+		var total = populasi * harga;
+
+		$(tr).find('td.jumlah').attr('data-val', populasi);
+
+		$(tr).find('td.box_zak').attr('data-val', box_zak);
+		$(tr).find('td.box_zak').text(numeral.formatInt(box_zak));
+
+		$(tr).find('td.total').attr('data-val', total);
+		$(tr).find('td.total').text(numeral.formatInt(total));
+
+		var total_vaksin = parseFloat($(div_rhpp_plasma).find('td.total_vaksin').attr('data-val'));
+
+		var nil_doc = total + total_vaksin;
+		$(div_rhpp_plasma).find('td.nil_doc b').text(numeral.formatInt(nil_doc));
+
+		var nil_pakan = numeral.unformat( $(div_rhpp_plasma).find('td.nil_pakan b').text() );
+		var nil_ovk = numeral.unformat( $(div_rhpp_plasma).find('td.nil_ovk b').text() );
+
+		var total_pembelian_sapronak = nil_doc + nil_pakan + nil_ovk;
+		$(div_rhpp_plasma).find('td.tot_pembelian_sapronak').attr('data-val', total_pembelian_sapronak);
+		$(div_rhpp_plasma).find('td.tot_pembelian_sapronak').text(numeral.formatInt(total_pembelian_sapronak));
+
+		$(div_rhpp_plasma).find('td.tot_pembelian_sapronak').text(numeral.formatInt(total_pembelian_sapronak));
+
+		var params = {
+			'noreg': $(div_rhpp_plasma).find('label.noreg').attr('data-val'),
+			'populasi': populasi,
+			'total_jumlah_pakan': numeral.unformat($(div_rhpp_plasma).find('td.jml_pakan b').text()),
+			'tgl_docin': $(div_rhpp_plasma).find('label.tgl_docin').attr('data-tgl'),
+		};
+
+		$.ajax({
+            url : 'transaksi/TSDRHPP/hitPerformaPlasma',
+            data : {
+                'params' : params
+            },
+            type : 'POST',
+            dataType : 'JSON',
+            beforeSend : function(){},
+            success : function(data){
+            	hideLoading();
+				if ( data.status == 1 ) {
+					var total_tonase = parseFloat($(div_rhpp_plasma).find('td.jml_panen_kg').attr('data-val'));
+
+					var deplesi = data.content.deplesi;
+					var ip = data.content.ip;
+					var bonus_kematian = (deplesi <= 5) ? parseFloat(data.content.bonus_kematian) * total_tonase : 0;
+
+					$(div_rhpp_plasma).find('td.deplesi').attr('data-val', deplesi);
+					$(div_rhpp_plasma).find('td.deplesi').text(numeral.formatDec(deplesi));
+
+					$(div_rhpp_plasma).find('td.ip').attr('data-val', ip);
+					$(div_rhpp_plasma).find('td.ip b').text(numeral.formatDec(ip));
+
+					$(div_rhpp_plasma).find('td.bonus_kematian').attr('data-val', bonus_kematian);
+					$(div_rhpp_plasma).find('td.bonus_kematian').text(numeral.formatInt(bonus_kematian));
+
+					tsdrhpp.hit_tot_pemasukan_plasma();
+				} else {
+					bootbox.alert( data.message );
+				}
+
+            },
+        });
+	}, // end - hitPerformaPlasma
+
     hit_bonus_insentif_listrik: function(elm) {
     	var div_rhpp_plasma = $('#rhpp_plasma');
 
@@ -262,7 +317,7 @@ var tsdrhpp = {
         $(div_rhpp_plasma).find('td.total_pemasukan b').text( numeral.formatInt(tot_pemasukan_plasma) );
     	$(div_rhpp_plasma).find('td.total_pemasukan').attr('data-val', tot_pemasukan_plasma );
 
-    	tsdrhpp.hit_pendapatan_peternak();
+    	tsdrhpp.hit_tot_pengeluaran();
     }, // end - hit_tot_pemasukan_plasma
 
     hit_tot_bonus: function(elm) {
@@ -296,21 +351,22 @@ var tsdrhpp = {
         tsdrhpp.hit_tot_pengeluaran();
     }, // end - hit_tot_pemasukan_inti
 
-    hit_tot_pengeluaran: function(elm) {
-    	var tr = $(elm).closest('tr');
-    	var tbody = $(tr).closest('tbody');
+    hit_tot_pengeluaran: function() {
+    	// var tr = $(elm).closest('tr');
+    	// var tbody = $(tr).closest('tbody');
 
     	var div_rhpp_plasma = $('#rhpp_plasma');
     	var div_rhpp_inti = $('#rhpp_inti');
 
-    	var total_pembelian_sapronak_plasma = $(div_rhpp_plasma).find('td.tot_pembelian_sapronak').data('val');
+    	var total_pembelian_sapronak_plasma = $(div_rhpp_plasma).find('td.tot_pembelian_sapronak').attr('data-val');
 
         var tot_pembelian_sapronak = parseFloat($(div_rhpp_inti).find('td.tot_pembelian_sapronak').attr('data-val'));
         var pendapatan_peternak_form_inti = parseFloat($(div_rhpp_inti).find('td.pendapatan_peternak_form_inti').attr('data-val'));
         var biaya_opr = parseFloat($(div_rhpp_inti).find('td.biaya_opr').attr('data-val'));
     	var total_pembelian_sapronak_inti = tot_pembelian_sapronak + pendapatan_peternak_form_inti + biaya_opr;
 
-    	var biaya_materai = numeral.unformat( $(elm).val() );
+    	// var biaya_materai = numeral.unformat( $(elm).val() );
+    	var biaya_materai = numeral.unformat( numeral.unformat($('input.biaya_materai').val()) );
 
     	$(div_rhpp_plasma).find('span.biaya_materai').html( numeral.formatInt(biaya_materai) );
         $(div_rhpp_inti).find('span.biaya_materai').html( numeral.formatInt(biaya_materai) );
@@ -504,11 +560,11 @@ var tsdrhpp = {
 			beforeSend : function(){ showLoading('Cek data LHK . . .'); },
 			success : function(data){
 				hideLoading();
-				if ( data.status == 1 ) {
-					tsdrhpp.tutup_siklus(elm);
-				} else {
-					bootbox.alert( data.message );
-				}
+				tsdrhpp.tutup_siklus(elm);
+				// if ( data.status == 1 ) {
+				// } else {
+				// 	bootbox.alert( data.message );
+				// }
 			},
 		});
 	}, // end - cekDataLhk

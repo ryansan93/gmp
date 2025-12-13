@@ -152,7 +152,7 @@
 				                		<label class="control-label">Noreg</label>
 				                	</div>
 				                	<div class="col-md-3 no-padding">
-				                        <label class="control-label">: <?php echo $data['noreg']; ?></label>
+				                        <label class="control-label noreg" data-val="<?php echo $data['noreg']; ?>">: <?php echo $data['noreg']; ?></label>
 				                	</div>
 				                	<div class="col-md-2 no-padding">
 				                		<label class="control-label">Kandang</label>
@@ -221,7 +221,14 @@
 							                				<td class="text-center nota" data-val="<?php echo $data_doc['sj']; ?>"><?php echo $data_doc['sj']; ?></td>
 							                				<td class="barang" data-val="<?php echo $data_doc['barang']; ?>"><?php echo $data_doc['barang']; ?></td>
 							                				<td class="text-right box_zak" data-val="<?php echo $data_doc['box']; ?>"><?php echo angkaRibuan($data_doc['box']); ?></td>
-							                				<td class="text-right jumlah" data-val="<?php echo $data_doc['jumlah']; ?>"><?php echo angkaRibuan($data_doc['jumlah']); ?></td>
+							                				<!-- <td class="text-right jumlah" data-val="<?php echo $data_doc['jumlah']; ?>"><?php echo angkaRibuan($data_doc['jumlah']); ?></td> -->
+							                				<td class="text-right jumlah" data-val="<?php echo $data_doc['jumlah']; ?>">
+																<?php if ( $data['tutup_siklus'] == 0 ) { ?>
+																	<input type="text" class="col-xs-12 form-control text-right" value="<?php echo $data_doc['jumlah']; ?>" data-tipe="integer" data-required="1" onblur="tsdrhpp.hitPerformaPlasma(this)" maxlength="7">
+																<?php } else { ?>
+																	<?php echo angkaRibuan($data_doc['jumlah']); ?>
+																<?php }?>
+															</td>
 							                				<td class="text-right harga" data-val="<?php echo $data_doc['harga']; ?>"><?php echo angkaRibuan($data_doc['harga']); ?></td>
 							                				<td class="text-right total" data-val="<?php echo $data_doc['total']; ?>"><?php echo angkaRibuan($data_doc['total']); ?></td>
 							                			</tr>
@@ -247,7 +254,7 @@
 					                					<td class="text-right" colspan="3"><b>TOTAL</b></td>
 					                					<td class="text-right"><b><?php echo angkaRibuan($total_box); ?></b></td>
 					                					<td class="text-right"><b><?php echo angkaRibuan($total_jumlah) ?></b></td>
-					                					<td class="text-right" colspan="2"><b><?php echo angkaRibuan($total_nilai); ?></b></td>
+					                					<td class="text-right nil_doc" colspan="2"><b><?php echo angkaRibuan($total_nilai); ?></b></td>
 					                				</tr>
 					                				<?php $total_nilai_doc = $total_nilai; ?>
 					                			<?php endif ?>
@@ -380,8 +387,8 @@
 					                			<tr>
 				                					<td class="text-right" colspan="3"><b>TOTAL PEMAKAIAN</b></td>
 				                					<td class="text-right"><b><?php echo angkaRibuan($total_pemakaian_zak); ?></b></td>
-				                					<td class="text-right"><b><?php echo angkaDecimal($total_pemakaian_jumlah) ?></b></td>
-				                					<td class="text-right" colspan="2"><b><?php echo angkaRibuan($total_pemakaian_nilai); ?></b></td>
+				                					<td class="text-right jml_pakan"><b><?php echo angkaDecimal($total_pemakaian_jumlah) ?></b></td>
+				                					<td class="text-right nil_pakan" colspan="2"><b><?php echo angkaRibuan($total_pemakaian_nilai); ?></b></td>
 				                				</tr>
 					                			<?php // $total_pemakaian += $total_nilai_pakan; ?>
 
@@ -439,7 +446,7 @@
 
 					                			<tr>
 				                					<td class="text-right" colspan="4"><b>TOTAL PEMAKAIAN</b></td>
-				                					<td class="text-right" colspan="3"><b><?php echo angkaDecimal($total_pemakaian); ?></b></td>
+				                					<td class="text-right nil_ovk" colspan="3"><b><?php echo angkaDecimal($total_pemakaian); ?></b></td>
 				                				</tr>
 				                				<?php $total_nilai_pemakaian = $total_pemakaian; ?>
 					                		</tbody>
@@ -548,13 +555,13 @@
 															// if ( $populasi > 0 && $total_ekor > 0 ) {
 															// 	$deplesi = abs((($populasi - $total_ekor) / $populasi) * 100);
 															// }
-															$deplesi = $data['deplesi'];
+															$deplesi = $data_plasma['detail']['deplesi'];
 														?>
 														<?php
 															// if ( $deplesi > 0 && $bb > 0 && $fcr > 0 && $rata_umur_panen > 0 ) {
 															// 	$ip = ((100 - $deplesi) * $bb) / ($fcr * $rata_umur_panen) * 100;
 															// }
-															$ip = $data['ip'];
+															$ip = $data_plasma['detail']['ip'];
 														?>
 														<?php
 															$selisih_fcr = round($bb, 2) - round($fcr, 2);
@@ -1542,13 +1549,13 @@
 															// if ( $populasi > 0 && $total_ekor > 0 ) {
 															// 	$deplesi = abs((($populasi - $total_ekor) / $populasi) * 100);
 															// }
-															$deplesi = $data['deplesi'];
+															$deplesi = $data_inti['detail']['deplesi'];
 														?>
 														<?php
 															// if ( $deplesi > 0 && $bb > 0 && $fcr > 0 && $rata_umur_panen > 0 ) {
 															// 	$ip = ((100 - $deplesi) * $bb) / ($fcr * $rata_umur_panen) * 100;
 															// }
-															$ip = $data['ip'];
+															$ip = $data_inti['detail']['ip'];
 														?>
 														<?php
 															$selisih_fcr = round(($bb - $fcr), 3);

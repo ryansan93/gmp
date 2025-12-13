@@ -292,12 +292,16 @@ class RhppGroup extends Public_Controller {
 
         $data_header = array();
 
-        $id_tutup_siklus = null; $mitra = array(); $noreg = array(); $populasi = null; $populasi_ch = null; $kandang = null; $tgl_docin = null; $tutup_siklus = null; $biaya_materai = null; $potongan_pajak = null; $tgl_tutup = null; $rata_umur_panen = null; $biaya_opr = null; $tipe_kandang = null;
+        $id_tutup_siklus = null; $mitra = array(); $noreg = array(); $populasi_ch = null; $kandang = null; $tgl_docin = null; $tutup_siklus = null; $biaya_materai = null; $potongan_pajak = null; $tgl_tutup = null; $rata_umur_panen = null; $biaya_opr = null; $tipe_kandang = null;
+        $populasi_inti = null; 
+        $populasi_plasma = null; 
 
         $data_doc_plasma = null; $data_pakan_plasma = null; $data_pindah_pakan_plasma = null; $data_retur_pakan_plasma = null; $data_voadip_plasma = null; $data_retur_voadip_plasma = null; $data_rpah_plasma = null;
         $data_doc_inti = null; $data_pakan_inti = null; $data_pindah_pakan_inti = null; $data_oa_pindah_pakan_inti = null; $data_oa_pakan_inti = null; $data_retur_pakan_inti = null; $data_oa_retur_pakan_inti = null; $data_voadip_inti = null; $data_retur_voadip_inti = null; $data_rpah_inti = null;
 
-        $bonus_pasar = 0; $fcr = 0; $bb = 0; $deplesi = 0; $ip = 0;
+        $bonus_pasar = 0; $fcr = 0; $bb = 0; 
+        $deplesi_inti = 0; $ip_inti = 0;
+        $deplesi_plasma = 0; $ip_plasma = 0;
 
         $data_potongan = null;
         $data_bonus = null;
@@ -381,7 +385,7 @@ class RhppGroup extends Public_Controller {
                 }
 
                 $noreg = $d_rhpp_inti['noreg'];
-                $populasi += $d_rhpp_inti['populasi'];
+                // $populasi += $d_rhpp_inti['populasi'];
                 if ( empty($data_header) ) {
                     $data_header['nomor'] = $d_rs->mitra->dMitra->nomor;
                     $data_header['mitra'] = $d_rhpp_inti['mitra'];
@@ -398,9 +402,9 @@ class RhppGroup extends Public_Controller {
                 $data_header['biaya_materai'] = 0;
                 $data_header['potongan_pajak'] = 0;
 
-                if ( $d_rs->dKandang->tipe == 'CH' && $ip >= 380 ) {
-                    $data_header['total_bonus_insentif_listrik'] = 0;
-                }
+                // if ( $d_rs->dKandang->tipe == 'CH' && $ip >= 380 ) {
+                //     $data_header['total_bonus_insentif_listrik'] = 0;
+                // }
 
                 $data_header['detail'][ $noreg ] = array(
                     'noreg' => $noreg,
@@ -412,6 +416,8 @@ class RhppGroup extends Public_Controller {
 
                 if ( !empty($d_rhpp_plasma) ) {
                     $key_doc = $d_rhpp_plasma['doc']['tanggal'].' | '.$d_rhpp_plasma['doc']['nota'];
+
+                    $populasi_plasma += $d_rhpp_plasma['doc']['jumlah'];
 
                     $data_doc_plasma['doc'][ $key_doc ] = array(
                         'tgl_docin' => $d_rhpp_plasma['doc']['tanggal'],
@@ -573,6 +579,7 @@ class RhppGroup extends Public_Controller {
                 }
                 
                 $key_doc = $d_rhpp_inti['doc']['tanggal'].' | '.$d_rhpp_inti['doc']['nota'];
+                $populasi_inti += $d_rhpp_inti['doc']['jumlah'];
                 $data_doc_inti['doc'][ $key_doc ] = array(
                     'tgl_docin' => $d_rhpp_inti['doc']['tanggal'],
                     'sj' => $d_rhpp_inti['doc']['nota'],
@@ -738,20 +745,26 @@ class RhppGroup extends Public_Controller {
             if ( $total_ekor > 0 && $total_tonase > 0 ) {
                 $bb = $total_tonase / $total_ekor;
             }
-            if ( $populasi > 0 && $total_ekor > 0 ) {
-                $deplesi = abs((($populasi - $total_ekor) / $populasi) * 100);
+            if ( $populasi_inti > 0 && $total_ekor > 0 ) {
+                $deplesi_inti = abs((($populasi_inti - $total_ekor) / $populasi_inti) * 100);
             }
-            if ( $deplesi > 0 && $bb > 0 && $fcr > 0 && $rata_umur_panen > 0 ) {
-                $ip = round((((100 - $deplesi) * $bb) / ($fcr * $rata_umur_panen) * 100), 2);
+            if ( $deplesi_inti > 0 && $bb > 0 && $fcr > 0 && $rata_umur_panen > 0 ) {
+                $ip_inti = round((((100 - $deplesi_inti) * $bb) / ($fcr * $rata_umur_panen) * 100), 2);
+            }
+            if ( $populasi_plasma > 0 && $total_ekor > 0 ) {
+                $deplesi_plasma = abs((($populasi_plasma - $total_ekor) / $populasi_plasma) * 100);
+            }
+            if ( $deplesi_plasma > 0 && $bb > 0 && $fcr > 0 && $rata_umur_panen > 0 ) {
+                $ip_plasma = round((((100 - $deplesi_plasma) * $bb) / ($fcr * $rata_umur_panen) * 100), 2);
             }
 
             foreach ($sapronak_kesepakatan['hitung_budidaya_item'] as $k => $val) {
                 if ( $val['ip_akhir'] > 0 ) {
-                    if ( ($ip >= $val['ip_awal']) && ($ip <= $val['ip_akhir']) ) {
+                    if ( ($ip_plasma >= $val['ip_awal']) && ($ip_plasma <= $val['ip_akhir']) ) {
                         $bonus_pasar = $val['bonus_ip'];
                     }
                 } else {
-                    if ( $ip >= $val['ip_awal'] ) {
+                    if ( $ip_plasma >= $val['ip_awal'] ) {
                         $bonus_pasar = $val['bonus_ip'];
                     }
                 }
@@ -783,7 +796,7 @@ class RhppGroup extends Public_Controller {
             if ( isset($data_rpah_plasma) && !empty($data_rpah_plasma) ) {
                 if ( $populasi_ch > 0 && !empty($kontrak_bonus_listrik) ) {
                     foreach ($kontrak_bonus_listrik as $k => $val) {
-                        if ( $ip >= $val['ip_awal'] ) {
+                        if ( $ip_plasma >= $val['ip_awal'] ) {
                             $data_header['total_bonus_insentif_listrik'] = $populasi_ch * $val['bonus'];
                         }
                     }
@@ -816,15 +829,13 @@ class RhppGroup extends Public_Controller {
                 }
             }
 
-            // cetak_r( $bonus_fcr.' | '.$data_rpah_plasma[$k_data]['tonase'] );
-
             $bonus_insentif_fcr = $bonus_fcr * $total_tonase;
             $data_header['bonus_insentif_fcr'] = $bonus_insentif_fcr;
 
             $data_header['fcr'] = $fcr;
             $data_header['bb'] = $bb;
-            $data_header['deplesi'] = $deplesi;
-            $data_header['ip'] = $ip;
+            // $data_header['deplesi'] = $deplesi;
+            // $data_header['ip'] = $ip;
             $data_header['bonus_pasar'] = $bonus_pasar;
         } else {
             $m_rhpp_group_header = new \Model\Storage\RhppGroupHeader_model();
@@ -849,10 +860,15 @@ class RhppGroup extends Public_Controller {
             $data_header['potongan_pajak'] = $d_rhpp_inti['prs_potongan_pajak'];
             $data_header['fcr'] = $d_rhpp_inti['fcr'];
             $data_header['bb'] = $d_rhpp_inti['bb'];
-            $data_header['deplesi'] = $d_rhpp_inti['deplesi'];
-            $data_header['ip'] = $d_rhpp_inti['ip'];
+            // $data_header['deplesi'] = $d_rhpp_inti['deplesi'];
+            // $data_header['ip'] = $d_rhpp_inti['ip'];
             $data_header['bonus_pasar'] = !empty($d_rhpp_plasma) ? $d_rhpp_plasma['persen_bonus_pasar'] : 0;
             $cn = $d_rhpp_inti['cn'];
+
+            $deplesi_inti = $d_rhpp_inti['deplesi'];
+            $ip_inti = $d_rhpp_inti['ip'];
+            $deplesi_plasma = $d_rhpp_plasma['deplesi'];
+            $ip_plasma = $d_rhpp_plasma['ip'];
 
             $tot_populasi = 0;
             foreach ($d_rhpp_inti['list_noreg'] as $k_ln => $v_ln) {
@@ -1209,7 +1225,9 @@ class RhppGroup extends Public_Controller {
             'data_rpah' => $data_rpah_plasma,
             'data_potongan' => $data_potongan,
             'data_bonus' => $data_bonus,
-            'data_piutang_plasma' => isset($data_piutang_plasma) ? $data_piutang_plasma : null
+            'data_piutang_plasma' => isset($data_piutang_plasma) ? $data_piutang_plasma : null,
+            'deplesi' => $deplesi_plasma,
+            'ip' => $ip_plasma
         );
 
         $data_detail_inti = array(
@@ -1222,7 +1240,9 @@ class RhppGroup extends Public_Controller {
             'data_oa_retur_pakan' => $data_oa_retur_pakan_inti,
             'data_voadip' => $data_voadip_inti,
             'data_retur_voadip' => $data_retur_voadip_inti,
-            'data_rpah' => $data_rpah_inti
+            'data_rpah' => $data_rpah_inti,
+            'deplesi' => $deplesi_inti,
+            'ip' => $ip_inti
         );
 
         $data_rhpp_plasma = array(

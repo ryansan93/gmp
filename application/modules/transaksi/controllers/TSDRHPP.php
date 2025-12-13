@@ -357,6 +357,42 @@ class TSDRHPP extends Public_Controller {
         echo $html;
     }
 
+    public function hitPerformaPlasma() {
+        $params = $this->input->post('params');
+
+        try {
+            $_noreg = $params['noreg'];
+            $populasi = $params['populasi'];
+            $total_jumlah_pakan = $params['total_jumlah_pakan'];
+            $tgl_docin = $params['tgl_docin'];
+
+            $sk = $this->get_harga_kontrak( $_noreg );
+            $data_rpah = $this->get_data_rpah( $_noreg, $populasi, $total_jumlah_pakan, $tgl_docin );
+            // $data_rpah_inti = $data_rpah['data'];
+            // if ( $jenis_mitra == 'ME' ) {
+            //     $data_rpah_plasma = $data_rpah['data'];
+            // }
+
+            $content = array(
+                'bonus_pasar' => $data_rpah['bonus_pasar'],
+                'bonus_kematian' => $data_rpah['bonus_kematian'],
+                'fcr' => $data_rpah['fcr'],
+                'bb' => $data_rpah['bb'],
+                'deplesi' => $data_rpah['deplesi'],
+                'ip' => $data_rpah['ip'],
+                'rata_umur_panen' => $data_rpah['rata_umur_panen'],
+                'bonus_insentif_listrik'
+            );
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $content;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function view($_noreg)
     {
         $data_rhpp_plasma = null;
@@ -375,7 +411,9 @@ class TSDRHPP extends Public_Controller {
 
         $cn = null;
 
-        $bonus_pasar = 0; $bonus_kematian = 0; $nilai_bonus_kematian = 0; $fcr = 0; $bb = 0; $deplesi = 0; $ip = 0;
+        $bonus_pasar = 0; $bonus_kematian = 0; $nilai_bonus_kematian = 0; $fcr = 0; $bb = 0; 
+        $deplesi_inti = 0; $ip_inti = 0;
+        $deplesi_plasma = 0; $ip_plasma = 0;
         $bonus_insentif_fcr = 0;
 
         $sk = $this->get_harga_kontrak( $_noreg );
@@ -644,51 +682,18 @@ class TSDRHPP extends Public_Controller {
             $bonus_kematian = $d_rhpp_plasma['bonus_kematian'];
             $fcr = $d_rhpp_inti['fcr'];
             $bb = $d_rhpp_inti['bb'];
-            $deplesi = $d_rhpp_inti['deplesi'];
-            $ip = $d_rhpp_inti['ip'];
+            // $deplesi = $d_rhpp_inti['deplesi'];
+            // $ip = $d_rhpp_inti['ip'];
+            $deplesi_inti = $d_rhpp_inti['deplesi']; 
+            $ip_inti = $d_rhpp_inti['ip'];
+            $deplesi_plasma = $d_rhpp_plasma['deplesi']; 
+            $ip_plasma = $d_rhpp_plasma['ip'];
             $cn = $d_rhpp_inti['cn'];
         } else {
-            // $m_pp = new \Model\Storage\PenjualanPeralatan_model();
-            // $d_pp = $m_pp->where('mitra', $d_rs['mitra']['nomor'])->where('status', 'BELUM')->get();
-
-            // if ( $d_pp->count() > 0 ) {
-            //     $d_pp = $d_pp->toArray();
-
-            //     $m_sm = new \Model\Storage\SaldoMitra_model();
-            //     $d_sm = $m_sm->where('no_mitra', $d_rs['mitra']['nomor'])->orderBy('id', 'desc')->first();
-
-            //     foreach ($d_pp as $k_pp => $v_pp) {
-            //         $m_bpp = new \Model\Storage\BayarPenjualanPeralatan_model();
-            //         $d_bpp = $m_bpp->where('id_penjualan_peralatan', $v_pp['id'])->get();
-
-            //         $sudah_bayar = 0;
-            //         if ( $d_bpp->count() > 0 ) {
-            //             foreach ($d_bpp as $k_bpp => $v_bpp) {
-            //                 $sudah_bayar += $v_bpp['saldo'] + $v_bpp['bayar'];
-            //             }
-            //         }
-
-            //         $data_potongan[ $v_pp['id'] ] = array(
-            //             'id_jual' => $v_pp['id'],
-            //             'tanggal' => $v_pp['tanggal'],
-            //             'tagihan' => $v_pp['total'],
-            //             'sudah_bayar' => $sudah_bayar,
-            //             'sisa_bayar' => $v_pp['total'] - $sudah_bayar,
-            //             'saldo' => (isset($d_sm->saldo) && $d_sm->saldo > 0) ? $d_sm->saldo : 0
-            //         );
-            //     }
-            // }
-
             $m_bo = new \Model\Storage\BiayaOperasional_model();
             $d_bo = $m_bo->where('tgl_berlaku', '<=', date('Y-m-d'))->orderBy('tgl_berlaku', 'desc')->first();
 
             $biaya_opr = 0;
-            // if ( $d_bo && $jenis_mitra == 'ME' ) {
-            //     $biaya_opr = $d_bo->biaya_opr;
-            // } else {
-            //     $m_dj = new \Model\Storage\DetJurnal_model();
-            //     $biaya_opr = $m_dj->where('noreg', $_noreg)->sum('nominal');
-            // }
 
             $data_piutang_plasma = $this->get_data_piutang( $d_rs['mitra']['d_mitra']['nomor'] );
             
@@ -786,8 +791,12 @@ class TSDRHPP extends Public_Controller {
             $nilai_bonus_kematian = $data_rpah['bonus_kematian'];
             $fcr = $data_rpah['fcr'];
             $bb = $data_rpah['bb'];
-            $deplesi = $data_rpah['deplesi'];
-            $ip = $data_rpah['ip'];
+            // $deplesi = $data_rpah['deplesi'];
+            // $ip = $data_rpah['ip'];
+            $deplesi_inti = $data_rpah['deplesi']; 
+            $ip_inti = $data_rpah['ip'];
+            $deplesi_plasma = $data_rpah['deplesi']; 
+            $ip_plasma = $data_rpah['ip'];
             $rata_umur_panen = $data_rpah['rata_umur_panen'];
         }
 
@@ -801,7 +810,9 @@ class TSDRHPP extends Public_Controller {
             'data_rpah' => $data_rpah_plasma,
             'data_potongan' => $data_potongan,
             'data_bonus' => $data_bonus,
-            'data_piutang_plasma' => $data_piutang_plasma
+            'data_piutang_plasma' => $data_piutang_plasma,
+            'deplesi' => $deplesi_plasma,
+            'ip' => $ip_plasma
         );
 
         $data_detail_inti = array(
@@ -814,7 +825,9 @@ class TSDRHPP extends Public_Controller {
             'data_oa_retur_pakan' => $data_oa_retur_pakan_inti,
             'data_voadip' => $data_voadip_inti,
             'data_retur_voadip' => $data_retur_voadip_inti,
-            'data_rpah' => $data_rpah_inti
+            'data_rpah' => $data_rpah_inti,
+            'deplesi' => $deplesi_inti,
+            'ip' => $ip_inti
         );
 
         $data_rhpp_plasma = array(
@@ -851,8 +864,8 @@ class TSDRHPP extends Public_Controller {
             'bonus_kematian' => $bonus_kematian,
             'fcr' => $fcr,
             'bb' => $bb,
-            'deplesi' => $deplesi,
-            'ip' => $ip,
+            // 'deplesi' => $deplesi,
+            // 'ip' => $ip,
             'cn' => $cn
         );
 
