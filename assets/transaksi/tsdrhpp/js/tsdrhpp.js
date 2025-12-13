@@ -252,6 +252,7 @@ var tsdrhpp = {
 			'populasi': populasi,
 			'total_jumlah_pakan': numeral.unformat($(div_rhpp_plasma).find('td.jml_pakan b').text()),
 			'tgl_docin': $(div_rhpp_plasma).find('label.tgl_docin').attr('data-tgl'),
+			'populasi_bonus_insentif_listrik': numeral.unformat($('input.populasi_bonus_insentif_listrik').val())
 		};
 
 		$.ajax({
@@ -279,6 +280,10 @@ var tsdrhpp = {
 
 					$(div_rhpp_plasma).find('td.bonus_kematian').attr('data-val', bonus_kematian);
 					$(div_rhpp_plasma).find('td.bonus_kematian').text(numeral.formatInt(bonus_kematian));
+
+					$(div_rhpp_plasma).find('td.bonus_insentif_listrik').attr('data-bonus', data.content.bonus_insentif_listrik);
+					$(div_rhpp_plasma).find('td.bonus_insentif_listrik').attr('data-val', data.content.total_bonus_insentif_listrik);
+					$(div_rhpp_plasma).find('td.bonus_insentif_listrik').text(numeral.formatInt(data.content.total_bonus_insentif_listrik));
 
 					tsdrhpp.hit_tot_pemasukan_plasma();
 				} else {

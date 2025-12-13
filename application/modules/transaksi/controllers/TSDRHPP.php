@@ -365,13 +365,24 @@ class TSDRHPP extends Public_Controller {
             $populasi = $params['populasi'];
             $total_jumlah_pakan = $params['total_jumlah_pakan'];
             $tgl_docin = $params['tgl_docin'];
+            $populasi_bonus_insentif_listrik = $params['populasi_bonus_insentif_listrik'];
 
             $sk = $this->get_harga_kontrak( $_noreg );
             $data_rpah = $this->get_data_rpah( $_noreg, $populasi, $total_jumlah_pakan, $tgl_docin );
-            // $data_rpah_inti = $data_rpah['data'];
-            // if ( $jenis_mitra == 'ME' ) {
-            //     $data_rpah_plasma = $data_rpah['data'];
-            // }
+
+            $bonus_insentif_listrik = 0;
+            foreach ($sk['bonus_insentif_listrik'] as $k_bil => $v_bil) {
+                if ( $v_bil['ip_akhir'] != 0 ) {
+                    if ( $data_rpah['ip'] >= $v_bil['ip_awal'] && $data_rpah['ip'] <= $v_bil['ip_akhir'] ) {
+                        $bonus_insentif_listrik = $v_bil['bonus'];
+                    }
+                } else {
+                    if ( $data_rpah['ip'] >= $v_bil['ip_awal'] ) {
+                        $bonus_insentif_listrik = $v_bil['bonus'];
+                    }
+                }
+            }
+            $total_bonus_insentif_listrik = $bonus_insentif_listrik * $populasi_bonus_insentif_listrik;
 
             $content = array(
                 'bonus_pasar' => $data_rpah['bonus_pasar'],
@@ -381,7 +392,8 @@ class TSDRHPP extends Public_Controller {
                 'deplesi' => $data_rpah['deplesi'],
                 'ip' => $data_rpah['ip'],
                 'rata_umur_panen' => $data_rpah['rata_umur_panen'],
-                'bonus_insentif_listrik'
+                'bonus_insentif_listrik' => $bonus_insentif_listrik,
+                'total_bonus_insentif_listrik' => $total_bonus_insentif_listrik
             );
 
             $this->result['status'] = 1;
