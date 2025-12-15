@@ -7,11 +7,11 @@
 				</div>
 				<div class="col-xs-12 no-padding">
 					<div class="input-group date datetimepicker" name="startDate" id="StartDate">
-							<input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
-							<span class="input-group-addon">
-								<span class="glyphicon glyphicon-calendar"></span>
-							</span>
-						</div>
+						<input type="text" class="form-control text-center" placeholder="Start Date" data-required="1" />
+						<span class="input-group-addon">
+							<span class="glyphicon glyphicon-calendar"></span>
+						</span>
+					</div>
 				</div>
 			</div>
 			<div class="col-xs-6 no-padding" style="padding-left: 5px; margin-bottom: 10px;">

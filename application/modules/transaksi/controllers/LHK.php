@@ -1969,9 +1969,9 @@ class LHK extends Public_Controller
         //     $d_conf = $d_conf->toArray();
 
         //     foreach ($d_conf as $key => $value) {
-                $id = '5306';
-                $id_old = '5306';
-                $tanggal = '2025-11-12';
+                $id = '11901';
+                $id_old = '11901';
+                $tanggal = '2025-12-10';
         
                 $conf = new \Model\Storage\Conf();
                 $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";

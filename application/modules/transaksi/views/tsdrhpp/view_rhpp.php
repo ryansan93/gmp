@@ -564,7 +564,7 @@
 															$ip = $data_plasma['detail']['ip'];
 														?>
 														<?php
-															$selisih_fcr = round($bb, 2) - round($fcr, 2);
+															$selisih_fcr = round(round($bb, 2) - round($fcr, 2), 3);
 
 															// cetak_r( 'BB      : '.round($bb, 3) );
 															// cetak_r( 'FCR     : '.round($fcr, 3) );

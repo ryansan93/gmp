@@ -145,25 +145,25 @@
 				<td class="text-right total_tagihan"><b>0</b></td>
 				<td class="text-right total_potongan_pph"><b>0</b></td>
 				<td class="text-right total_netto"><b>0</b></td>
-				<td class="text-right total_dn hide"><b>0</b></td>
-				<td class="text-right total_cn hide"><b>0</b></td>
+				<td class="text-right total_dn"><b>0</b></td>
+				<td class="text-right total_cn"><b>0</b></td>
 				<td class="text-right total_transfer"><b>0</b></td>
 				<td class="text-right total_bayar"><b>0</b></td>
 				<td class="text-right total_sisa"><b>0</b></td>
 				<td class="text-right"></td>
 			</tr>
 			<tr>
-				<th style="width: 6%;">Tgl Rcn Bayar</th>
-				<th class="col-xs-1">Transaksi</th>
+				<th style="width: 5%;">Tgl Rcn Bayar</th>
+				<th style="width: 7%;">Transaksi</th>
 				<th class="col-xs-1">No. Bayar / No. Invoice</th>
 				<th style="width: 3%;">Unit</th>
-				<th style="width: 6%;">Periode</th>
+				<th style="width: 5%;">Periode</th>
 				<th class="col-xs-2">Nama Penerima</th>
 				<th class="col-xs-1">Bruto</th>
-				<th class="col-xs-1">Potongan PPH</th>
+				<th style="width: 5%;">Potongan PPH</th>
 				<th class="col-xs-1">Netto</th>
-				<th class="col-xs-1 hide">DN</th>
-				<th class="col-xs-1">CN</th>
+				<th style="width: 5%;">DN</th>
+				<th style="width: 5%;">CN</th>
 				<th class="col-xs-1">Transfer</th>
 				<th class="col-xs-1">Bayar</th>
 				<th class="col-xs-1">Sisa</th>
@@ -174,7 +174,7 @@
 		</thead>
 		<tbody>
 			<tr>
-				<td colspan="13">Data tidak ditemukan.</td>
+				<td colspan="15">Data tidak ditemukan.</td>
 			</tr>
 		</tbody>
 	</table>
