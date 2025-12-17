@@ -198,10 +198,12 @@ class DistribusiBarang extends Public_Controller {
                     krm.no_polisi,
                     krm.sopir,
                     krm.ekspedisi,
-                    dss.urut
+                    dss.urut,
+                    dss.noreg
                 from
                     (
                         select
+                            dss.noreg,
                             dss.jenis_trans,
                             dss.jenis_barang,
                             dss.tgl_trans,
@@ -216,6 +218,7 @@ class DistribusiBarang extends Public_Controller {
                         union all
 
                         select
+                            dss.noreg,
                             case
                                 when dsts.tbl_name like 'terima_pakan' then
                                     'mutasi'
@@ -1532,7 +1535,7 @@ class DistribusiBarang extends Public_Controller {
             
         $filename = 'DISTRIBUSI_'.strtoupper($jenis).'_'.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xlsx';
 
-        $arr_header = array('Transaksi', 'Tanggal', 'Unit', 'Asal', 'Tujuan', 'Barang', 'No. SJ', 'Jumlah', 'OA', 'OA Mutasi', 'Hrg Beli', 'Total Beli');
+        $arr_header = array('Transaksi', 'Tanggal', 'Unit', 'Asal', 'Tujuan', 'Noreg', 'Barang', 'No. SJ', 'Jumlah', 'OA', 'OA Mutasi', 'Hrg Beli', 'Total Beli');
         $arr_column = null;
         if ( !empty($data) ) {
             $idx = 0;
@@ -1543,6 +1546,7 @@ class DistribusiBarang extends Public_Controller {
                     'Unit' => array('value' => $value['unit'], 'data_type' => 'string'),
                     'Asal' => array('value' => strtoupper($value['nama_asal']).( !empty($value['kdg_asal']) ? ' (KDG:'.$value['kdg_asal'].')' : '' ), 'data_type' => 'string'),
                     'Tujuan' => array('value' => strtoupper($value['nama_tujuan']).( !empty($value['kdg_tujuan']) ? ' (KDG:'.$value['kdg_tujuan'].')' : '' ), 'data_type' => 'string'),
+                    'Noreg' => array('value' => $value['noreg'], 'data_type' => 'string'),
                     'Barang' => array('value' => strtoupper($value['nama_barang']), 'data_type' => 'string'),
                     'No. SJ' => array('value' => strtoupper($value['no_sj']), 'data_type' => 'string'),
                     'Jumlah' => array('value' => $value['jumlah'], 'data_type' => 'decimal2'),

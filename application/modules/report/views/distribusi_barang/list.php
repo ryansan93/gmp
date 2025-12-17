@@ -10,6 +10,7 @@
 			<td><?php echo $value['unit']; ?></td>
 			<td><?php echo strtoupper($value['nama_asal']).( !empty($value['kdg_asal']) ? ' (KDG:'.$value['kdg_asal'].')' : '' ); ?></td>
 			<td><?php echo strtoupper($value['nama_tujuan']).( !empty($value['kdg_tujuan']) ? ' (KDG:'.$value['kdg_tujuan'].')' : '' ); ?></td>
+			<td><?php echo $value['noreg']; ?></td>
 			<td><?php echo strtoupper($value['nama_barang']); ?></td>
 			<td><?php echo strtoupper($value['no_sj']); ?></td>
 			<td class="text-right"><?php echo ($value['jumlah'] >= 0) ? angkaDecimal($value['jumlah']) : '('.angkaDecimal(abs($value['jumlah'])).')'; ?></td>
@@ -26,7 +27,7 @@
 		?>
 	<?php endforeach ?>
 	<tr>
-		<td colspan="7" class="text-right"><b>TOTAL</b></td>
+		<td colspan="8" class="text-right"><b>TOTAL</b></td>
 		<td class="text-right"><b><?php echo angkaRibuan($tot_jumlah); ?></b></td>
 		<td colspan="3"></td>
 		<td class="text-right"><b><?php echo angkaRibuan($tot_beli); ?></b></td>

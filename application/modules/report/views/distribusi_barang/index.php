@@ -111,8 +111,9 @@
 						<th class="text-center" style="width: 5%; vertical-align: middle;">Transaksi</th>
 						<th class="text-center" style="width: 6%; vertical-align: middle;">Tanggal</th>
 						<th class="text-center" style="width: 5%; vertical-align: middle;">Unit</th>
-						<th class="text-center" style="width: 15%; vertical-align: middle;">Asal</th>
-						<th class="text-center" style="width: 15%; vertical-align: middle;">Tujuan</th>
+						<th class="text-center" style="width: 10%; vertical-align: middle;">Asal</th>
+						<th class="text-center" style="width: 10%; vertical-align: middle;">Tujuan</th>
+						<th class="text-center" style="width: 10%; vertical-align: middle;">Noreg</th>
 						<th class="text-center" style="width: 10%; vertical-align: middle;">Barang</th>
 						<th class="text-center" style="width: 7%; vertical-align: middle;">No. SJ</th>
 						<th class="text-center" style="width: 5%; vertical-align: middle;">Jumlah</th>
