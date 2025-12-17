@@ -492,71 +492,87 @@ var kk = {
         if ( status == 0 ) {
 			bootbox.alert( keterangan );
 		} else {
-			bootbox.confirm( keterangan , function(result) {
-                if ( result ) {
-                    showLoading('Proses simpan data kas keluar . . .');
+            var user_submit = $(elm).attr('data-usersubmit');
+            var user_edit = $(elm).attr('data-useredit');
 
-                    var no_urut = 1;
-					var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
-						var _detail = {
-                            'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
-                            // 'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
-                            'coa_asal': $(dcontent).find('select.bank').select2().val(),
-                            'coa_asal_nama': $(dcontent).find('select.bank option:selected').attr('data-nama'),
-                            'coa_tujuan': $(tr).find('select.tujuan').select2().val(),
-                            'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
-                            'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
-                            'no_invoice': $(tr).find('input.no_invoice').val(),
-							'nilai': numeral.unformat($(tr).find('input.nilai').val())
-						};
+            var exec = 1;
+            if ( user_submit != user_edit ) {
+                var nominal_old = $(elm).attr('data-nominalold');
+                var nilai = numeral.unformat($(dcontent).find('div.nilai input').val());
 
-                        no_urut++;
-
-						return _detail;
-					});
-
-					var data = {
-						'no_kk': $(elm).attr('data-kode'),
-						'tgl_kk': dateSQL( $(dcontent).find('#TglKk').data('DateTimePicker').date() ),
-						// 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
-                        'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
-                        'no_supplier': $(dcontent).find('select.no_supplier').select2().val(),
-                        'supplier': $(dcontent).find('input.supplier').val().toUpperCase(),
-                        'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
-                        'coa_bank': $(dcontent).find('select.bank').select2().val().toUpperCase(),
-                        'nama_bank': $(dcontent).find('select.bank').find('option:selected').attr('data-nama'),
-                        // 'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
-						// 'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
-						// 'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
-                        'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
-                        // 'unit': $(dcontent).find('select.unit').select2().val(),
-                        'unit': $(dcontent).find('select.bank').find('option:selected').attr('data-unit'),
-                        'kode': $(dcontent).find('select.bank').find('option:selected').attr('data-kode'),
-                        'noreg': $(dcontent).find('select.noreg').select2().val(),
-						'detail': detail
-					};
-
-                    $.ajax({
-                        url: 'accounting/KasKeluarInternal/edit',
-                        dataType: 'json',
-                        type: 'post',
-                        data: {
-                            'params': data
-                        },
-                        beforeSend: function() {},
-                        success: function(data) {
-                            hideLoading();
-                            if ( data.status == 1 ) {
-                                bootbox.alert( data.message, function () {
-                                    kk.loadForm( data.content.id );
-                                });
-                            } else {
-                                bootbox.alert(data.message);
-                            };
-                        },
-                    });
+                if ( nominal_old != nilai ) {
+                    exec = 0;
+                    bootbox.alert('Nominal yang anda masukkan tidak sama.<br>Nominal Sebelumnya : <b>'+numeral.formatDec(nominal_old)+'</b><br>Nominal Sekarang : <b>'+numeral.formatDec(nilai)+'</b><br><br>Harap cek kembali data yang anda masukkan.');
                 }
-            });
+            }
+
+            if ( exec == 1 ) {
+                bootbox.confirm( keterangan , function(result) {
+                    if ( result ) {
+                        showLoading('Proses simpan data kas keluar . . .');
+    
+                        var no_urut = 1;
+                        var detail = $.map( $(dcontent).find('.tbl_detail tbody tr'), function(tr) {
+                            var _detail = {
+                                'det_jurnal_trans': $(tr).find('select.det_jurnal_trans').select2().val(),
+                                // 'coa_asal': $(tr).find('select.det_jurnal_trans option:selected').attr('data-coaasal'),
+                                'coa_asal': $(dcontent).find('select.bank').select2().val(),
+                                'coa_asal_nama': $(dcontent).find('select.bank option:selected').attr('data-nama'),
+                                'coa_tujuan': $(tr).find('select.tujuan').select2().val(),
+                                'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
+                                'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
+                                'no_invoice': $(tr).find('input.no_invoice').val(),
+                                'nilai': numeral.unformat($(tr).find('input.nilai').val())
+                            };
+    
+                            no_urut++;
+    
+                            return _detail;
+                        });
+    
+                        var data = {
+                            'no_kk': $(elm).attr('data-kode'),
+                            'tgl_kk': dateSQL( $(dcontent).find('#TglKk').data('DateTimePicker').date() ),
+                            // 'no_coa': $(dcontent).find('select.no_coa_header').select2().val(),
+                            'jurnal_trans': $(dcontent).find('select.jurnal_trans').select2().val(),
+                            'no_supplier': $(dcontent).find('select.no_supplier').select2().val(),
+                            'supplier': $(dcontent).find('input.supplier').val().toUpperCase(),
+                            'keterangan': $(dcontent).find('textarea.keterangan').val().trim().toUpperCase(),
+                            'coa_bank': $(dcontent).find('select.bank').select2().val().toUpperCase(),
+                            'nama_bank': $(dcontent).find('select.bank').find('option:selected').attr('data-nama'),
+                            // 'no_giro': $(dcontent).find('input.no_giro').val().toUpperCase(),
+                            // 'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
+                            // 'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
+                            'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
+                            // 'unit': $(dcontent).find('select.unit').select2().val(),
+                            'unit': $(dcontent).find('select.bank').find('option:selected').attr('data-unit'),
+                            'kode': $(dcontent).find('select.bank').find('option:selected').attr('data-kode'),
+                            'noreg': $(dcontent).find('select.noreg').select2().val(),
+                            'detail': detail
+                        };
+    
+                        $.ajax({
+                            url: 'accounting/KasKeluarInternal/edit',
+                            dataType: 'json',
+                            type: 'post',
+                            data: {
+                                'params': data
+                            },
+                            beforeSend: function() {},
+                            success: function(data) {
+                                hideLoading();
+                                if ( data.status == 1 ) {
+                                    bootbox.alert( data.message, function () {
+                                        kk.loadForm( data.content.id );
+                                    });
+                                } else {
+                                    bootbox.alert(data.message);
+                                };
+                            },
+                        });
+                    }
+                });
+            }
         }
     }, // end - edit
 

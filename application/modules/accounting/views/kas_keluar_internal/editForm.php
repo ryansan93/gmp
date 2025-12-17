@@ -279,7 +279,7 @@
 <div class="col-xs-12 no-padding"><hr></div>
 
 <div class="col-xs-12 no-padding">
-    <button type="button" class="btn btn-primary pull-right" onclick="kk.edit(this)" data-kode="<?php echo $data['no_kk']; ?>" style="margin-left: 5px;">
+    <button type="button" class="btn btn-primary pull-right" onclick="kk.edit(this)" data-kode="<?php echo $data['no_kk']; ?>" data-nominalold="<?php echo $data['nilai']; ?>" data-usersubmit="<?php echo $log['user_id']; ?>" data-useredit="<?php echo $userid; ?>" style="margin-left: 5px;">
         <i class="fa fa-save"></i>
         Update
     </button>

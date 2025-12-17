@@ -173,6 +173,9 @@ class KasKeluar extends Public_Controller {
 
         $m_kki = new \Model\Storage\KkItem_model();
         $d_kki = $m_kki->getKkItem( $kode );
+
+        $m_log = new \Model\Storage\LogTables_model();
+        $d_log = $m_log->getLog($m_kk->table, $kode);
         
         $content['coa'] = $m_coa->getDataCoa();
         $content['bank'] = $m_coa->getDataKas(1, $this->userid, 2);
@@ -182,6 +185,9 @@ class KasKeluar extends Public_Controller {
         $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $content['data'] = $d_kk;
         $content['detail'] = $d_kki;
+
+        $content['userid'] = $this->userid;
+        $content['log'] = $d_log[0];
 
         $html = $this->load->view($this->pathView . 'editForm', $content, TRUE);
 

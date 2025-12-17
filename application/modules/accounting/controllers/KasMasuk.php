@@ -128,7 +128,7 @@ class KasMasuk extends Public_Controller {
         $m_djt = new \Model\Storage\DetJurnalTrans_model();
 
         $content['coa'] = $m_coa->getDataCoa();
-        $content['bank'] = $m_coa->getDataKas(1, $this->userid, 2);
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
@@ -173,15 +173,21 @@ class KasMasuk extends Public_Controller {
 
         $m_kmi = new \Model\Storage\KmItem_model();
         $d_kmi = $m_kmi->getKmItem( $kode );
+
+        $m_log = new \Model\Storage\LogTables_model();
+        $d_log = $m_log->getLog($m_km->table, $kode);
         
         $content['coa'] = $m_coa->getDataCoa();
-        $content['bank'] = $m_coa->getDataKas(1, $this->userid, 2);
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
         $content['pelanggan'] = $m_plg->getDataPelanggan();
         $content['unit'] = $m_wilayah->getDataUnit(1, $this->userid);
         $content['jurnal_trans'] = $m_jt->getJurnalTransByUrl( $this->url );
         $content['det_jurnal_trans'] = $m_djt->getDetJurnalTransByUrl( $this->url );
         $content['data'] = $d_km;
         $content['detail'] = $d_kmi;
+
+        $content['userid'] = $this->userid;
+        $content['log'] = $d_log[0];
 
         $html = $this->load->view($this->pathView . 'editForm', $content, TRUE);
 
