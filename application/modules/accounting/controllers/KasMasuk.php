@@ -112,7 +112,7 @@ class KasMasuk extends Public_Controller {
 
         $content['start_date'] = $start_date;
         $content['end_date'] = $end_date;
-        $content['bank'] = $m_coa->getDataKas(1, $this->userid, 2);
+        $content['bank'] = $m_coa->getDataKas(1, $this->userid);
         $content['akses'] = $this->hakAkses;
         $html = $this->load->view($this->pathView . 'riwayat', $content, TRUE);
 
