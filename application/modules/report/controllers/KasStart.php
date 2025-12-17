@@ -46,7 +46,7 @@ class KasStart extends Public_Controller {
 
             $m_coa = new \Model\Storage\Coa_model();
 
-            $content['kas'] = $m_coa->getDataKas(1, $this->userid, 2);
+            $content['kas'] = $m_coa->getDataKas(1, $this->userid);
             $content['periode'] = $periode;
             $content['perusahaan'] = $this->getPerusahaan();
             $content['title_menu'] = 'Laporan Kas';
