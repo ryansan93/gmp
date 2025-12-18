@@ -406,6 +406,21 @@ class BankStart extends Public_Controller {
                             from piutang
                             where
                                 tgl_realisasi between '".$start_date_new."' and '".$end_date_new."'
+
+                            union all
+
+                            select
+                                'bayar_peralatan' as tbl_name,
+                                cast(id as varchar(20)) as tbl_id,
+                                tgl_realisasi as tanggal,
+                                -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
+                                cast(ket_realisasi as varchar(max)) as keterangan,
+                                0 as debet,
+                                jml_bayar as kredit,
+                                coa_bank as kas
+                            from bayar_peralatan
+                            where
+                                tgl_realisasi between '".$start_date_new."' and '".$end_date_new."'
                         ) data
                         on
                             nb.tbl_id = data.tbl_id
@@ -692,6 +707,21 @@ class BankStart extends Public_Controller {
                             nominal as kredit,
                             tf_bank as kas
                         from piutang
+                        where
+                            tgl_realisasi between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        select
+                            'bayar_peralatan' as tbl_name,
+                            cast(id as varchar(20)) as tbl_id,
+                            tgl_realisasi as tanggal,
+                            -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
+                            cast(ket_realisasi as varchar(max)) as keterangan,
+                            0 as debet,
+                            jml_bayar as kredit,
+                            coa_bank as kas
+                        from bayar_peralatan
                         where
                             tgl_realisasi between '".$start_date."' and '".$end_date."'
                     ) data
