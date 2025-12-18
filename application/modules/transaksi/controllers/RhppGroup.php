@@ -2915,10 +2915,12 @@ class RhppGroup extends Public_Controller {
             $m_rgh = new \Model\Storage\RhppGroupHeader_model();
             $d_rgh = $m_rgh->where('id', $id)->first();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', ".$id.", ".$id.", 2";
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', ".$id.", ".$id.", 2";
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 2);
+
 
             $deskripsi_log = 'submit cn oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_rgh, $deskripsi_log);
