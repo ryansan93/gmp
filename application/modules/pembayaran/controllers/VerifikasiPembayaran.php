@@ -974,57 +974,107 @@ class VerifikasiPembayaran extends Public_Controller
         $files = isset($_FILES['files']) ? $_FILES['files'] : [];
 
         try {
+            // cetak_r( $data, 1 );
+
             $isMoved = 0;
             if (!empty($files)) {
                 $moved = uploadFile($files);
                 $isMoved = $moved['status'];
+            }
+            
+            if ( $data['tbl_name'] == 'realisasi_pembayaran' ) {
+                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+                $d_rp = $m_rp->where('id', $data['id'])->first();
                 
-            }
-            
-            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-            $d_rp = $m_rp->where('id', $data['id'])->first();
-            
-            $file_name = $path_name = $d_rp->lampiran_realisasi;
-            if ($isMoved) {
-                $file_name = $moved['name'];
-                $path_name = $moved['path'];
-            }
+                $file_name = $path_name = $d_rp->lampiran_realisasi;
+                if ($isMoved) {
+                    $file_name = $moved['name'];
+                    $path_name = $moved['path'];
+                }
 
-            $m_coa = new \Model\Storage\Coa_model();
-            $d_coa = $m_coa->where('coa', $d_rp->coa_bank)->orderBy('id', 'desc')->first();
+                $m_coa = new \Model\Storage\Coa_model();
+                $d_coa = $m_coa->where('coa', $d_rp->coa_bank)->orderBy('id', 'desc')->first();
 
-            $m_nbbk = new \Model\Storage\NoBbk_model();
-            $d_nbbk = $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->where('kode', 'like', $d_coa->kode.'%')->first();
-
-            if ( !$d_nbbk ) {
                 $m_nbbk = new \Model\Storage\NoBbk_model();
-                $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
-                $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->update(
-                    array('kode' => $no_kk)
+                $d_nbbk = $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->where('kode', 'like', $d_coa->kode.'%')->first();
+
+                if ( !$d_nbbk ) {
+                    $m_nbbk = new \Model\Storage\NoBbk_model();
+                    $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
+                    $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->update(
+                        array('kode' => $no_kk)
+                    );
+                }
+
+                $m_rp = new \Model\Storage\RealisasiPembayaran_model();
+                $m_rp->where('id', $data['id'])->update(
+                    array(
+                        'no_bukti' => $data['no_bukti'],
+                        'tgl_realisasi' => $data['tgl_bayar'],
+                        'lampiran_realisasi' => $path_name,
+                        'ket_realisasi' => $data['ket_bayar'],
+                        'status' => 2
+                    )
                 );
+
+                $tgl_bayar = $d_rp->tgl_realisasi;
+                if ( $data['tgl_bayar'] < $tgl_bayar ) {
+                    $tgl_bayar = $data['tgl_bayar'];
+                }
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $tgl_bayar);
+
+                $_d_rp = $m_rp->where('id', $data['id'])->first();
+                $deskripsi_log = 'update pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
             }
 
-            $m_rp = new \Model\Storage\RealisasiPembayaran_model();
-            $m_rp->where('id', $data['id'])->update(
-                array(
-                    'no_bukti' => $data['no_bukti'],
-                    'tgl_realisasi' => $data['tgl_bayar'],
-                    'lampiran_realisasi' => $path_name,
-                    'ket_realisasi' => $data['ket_bayar'],
-                    'status' => 2
-                )
-            );
+            if ( $data['tbl_name'] == 'bayar_peralatan' ) {
+                $m_bp = new \Model\Storage\BayarPeralatan_model();
+                $d_bp = $m_bp->where('id', $data['id'])->first();
+                
+                $file_name = $path_name = $d_bp->lampiran_realisasi;
+                if ($isMoved) {
+                    $file_name = $moved['name'];
+                    $path_name = $moved['path'];
+                }
 
-            $tgl_bayar = $d_rp->tgl_realisasi;
-            if ( $data['tgl_bayar'] < $tgl_bayar ) {
-                $tgl_bayar = $data['tgl_bayar'];
+                $m_coa = new \Model\Storage\Coa_model();
+                $d_coa = $m_coa->where('coa', $d_bp->coa_bank)->orderBy('id', 'desc')->first();
+
+                $m_nbbk = new \Model\Storage\NoBbk_model();
+                $d_nbbk = $m_nbbk->where('tbl_name', $m_bp->getTable())->where('tbl_id', $d_bp->id)->where('kode', 'like', $d_coa->kode.'%')->first();
+
+                if ( !$d_nbbk ) {
+                    $m_nbbk = new \Model\Storage\NoBbk_model();
+                    $no_kk = $m_nbbk->getKodeKeluar($d_coa->kode, $data['tgl_bayar']);
+                    $m_nbbk->where('tbl_name', $m_bp->getTable())->where('tbl_id', $d_bp->id)->update(
+                        array('kode' => $no_kk)
+                    );
+                }
+
+                $m_bp = new \Model\Storage\BayarPeralatan_model();
+                $m_bp->where('id', $data['id'])->update(
+                    array(
+                        'no_bukti' => $data['no_bukti'],
+                        'tgl_realisasi' => $data['tgl_bayar'],
+                        'lampiran_realisasi' => $path_name,
+                        'ket_realisasi' => $data['ket_bayar'],
+                        'mstatus' => 2
+                    )
+                );
+
+                $tgl_bayar = $d_bp->tgl_realisasi;
+                if ( $data['tgl_bayar'] < $tgl_bayar ) {
+                    $tgl_bayar = $data['tgl_bayar'];
+                }
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $tgl_bayar);
+
+                $_d_bp = $m_bp->where('id', $data['id'])->first();
+                $deskripsi_log = 'update pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $_d_bp, $deskripsi_log);
             }
-
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $tgl_bayar);
-
-            $_d_rp = $m_rp->where('id', $data['id'])->first();
-            $deskripsi_log = 'update pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $_d_rp, $deskripsi_log);
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data pembayaran berhasil di update.';
