@@ -216,15 +216,15 @@ class LabaRugi extends Public_Controller {
                             ts.id = _ts.id
                     right join
                         (
-                            select r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg, r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip, rhpp_inti.lr_inti, rhpp_plasma.bonus_pasar, rhpp_inti.tot_pembelian_sapronak, rhpp_plasma.pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional
+                            select r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg, r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip, rhpp_inti.lr_inti, isnull(rhpp_plasma.bonus_pasar, 0) as bonus_pasar, rhpp_inti.tot_pembelian_sapronak, isnull(rhpp_plasma.pdpt_peternak_belum_pajak, 0) as pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional
                             from rhpp r
-                            right join
+                            left join
                                 (
                                     select noreg, bonus_pasar, pdpt_peternak_belum_pajak from rhpp r where jenis = 'rhpp_plasma'
                                 ) rhpp_plasma
                                 on
                                     rhpp_plasma.noreg = r.noreg 
-                            right join
+                            left join
                                 (
                                     select noreg, lr_inti, biaya_materai, biaya_operasional, tot_pembelian_sapronak from rhpp r where jenis = 'rhpp_inti'
                                 ) rhpp_inti
@@ -528,15 +528,15 @@ class LabaRugi extends Public_Controller {
                 tutup_siklus ts 
             right join
                 (
-                    select r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg, r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip, rhpp_inti.lr_inti, rhpp_plasma.bonus_pasar, rhpp_inti.tot_pembelian_sapronak, rhpp_plasma.pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional, rhpp_inti.barang as nama_doc
+                    select r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg, r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip, rhpp_inti.lr_inti, isnull(rhpp_plasma.bonus_pasar, 0) as bonus_pasar, rhpp_inti.tot_pembelian_sapronak, isnull(rhpp_plasma.pdpt_peternak_belum_pajak, 0) as pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional, rhpp_inti.barang as nama_doc
                     from rhpp r
-                    right join
+                    left join
                         (
                             select noreg, bonus_pasar, pdpt_peternak_belum_pajak from rhpp r where jenis = 'rhpp_plasma'
                         ) rhpp_plasma
                         on
                             rhpp_plasma.noreg = r.noreg 
-                    right join
+                    left join
                         (
                             select 
                                 r.noreg, 

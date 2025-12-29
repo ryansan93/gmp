@@ -863,7 +863,6 @@ class PenerimaanDocMobile extends Public_Controller {
         // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '758', '2025-11-21', 2, null, null";
         // $conf->hydrateRaw($sql);
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 730, 730, 3, null, '2025-11-21');
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 758, 758, 2, null, '2025-11-21');
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 996, 996, 2, 'terima_doc', '2025-12-12');
     }
 }

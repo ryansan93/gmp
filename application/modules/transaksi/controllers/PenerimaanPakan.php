@@ -1193,4 +1193,26 @@ class PenerimaanPakan extends Public_Controller {
         $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '11456', '2025-12-04', 2, '25102450101', '25110400101'";
         $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
     }
+
+    public function tes() {
+        $arr = array(
+            10417,
+            10418,
+            10419,
+            10420,
+            10542,
+            10543,
+            10605,
+            10607,
+            10610,
+            10611,
+            10612,
+            10616,
+            10617
+        );
+
+        foreach ($arr as $key => $value) {
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+        }
+    }
 }
