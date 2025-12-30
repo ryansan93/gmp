@@ -611,6 +611,53 @@ var kk = {
         });
     }, // end - delete
 
+    excryptParams: function() {
+        var dcontent = $('div#riwayat');
+		var err = 0;
+
+		$.map( $(dcontent).find('[data-required=1]'), function (ipt) {
+			if ( empty( $(ipt).val() ) ) {
+				$(ipt).parent().addClass('has-error');
+				err++;
+			} else {
+				$(ipt).parent().removeClass('has-error');
+			}
+		});
+
+		if ( err > 0 ) {
+			bootbox.alert('Harap lengkapi data terlebih dahulu.');
+		} else {
+			var params = {
+                'start_date': dateSQL( $(dcontent).find('#StartDate').data('DateTimePicker').date() ),
+                'end_date': dateSQL( $(dcontent).find('#EndDate').data('DateTimePicker').date() ),
+                'bank': $(dcontent).find('select.bank_riwayat').select2().val().toUpperCase()
+            };
+
+			$.ajax({
+	            url: 'accounting/KasKeluarInternal/excryptParams',
+	            data: {
+	                'params': params
+	            },
+	            type: 'POST',
+	            dataType: 'JSON',
+	            beforeSend: function() { showLoading(); },
+	            success: function(data) {
+	                hideLoading();
+
+	                if ( data.status == 1 ) {
+						kk.exportExcel(data.content);
+	                } else {
+	                	bootbox.alert( data.message );
+	                }
+	            }
+	        });
+		}
+	}, // end - excryptParams
+
+    exportExcel : function (params) {
+		goToURL('accounting/KasKeluarInternal/exportExcel/'+params);
+	}, // end - exportExcel
+
     printPreview: function (elm) {
         var no_so = $(elm).attr('data-kode');
 

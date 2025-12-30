@@ -491,6 +491,93 @@ class KasKeluarInternal extends Public_Controller {
         display_json( $this->result );
     }
 
+    public function excryptParams()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $params_encrypt = exEncrypt( json_encode($params) );
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params_encrypt;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function exportExcel($params_encrypt)
+    {
+        $params = json_decode( exDecrypt($params_encrypt), true );
+
+        $start_date = $params['start_date'];
+        $end_date = $params['end_date'];
+        $bank = $params['bank'];
+
+        $m_kk = new \Model\Storage\Kk_model();
+        $data = $m_kk->getKkByDate($start_date, $end_date, $bank);
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select * from coa where coa = '".$bank."'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $nama = null;
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray()[0];
+
+            $nama = $d_conf['nama_coa'];
+        }
+
+        $filename = strtoupper("KAS_INTERNAL".str_replace(' ', '_', $d_conf['nama_coa'])."_");
+        $filename = $filename.str_replace('-', '', $start_date).'_'.str_replace('-', '', $end_date).'.xls';
+
+        $arr_header = array('A', 'B', 'C', 'D', 'E', 'F', 'G');
+        
+        $arr_column = null;
+        
+        $idx = 0;
+        $arr_column[ $idx ] = array(
+            'G' => array('value' => 'KAS KELUAR INTERNAL'.strtoupper($nama), 'data_type' => 'string', 'colspan' => array('A','G'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+        );
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'G' => array('value' => 'PERIODE '.str_replace('-', '/', $start_date).' - '.str_replace('-', '/', $end_date), 'data_type' => 'string', 'colspan' => array('A','G'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+        );
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'A' => array('value' => 'Tanggal', 'data_type' => 'string', 'text_style' => 'bold'),
+            'B' => array('value' => 'No. Kas Keluar', 'data_type' => 'string', 'text_style' => 'bold'),
+            'C' => array('value' => 'Plasma', 'data_type' => 'string', 'text_style' => 'bold'),
+            'D' => array('value' => 'Supplier', 'data_type' => 'string', 'text_style' => 'bold'),
+            'E' => array('value' => 'Keterangan', 'data_type' => 'string', 'text_style' => 'bold'),
+            'F' => array('value' => 'Unit', 'data_type' => 'string', 'text_style' => 'bold'),
+            'G' => array('value' => 'Nilai', 'data_type' => 'string', 'text_style' => 'bold'),
+        );
+        $idx++;
+        if ( !empty($data) ) {
+            foreach ($data as $key => $value) {
+                $arr_column[ $idx ] = array(
+                    'A' => array('value' => $value['tgl_kk'], 'data_type' => 'date'),
+                    'B' => array('value' => $value['no_kk'], 'data_type' => 'string'),
+                    'C' => array('value' => !empty($value['nama_mitra']) ? strtoupper($value['nama_mitra'].' ('.$value['noreg'].')') : '-', 'data_type' => 'string'),
+                    'D' => array('value' => !empty($value['supplier']) ? strtoupper($value['supplier']) : '-', 'data_type' => 'string'),
+                    'E' => array('value' => !empty($value['keterangan']) ? strtoupper($value['keterangan']) : '-', 'data_type' => 'string'),
+                    'F' => array('value' => strtoupper($value['unit']), 'data_type' => 'string'),
+                    'G' => array('value' => $value['nilai'], 'data_type' => 'decimal2'),
+                );
+                $idx++;
+            }
+        }
+
+        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column, 1, 0 );
+
+        $this->load->helper('download');
+        force_download('export_excel/'.$filename.'.xlsx', NULL);
+    }
+
     public function printPreview($no_kk) {        
         $kode = exDecrypt( $no_kk );
 

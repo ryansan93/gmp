@@ -59,11 +59,12 @@
 
 <div class="col-xs-12 no-padding">
 	<small>
-		<table class="table table-bordered tbl_riwayat">
+		<table class="table table-bordered tbl_riwayat" style="margin-bottom: 0px;">
 			<thead>
 				<tr>
 					<th class="col-xs-1">Tanggal</th>
-					<th class="col-xs-2">No. Kas Keluar</th>
+					<th class="col-xs-1">No. Kas Keluar</th>
+					<th class="col-xs-2">Plasma</th>
 					<th class="col-xs-2">Supplier</th>
 					<th class="col-xs-3">Keterangan</th>
 					<th class="col-xs-2">Unit</th>
@@ -72,9 +73,13 @@
 			</thead>
 			<tbody>
 				<tr>
-					<td colspan="6">Data tidak ditemukan.</td>
+					<td colspan="7">Data tidak ditemukan.</td>
 				</tr>
 			</tbody>
 		</table>
 	</small>
+</div>
+<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+<div class="col-xs-12 no-padding">
+	<button type="button" class="btn btn-default pull-right" onclick="kk.excryptParams(this)"><i class="fa fa-file-excel-o"></i> Export Excel</button>
 </div>
