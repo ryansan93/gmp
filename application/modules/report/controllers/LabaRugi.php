@@ -528,22 +528,18 @@ class LabaRugi extends Public_Controller {
                 tutup_siklus ts 
             right join
                 (
-                    select r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg, r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip, rhpp_inti.lr_inti, isnull(rhpp_plasma.bonus_pasar, 0) as bonus_pasar, rhpp_inti.tot_pembelian_sapronak, isnull(rhpp_plasma.pdpt_peternak_belum_pajak, 0) as pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional, rhpp_inti.barang as nama_doc
-                    from rhpp r
+                    select rhpp_inti.noreg, rhpp_inti.populasi, rhpp_inti.tgl_docin, rhpp_inti.jml_panen_ekor, rhpp_inti.jml_panen_kg, rhpp_inti.bb, rhpp_inti.fcr, rhpp_inti.deplesi, rhpp_inti.rata_umur, rhpp_inti.ip, rhpp_inti.lr_inti, isnull(rhpp_plasma.bonus_pasar, 0) as bonus_pasar, rhpp_inti.tot_pembelian_sapronak, isnull(rhpp_plasma.pdpt_peternak_belum_pajak, 0) as pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional, rhpp_inti.barang as nama_doc
+                    from tutup_siklus ts
                     left join
                         (
-                            select noreg, bonus_pasar, pdpt_peternak_belum_pajak from rhpp r where jenis = 'rhpp_plasma'
+                            select r.* from rhpp r where jenis = 'rhpp_plasma'
                         ) rhpp_plasma
                         on
-                            rhpp_plasma.noreg = r.noreg 
+                            rhpp_plasma.noreg = ts.noreg 
                     left join
                         (
                             select 
-                                r.noreg, 
-                                r.lr_inti, 
-                                r.biaya_materai, 
-                                r.biaya_operasional, 
-                                r.tot_pembelian_sapronak,
+                                r.*,
                                 rd.barang
                             from rhpp r 
                             right join
@@ -554,11 +550,7 @@ class LabaRugi extends Public_Controller {
                                 r.jenis = 'rhpp_inti'
                         ) rhpp_inti
                         on
-                            rhpp_inti.noreg = r.noreg
-                    right join
-                        tutup_siklus ts 
-                        on
-                            r.id_ts = ts.id
+                            rhpp_inti.noreg = ts.noreg
                     right join
                         (
                             select 
@@ -578,12 +570,11 @@ class LabaRugi extends Public_Controller {
                                     k.unit = w.id
                         )  rdim_submit
                         on
-                            rdim_submit.noreg = r.noreg 
+                            rdim_submit.noreg = ts.noreg 
                     where
-                        r.lr_inti is not null and
                         ts.tgl_tutup between '".$start_date."' and '".$end_date."'
                         ".$sql_unit."
-                    group by r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg, r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip, rhpp_inti.lr_inti, rhpp_plasma.bonus_pasar, rhpp_inti.tot_pembelian_sapronak, rhpp_plasma.pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional, rhpp_inti.barang
+                    group by rhpp_inti.noreg, rhpp_inti.populasi, rhpp_inti.tgl_docin, rhpp_inti.jml_panen_ekor, rhpp_inti.jml_panen_kg, rhpp_inti.bb, rhpp_inti.fcr, rhpp_inti.deplesi, rhpp_inti.rata_umur, rhpp_inti.ip, rhpp_inti.lr_inti, rhpp_plasma.bonus_pasar, rhpp_inti.tot_pembelian_sapronak, rhpp_plasma.pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional, rhpp_inti.barang
                 ) rhpp
                 on
                     rhpp.noreg = ts.noreg
@@ -964,11 +955,11 @@ class LabaRugi extends Public_Controller {
                     r_penjualan.tgl_panen_awal,
                     r_penjualan.tgl_panen_akhir,
                     (DateDiff (Day, r_penjualan.tgl_panen_awal, r_penjualan.tgl_panen_akhir) + 1) as durasi_panen,
-                    r_plasma.rata_umur as umur,
-                    r_plasma.deplesi,
-                    r_plasma.fcr,
-                    r_plasma.bb,
-                    r_plasma.ip,
+                    r_inti.rata_umur as umur,
+                    r_inti.deplesi,
+                    r_inti.fcr,
+                    r_inti.bb,
+                    r_inti.ip,
                     case
                         when r_penjualan.tgl_panen_akhir <= rpp.tanggal then
                             (DateDiff (Day, r_penjualan.tgl_panen_akhir, rpp.tanggal) + 1)
@@ -1145,7 +1136,7 @@ class LabaRugi extends Public_Controller {
                 left join
                     (select id_header, min(tanggal) as tgl_panen_awal, max(tanggal) as tgl_panen_akhir, sum(ekor) as ekor, sum(tonase) as tonase, sum(total_pasar) as total from rhpp_penjualan group by id_header) r_penjualan
                     on
-                        r_penjualan.id_header = r_plasma.id
+                        r_penjualan.id_header = r_inti.id
                 left join
                     (select id_header, max(tanggal) as tanggal, sum(jumlah) as jumlah, sum(total) as total from rhpp_pindah_pakan group by id_header) rpp
                     on
@@ -1249,11 +1240,11 @@ class LabaRugi extends Public_Controller {
                     rg_penjualan.tgl_panen_awal,
                     rg_penjualan.tgl_panen_akhir,
                     (DateDiff (Day, rg_penjualan.tgl_panen_awal, rg_penjualan.tgl_panen_akhir) + 1) as durasi_panen,
-                    rg_plasma.rata_umur as umur,
-                    rg_plasma.deplesi,
-                    rg_plasma.fcr,
-                    rg_plasma.bb,
-                    rg_plasma.ip,
+                    rg_inti.rata_umur as umur,
+                    rg_inti.deplesi,
+                    rg_inti.fcr,
+                    rg_inti.bb,
+                    rg_inti.ip,
                     case
                         when rg_penjualan.tgl_panen_akhir <= rgpp.tanggal then
                             (DateDiff (Day, rg_penjualan.tgl_panen_akhir, rgpp.tanggal) + 1)
@@ -1444,7 +1435,7 @@ class LabaRugi extends Public_Controller {
                 left join
                     (select id_header, min(tanggal) as tgl_panen_awal, max(tanggal) as tgl_panen_akhir, sum(ekor) as ekor, sum(tonase) as tonase, sum(total_pasar) as total from rhpp_group_penjualan group by id_header) rg_penjualan
                     on
-                        rg_penjualan.id_header = rg_plasma.id
+                        rg_penjualan.id_header = rg_inti.id
                 left join
                     (select id_header, max(tanggal) as tanggal, sum(jumlah) as jumlah, sum(total) as total from rhpp_group_pindah_pakan group by id_header) rgpp
                     on
