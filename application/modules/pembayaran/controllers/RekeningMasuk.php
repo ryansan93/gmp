@@ -161,7 +161,19 @@ class RekeningMasuk extends Public_Controller
                     prs.kode = rm.perusahaan
             left join
                 (
-                    select sum(pp.jml_transfer) as jml_transfer, kode_umb from pembayaran_pelanggan pp group by kode_umb
+                    select
+                    sum(jml_transfer) as jml_transfer,
+                    kode_umb
+                    from
+                    (
+                        select sum(pp.jml_transfer) as jml_transfer, kode_umb from pembayaran_pelanggan pp group by kode_umb
+    
+                        union all
+    
+                        select sum(nilai) as jml_transfer, no_km as kode_umb from kmitem group by no_km
+                    ) data
+                    group by
+                        kode_umb
                 ) pp
                 on
                     pp.kode_umb = rm.no_bukti
