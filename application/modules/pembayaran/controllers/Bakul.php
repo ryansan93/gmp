@@ -306,8 +306,8 @@ class Bakul extends Public_Controller
                     dj.tanggal,
                     dj.unit,
                     dj.pelanggan as no_pelanggan,
-                    dj.nominal,
-                    isnull(pps.nominal, 0) as pakai, (dj.nominal - isnull(pps.nominal, 0)) as sisa
+                    sum(dj.nominal) as nominal,
+                    isnull(pps.nominal, 0) as pakai, (sum(dj.nominal) - isnull(pps.nominal, 0)) as sisa
                 from det_jurnal dj
                 left join
                     (
@@ -317,8 +317,16 @@ class Bakul extends Public_Controller
                         dj.kode_trans = pps.nomor
                 where
                     dj.coa_asal = '23100.000' and
-                    (dj.nominal - isnull(pps.nominal, 0)) > 0 and
+                    -- (dj.nominal - isnull(pps.nominal, 0)) > 0 and
                     dj.pelanggan = '".$params['pelanggan']."'
+                group by
+                    dj.kode_trans,
+                    dj.tanggal,
+                    dj.unit,
+                    dj.pelanggan,
+                    pps.nominal
+                having
+	                (sum(dj.nominal) - isnull(pps.nominal, 0)) > 0
             ";
             $d_pps = $m_conf->hydrateRaw( $sql );
 

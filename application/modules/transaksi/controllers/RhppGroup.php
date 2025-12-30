@@ -380,7 +380,7 @@ class RhppGroup extends Public_Controller {
                 if ( $d_kdg->count() > 0 ) {
                     $d_kdg = $d_kdg->toArray()[0];
                     if ( $d_kdg['tipe'] == 'CH' ) {
-                        $populasi_ch += $d_rhpp_inti['populasi'];
+                        $populasi_ch += $d_rhpp_plasma['doc']['jumlah'];
                     }
                 }
 
