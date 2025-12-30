@@ -149,19 +149,21 @@ class KartuHutangRingkas extends Public_Controller {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
         select 
-            data.*
-        --    data.supplier,
-        --    isnull(sum(data.saldo_awal), 0) as saldo_awal,
-        --    isnull(sum(data.debet), 0) as debet,
-        --    isnull(sum(data.kredit), 0) as kredit,
-        --    isnull(sum(data.saldo_akhir), 0) as saldo_akhir
-            ,supl.nama as nama_supplier
+        --    data.*
+            data.supplier,
+            supl.nama as nama_supplier,
+        --    data.jenis,
+        --    data.unit,
+            isnull(sum(data.saldo_awal), 0) as saldo_awal,
+            isnull(sum(data.debet), 0) as debet,
+            isnull(sum(data.kredit), 0) as kredit,
+            isnull(sum(data.saldo_akhir), 0) as saldo_akhir
         from
         (
             select
                 _data.supplier,
-                -- _data.jenis,
-                -- _data.unit,
+                _data.jenis,
+                _data.unit,
                 isnull(sum(_data.saldo_awal), 0) as saldo_awal,
                 isnull(sum(_data.debet), 0) as debet,
                 isnull(sum(_data.kredit), 0) as kredit,
@@ -289,7 +291,13 @@ class KartuHutangRingkas extends Public_Controller {
                         kpv.supplier, 
                         kpv.total as debet,
                         0 as kredit,
-                        'OVK' as jenis,
+                        case
+                            when kpv.supplier = '19B004' then
+                                'OVK'
+                            else
+                                'OVK EXTERN'
+                        end as jenis,
+        --                'OVK' as jenis,
                         null as unit
                     from konfirmasi_pembayaran_voadip kpv
                     where
@@ -353,6 +361,23 @@ class KartuHutangRingkas extends Public_Controller {
                     from cn c
                     where
                         c.tanggal < '".$start_date."'
+
+                    union all
+            
+                    select
+                        bp.no_faktur,
+                        op.supplier,
+                        0 as debet,
+                        bp.jml_bayar as kredit,
+                        'PERALATAN' as jenis,
+                        op.unit 
+                    from bayar_peralatan bp 
+                    left join
+                        order_peralatan op 
+                        on
+                            op.no_order = bp.no_order 
+                    where
+                        bp.tgl_realisasi < '".$start_date."'
 
                     union all
 
@@ -434,13 +459,20 @@ class KartuHutangRingkas extends Public_Controller {
                 from
                 (
                     /* DEBET */
+        --        	select
+        --        	sum(data.debet)
+        --        	from
+        --        	(
                     select 
                         kpd.nomor,
                         kpd.supplier,
                         kpdd.total as debet,
+        --                dj.nominal,
+        --                kpdd.total - dj.nominal as selisih,
                         0 as kredit,
                         'DOC' as jenis,
                         kpdd.kode_unit as unit
+        --                ,td.no_order
                     from konfirmasi_pembayaran_doc_det kpdd
                     left join
                         konfirmasi_pembayaran_doc kpd
@@ -456,8 +488,14 @@ class KartuHutangRingkas extends Public_Controller {
                         ) td
                         on
                             td.no_order = kpdd.no_order
+        --            left join
+        --            	(select * from det_jurnal where tbl_name = 'terima_doc' and coa_asal = '21180.200' and unit = 'MLG' and tanggal between '".$start_date."' and '".$end_date."') dj
+        --            	on
+        --            		cast(td.id as varchar(10)) = dj.tbl_id
                     where
                         cast(td.datang as date) between '".$start_date."' and '".$end_date."'
+        --                and kpdd.kode_unit = 'LMG'
+        --        	) data
 
                     union all
 
@@ -544,9 +582,19 @@ class KartuHutangRingkas extends Public_Controller {
                         kpv.supplier, 
                         kpv.total as debet,
                         0 as kredit,
-                        'OVK' as jenis,
-                        null as unit
-                    from konfirmasi_pembayaran_voadip kpv
+                        case
+                            when kpv.supplier = '19B004' then
+                                'OVK'
+                            else
+                                'OVK EXTERN'
+                        end as jenis,
+        --                'OVK' as jenis,
+                        kpvd.kode_unit as unit
+                    from konfirmasi_pembayaran_voadip_det kpvd
+                    left join
+                        konfirmasi_pembayaran_voadip kpv
+                        on
+                            kpvd.id_header = kpv.id
                     where
                         kpv.tgl_bayar between '".$start_date."' and '".$end_date."'
 
@@ -615,6 +663,23 @@ class KartuHutangRingkas extends Public_Controller {
                         c.tanggal between '".$start_date."' and '".$end_date."'
 
                     union all
+            
+                    select
+                        bp.no_faktur,
+                        op.supplier,
+                        0 as debet,
+                        bp.jml_bayar as kredit,
+                        'PERALATAN' as jenis,
+                        op.unit 
+                    from bayar_peralatan bp 
+                    left join
+                        order_peralatan op 
+                        on
+                            op.no_order = bp.no_order 
+                    where
+                        bp.tgl_realisasi between '".$start_date."' and '".$end_date."'
+
+                    union all
 
                     select 
                         rp.nomor,
@@ -632,7 +697,18 @@ class KartuHutangRingkas extends Public_Controller {
                             else
                                 rpd.transfer
                         end as kredit,
-                        rpd.transaksi as jenis,
+                        case
+                            when rpd.transaksi = 'VOADIP' then
+                                case
+                                    when rp.supplier = '19B004' then
+                                        'OVK'
+                                    else
+                                        'OVK EXTERN'
+                                end
+                            else
+                                rpd.transaksi
+                        end as jenis,
+        --                rpd.transaksi as jenis,
                         konfir.kode_unit as unit
                     from realisasi_pembayaran_det rpd
                     left join
@@ -668,6 +744,16 @@ class KartuHutangRingkas extends Public_Controller {
                                     kppd.id_header = kpp.id
                             group by
                                 kppd.kode_unit, kpp.nomor
+                                
+                            union all
+                            
+                            select kpvd.kode_unit, kpv.nomor, null as tanggal, 0 as pph from konfirmasi_pembayaran_voadip_det kpvd 
+                            left join
+                                konfirmasi_pembayaran_voadip kpv 
+                                on
+                                    kpvd.id_header = kpv.id
+                            group by
+                                kpvd.kode_unit, kpv.nomor
                         ) konfir
                         on
                             rpd.no_bayar = konfir.nomor
@@ -682,9 +768,9 @@ class KartuHutangRingkas extends Public_Controller {
                 /* END - TRANSAKSI BULAN BERJALAN */
             ) _data
             group by
-                _data.supplier
-                -- _data.jenis,
-                -- _data.unit
+                _data.supplier,
+                _data.jenis,
+                _data.unit
         ) data
         left join
             (
@@ -713,14 +799,13 @@ class KartuHutangRingkas extends Public_Controller {
             on
                 supl.nomor = data.supplier
         ".$where."
-        -- where 
-        --     supl.tipe = 'supplier' 
-        --     and data.jenis in ('OVK')
-        -- group by
-        --	   data.supplier,
-        --     supl.nama
+        group by
+            -- data.jenis,
+            -- data.unit
+            data.supplier,
+            supl.nama
         order by
-            data.supplier asc
+            supl.nama asc
 
         /*
             select

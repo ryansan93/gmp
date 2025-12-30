@@ -45,21 +45,377 @@ class LaporanHarianManajemen extends Public_Controller {
 
     public function getData($tanggal)
     {
+        $tgl_awal_tahun = substr($tanggal, 0, 4).'-01-01';
+        $tgl_prev = prev_date( $tanggal );
+
+        $sql_lr_inti_prev = null;
+        if ( $tanggal > $tgl_awal_tahun ) {
+            $sql_lr_inti_prev = "
+                union all
+
+                /* LABA INTI PREV */
+                select
+                    0 as saldo_bank,
+                    0 as tot_trf,
+                    0 as hutang_doc,
+                    0 as hutang_pakan,
+                    sum(data.lr_inti) as lr_inti_prev,
+                    0 as lr_inti,
+                    0 as jml_rhpp,
+                    0 as jml_box,
+                    0 as jml_doc,
+                    0 as total_doc,
+                    0 as tonase,
+                    0 as tot_jual
+                from
+                (
+                    select lr_inti from rhpp r
+                    left join
+                        tutup_siklus ts
+                        on
+                            r.id_ts = ts.id
+                    where
+                        r.jenis = 'rhpp_inti' and
+                        not exists (select * from rhpp_group_noreg where noreg = r.noreg) and
+                        ts.tgl_tutup between '".$tgl_awal_tahun."' and '".$tgl_prev."'
+    
+                    union all
+    
+                    select lr_inti from rhpp_group rg
+                    left join
+                        rhpp_group_header rgh
+                        on
+                            rg.id_header = rgh.id
+                    where
+                        rg.jenis = 'rhpp_inti' and
+                        rgh.tgl_submit between '".$tgl_awal_tahun."' and '".$tgl_prev."'
+                ) data
+                /* END - LABA INTI PREV */
+            ";
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
-                data.saldo_bank
+                sum(data.saldo_bank) as saldo_bank,
+                sum(data.tot_trf) as tot_trf,
+                sum(data.hutang_doc) as hutang_doc,
+                sum(data.hutang_pakan) as hutang_pakan,
+                sum(data.lr_inti_prev) as lr_inti_prev,
+                sum(data.lr_inti) as lr_inti,
+                sum(data.jml_rhpp) as jml_rhpp,
+                sum(data.jml_box) as jml_box,
+                sum(data.jml_doc) as jml_doc,
+                sum(data.total_doc) as total_doc,
+                sum(data.tonase) as tonase,
+                sum(data.tot_jual) as tot_jual,
+                isnull(sum(data.hutang_doc), 0) + isnull(sum(data.hutang_pakan), 0) as tot_hutang,
+                isnull(sum(data.lr_inti_prev), 0) + isnull(sum(data.lr_inti), 0) as lr_total,
+                case
+	                when sum(data.lr_inti) > 0 and sum(data.jml_doc) > 0 then
+	                	sum(data.lr_inti) / sum(data.jml_doc)
+	                else
+	                	0
+                end as lr_per_ekor,
+                case
+	                when sum(data.total_doc) > 0 and sum(data.jml_doc) > 0 then
+	                	sum(data.total_doc) / sum(data.jml_doc)
+	                else
+	                	0
+                end as hrg_doc,
+                case
+	                when sum(data.tot_jual) > 0 and sum(data.tonase) > 0 then
+	                	sum(data.tot_jual) / sum(data.tonase)
+	                else
+	                	0
+                end as hrg_rata_ayam
             from (
-                select sum(sb.saldo_akhir) as saldo_bank, 0 as tot_trf from saldo_bank sb where sb.tanggal = '".$tanggal."'
+                /* SALDO BANK */
+                select 
+                    sum(sb.saldo_akhir) as saldo_bank,
+                    0 as tot_trf,
+                    0 as hutang_doc,
+                    0 as hutang_pakan,
+                    0 as lr_inti_prev,
+                    0 as lr_inti,
+                    0 as jml_rhpp,
+                    0 as jml_box,
+                    0 as jml_doc,
+                    0 as total_doc,
+                    0 as tonase,
+                    0 as tot_jual
+                from saldo_bank sb where sb.tanggal = '".$tanggal."'
+                /* END - SALDO BANK */
 
                 union all
 
+                /* TRANSFER */
                 select
                     0 as saldo_bank,
-                    sum(rp.jml_transfer) as tot_trf
+                    sum(rp.jml_transfer) as tot_trf,
+                    0 as hutang_doc,
+                    0 as hutang_pakan,
+                    0 as lr_inti_prev,
+                    0 as lr_inti,
+                    0 as jml_rhpp,
+                    0 as jml_box,
+                    0 as jml_doc,
+                    0 as total_doc,
+                    0 as tonase,
+                    0 as tot_jual
                 from realisasi_pembayaran rp
                 where
                     rp.tgl_realisasi = '".$tanggal."'
+                /* END - TRANSFER */
+
+                union all
+
+                /* HUTANG */
+                select
+                    0 as saldo_bank,
+                    0 as tot_trf,
+                    case
+                        when sa.jenis = 'DOC' then
+                            (isnull(sum(sa.debet), 0) - isnull(sum(sa.kredit), 0))
+                        else
+                            0
+                    end as hutang_doc,
+                    case
+                        when sa.jenis = 'PAKAN' then
+                            (isnull(sum(sa.debet), 0) - isnull(sum(sa.kredit), 0))
+                        else
+                            0
+                    end as hutang_pakan,
+                    0 as lr_inti_prev,
+                    0 as lr_inti,
+                    0 as jml_rhpp,
+                    0 as jml_box,
+                    0 as jml_doc,
+                    0 as total_doc,
+                    0 as tonase,
+                    0 as tot_jual
+                from
+                (
+                    /* DEBET */
+                    select 
+                        kpd.nomor,
+                        kpd.supplier,
+                        kpdd.total as debet,
+                        0 as kredit,
+                        'DOC' as jenis,
+                        kpdd.kode_unit as unit
+                    from konfirmasi_pembayaran_doc_det kpdd
+                    left join
+                        konfirmasi_pembayaran_doc kpd
+                        on
+                            kpdd.id_header = kpd.id
+                    left join
+                        (
+                            select td1.* from terima_doc td1
+                            right join
+                                (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                on
+                                    td1.id = td2.id
+                        ) td
+                        on
+                            td.no_order = kpdd.no_order
+                    where
+                        cast(td.datang as date) <= '".$tanggal."'
+
+                    union all
+
+                    select 
+                        kpp.nomor, 	
+                        kpp.supplier, 
+                        kppd.total as debet,
+                        0 as kredit,
+                        'PAKAN' as jenis,
+                        kppd.kode_unit as unit
+                    from konfirmasi_pembayaran_pakan_det kppd
+                    left join
+                        konfirmasi_pembayaran_pakan kpp
+                        on
+                            kppd.id_header = kpp.id
+                    where
+                        kpp.tgl_bayar <= '".$tanggal."'
+
+                    union all
+
+                    select
+                        d.nomor,
+                        d.supplier,
+                        d.tot_dn as debet,
+                        0 as kredit,
+                        d.jenis_dn as jenis,
+                        null as unit
+                    from dn d
+                    where
+                        d.tanggal <= '".$tanggal."'
+                    /* END - DEBET */
+
+                    union all
+
+                    /* KREDIT */
+                    select
+                        c.nomor,
+                        c.supplier,
+                        0 as debet,
+                        c.tot_cn as kredit,
+                        case
+                            when c.jenis_cn = 'PKN' then
+                                'PAKAN'
+                            else
+                                c.jenis_cn 
+                        end as jenis,
+                        null as unit
+                    from cn c
+                    where
+                        c.tanggal <= '".$tanggal."'
+
+                    union all
+            
+                    select
+                        bp.no_faktur,
+                        op.supplier,
+                        0 as debet,
+                        bp.jml_bayar as kredit,
+                        'PERALATAN' as jenis,
+                        op.unit 
+                    from bayar_peralatan bp 
+                    left join
+                        order_peralatan op 
+                        on
+                            op.no_order = bp.no_order 
+                    where
+                        bp.tgl_realisasi <= '".$tanggal."'
+
+                    union all
+
+                    select 
+                        rp.nomor,
+                        rp.supplier,
+                        0 as debet,
+                        case
+                            when rpd.transaksi = 'DOC' then
+                                case
+                                    when konfir.tanggal <= '2025-09-20' then
+                                        rpd.transfer
+                                    else
+                                        rpd.transfer+konfir.pph
+                                        -- rpd.transfer
+                                end
+                            else
+                                rpd.transfer
+                        end as kredit,
+                        rpd.transaksi as jenis,
+                        konfir.kode_unit as unit
+                    from realisasi_pembayaran_det rpd
+                    left join
+                        realisasi_pembayaran rp
+                        on
+                            rpd.id_header = rp.id
+                    left join
+                        (
+                            select kpdd.kode_unit, kpd.nomor, kpd.tgl_bayar as tanggal, (kpdd.total * (0.25/100)) as pph from konfirmasi_pembayaran_doc_det kpdd 
+                            left join
+                                konfirmasi_pembayaran_doc kpd 
+                                on
+                                    kpdd.id_header = kpd.id
+                            left join
+                                (
+                                    select td1.* from terima_doc td1
+                                    right join
+                                        (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                        on
+                                            td1.id = td2.id
+                                ) td
+                                on
+                                    td.no_order = kpdd.no_order
+                            group by
+                                kpdd.kode_unit, kpd.nomor, kpd.tgl_bayar, kpdd.total
+                                
+                            union all
+                            
+                            select kppd.kode_unit, kpp.nomor, null as tanggal, 0 as pph from konfirmasi_pembayaran_pakan_det kppd 
+                            left join
+                                konfirmasi_pembayaran_pakan kpp 
+                                on
+                                    kppd.id_header = kpp.id
+                            group by
+                                kppd.kode_unit, kpp.nomor
+                        ) konfir
+                        on
+                            rpd.no_bayar = konfir.nomor
+                    where
+                        rp.tgl_bayar <= '".$tanggal."'
+                    /* END - KREDIT */
+                ) sa
+                where
+                    sa.jenis in ('DOC', 'PAKAN')
+                group by
+                    sa.jenis
+                /* END - HUTANG */
+
+                ".$sql_lr_inti_prev."
+
+                union all
+
+                /* LABA INTI */
+                select
+                    0 as saldo_bank,
+                    0 as tot_trf,
+                    0 as hutang_doc,
+                    0 as hutang_pakan,
+                    0 as lr_inti_prev,
+                    sum(data.lr_inti) as lr_inti,
+                    count(data.lr_inti) as jml_rhpp,
+                    sum(data.box) as jml_box,
+                    sum(data.jumlah) as jml_doc,
+                    sum(data.tot_doc) as total_doc,
+                    sum(data.tonase) as tonase,
+                    sum(data.tot_jual) as tot_jual
+                from
+                (
+                    select r.lr_inti, rd.box, rd.jumlah, rd.total as tot_doc, rp.tonase, rp.total as tot_jual
+                    from rhpp r
+                    left join
+                        (select id_header, sum(box) as box, sum(jumlah) as jumlah, sum(total) as total from rhpp_doc group by id_header) rd
+                        on
+                            r.id = rd.id_header
+                    left join
+                        (select id_header, sum(ekor) as ekor, sum(tonase) as tonase, sum(total_pasar) as total from rhpp_penjualan group by id_header) rp
+                        on
+                            r.id = rp.id_header
+                    left join
+                        tutup_siklus ts
+                        on
+                            r.id_ts = ts.id
+                    where
+                        r.jenis = 'rhpp_inti' and
+                        not exists (select * from rhpp_group_noreg where noreg = r.noreg) and
+                        ts.tgl_tutup = '".$tanggal."'
+    
+                    union all
+    
+                    select rg.lr_inti, rgd.box, rgd.jumlah, rgd.total as tot_doc, rgp.tonase, rgp.total as tot_jual
+                    from rhpp_group rg
+                    left join
+                        (select id_header, sum(box) as box, sum(jumlah) as jumlah, sum(total) as total from rhpp_group_doc group by id_header) rgd
+                        on
+                            rg.id = rgd.id_header
+                    left join
+                        (select id_header, sum(ekor) as ekor, sum(tonase) as tonase, sum(total_pasar) as total from rhpp_group_penjualan group by id_header) rgp
+                        on
+                            rg.id = rgp.id_header
+                    left join
+                        rhpp_group_header rgh
+                        on
+                            rg.id_header = rgh.id
+                    where
+                        rg.jenis = 'rhpp_inti' and
+                        rgh.tgl_submit = '".$tanggal."'
+                ) data
+                /* END - LABA INTI */
             ) data
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
@@ -76,11 +432,12 @@ class LaporanHarianManajemen extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        try {
+        try {                
             $tanggal = $params['tanggal'];
 
-            $data = $this->getData( $tanggal );
+            $data = $this->getData( $tanggal )[0];
 
+            $content['tanggal'] = $tanggal;
             $content['data'] = $data;
             $html = $this->load->view($this->pathView.'list', $content, TRUE);
 
@@ -91,5 +448,12 @@ class LaporanHarianManajemen extends Public_Controller {
         }
 
         display_json( $this->result );
+    }
+    
+    public function tes() {
+        $tanggal = '2025-12-29';
+        $tgl_awal_tahun = substr($tanggal, 0, 4);
+
+        cetak_r( $tgl_awal_tahun );
     }
 }

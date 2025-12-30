@@ -29,7 +29,7 @@ var lhm = {
 			};
 
 			$.ajax({
-                url : 'report/LaporanHarianManajemen/getData',
+                url : 'report/LaporanHarianManajemen/getLists',
                 data : {
                     'params' : params
                 },
