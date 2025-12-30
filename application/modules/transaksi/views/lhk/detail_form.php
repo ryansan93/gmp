@@ -169,7 +169,7 @@
 
 	<div class="col-xs-12"><hr></div>
 
-	<?php // if ( $data['status'] <> 2 ) { ?>
+	<?php if ( $data['status'] <> 2 ) { ?>
 		<div class="col-xs-12 lock_btn_fiskal" data-date="<?php echo substr($data['tanggal'], 0, 10); ?>">
 			<div class="col-xs-12" style="padding: 0px 0px 5px 0px;">
 				<?php if ( $akses['a_edit'] == 1 ) { ?>
@@ -182,7 +182,7 @@
 				<?php } ?>
 			</div>
 		</div>
-	<?php // } ?>
+	<?php } ?>
 </div>
 
 <!-- Modal Nekropsi -->
