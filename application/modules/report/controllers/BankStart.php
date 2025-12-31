@@ -310,7 +310,13 @@ class BankStart extends Public_Controller {
                             select 
                                 'realisasi_pembayaran' as tbl_name,
                                 rp.nomor as tbl_id,
-                                rp.tgl_realisasi as tanggal,
+                                case
+                                    when rp.tgl_realisasi is not null then
+                                        rp.tgl_realisasi
+                                    else
+                                        rp.tgl_bayar
+                                end as tanggal,
+                                -- rp.tgl_realisasi as tanggal,
                                 -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
                                 cast(rp.ket_realisasi as varchar(max)) as keterangan,
                                 0 as debet,
@@ -387,6 +393,7 @@ class BankStart extends Public_Controller {
                                 rp.tgl_realisasi between '".$start_date_new."' and '".$end_date_new."'
                             group by
                                 rp.nomor,
+                                rp.tgl_bayar,
                                 rp.tgl_realisasi,
                                 cast(rp.ket_realisasi as varchar(max)),
                                 rp.jml_transfer,
@@ -578,7 +585,13 @@ class BankStart extends Public_Controller {
                         select 
                             'realisasi_pembayaran' as tbl_name,
                             rp.nomor as tbl_id,
-                            rp.tgl_bayar as tanggal,
+                            case
+                                when rp.tgl_realisasi is not null then
+                                    rp.tgl_realisasi
+                                else
+                                    rp.tgl_bayar
+                            end as tanggal,
+                            -- rp.tgl_bayar as tanggal,
                             -- 'Pembayaran '+pengajuan.jenis+' '+pengajuan.tujuan+' '+ltrim(rtrim(pengajuan.periode)) as keterangan,
                             cast(rp.ket_realisasi as varchar(max)) as keterangan,
                             0 as debet,
@@ -657,6 +670,7 @@ class BankStart extends Public_Controller {
                         group by
                             rp.nomor,
                             rp.tgl_bayar,
+                            rp.tgl_realisasi,
                             cast(rp.ket_realisasi as varchar(max)),
                             rp.jml_transfer,
                             rp.coa_bank
