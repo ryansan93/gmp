@@ -159,7 +159,7 @@ class LHK extends Public_Controller
         $m_ts = new \Model\Storage\TutupSiklus_model();
         $d_ts = $m_ts->where('noreg', $d_lhk['noreg'])->first();
         if ( $d_ts ) {
-            //  $status = 2;
+             $status = 2;
         }
 
         $data = array(
