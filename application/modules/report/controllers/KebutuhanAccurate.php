@@ -1751,8 +1751,8 @@ class KebutuhanAccurate extends Public_Controller {
                     pp.non_saldo as lebih_bayar_non_saldo,
                     pp.bad_debt as bad_debt,
                     pp.total_bayar as tot_bayar,
-                    dj.no_bukti as no_bukti_auto
-                    -- pp.no_bukti_auto
+                    -- dj.no_bukti as no_bukti_auto
+                    pp.kode_umb
                 from pembayaran_pelanggan pp 
                 left join
                     (
@@ -1802,7 +1802,8 @@ class KebutuhanAccurate extends Public_Controller {
                     pp.non_saldo,
                     pp.bad_debt,
                     pp.total_bayar,
-                    dj.no_bukti
+                    -- dj.no_bukti
+                    pp.kode_umb
                 
             OPEN pp_do
 
@@ -1814,17 +1815,27 @@ class KebutuhanAccurate extends Public_Controller {
                 DECLARE dpp_do CURSOR LOCAL FOR
                     select
                         drs.no_do,
-                        dpp.jumlah_bayar,
+                        (dpp.tagihan - dpp.sisa_tagihan) as jumlah_bayar,
                         w.kode as kode_unit,
                         drs.no_sj,
-                        drs.no_nota,
+                        drsi.no_inv as no_nota,
                         drs.no_pelanggan,
                         plg.nama as nama_plg
                     from det_pembayaran_pelanggan dpp 
                     left join
-                        det_real_sj drs 
+                    	pembayaran_pelanggan pp
+                    	on
+                    		dpp.id_header = pp.id
+                    left join
+                        det_real_sj_inv drsi 
                         on
-                            dpp.id_do = drs.id
+                            dpp.no_inv = drsi.no_inv
+                    left join
+                    	(
+                    		select id_header, no_sj, no_do, no_pelanggan from det_real_sj group by no_sj, no_do, id_header, no_pelanggan
+                    	) drs
+                    	on
+                    		drsi.no_sj = drs.no_sj
                     left join
                         real_sj rs 
                         on
@@ -1847,7 +1858,7 @@ class KebutuhanAccurate extends Public_Controller {
                         on
                             w.id = rs.id_unit 
                     where 
-                        dpp.jumlah_bayar > 0 and
+                        (dpp.tagihan - dpp.sisa_tagihan) > 0 and
                         dpp.id_header = @tbl_id
                         ".$sql_unit."
                     order by

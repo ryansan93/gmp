@@ -1190,6 +1190,6 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function tes() {
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 413, 413, 2, 'realisasi_pembayaran', '2025-11-18');
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 1022, 1022, 2, 'realisasi_pembayaran', '2025-12-29');
     }
 }

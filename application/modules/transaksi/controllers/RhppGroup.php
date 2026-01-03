@@ -3036,20 +3036,22 @@ class RhppGroup extends Public_Controller {
 
     public function tes()
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select * from rhpp_group rg
-            where
-                rg.jenis = 'rhpp_plasma'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select * from rhpp_group rg
+        //     where
+        //         rg.jenis = 'rhpp_plasma'
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $key => $val) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
-            }
-        }
+        //     foreach ($d_conf as $key => $val) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
+        //     }
+        // }
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 58, 58, 2);
     }
 }

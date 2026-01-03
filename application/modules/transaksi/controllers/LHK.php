@@ -1949,36 +1949,53 @@ class LHK extends Public_Controller
     public function tes() {
         //  cetak_r( $this->url );
 
-        // $conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select tp.*, kp.no_order from terima_pakan tp
-        //     left join
-        //         kirim_pakan kp
-        //         on
-        //             tp.id_kirim_pakan = kp.id
-        //     where
-        //         kp.jenis_kirim = 'opkp' and
-        //         tp.tgl_terima >= '2025-10-01'
-        //     order by
-        //         tp.tgl_terima asc,
-        //         kp.no_order asc
-        // ";
-        // $d_conf = $conf->hydrateRaw($sql);
+        $conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.tgl_trans,
+                data.kode_trans,
+                data.total as nominal_terima,
+                dj.nominal as nominal_jurnal
+            from
+            (
+                select dsts.tgl_trans, dsts.kode_trans, sum(dsts.jumlah*dss.hrg_beli) as total from det_stok_trans_siklus dsts
+                left join
+                    det_stok_siklus dss 
+                    on
+                        dsts.id_header = dss.id
+                where
+                    dsts.tbl_name = 'lhk' and
+                    dss.jenis_barang = 'pakan'
+                group by
+                    dsts.tgl_trans, dsts.kode_trans
+            ) data
+            left join
+                (select * from det_jurnal where coa_tujuan = '71101.000') dj
+                on
+                    data.kode_trans = dj.tbl_id
+            where
+                data.tgl_trans >= '2025-12-01'
+                and (data.total - dj.nominal) <> 0
+            order by
+                data.tgl_trans asc,
+                data.kode_trans asc
+        ";
+        $d_conf = $conf->hydrateRaw($sql);
 
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-        //     foreach ($d_conf as $key => $value) {
-                $id = '10179';
-                $id_old = '10179';
-                $tanggal = '2025-12-01';
+            foreach ($d_conf as $key => $value) {
+                // $id = '10179';
+                // $id_old = '10179';
+                // $tanggal = '2025-12-01';
         
-                $conf = new \Model\Storage\Conf();
-                $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
-                $d_conf = $conf->hydrateRaw($sql);
+                // $conf = new \Model\Storage\Conf();
+                // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', 2, null, null";
+                // $d_conf = $conf->hydrateRaw($sql);
         
-                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 3);
-        //     }
-        // }
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['kode_trans'], $value['kode_trans'], 2);
+            }
+        }
     }
 }
