@@ -417,6 +417,12 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as jml_pemakaian,
                         0 as hrg_pemakaian
                     from det_stok_siklus dss
+                    right join
+                        (
+                            select max(id) as id, noreg from det_stok_siklus where jenis_barang = 'doc' and tgl_trans between '".$start_date."' and '".$end_date."' group by noreg
+                        ) dss2
+                        on
+                            dss.id = dss2.id
                     where
                         dss.jenis_barang = 'doc' and
                         dss.tgl_trans between '".$start_date."' and '".$end_date."'
