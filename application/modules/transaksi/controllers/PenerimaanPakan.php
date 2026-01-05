@@ -1196,7 +1196,15 @@ class PenerimaanPakan extends Public_Controller {
 
     public function tes() {
         $arr = array(
-            16579
+            14238,
+            14232,
+            13650,
+            13864,
+            13840,
+            15758,
+            15831,
+            16337,
+            16496
         );
 
         foreach ($arr as $key => $value) {

@@ -81,6 +81,8 @@ var bakul = {
 		if ( !empty(tgl) ) {
 			$("#tglBayar").data("DateTimePicker").date( new Date(tgl) );
 		}
+
+		App.setTutupBulan();
 	}, // end - setting_up
 
 	changeTabActive: function(elm) {

@@ -1120,7 +1120,7 @@ class Bakul extends Public_Controller
 	        	$this->result['status'] = 1;
                 $this->result['content'] = array(
                     'id' => $id,
-                    'id_old' => null,
+                    'id_old' => $id,
                     'status' => 2,
                     'message' => 'Data berhasil di simpan.',
                 );
@@ -1503,6 +1503,6 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 5420, 5420, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 7117, 7117, 2);
 	}
 }

@@ -2,7 +2,7 @@
 	<div class="col-lg-2 no-padding"><label class="control-label text-left">Tgl Rek Koran</label></div>
 	<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 	<div class="col-lg-2" style="padding: 0px 30px 0px 0px;">
-		<div class="input-group date" id="tglBayar">
+		<div class="input-group date lock_date_fiskal" id="tglBayar">
 	        <input type="text" class="form-control text-center" placeholder="Tanggal" data-required="1" data-val="<?php echo $data['tgl_bayar']; ?>" />
 	        <span class="input-group-addon">
 	            <span class="glyphicon glyphicon-calendar"></span>

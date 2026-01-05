@@ -186,7 +186,7 @@
         ?>
     </p>
 </div>
-<div class="col-lg-6 no-padding">
+<div class="col-lg-6 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_bayar'], 0, 10); ?>">
 	<?php if ( $data['edit'] == 1 ): ?>
 		<!-- <?php if ( $akses['a_edit'] == 1 ): ?>
 			<button type="button" class="btn btn-primary pull-right" onclick="bakul.changeTabActive(this)" data-href="action" data-id="<?php echo $data['id']; ?>" data-resubmit="resubmit"><i class="fa fa-edit"></i> Update</button>

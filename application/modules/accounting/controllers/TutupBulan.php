@@ -232,6 +232,7 @@ class TutupBulan extends Public_Controller
             
             $angka_bulan = (strlen($bulan) == 1) ? '0'.$bulan : $bulan;
             
+            $tgl_awal_tahun = $tahun.'-01-01';
             $date = $tahun.'-'.$angka_bulan.'-01';
             $start_date = date("Y-m-d", strtotime($date));
             $end_date = date("Y-m-t", strtotime($date));
@@ -567,6 +568,51 @@ class TutupBulan extends Public_Controller
                     $m_sb->save();
                 }
             }
+
+            // /* UPDATE COA LABA RUGI */
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "
+            //     select noreg, sum(kredit) as kredit, sum(debet) as debet, unit from (
+            //         select
+            //             dj.noreg,
+            //             dj.coa_asal as no_coa, 
+            //             sum(dj.nominal) as kredit, 
+            //             0 as debet, 
+            //             dj.unit
+            //         from det_jurnal dj 
+            //         where 
+            //             dj.tanggal between '".$tgl_awal_tahun."' and '".$end_date."'
+            //             -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+            //         group by dj.noreg, dj.coa_asal, dj.unit
+                    
+            //         union all
+                    
+            //         select 
+            //             dj.noreg,
+            //             dj.coa_tujuan as no_coa, 
+            //             0 as kredit, 
+            //             sum(dj.nominal) as debet, 
+            //             case
+            //                 when dj.unit_tujuan is not null then
+            //                     dj.unit_tujuan
+            //                 else
+            //                     dj.unit
+            //             end as unit
+            //         from det_jurnal dj 
+            //         where 
+            //             dj.tanggal between '".$tgl_awal_tahun."' and '".$end_date."'
+            //             -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+            //         group by dj.noreg, dj.coa_tujuan, dj.unit, dj.unit_tujuan
+            //     ) data
+            //     where
+            //         SUBSTRING(data.no_coa, 1, 1) >= 5
+            //     group by
+            //         noreg, no_coa, unit
+            // ";
+            // if ( $d_conf->count() > 0 ) {
+            //     $d_conf = $d_conf->toArray()[0];
+            // }
+            // /* END - UPDATE COA LABA RUGI */
 
             /* PERIODE FISKAL */
             $m_bo = new \Model\Storage\PeriodeFiskal_model();
