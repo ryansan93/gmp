@@ -661,8 +661,8 @@ class GeneralLedger extends Public_Controller {
                             cast(keterangan as varchar(max)) as keterangan,
                             kode_trans,
                             no_coa,
-                            sum(kredit) as kredit,
-                            sum(debet) as debet,
+                            kredit as kredit,
+                            debet as debet,
                             unit
                         from (
                             select 
@@ -710,7 +710,7 @@ class GeneralLedger extends Public_Controller {
                                 dj.unit_tujuan
                         ) data
                         group by
-                            tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit
+                            tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit, kredit, debet
                     ) dj
                     on
                         dj.no_coa = c.coa
