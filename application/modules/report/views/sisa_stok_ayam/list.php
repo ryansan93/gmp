@@ -21,6 +21,7 @@
 				<th class="col-xs-1 text-center">TONASE JUAL</th>
 				<th class="col-xs-1 text-center">SISA EKOR</th>
 				<th class="col-xs-1 text-center">SISA TONASE</th>
+				<th class="col-xs-1 text-center">TGL TUTUP SIKLUS</th>
 			</tr>
         <?php } ?>
 
@@ -41,6 +42,7 @@
             <td class="text-right"><?php echo angkaDecimal($value['tonase_jual']); ?></td>
             <td class="text-right"><?php echo angkaRibuan($value['sisa_ekor']); ?></td>
             <td class="text-right"><?php echo angkaDecimal($value['sisa_tonase']); ?></td>
+            <td class="text-center"><?php echo tglIndonesia($value['tgl_tutup_siklus'], '-', ' '); ?></td>
         </tr>
 
         <?php $idx++; ?>

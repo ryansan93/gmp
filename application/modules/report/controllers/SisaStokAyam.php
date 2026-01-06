@@ -81,7 +81,8 @@ class SisaStokAyam extends Public_Controller {
                 isnull(panen.ekor, 0) as ekor_jual,
                 isnull(panen.tonase, 0) as tonase_jual,
                 td.jml_ekor - isnull(lhk.ekor_mati, 0) - isnull(panen.ekor, 0) as sisa_ekor, 
-                ((td.jml_ekor - isnull(lhk.ekor_mati, 0)) * lhk.bb) - isnull(panen.tonase, 0) as sisa_tonase
+                ((td.jml_ekor - isnull(lhk.ekor_mati, 0)) * lhk.bb) - isnull(panen.tonase, 0) as sisa_tonase,
+                ts.tgl_tutup as tgl_tutup_siklus
             from 
             (
                 select td1.* from terima_doc td1
@@ -135,7 +136,7 @@ class SisaStokAyam extends Public_Controller {
                     w.id = k.unit
             where
                 td.datang <= '".$tanggal."' and
-                ts.id is null and
+                -- ts.id is null and
                 td.jml_ekor - isnull(lhk.ekor_mati, 0) - isnull(panen.ekor, 0) > 0
                 ".$sql_unit."
         ";
@@ -202,7 +203,7 @@ class SisaStokAyam extends Public_Controller {
 
         $start_row_header = $idx+1;
 
-        $arr_header = array('NOREG', 'UNIT', 'KDG', 'TGL CHICK IN', 'TGL DATANG PPL', 'UMUR', 'POPULASI', 'EKOR MATI REAL', 'SISA EKOR LHK', 'BW RATA LHK', 'TONASE LHK', 'TGL PANEN TERAKHIR', 'EKOR JUAL', 'TONASE JUAL', 'SISA EKOR', 'SISA TONASE');
+        $arr_header = array('NOREG', 'UNIT', 'KDG', 'TGL CHICK IN', 'TGL DATANG PPL', 'UMUR', 'POPULASI', 'EKOR MATI REAL', 'SISA EKOR LHK', 'BW RATA LHK', 'TONASE LHK', 'TGL PANEN TERAKHIR', 'EKOR JUAL', 'TONASE JUAL', 'SISA EKOR', 'SISA TONASE', 'TGL TUTUP SIKLUS');
         if ( !empty($data) ) {
             foreach ($data as $key => $value) {
                 
@@ -222,7 +223,8 @@ class SisaStokAyam extends Public_Controller {
                     'EKOR JUAL' => array('value' => $value['ekor_jual'], 'data_type' => 'integer'),
                     'TONASE JUAL' => array('value' => $value['tonase_jual'], 'data_type' => 'decimal2'),
                     'SISA EKOR' => array('value' => $value['sisa_ekor'], 'data_type' => 'integer'),
-                    'SISA TONASE' => array('value' => $value['sisa_tonase'], 'data_type' => 'decimal2')
+                    'SISA TONASE' => array('value' => $value['sisa_tonase'], 'data_type' => 'decimal2'),
+                    'TGL TUTUP SIKLUS' => array('value' => $value['tgl_tutup_siklus'], 'data_type' => 'date'),
                 );
 
                 $idx++;
