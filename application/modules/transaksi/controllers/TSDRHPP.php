@@ -4228,7 +4228,10 @@ class TSDRHPP extends Public_Controller {
 
                 $d_ts = $m_ts->where('id', $id)->first();
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, null, 1);
+                $invoice = null;
+                if ( $params['jenis_rhpp'] == 0 ) {
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, null, 1);
+                }
 
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", NULL, 1";
@@ -5739,21 +5742,23 @@ class TSDRHPP extends Public_Controller {
 
     public function tes()
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select * from rhpp r
-            where
-                r.invoice is not null and
-                r.jenis = 'rhpp_plasma'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select * from rhpp r
+        //     where
+        //         r.invoice is not null and
+        //         r.jenis = 'rhpp_plasma'
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $key => $val) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
-            }
-        }
+        //     foreach ($d_conf as $key => $val) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
+        //     }
+        // }
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 1509, 1509, 3);
     }
 }
