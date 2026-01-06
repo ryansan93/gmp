@@ -118,7 +118,7 @@ class SisaStokAyam extends Public_Controller {
                 on
                     panen.noreg = od.noreg
             left join
-                (select * from tutup_siklus ) ts 
+                (select * from tutup_siklus where tgl_tutup <= '".$tanggal."' ) ts 
                 on
                     ts.noreg = od.noreg
             left join
