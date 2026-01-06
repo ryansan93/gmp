@@ -245,8 +245,19 @@ class RhppGroup extends Public_Controller {
                 if ( $d_rs->count() > 0 ) {
                     $d_rs = $d_rs->toArray();
 
+                    // $m_ts = new \Model\Storage\TutupSiklus_model();
+                    // $d_ts = $m_ts->select('noreg', 'tgl_docin')->whereIn('noreg', $d_rs)->get();
+
+                    $_noreg = null;
+                    foreach ($d_rs as $k_rs => $v_rs) {
+                        $_noreg[] = $v_rs['noreg'];
+                    }
+
                     $m_ts = new \Model\Storage\TutupSiklus_model();
-                    $d_ts = $m_ts->select('noreg', 'tgl_docin')->whereIn('noreg', $d_rs)->get();
+                    $sql = "
+                        select noreg, tgl_docin from rhpp where noreg in ('".implode("', '", $_noreg)."') and jenis = 'rhpp_plasma'
+                    ";
+                    $d_ts = $m_ts->hydrateRaw( $sql );
 
                     if ( $d_ts->count() > 0 ) {
                         $d_ts = $d_ts->toArray();
