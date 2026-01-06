@@ -135,9 +135,9 @@ class SisaStokAyam extends Public_Controller {
                 on
                     w.id = k.unit
             where
-                td.datang <= '".$tanggal."' and
-                -- ts.id is null and
-                td.jml_ekor - isnull(lhk.ekor_mati, 0) - isnull(panen.ekor, 0) > 0
+                td.datang <= '".$tanggal."'
+                -- and ts.id is null
+                -- and td.jml_ekor - isnull(lhk.ekor_mati, 0) - isnull(panen.ekor, 0) > 0
                 ".$sql_unit."
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
