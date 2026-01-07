@@ -116,7 +116,7 @@ class SaldoBank extends Public_Controller {
     {
         $m_coa = new \Model\Storage\Coa_model();
 
-        $content['bank'] = $m_coa->getDataBank(1, $this->userid);
+        $content['bank'] = $m_coa->getDataBank();
         $content['akses'] = $this->hakAkses;
         $html = $this->load->view($this->pathView . 'addForm', $content, TRUE);
 
@@ -195,7 +195,7 @@ class SaldoBank extends Public_Controller {
             $data = $d_conf->toArray();
         }
 
-        $content['bank'] = $m_coa->getDataBank(1, $this->userid);
+        $content['bank'] = $m_coa->getDataBank();
         $content['data'] = $data;
 
         $html = $this->load->view($this->pathView . 'editForm', $content, TRUE);
