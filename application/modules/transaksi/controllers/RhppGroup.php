@@ -255,7 +255,7 @@ class RhppGroup extends Public_Controller {
 
                     $m_ts = new \Model\Storage\TutupSiklus_model();
                     $sql = "
-                        select noreg, tgl_docin from rhpp where noreg in ('".implode("', '", $_noreg)."') and jenis = 'rhpp_plasma'
+                        select noreg, tgl_docin from rhpp where noreg in ('".implode("', '", $_noreg)."') and jenis = 'rhpp_plasma' and (invoice is null or invoice = '')
                     ";
                     $d_ts = $m_ts->hydrateRaw( $sql );
 
@@ -321,6 +321,8 @@ class RhppGroup extends Public_Controller {
         $jenis_mitra = null;
         $nomor_mitra = null;
         $cn = '';
+
+        $berita_acara = null;
 
         if ( empty($params['id']) ) {
             $total_jumlah_pakan = 0;
@@ -852,6 +854,8 @@ class RhppGroup extends Public_Controller {
             $m_rhpp_group_header = new \Model\Storage\RhppGroupHeader_model();
             $d_rhpp_group_header = $m_rhpp_group_header->where('id', $params['id'])->with(['rhpp'])->first()->toArray();
 
+            $berita_acara = $d_rhpp_group_header['berita_acara'];
+
             $d_rhpp_inti = null;
             $d_rhpp_plasma = null;
             foreach ($d_rhpp_group_header['rhpp'] as $k_rgh=> $v_rgh) {
@@ -1269,6 +1273,7 @@ class RhppGroup extends Public_Controller {
         $data_header['cn'] = $cn;
         $data_header['data_potongan_pajak'] = $data_potongan_pajak;
         $data_header['potongan_pajak'] = isset($params['id']) ? $data_header['potongan_pajak'] : $data_header['potongan_pajak'] / count($params['list_noreg']);
+        $data_header['berita_acara'] = $berita_acara;
 
         $akses = hakAkses($this->url);
 
@@ -3043,6 +3048,69 @@ class RhppGroup extends Public_Controller {
         $html = $this->load->view('transaksi/rhpp_group/modal_piutang', $content, TRUE);
 
         echo $html;
+    }
+
+    public function mappingFiles($files)
+    {
+        $mappingFiles = [];
+        foreach ($files['tmp_name'] as $key => $file) {
+            $sha1 = sha1_file($file);
+            $index = $key;
+            $mappingFiles[$index] = [
+                'name' => $files['name'][$key],
+                'tmp_name' => $file,
+                'type' => $files['type'][$key],
+                'size' => $files['size'][$key],
+                'error' => $files['error'][$key]
+            ];
+        }
+        
+        return $mappingFiles;
+    }
+
+    public function uploadBeritaAcara()
+    {
+        $params = json_decode($this->input->post('data'),TRUE);
+        $files = isset($_FILES['files']) ? $_FILES['files'] : null;
+        $mappingFiles = !empty($files) ? $this->mappingFiles($files) : null;
+        
+        try {
+            $id = exDecrypt( $params['id'] );
+
+            $path_name = null;
+            $file = isset($mappingFiles[0]) ? $mappingFiles[0] : null;
+
+            if ( !empty($file) ) {
+                $moved = uploadFile($file);
+                $isMoved = $moved['status'];
+
+                if ($isMoved) {
+                    $path_name = $moved['path'];
+
+                    $m_rhpp = new \Model\Storage\RhppGroupHeader_model();
+                    $m_rhpp->where('id', $id)->update(
+                        array(
+                            'berita_acara' => $path_name
+                        )
+                    );
+
+                    $d_rhpp = $m_rhpp->where('id', $id)->first();
+
+                    $deskripsi_log = 'upload berita acara oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                    Modules::run( 'base/event/save', $d_rhpp, $deskripsi_log);
+
+                    $this->result['status'] = 1;
+                    $this->result['content'] = 'uploads/'.$path_name;
+                    $this->result['message'] = 'Berita acara berhasil di upload.';
+                }
+            } else {
+                $this->result['message'] = 'Data gagal di upload.';
+            }
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
     }
 
     public function tes()

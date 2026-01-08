@@ -1306,6 +1306,73 @@ var tsdrhpp = {
 
 		$('modal').modal('hide');
 	}, // end - addPiutang
+
+	formUploadBeritaAcara: function (elm) {
+        var noreg = $(elm).data('noreg');
+
+		var message = '<p><b>File Berita Acara (PDF) : </b></p><p>';
+		message += '<label class="">';
+		message += '<input type="file" onchange="showNameFile(this)" class="file_lampiran berita_acara" name="" placeholder="Bukti Credit Note" data-allowtypes="pdf|PDF" style="display: none;">';
+		message += '<i class="glyphicon glyphicon-paperclip cursor-p"></i>';
+		message += '</label></p>';
+
+        bootbox.dialog({
+            message: message,
+            buttons: {
+                cancel: {
+                    label: '<i class="fa fa-times"></i> Batal',
+                    className: 'btn-danger',
+                    callback: function(){}
+                },
+                ok: {
+                    label: '<i class="fa fa-check"></i> Simpan',
+                    className: 'btn-primary',
+                    callback: function(){
+                        var berita_acara = $('.berita_acara').val();
+
+                        if ( !empty(berita_acara) ) {
+							var file_tmp = $('.berita_acara').get(0).files[0];
+
+							var formData = new FormData();
+	        				formData.append('files[]', file_tmp);
+
+							var data = {
+								'noreg': noreg
+							};
+							formData.append('data', JSON.stringify(data));
+
+                            $.ajax({
+                                url: 'transaksi/TSDRHPP/uploadBeritaAcara',
+                                dataType: 'json',
+								type: 'post',
+								async:false,
+								processData: false,
+								contentType: false,
+								data: formData,
+                                beforeSend: function() { showLoading(); },
+                                success: function(data) {
+                                    hideLoading();
+                                    if ( data.status == 1 ) {
+										bootbox.alert(data.message, function() {
+											$('.btn_cetak').removeClass('hide');
+											$('.btn_file_berita_acara').removeClass('hide');
+											$('.btn_file_berita_acara').attr('href', data.content);
+											$('.span_berita_acara').addClass('hide');
+										});
+                                    } else {
+                                        bootbox.alert(data.message);
+                                    }
+                                }
+                            });
+                        } else {
+                            $(elm).click();
+                            bootbox.alert('Harap isi lampiran terlebih dahulu.');
+                        }
+                    }
+                }
+            }
+        });
+    }, // end - print
 };
 
 tsdrhpp.start_up();

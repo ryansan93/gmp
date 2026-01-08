@@ -974,15 +974,49 @@
 							            	</table>
 						            	</div>
 						            	<?php if ( $data['tutup_siklus'] == 1 ): ?>
-							            	<div class="col-sm-6 no-padding">
-							            		<div class="col-sm-12" style="padding-left: 0px; padding-right: 0px; padding-top: 10px;">
-								            		<button type="button" class="btn btn-default pull-right" onclick="tsdrhpp.print(this)" data-noreg="<?php echo exEncrypt($data['noreg']); ?>"><i class="fa fa-print"></i> Print</button>
-							            		</div>
+											<?php
+												$hide_cetak = 'hide';
+												$hide_btn_berita_acara = 'hide';
+												$hide_span_berita_acara = 'hide';
+												$hide_btn_file_berita_acara = 'hide';
 
-							            		<div class="col-sm-12" style="padding-left: 0px; padding-right: 0px; padding-top: 10px;">
-								            		<button type="button" class="btn btn-default pull-right" onclick="tsdrhpp.export_excel(this)" data-noreg="<?php echo exEncrypt($data['noreg']); ?>"><i class="fa fa-file-excel-o"></i> Export Excel Plasma</button>
-							            		</div>
-							            	</div>
+												if ( $pendapatan_peternak < 0 ) {
+													$hide_cetak = 'hide';
+													$hide_span_berita_acara = '';
+													$hide_btn_berita_acara = '';
+
+													if ( $data['non_group'] == 1 && !empty($data['berita_acara'])) {
+														$hide_cetak = '';
+														$hide_span_berita_acara = 'hide';
+														$hide_btn_file_berita_acara = '';
+													} else {
+														if ( $data['non_group'] == 0 ) {
+															$hide_cetak = 'hide';
+															$hide_btn_berita_acara = 'hide';
+															$hide_span_berita_acara = 'hide';
+															$hide_btn_file_berita_acara = 'hide';
+														}
+													}
+												} else {
+													$hide_cetak = '';
+												}
+											?>
+											<div class="col-sm-6 no-padding">
+												<div class="col-sm-12 btn_cetak <?php echo $hide_cetak; ?>" style="padding-left: 0px; padding-right: 0px; padding-top: 10px;">
+													<button type="button" class="btn btn-default pull-right" onclick="tsdrhpp.print(this)" data-noreg="<?php echo exEncrypt($data['noreg']); ?>"><i class="fa fa-print"></i> Print</button>
+												</div>
+												<div class="col-sm-12 btn_cetak <?php echo $hide_cetak; ?>" style="padding-left: 0px; padding-right: 0px; padding-top: 10px;">
+													<button type="button" class="btn btn-default pull-right" onclick="tsdrhpp.export_excel(this)" data-noreg="<?php echo exEncrypt($data['noreg']); ?>"><i class="fa fa-file-excel-o"></i> Export Excel Plasma</button>
+												</div>
+
+												<div class="col-sm-12 span_berita_acara <?php echo $hide_span_berita_acara; ?>" style="padding-left: 0px; padding-right: 0px; padding-top: 10px;">
+													<span class="pull-right">* Upload berita acara terlebih dahulu sebelum mencetak RHPP karena RHPP merah.</span>
+												</div>
+												<div class="col-sm-12 btn_berita_acara <?php echo $hide_btn_berita_acara; ?>" style="padding-left: 0px; padding-right: 0px; padding-top: 10px;">
+													<button type="button" class="btn btn-primary pull-right" onclick="tsdrhpp.formUploadBeritaAcara(this)" data-noreg="<?php echo exEncrypt($data['noreg']); ?>"><i class="fa fa-upload"></i> Upload berita acara</button>
+													<a style="margin-right: 10px;" title="FILE LAMPIRAN BERITA ACARA" class="btn btn-default pull-right btn_file_berita_acara <?php echo $hide_btn_file_berita_acara; ?>" href="uploads/<?php echo $data['berita_acara']; ?>" target="_blank"><i class="fa fa-file"></i></a>
+												</div>
+											</div>
 							            <?php endif ?>
 						            </div>
 						    	</div>

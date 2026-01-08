@@ -439,6 +439,9 @@ class TSDRHPP extends Public_Controller {
 
         $jenis_mitra = $d_rs['mitra']['d_mitra']['jenis'];
 
+        $non_group = 1;
+        $berita_acara = null;
+
         if ( $d_ts ) {
             $m_rhpp = new \Model\Storage\Rhpp_model();
             $d_rhpp_inti = $m_rhpp->where('noreg', $_noreg)->where('jenis', 'rhpp_inti')->with(['doc', 'pakan', 'oa_pakan', 'pindah_pakan', 'oa_pindah_pakan', 'retur_pakan', 'oa_retur_pakan', 'voadip', 'retur_voadip', 'penjualan', 'potongan', 'bonus'])->orderBy('id', 'desc')->first();
@@ -446,6 +449,12 @@ class TSDRHPP extends Public_Controller {
 
             $d_rhpp_inti = !empty($d_rhpp_inti) ? $d_rhpp_inti->toArray() : null;
             $d_rhpp_plasma = !empty($d_rhpp_plasma) ? $d_rhpp_plasma->toArray() : null;
+
+            if ( empty($d_rhpp_plasma['invoice']) ) {
+                $non_group = 0;
+            }
+
+            $berita_acara = $d_rhpp_plasma['berita_acara'];
 
             $id_tutup_siklus = $d_rhpp_inti['id_ts'];
             $no_mitra = $d_rs['mitra']['d_mitra']['nomor'];
@@ -878,7 +887,9 @@ class TSDRHPP extends Public_Controller {
             'bb' => $bb,
             // 'deplesi' => $deplesi,
             // 'ip' => $ip,
-            'cn' => $cn
+            'cn' => $cn,
+            'non_group' => $non_group,
+            'berita_acara' => $berita_acara
         );
 
         $akses = hakAkses($this->url);
@@ -4228,10 +4239,7 @@ class TSDRHPP extends Public_Controller {
 
                 $d_ts = $m_ts->where('id', $id)->first();
 
-                $invoice = null;
-                if ( $params['jenis_rhpp'] == 0 ) {
-                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, null, 1);
-                }
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, null, 1);
 
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", NULL, 1";
@@ -5738,6 +5746,70 @@ class TSDRHPP extends Public_Controller {
         $html = $this->load->view('transaksi/tsdrhpp/modal_piutang', $content, TRUE);
 
         echo $html;
+    }
+
+    public function mappingFiles($files)
+    {
+        $mappingFiles = [];
+        foreach ($files['tmp_name'] as $key => $file) {
+            $sha1 = sha1_file($file);
+            $index = $key;
+            $mappingFiles[$index] = [
+                'name' => $files['name'][$key],
+                'tmp_name' => $file,
+                'type' => $files['type'][$key],
+                'size' => $files['size'][$key],
+                'error' => $files['error'][$key]
+            ];
+        }
+        
+        return $mappingFiles;
+    }
+
+    public function uploadBeritaAcara()
+    {
+        $params = json_decode($this->input->post('data'),TRUE);
+        $files = isset($_FILES['files']) ? $_FILES['files'] : null;
+        $mappingFiles = !empty($files) ? $this->mappingFiles($files) : null;
+        
+        try {
+            $noreg = exDecrypt( $params['noreg'] );
+
+            $path_name = null;
+            $file = isset($mappingFiles[0]) ? $mappingFiles[0] : null;
+
+            if ( !empty($file) ) {
+                $moved = uploadFile($file);
+                $isMoved = $moved['status'];
+
+                if ($isMoved) {
+                    $path_name = $moved['path'];
+
+                    $m_rhpp = new \Model\Storage\Rhpp_model();
+                    $m_rhpp->where('noreg', $noreg)->where('jenis', 'rhpp_plasma')->update(
+                        array(
+                            'berita_acara' => $path_name
+                        )
+                    );
+
+                    $m_ts = new \Model\Storage\TutupSiklus_model();
+                    $d_ts = $m_ts->where('noreg', $noreg)->first();
+
+                    $deskripsi_log = 'upload berita acara oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                    Modules::run( 'base/event/save', $d_ts, $deskripsi_log);
+
+                    $this->result['status'] = 1;
+                    $this->result['content'] = 'uploads/'.$path_name;
+                    $this->result['message'] = 'Berita acara berhasil di upload.';
+                }
+            } else {
+                $this->result['message'] = 'Data gagal di upload.';
+            }
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
     }
 
     public function tes()
