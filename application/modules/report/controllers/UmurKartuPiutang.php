@@ -103,64 +103,25 @@ class UmurKartuPiutang extends Public_Controller {
                 (
                     /* SALDO AWAL */
                     select 
-                        inv.pelanggan,
-                        sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) ) as saldo_awal,
+                        inv.pelanggan, 
+                        sum(isnull(inv.total, 0 ) - isnull(byr.bayar, 0)) as saldo_awal,
                         0 as debet,
                         0 as kredit,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') = 0 then
-                                sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) )
-                            else
-                                0
-                        end as _current,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 1 and datediff(day, inv.tanggal, '".$end_date."') <= 7 then
-                                sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) )
-                            else
-                                0
-                        end as umur1,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 8 and datediff(day, inv.tanggal, '".$end_date."') <= 14 then
-                                sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) )
-                            else
-                                0
-                        end as umur2,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 15 and datediff(day, inv.tanggal, '".$end_date."') <= 21 then
-                                sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) )
-                            else
-                                0
-                        end as umur3,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 22 and datediff(day, inv.tanggal, '".$end_date."') <= 30 then
-                                sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) )
-                            else
-                                0
-                        end as umur4,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 31 and datediff(day, inv.tanggal, '".$end_date."') <= 60 then
-                                sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) )
-                            else
-                                0
-                        end as umur5,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 61 and datediff(day, inv.tanggal, '".$end_date."') <= 90 then
-                                sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) )
-                            else
-                                0
-                        end as umur6,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') > 90 then
-                                sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) )
-                            else
-                                0
-                        end as umur7
+                        0 as _current,
+                        0 as umur1,
+                        0 as umur2,
+                        0 as umur3,
+                        0 as umur4,
+                        0 as umur5,
+                        0 as umur6,
+                        0 as umur7
                     from (
                         select
                             rs.tgl_panen as tanggal,
                             drsi.no_inv as nomor,
                             drs.no_pelanggan as pelanggan,
-                            drsi.total
+                            drsi.total,
+                            drsi.no_inv as kode_trans
                         from det_real_sj_inv drsi
                         left join
                             (select id_header, no_sj, no_pelanggan from det_real_sj group by id_header, no_sj, no_pelanggan) drs
@@ -172,211 +133,19 @@ class UmurKartuPiutang extends Public_Controller {
                                 drs.id_header = rs.id
                         where
                             rs.tgl_panen < '".$start_date."'
-
-                        union all
-
-                        select
-                            c.tanggal,
-                            c.nomor,
-                            c.pelanggan,
-                            0 - ((c.tot_cn - isnull(rpc.pakai, 0))) as total
-                        from cn c
-                        left join
-                            (
-                                select
-                                    sum(isnull(pakai, 0)) as pakai, id_cn
-                                from
-                                (
-                                    select sum(rpc.pakai) as pakai, rpc.id_cn from realisasi_pembayaran_cn rpc
-                                    left join
-                                        realisasi_pembayaran rp
-                                        on
-                                            rpc.id_header = rp.id
-                                    where
-                                        rp.tgl_bayar < '".$start_date."'
-                                    group by 
-                                        rpc.id_cn
-
-                                    union all
-
-                                    select sum(bpc.pakai) as pakai, bpc.id_cn from bayar_peralatan_cn bpc
-                                    left join
-                                        bayar_peralatan bp
-                                        on
-                                            bpc.id_header = bp.id
-                                    where
-                                        bp.tgl_bayar < '".$start_date."'
-                                    group by 
-                                        bpc.id_cn
-
-                                    union all
-
-                                    select sum(ppc.pakai) as pakai, ppc.id_cn from pembayaran_pelanggan_cn ppc
-                                    left join
-                                        pembayaran_pelanggan pp
-                                        on
-                                            ppc.id_header = pp.id
-                                    where
-                                        pp.tgl_bayar < '".$start_date."'
-                                    group by 
-                                        ppc.id_cn
-                                ) rpc
-                                group by
-                                    rpc.id_cn
-                            ) rpc
-                            on
-                                c.id = rpc.id_cn
-                        where 
-                            c.tanggal < '".$start_date."' and
-                            c.tot_cn > isnull(rpc.pakai, 0) and
-                            (c.pelanggan is not null and c.pelanggan <> '')
-
-                        union all
-
-                        select
-                            d.tanggal,
-                            d.nomor,
-                            d.pelanggan,
-                            (d.tot_dn - isnull(rpd.pakai, 0)) as total
-                        from dn d
-                        left join
-                            (
-                                select
-                                    sum(isnull(pakai, 0)) as pakai, id_dn
-                                from
-                                (
-                                    select sum(rpd.pakai) as pakai, rpd.id_dn from realisasi_pembayaran_dn rpd
-                                    left join
-                                        realisasi_pembayaran rp
-                                        on
-                                            rpd.id_header = rp.id
-                                    where
-                                        rp.tgl_bayar < '".$start_date."'
-                                    group by 
-                                        rpd.id_dn
-
-                                    union all
-
-                                    select sum(bpd.pakai) as pakai, bpd.id_dn from bayar_peralatan_dn bpd
-                                    left join
-                                        bayar_peralatan bp
-                                        on
-                                            bpd.id_header = bp.id
-                                    where
-                                        bp.tgl_bayar < '".$start_date."'
-                                    group by 
-                                        bpd.id_dn
-
-                                    union all
-
-                                    select sum(ppd.pakai) as pakai, ppd.id_dn from pembayaran_pelanggan_dn ppd
-                                    left join
-                                        pembayaran_pelanggan pp
-                                        on
-                                            ppd.id_header = pp.id
-                                    where
-                                        pp.tgl_bayar < '".$start_date."'
-                                    group by 
-                                        ppd.id_dn
-                                ) rpd
-                                group by
-                                    rpd.id_dn
-                            ) rpd
-                            on
-                                d.id = rpd.id_dn
-                        where 
-                            d.tanggal < '".$start_date."' and
-                            d.tot_dn > isnull(rpd.pakai, 0) and
-                            (d.pelanggan is not null and d.pelanggan <> '')
                     ) inv
                     left join
                         (
                             select
-                                byr.nomor, 
-                                sum(byr.cn) as cn, 
-                                sum(byr.dn) as dn, 
-                                sum(byr.potongan) as potongan, 
-                                sum(byr.uang_muka) as uang_muka, 
-                                sum(byr.transfer) as transfer, 
-                                sum(byr.saldo) as saldo 
+                                byr.nomor,
+                                sum(byr.bayar) as bayar
                             from
                             (
                                 select 
-                                    dpp.no_inv as nomor, 
-                                    sum(dppcd.nominal) as cn, 
-                                    0 as dn, 
-                                    0 as potongan, 
-                                    0 as uang_muka, 
-                                    0 as transfer, 
-                                    0 as saldo 
-                                from det_pembayaran_pelanggan_cn_dn dppcd
-                                left join
-                                    det_pembayaran_pelanggan dpp
-                                    on
-                                        dppcd.id_header = dpp.id
-                                left join
-                                    pembayaran_pelanggan pp
-                                    on
-                                        dpp.id_header = pp.id
-                                left join
-                                    (
-                                        select nomor, tanggal from cn c
-                                        union all
-                                        select nomor, tanggal from dn d
-                                    ) cn_dn
-                                    on
-                                        dppcd.nomor_cn_dn = cn_dn.nomor
-                                where
-                                    dppcd.nomor_cn_dn like '%CN%' and
-                                    pp.tgl_bayar < '".$start_date."' and
-                                    cn_dn.tanggal < '".$start_date."'
-                                group by
-                                    dpp.no_inv
-        
-                                union all
-        
-                                select 
-                                    dpp.no_inv as nomor, 
-                                    0 as cn, 
-                                    sum(dppcd.nominal) as dn, 
-                                    0 as potongan, 
-                                    0 as uang_muka, 
-                                    0 as transfer, 
-                                    0 as saldo 
-                                from det_pembayaran_pelanggan_cn_dn dppcd
-                                left join
-                                    det_pembayaran_pelanggan dpp
-                                    on
-                                        dppcd.id_header = dpp.id
-                                left join
-                                    pembayaran_pelanggan pp
-                                    on
-                                        dpp.id_header = pp.id
-                                left join
-                                    (
-                                        select nomor, tanggal from cn c
-                                        union all
-                                        select nomor, tanggal from dn d
-                                    ) cn_dn
-                                    on
-                                        dppcd.nomor_cn_dn = cn_dn.nomor
-                                where
-                                    dppcd.nomor_cn_dn like '%DN%' and
-                                    pp.tgl_bayar < '".$start_date."' and
-                                    cn_dn.tanggal < '".$start_date."'
-                                group by
-                                    dpp.no_inv
-                                
-                                union all
-        
-                                select 
-                                    dpp.no_inv as nomor, 
-                                    0 as cn, 
-                                    0 as dn, 
-                                    sum(dpp.penyesuaian) as potongan, 
-                                    0 as uang_muka, 
-                                    isnull(sum(dpp.tagihan-(dpp.penyesuaian+dpp.sisa_tagihan)), 0) as transfer,
-                                    0 as saldo
+                                    pp.no_pelanggan as pelanggan,
+                                    dpp.no_inv as nomor,
+                                    isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as bayar,
+                                    pp.nomor as kode_trans
                                 from det_pembayaran_pelanggan dpp
                                 left join
                                     pembayaran_pelanggan pp
@@ -384,17 +153,17 @@ class UmurKartuPiutang extends Public_Controller {
                                         dpp.id_header = pp.id
                                 where
                                     pp.tgl_bayar < '".$start_date."'
-                                group by
-                                    dpp.no_inv
+                                    and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) > 0
                             ) byr
                             group by
                                 byr.nomor
                         ) byr
                         on
-                            inv.nomor = byr.nomor
+                            byr.nomor = inv.nomor
                     group by
-                        inv.pelanggan,
-                        inv.tanggal
+                        inv.pelanggan
+                    having
+                        sum(isnull(inv.total, 0 ) - isnull(byr.bayar, 0)) <> 0
                     /* END - SALDO AWAL */
     
                     union all
@@ -403,56 +172,16 @@ class UmurKartuPiutang extends Public_Controller {
                     select 
                         inv.pelanggan, 
                         0 as saldo_awal,
-                        sum(inv.total) as debet,
+                        isnull(sum(inv.total), 0) as debet,
                         0 as kredit,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') = 0 then
-                                sum(inv.total)
-                            else
-                                0
-                        end as _current,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 1 and datediff(day, inv.tanggal, '".$end_date."') <= 7 then
-                                sum(inv.total)
-                            else
-                                0
-                        end as umur1,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 8 and datediff(day, inv.tanggal, '".$end_date."') <= 14 then
-                                sum(inv.total)
-                            else
-                                0
-                        end as umur2,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 15 and datediff(day, inv.tanggal, '".$end_date."') <= 21 then
-                                sum(inv.total)
-                            else
-                                0
-                        end as umur3,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 22 and datediff(day, inv.tanggal, '".$end_date."') <= 30 then
-                                sum(inv.total)
-                            else
-                                0
-                        end as umur4,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 31 and datediff(day, inv.tanggal, '".$end_date."') <= 60 then
-                                sum(inv.total)
-                            else
-                                0
-                        end as umur5,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') >= 61 and datediff(day, inv.tanggal, '".$end_date."') <= 90 then
-                                sum(inv.total)
-                            else
-                                0
-                        end as umur6,
-                        case
-                            when datediff(day, inv.tanggal, '".$end_date."') > 90 then
-                                sum(inv.total)
-                            else
-                                0
-                        end as umur7
+                        0 as _current,
+                        0 as umur1,
+                        0 as umur2,
+                        0 as umur3,
+                        0 as umur4,
+                        0 as umur5,
+                        0 as umur6,
+                        0 as umur7
                     from (
                         select
                             rs.tgl_panen as tanggal,
@@ -471,32 +200,18 @@ class UmurKartuPiutang extends Public_Controller {
                                 drs.id_header = rs.id
                         where
                             rs.tgl_panen between '".$start_date."' and '".$end_date."'
-
-                        union all
-
-                        select
-                            d.tanggal,
-                            d.nomor,
-                            d.pelanggan,
-                            d.tot_dn as total,
-                            d.nomor as kode_trans
-                        from dn d
-                        where 
-                            d.tanggal between '".$start_date."' and '".$end_date."' and
-                            (d.pelanggan is not null and d.pelanggan <> '')
                     ) inv
                     group by
                         inv.pelanggan,
                         inv.tanggal
-                    /* END - TRANSAKSI DI BULAN ITU */
-    
+
                     union all
     
                     select
                         byr.pelanggan,
                         0 as saldo_awal,
                         0 as debet,
-                        sum(byr.kredit) as kredit,
+                        isnull(sum(byr.bayar), 0) as kredit,
                         0 as _current,
                         0 as umur1,
                         0 as umur2,
@@ -511,8 +226,7 @@ class UmurKartuPiutang extends Public_Controller {
                             pp.tgl_bayar as tanggal,
                             pp.no_pelanggan as pelanggan,
                             dpp.no_inv as nomor,
-                            0 as debet, 
-                            isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as kredit,
+                            isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as bayar,
                             pp.nomor as kode_trans
                         from det_pembayaran_pelanggan dpp
                         left join
@@ -520,25 +234,124 @@ class UmurKartuPiutang extends Public_Controller {
                             on
                                 dpp.id_header = pp.id
                         where
-                            pp.tgl_bayar between '".$start_date."' and '".$end_date."' and
-                            isnull(dpp.tagihan-dpp.sisa_tagihan, 0) > 0
+                            pp.tgl_bayar between '".$start_date."' and '".$end_date."' 
+                            and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) <> 0
+                    ) byr
+                    group by
+                        byr.pelanggan,
+                        byr.tanggal
+                    /* END - TRANSAKSI DI BULAN ITU */
+
+                    union all
+
+                    /* TRANSAKSI DI BULAN ITU PER UMUR */
+                    select 
+                        inv.pelanggan, 
+                        0 as saldo_awal,
+                        0 as debet,
+                        0 as kredit,
+                        case
+                            when datediff(day, inv.tanggal, '".$end_date."') <= 0 then
+                                sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                            else
+                                0
+                        end as _current,
+                        case
+                            when datediff(day, inv.tanggal, '".$end_date."') >= 1 and datediff(day, inv.tanggal, '".$end_date."') <= 7 then
+                                sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                            else
+                                0
+                        end as umur1,
+                        case
+                            when datediff(day, inv.tanggal, '".$end_date."') >= 8 and datediff(day, inv.tanggal, '".$end_date."') <= 14 then
+                                sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                            else
+                                0
+                        end as umur2,
+                        case
+                            when datediff(day, inv.tanggal, '".$end_date."') >= 15 and datediff(day, inv.tanggal, '".$end_date."') <= 21 then
+                                sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                            else
+                                0
+                        end as umur3,
+                        case
+                            when datediff(day, inv.tanggal, '".$end_date."') >= 22 and datediff(day, inv.tanggal, '".$end_date."') <= 30 then
+                                sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                            else
+                                0
+                        end as umur4,
+                        case
+                            when datediff(day, inv.tanggal, '".$end_date."') >= 31 and datediff(day, inv.tanggal, '".$end_date."') <= 60 then
+                                sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                            else
+                                0
+                        end as umur5,
+                        case
+                            when datediff(day, inv.tanggal, '".$end_date."') >= 61 and datediff(day, inv.tanggal, '".$end_date."') <= 90 then
+                                sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                            else
+                                0
+                        end as umur6,
+                        case
+                            when datediff(day, inv.tanggal, '".$end_date."') >= 91 then
+                                sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                            else
+                                0
+                        end as umur7
+                    from (
+                        select
+                            rs.tgl_panen as tanggal,
+                            drs.no_pelanggan as pelanggan,
+                            drsi.no_inv as nomor,
+                            drsi.total as debet,
+                            0 as kredit
+                            , drsi.no_inv as kode_trans
+                        from det_real_sj_inv drsi
+                        left join
+                            (select id_header, no_sj, no_pelanggan from det_real_sj group by id_header, no_sj, no_pelanggan) drs
+                            on
+                                drsi.no_sj = drs.no_sj
+                        left join
+                            real_sj rs
+                            on
+                                drs.id_header = rs.id
+                        where
+                            rs.tgl_panen <= '".$end_date."'
 
                         union all
 
                         select
-                            c.tanggal,
-                            c.pelanggan,
-                            c.nomor,
+                            rs.tgl_panen as tanggal,
+                            pp.no_pelanggan as pelanggan,
+                            dpp.no_inv as nomor,
                             0 as debet,
-                            c.tot_cn as kredit,
-                            c.nomor as kode_trans
-                        from cn c
-                        where 
-                            c.tanggal between '".$start_date."' and '".$end_date."' and
-                            (c.pelanggan is not null and c.pelanggan <> '')
-                    ) byr
+                            isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as kredit
+                            , pp.nomor as kode_trans
+                        from det_pembayaran_pelanggan dpp
+                        left join
+                            pembayaran_pelanggan pp
+                            on
+                                dpp.id_header = pp.id
+                        left join
+                            det_real_sj_inv drsi
+                            on
+                                dpp.no_inv = drsi.no_inv 
+                        left join
+                            (select id_header, no_sj, no_pelanggan from det_real_sj group by id_header, no_sj, no_pelanggan) drs
+                            on
+                                drsi.no_sj = drs.no_sj
+                        left join
+                            real_sj rs
+                            on
+                                drs.id_header = rs.id
+                        where
+                            pp.tgl_bayar <= '".$end_date."'
+                            and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) <> 0
+                    ) inv
                     group by
-                        byr.pelanggan
+                        inv.pelanggan,
+                        inv.tanggal
+                    /* END - TRANSAKSI DI BULAN ITU PER UMUR */
                 ) d
                 group by
                     d.pelanggan
@@ -550,24 +363,6 @@ class UmurKartuPiutang extends Public_Controller {
                         (select max(id) as id, nomor from pelanggan p where tipe = 'pelanggan' group by nomor) p2
                         on
                             p1.id = p2.id
-
-                    /*
-                    union all
-                            
-                    select e1.nomor, e1.nama from ekspedisi e1
-                    right join
-                        (select max(id) as id, nomor from ekspedisi e group by nomor) e2
-                        on
-                            e1.id = e2.id
-
-                    union all
-
-                    select m1.nomor, m1.nama from mitra m1
-                    right join
-                        (select max(id) as id, nomor from mitra group by nomor) m2
-                        on
-                            m1.id = m2.id
-                    */
                 ) plg
                 on
                     plg.nomor = data.pelanggan

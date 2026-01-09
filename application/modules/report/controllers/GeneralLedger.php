@@ -531,14 +531,24 @@ class GeneralLedger extends Public_Controller {
                             -- sb.kredit2
                             0
                         else
-                            sb.kredit1
+                            case
+                                when sb.debet1 + sb.kredit1 < 0 then
+                                    sb.debet1 + sb.kredit1
+                                else
+                                    0
+                            end
                     end as kredit,
                     case
                         when sb.debet2 <> 0 then
                             -- sb.debet2
                             0
                         else
-                            sb.debet1
+                            case
+                                when sb.debet1 + sb.kredit1 >= 0 then
+                                    sb.debet1 + sb.kredit1
+                                else
+                                    0
+                            end
                     end as debet,
                     0 as urut
                 from (
