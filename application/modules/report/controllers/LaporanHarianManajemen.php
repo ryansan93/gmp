@@ -501,7 +501,7 @@ class LaporanHarianManajemen extends Public_Controller {
             $data = $d_conf->toArray();
         }
 
-        cetak_r( $data, 1 );
+        // cetak_r( $data, 1 );
 
         return $data;
     }
