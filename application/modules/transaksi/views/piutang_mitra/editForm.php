@@ -39,6 +39,7 @@
             <div class="col-xs-12 no-padding">
                 <select class="form-control tf_bank" data-required="1">
                     <option>-- Pilih Asal Piutang --</option>
+                    <option value="0" <?php echo ($data['tf_bank'] == 0) ? 'selected' : null; ?> ><?php echo 'NON BANK'; ?></option>
                     <?php foreach ($bank as $key => $value) { ?>
                         <?php
                             $selected = null;

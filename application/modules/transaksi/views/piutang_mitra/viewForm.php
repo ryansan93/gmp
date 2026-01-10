@@ -20,7 +20,7 @@
     <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
         <div class="col-xs-2 no-padding"><label class="label-control">Asal Piutang</label></div>
         <div class="col-xs-10 no-padding">
-            <label class="label-control">: <?php echo $data['nama_bank']; ?></label>
+            <label class="label-control">: <?php echo !empty($data['nama_bank']) ? $data['nama_bank'] : 'NON BANK'; ?></label>
         </div>
     </div>
     <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">

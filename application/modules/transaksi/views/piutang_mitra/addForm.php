@@ -33,11 +33,11 @@
             <div class="col-xs-12 no-padding">
                 <select class="form-control tf_bank" data-required="1">
                     <option>-- Pilih Asal Piutang --</option>
+                    <option value="0"><?php echo 'NON BANK'; ?></option>
                     <?php foreach ($bank as $key => $value) { ?>
                         <option value="<?php echo $value['no_coa'] ?>"><?php echo $value['nama_coa']; ?></option>
                     <?php } ?>
                     <!-- <option value="1"><?php echo 'BANK'; ?></option> -->
-                    <!-- <option value="0"><?php echo 'NON BANK'; ?></option> -->
                 </select>
             </div>
         </div>
