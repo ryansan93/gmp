@@ -118,6 +118,12 @@ class LaporanHarianManajemen extends Public_Controller {
 	                	0
                 end as lr_per_ekor,
                 case
+	                when sum(data.lr_inti) > 0 and sum(data.tonase) > 0 then
+	                	sum(data.lr_inti) / sum(data.tonase)
+	                else
+	                	0
+                end as lr_per_kg,
+                case
 	                when sum(data.total_doc) > 0 and sum(data.jml_doc) > 0 then
 	                	sum(data.total_doc) / sum(data.jml_doc)
 	                else
@@ -150,6 +156,7 @@ class LaporanHarianManajemen extends Public_Controller {
                 union all
 
                 /* TRANSFER */
+                /*
                 select
                     0 as saldo_bank,
                     sum(rp.jml_transfer) as tot_trf,
@@ -166,6 +173,40 @@ class LaporanHarianManajemen extends Public_Controller {
                 from realisasi_pembayaran rp
                 where
                     rp.tgl_realisasi = '".$tanggal."'
+                */
+
+                select
+                    0 as saldo_bank,
+                    sum(tbl.nominal) as tot_trf,
+                    0 as hutang_doc,
+                    0 as hutang_pakan,
+                    0 as lr_inti_prev,
+                    0 as lr_inti,
+                    0 as jml_rhpp,
+                    0 as jml_box,
+                    0 as jml_doc,
+                    0 as total_doc,
+                    0 as tonase,
+                    0 as tot_jual
+                from no_bbk nb
+                left join
+                    (select * from coa where bank = 1) c 
+                    on
+                        SUBSTRING(nb.kode, 1, 4) = c.kode
+                left join
+                    (
+                        select 'kk' as tbl_name, no_kk as tbl_id, nilai as nominal, tgl_kk as tanggal from kk
+                        
+                        union all
+                        
+                        select 'realisasi_pembayaran' as tbl_name, nomor as tbl_id, jml_transfer as nominal, tgl_realisasi as tanggal from realisasi_pembayaran
+                    ) tbl
+                    on
+                        nb.tbl_name = tbl.tbl_name and
+                        nb.tbl_id = tbl.tbl_id
+                where
+                    c.kode in ('BCA1', 'BCA2')
+                    and tbl.tanggal = '".$tanggal."'
                 /* END - TRANSFER */
 
                 union all
@@ -197,33 +238,48 @@ class LaporanHarianManajemen extends Public_Controller {
                 from
                 (
                     /* DEBET */
-                    select 
+                    /*
+                    select
                         kpd.nomor,
-                        kpd.supplier,
+                        kpdd.supplier,
                         kpdd.total as debet,
                         0 as kredit,
                         'DOC' as jenis,
                         kpdd.kode_unit as unit
-                    from konfirmasi_pembayaran_doc_det kpdd
+                    from 
+                    left join
+                        konfirmasi_pembayaran_doc_det kpdd
+                        on
+                            od.no_order = kpdd.no_order
                     left join
                         konfirmasi_pembayaran_doc kpd
                         on
                             kpdd.id_header = kpd.id
-                    left join
-                        (
-                            select td1.* from terima_doc td1
-                            right join
-                                (select max(id) as id, no_order from terima_doc group by no_order) td2
-                                on
-                                    td1.id = td2.id
-                        ) td
-                        on
-                            td.no_order = kpdd.no_order
                     where
-                        cast(td.datang as date) <= '".$tanggal."'
+                        cast(od.tgl_submit as date) <= '".$tanggal."'
+                    */
+
+                    select
+                        od.no_order as nomor,
+                        od.supplier,
+                        od.total as debet,
+                        0 as kredit,
+                        'DOC' as jenis,
+                        SUBSTRING(od.no_order, 5, 3) as unit
+                    from
+                    (
+                        select od1.* from order_doc od1
+                        right join
+                            (select max(id) as id, no_order from order_doc group by no_order) od2
+                            on
+                                od1.id = od2.id
+                    ) od
+                    where
+                        cast(od.tgl_submit as date) <= '".$tanggal."'
 
                     union all
 
+                    /*
                     select 
                         kpp.nomor, 	
                         kpp.supplier, 
@@ -238,6 +294,25 @@ class LaporanHarianManajemen extends Public_Controller {
                             kppd.id_header = kpp.id
                     where
                         kpp.tgl_bayar <= '".$tanggal."'
+                    */
+
+                    select
+                        op.no_order as nomor, 	
+                        op.supplier, 
+                        sum(opd.total) as debet,
+                        0 as kredit,
+                        'PAKAN' as jenis,
+                        SUBSTRING(op.no_order , 5, 3)  as unit
+                    from order_pakan_detail opd 
+                    left join
+                        order_pakan op 
+                        on
+                            opd.id_header = op.id 
+                    where
+                        op.tgl_trans <= '".$tanggal."'
+                    group by
+                        op.no_order, 	
+                        op.supplier
 
                     union all
 
@@ -292,7 +367,7 @@ class LaporanHarianManajemen extends Public_Controller {
                     union all
 
                     select 
-                        rp.nomor,
+                        konfir.no_order as nomor,
                         rp.supplier,
                         0 as debet,
                         case
@@ -316,7 +391,7 @@ class LaporanHarianManajemen extends Public_Controller {
                             rpd.id_header = rp.id
                     left join
                         (
-                            select kpdd.kode_unit, kpd.nomor, kpd.tgl_bayar as tanggal, (kpdd.total * (0.25/100)) as pph from konfirmasi_pembayaran_doc_det kpdd 
+                            select kpdd.kode_unit, kpd.nomor, kpdd.no_order, kpd.tgl_bayar as tanggal, (kpdd.total * (0.25/100)) as pph from konfirmasi_pembayaran_doc_det kpdd 
                             left join
                                 konfirmasi_pembayaran_doc kpd 
                                 on
@@ -332,17 +407,17 @@ class LaporanHarianManajemen extends Public_Controller {
                                 on
                                     td.no_order = kpdd.no_order
                             group by
-                                kpdd.kode_unit, kpd.nomor, kpd.tgl_bayar, kpdd.total
+                                kpdd.kode_unit, kpd.nomor, kpdd.no_order, kpd.tgl_bayar, kpdd.total
                                 
                             union all
                             
-                            select kppd.kode_unit, kpp.nomor, null as tanggal, 0 as pph from konfirmasi_pembayaran_pakan_det kppd 
+                            select kppd.kode_unit, kpp.nomor, kppd.no_order, null as tanggal, 0 as pph from konfirmasi_pembayaran_pakan_det kppd 
                             left join
                                 konfirmasi_pembayaran_pakan kpp 
                                 on
                                     kppd.id_header = kpp.id
                             group by
-                                kppd.kode_unit, kpp.nomor
+                                kppd.kode_unit, kpp.nomor, kppd.no_order
                         ) konfir
                         on
                             rpd.no_bayar = konfir.nomor
@@ -418,12 +493,15 @@ class LaporanHarianManajemen extends Public_Controller {
                 /* END - LABA INTI */
             ) data
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
         if ( $d_conf->count() > 0 ) {
             $data = $d_conf->toArray();
         }
+
+        cetak_r( $data, 1 );
 
         return $data;
     }
