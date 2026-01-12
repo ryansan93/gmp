@@ -1372,7 +1372,7 @@ var tsdrhpp = {
                 }
             }
         });
-    }, // end - print
+    }, // end - formUploadBeritaAcara
 };
 
 tsdrhpp.start_up();

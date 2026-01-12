@@ -104,7 +104,7 @@ class UmurKartuPiutang extends Public_Controller {
                     /* SALDO AWAL */
                     select 
                         inv.pelanggan, 
-                        sum(isnull(inv.total, 0 ) - isnull(byr.bayar, 0)) as saldo_awal,
+                        sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0)) as saldo_awal,
                         0 as debet,
                         0 as kredit,
                         0 as _current,
@@ -120,7 +120,8 @@ class UmurKartuPiutang extends Public_Controller {
                             rs.tgl_panen as tanggal,
                             drsi.no_inv as nomor,
                             drs.no_pelanggan as pelanggan,
-                            drsi.total,
+                            drsi.total as debet,
+                            0 as kredit,
                             drsi.no_inv as kode_trans
                         from det_real_sj_inv drsi
                         left join
@@ -133,37 +134,41 @@ class UmurKartuPiutang extends Public_Controller {
                                 drs.id_header = rs.id
                         where
                             rs.tgl_panen < '".$start_date."'
+
+                        union all
+
+                        select 
+                            pp.tgl_bayar as tanggal,
+                            dpp.no_inv as nomor,
+                            pp.no_pelanggan as pelanggan,
+                            0 as debet,
+                            isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as kredit,
+                            pp.nomor as kode_trans
+                        from det_pembayaran_pelanggan dpp
+                        left join
+                            pembayaran_pelanggan pp
+                            on
+                                dpp.id_header = pp.id
+                        left join
+                            det_real_sj_inv drsi
+                            on
+                                dpp.no_inv = drsi.no_inv 
+                        left join
+                            (select id_header, no_sj, no_pelanggan from det_real_sj group by id_header, no_sj, no_pelanggan) drs
+                            on
+                                drsi.no_sj = drs.no_sj
+                        left join
+                            real_sj rs
+                            on
+                                drs.id_header = rs.id
+                        where
+                            pp.tgl_bayar < '".$start_date."'
+                            and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) > 0
                     ) inv
-                    left join
-                        (
-                            select
-                                byr.nomor,
-                                sum(byr.bayar) as bayar
-                            from
-                            (
-                                select 
-                                    pp.no_pelanggan as pelanggan,
-                                    dpp.no_inv as nomor,
-                                    isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as bayar,
-                                    pp.nomor as kode_trans
-                                from det_pembayaran_pelanggan dpp
-                                left join
-                                    pembayaran_pelanggan pp
-                                    on
-                                        dpp.id_header = pp.id
-                                where
-                                    pp.tgl_bayar < '".$start_date."'
-                                    and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) > 0
-                            ) byr
-                            group by
-                                byr.nomor
-                        ) byr
-                        on
-                            byr.nomor = inv.nomor
                     group by
                         inv.pelanggan
                     having
-                        sum(isnull(inv.total, 0 ) - isnull(byr.bayar, 0)) <> 0
+                        sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0)) <> 0
                     /* END - SALDO AWAL */
     
                     union all
@@ -321,7 +326,7 @@ class UmurKartuPiutang extends Public_Controller {
                         union all
 
                         select
-                            rs.tgl_panen as tanggal,
+                            pp.tgl_bayar as tanggal,
                             pp.no_pelanggan as pelanggan,
                             dpp.no_inv as nomor,
                             0 as debet,
@@ -369,6 +374,7 @@ class UmurKartuPiutang extends Public_Controller {
             order by
                 data.pelanggan asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
