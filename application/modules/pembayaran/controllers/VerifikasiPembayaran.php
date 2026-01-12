@@ -260,7 +260,8 @@ class VerifikasiPembayaran extends Public_Controller
                     on
                         nb.tbl_id = p.kode
                 where
-                    p.status = ".$status."
+                    p.status = ".$status." and
+                    p.tf_bank <> 0
 
                 union all
 
@@ -1190,6 +1191,6 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function tes() {
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 1022, 1022, 2, 'realisasi_pembayaran', '2025-12-29');
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 622, 622, 2, 'realisasi_pembayaran', '2025-12-02');
     }
 }
