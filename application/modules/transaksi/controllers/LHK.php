@@ -315,12 +315,14 @@ class LHK extends Public_Controller
         // }
 
         $m_wil = new \Model\Storage\Wilayah_model();
-        $d_wil = $m_wil->getDataUnit(1, $this->user);
+        $d_wil = $m_wil->getDataUnit(1, $this->userid);
 
         $kode_unit = array();
         foreach ($d_wil as $key => $value) {
             $kode_unit[] = $value['kode'];
         }
+
+        cetak_r( $kode_unit, 1 );
 
         // $start_date = prev_date(date('Y-m-d'), 90).' 00:00:00.000';
         $start_date = prev_date(date('Y-m-d'), 120).' 00:00:00.000';

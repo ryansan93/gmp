@@ -95,7 +95,6 @@ class Wilayah_model extends Conf{
           }
         }
       }
-
     }
 
     $sql = "
