@@ -39,8 +39,11 @@ class KartuPiutangPerInvoice extends Public_Controller {
 
             $data = $this->includes;
 
+            $m_plg = new \Model\Storage\Pelanggan_model();
+
             $content['akses'] = $akses;
             $content['title_menu'] = 'Laporan Kartu Piutang Per Invoice';
+            $content['pelanggan'] = $m_plg->getDataPelanggan(0);
 
             // Load Indexx
             $data['view'] = $this->load->view($this->pathView.'index', $content, TRUE);
@@ -55,6 +58,7 @@ class KartuPiutangPerInvoice extends Public_Controller {
 
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
+        $pelanggan = $params['pelanggan'];
 
         if ( $bulan != 'all' ) {
             $i = $bulan;
@@ -76,11 +80,17 @@ class KartuPiutangPerInvoice extends Public_Controller {
             $end_date = date("Y-m-t", strtotime($_end_date));
         }
 
+        $today = date("Y-m-d");
+        if ( $end_date > $today ) {
+            $end_date = $today;
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
                 data.*,
-                plg.nama as nama_pelanggan
+                plg.nama as nama_pelanggan,
+                datediff(day, data.tgl_inv, '".$end_date."') as umur
             from (
                 /* SALDO AWAL */
                 select 
@@ -89,6 +99,7 @@ class KartuPiutangPerInvoice extends Public_Controller {
                     'Saldo Awal' as jenis_trans,
                     inv.nomor as no_inv,
                     inv.nomor as kode_trans,
+                    inv.tanggal as tgl_inv,
                     0 as debet,
                     0 as kredit,
                     sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) ) as saldo,
@@ -97,7 +108,8 @@ class KartuPiutangPerInvoice extends Public_Controller {
                     select
                         drsi.no_inv as nomor,
                         drs.no_pelanggan as pelanggan,
-                        drsi.total
+                        drsi.total,
+                        rs.tgl_panen as tanggal
                     from det_real_sj_inv drsi
                     left join
                         (select id_header, no_sj, no_pelanggan from det_real_sj group by id_header, no_sj, no_pelanggan) drs
@@ -115,7 +127,8 @@ class KartuPiutangPerInvoice extends Public_Controller {
                     select
                         c.nomor,
                         c.pelanggan,
-                        0 - ((c.tot_cn - isnull(rpc.pakai, 0))) as total
+                        0 - ((c.tot_cn - isnull(rpc.pakai, 0))) as total,
+                        c.tanggal
                     from cn c
                     left join
                         (
@@ -172,7 +185,8 @@ class KartuPiutangPerInvoice extends Public_Controller {
                     select
                         d.nomor,
                         d.pelanggan,
-                        (d.tot_dn - isnull(rpd.pakai, 0)) as total
+                        (d.tot_dn - isnull(rpd.pakai, 0)) as total,
+                        d.tanggal
                     from dn d
                     left join
                         (
@@ -329,7 +343,10 @@ class KartuPiutangPerInvoice extends Public_Controller {
                         inv.nomor = byr.nomor
                 group by
                     inv.pelanggan,
-                    inv.nomor
+                    inv.nomor,
+                    inv.tanggal
+                having
+                    sum( (inv.total+(isnull(byr.dn, 0))) - (isnull(byr.cn, 0)+isnull(byr.potongan, 0)+isnull(byr.uang_muka, 0)+isnull(byr.transfer, 0)+isnull(byr.saldo, 0)) ) <> 0
                 /* END - SALDO AWAL */
 
                 union all
@@ -341,6 +358,7 @@ class KartuPiutangPerInvoice extends Public_Controller {
                     inv.kode_trans as jenis_trans,
                     inv.nomor as no_inv,
                     inv.nomor as kode_trans,
+                    inv.tanggal as tgl_inv,
                     inv.total as debet,
                     0 as kredit,
                     0 as saldo,
@@ -388,6 +406,7 @@ class KartuPiutangPerInvoice extends Public_Controller {
                     byr.kode_trans as jenis_trans,
                     byr.nomor as no_inv,
                     byr.kode_trans as kode_trans,
+                    null as tgl_inv,
                     byr.debet as debet,
                     byr.kredit as kredit,
                     0 as saldo,
@@ -434,6 +453,7 @@ class KartuPiutangPerInvoice extends Public_Controller {
                         on
                             p1.id = p2.id
 
+                    /*
                     union all
                             
                     select e1.nomor, e1.nama from ekspedisi e1
@@ -449,11 +469,12 @@ class KartuPiutangPerInvoice extends Public_Controller {
                         (select max(id) as id, nomor from mitra group by nomor) m2
                         on
                             m1.id = m2.id
+                    */
                 ) plg
                 on
                     plg.nomor = data.pelanggan
             where
-                data.pelanggan = '22A360'
+                data.pelanggan = '".$pelanggan."' or '".$pelanggan."' like 'all'
             order by
                 data.pelanggan asc,
                 data.no_inv asc,

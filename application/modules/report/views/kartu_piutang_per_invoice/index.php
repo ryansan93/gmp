@@ -37,6 +37,19 @@
 					</div>
 				</div>
 			</div>
+			<div class="col-xs-12 no-padding">
+                <div class="col-xs-12 no-padding"><label class="control-label">Pelanggan</label></div>
+				<div class="col-xs-12 no-padding">
+					<select class="form-control pelanggan" data-required="1">
+						<option value="all">ALL</option>
+						<?php if ( !empty($pelanggan) ): ?>
+							<?php foreach ($pelanggan as $k_plg => $v_plg): ?>
+								<option value="<?php echo $v_plg['nomor'] ?>"><?php echo strtoupper($v_plg['nomor'].' | '.$v_plg['nama']); ?></option>
+							<?php endforeach ?>
+						<?php endif ?>
+					</select>
+				</div>
+			</div>
         </div>
 		<div class="col-xs-12 no-padding">
 			<div class="col-xs-12 no-padding">

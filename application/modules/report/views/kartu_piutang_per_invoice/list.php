@@ -35,6 +35,16 @@
                         <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
                         <div class="col-xs-10 no-padding"><label class="label-control"><?php echo $value['no_inv']; ?></label></div>
                     </div>
+                    <div class="col-xs-12 no-padding">
+                        <div class="col-xs-1 no-padding"><label class="label-control">Tgl. Invoice</label></div>
+                        <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
+                        <div class="col-xs-10 no-padding"><label class="label-control"><?php echo strtoupper(tglIndonesia($value['tgl_inv'], '-', ' ')); ?></label></div>
+                    </div>
+                    <!-- <div class="col-xs-12 no-padding">
+                        <div class="col-xs-1 no-padding"><label class="label-control">Umur</label></div>
+                        <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
+                        <div class="col-xs-10 no-padding"><label class="label-control"><?php echo angkaRibuan($value['umur']); ?></label></div>
+                    </div> -->
                 </td>
             </tr>
             <tr>

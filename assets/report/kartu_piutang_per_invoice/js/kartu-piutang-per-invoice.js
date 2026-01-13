@@ -5,6 +5,7 @@ var khl = {
 
     settingUp: function() {
         $('select.bulan').select2();
+        $('select.pelanggan').select2();
 
         $('#Tahun').datetimepicker({
             locale: 'id',
@@ -29,7 +30,8 @@ var khl = {
             var dcontent = $('table tbody');
 			var params = {
 				'bulan': $('.bulan').select2().val(),
-				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
+				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() ),
+				'pelanggan': $('.pelanggan').select2().val(),
 			};
 
 			$.ajax({
