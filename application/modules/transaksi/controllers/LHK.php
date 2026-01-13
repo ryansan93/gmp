@@ -322,8 +322,6 @@ class LHK extends Public_Controller
             $kode_unit[] = $value['kode'];
         }
 
-        cetak_r( $kode_unit, 1 );
-
         // $start_date = prev_date(date('Y-m-d'), 90).' 00:00:00.000';
         $start_date = prev_date(date('Y-m-d'), 120).' 00:00:00.000';
 
