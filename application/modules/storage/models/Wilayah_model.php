@@ -46,7 +46,7 @@ class Wilayah_model extends Conf{
         $d_karyawan = $m_karyawan->where('nama', 'like', strtolower(trim($d_det_user['nama_detuser'])).'%')->orderBy('id', 'desc')->first();
 
         $sql_karyawan = "
-          select * from karyawan where nama like '".strtolower(trim($d_det_user['nama_detuser']))."%' order by id desc
+          select * from karyawan where nama like '".strtolower(trim(str_replace("'", "''", $d_det_user['nama_detuser'])))."%' order by id desc
         ";
         $d_karyawan = $this->hydrateRaw( $sql_karyawan );
   
