@@ -111,15 +111,25 @@
 										$hide = null;
 									}
 
-									$kecamatan = $data_details[$_key][$index]['kecamatan'];
-									$kabupaten = $data_details[$_key][$index]['kabupaten'];
-									$kapasitas = $data_details[$_key][$index]['kapasitas'];
-
+									$kecamatan = null;
+									$kabupaten = null;
+									$kapasitas = null;
 									$data_old = array(
-										'noreg' => $data_details[$_key][$index]['noreg'],
-										'mitra' => $data_details[$_key][$index]['id_mitra'],
-										'kandang' => $data_details[$_key][$index]['kandang']
+										'noreg' => null,
+										'mitra' => null,
+										'kandang' => null,
 									);
+									if ( isset($data_details[$_key][$index]) ) {
+										$kecamatan = $data_details[$_key][$index]['kecamatan'];
+										$kabupaten = $data_details[$_key][$index]['kabupaten'];
+										$kapasitas = $data_details[$_key][$index]['kapasitas'];
+
+										$data_old = array(
+											'noreg' => $data_details[$_key][$index]['noreg'],
+											'mitra' => $data_details[$_key][$index]['id_mitra'],
+											'kandang' => $data_details[$_key][$index]['kandang']
+										);
+									}
 								?>
 								<tr class="child v-center <?php echo $inactive; ?>" data-key="<?php echo $_key ?>" data-old='<?php echo json_encode($data_old); ?>' >
 									<td class="page0">
@@ -189,7 +199,7 @@
 									<td class="page1 kecamatan"><?php echo $kecamatan; ?></td>
 									<td class="page1 kabupaten"><?php echo $kabupaten; ?></td>
 									<td class="page1">
-										<input class="form-control" type="text" name="noreg" value="<?php echo $data_details[$_key][$index]['noreg']; ?>" data-nim="<?php echo $nim; ?>" data-tipe="text" readonly>
+										<input class="form-control" type="text" name="noreg" value="<?php echo isset($data_details[$_key][$index]) ? $data_details[$_key][$index]['noreg'] : null; ?>" data-nim="<?php echo $nim; ?>" data-tipe="text" readonly>
 									</td>
 									<td class="page1">
 										<select class="form-control" name="vaksin">
