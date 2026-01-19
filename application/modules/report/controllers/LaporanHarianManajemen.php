@@ -323,9 +323,8 @@ class LaporanHarianManajemen extends Public_Controller {
     
                         union all
     
-                        /*
                         select 
-                            kpp.nomor, 	
+                            kppd.no_order as nomor, 	
                             kpp.supplier, 
                             kppd.total as debet,
                             0 as kredit,
@@ -338,7 +337,8 @@ class LaporanHarianManajemen extends Public_Controller {
                                 kppd.id_header = kpp.id
                         where
                             kpp.tgl_bayar <= '".$tanggal."'
-                        */
+
+                        union all
     
                         select
                             op.no_order as nomor, 	
@@ -353,7 +353,8 @@ class LaporanHarianManajemen extends Public_Controller {
                             on
                                 opd.id_header = op.id 
                         where
-                            op.tgl_trans <= '".$tanggal."'
+                            op.tgl_trans <= '".$tanggal."' and
+                            not exists (select * from konfirmasi_pembayaran_pakan_det where no_order = op.no_order)
                         group by
                             op.no_order, 	
                             op.supplier
@@ -477,13 +478,15 @@ class LaporanHarianManajemen extends Public_Controller {
                 ) sa
                 left join
                     (
-                        select w1.*, w2.nama as prov from wilayah w1
+                        select w1.kode, w2.nama as prov from wilayah w1
                         left join
                             wilayah w2 
                             on
                                 w1.induk = w2.id
                         where 
                             w1.kode is not null
+                        group by
+                            w1.kode, w2.nama
                     ) w
                     on
                         sa.unit = w.kode
