@@ -5631,10 +5631,10 @@ class TSDRHPP extends Public_Controller {
             $m_ts = new \Model\Storage\TutupSiklus_model();
             $d_ts = $m_ts->where('id', $id)->first();
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", ".$id.", 2";
+            // $m_conf = new \Model\Storage\Conf();
+            // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", ".$id.", 2";
 
-            $d_conf = $m_conf->hydrateRaw( $sql );
+            // $d_conf = $m_conf->hydrateRaw( $sql );
 
             $deskripsi_log = 'submit cn oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_ts, $deskripsi_log);
