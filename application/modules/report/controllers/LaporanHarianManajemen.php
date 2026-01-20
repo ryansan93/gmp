@@ -284,23 +284,21 @@ class LaporanHarianManajemen extends Public_Controller {
                         /* DEBET */
                         /*
                         select
-                            kpd.nomor,
-                            kpdd.supplier,
+                            kpdd.no_order as nomor,
+                            kpd.supplier,
                             kpdd.total as debet,
                             0 as kredit,
                             'DOC' as jenis,
                             kpdd.kode_unit as unit
-                        from 
-                        left join
-                            konfirmasi_pembayaran_doc_det kpdd
-                            on
-                                od.no_order = kpdd.no_order
+                        from konfirmasi_pembayaran_doc_det kpdd
                         left join
                             konfirmasi_pembayaran_doc kpd
                             on
                                 kpdd.id_header = kpd.id
                         where
-                            cast(od.tgl_submit as date) <= '".$tanggal."'
+                            kpd.tgl_bayar <= '".$tanggal."'
+
+                        union all
                         */
     
                         select
@@ -319,7 +317,8 @@ class LaporanHarianManajemen extends Public_Controller {
                                     od1.id = od2.id
                         ) od
                         where
-                            cast(od.tgl_submit as date) <= '".$tanggal."'
+                            cast(od.tgl_submit as date) <= '".$tanggal."' 
+                            -- and not exists (select * from konfirmasi_pembayaran_doc_det where no_order = od.no_order)
     
                         union all
     
@@ -335,8 +334,13 @@ class LaporanHarianManajemen extends Public_Controller {
                             konfirmasi_pembayaran_pakan kpp
                             on
                                 kppd.id_header = kpp.id
+                        left join
+                            order_pakan op
+                            on
+                                kppd.no_order = op.no_order
                         where
-                            kpp.tgl_bayar <= '".$tanggal."'
+                            cast(op.tgl_trans as date) <= '".$tanggal."'
+                        -- where kpp.tgl_bayar <= '".$tanggal."'
 
                         union all
     
@@ -391,6 +395,51 @@ class LaporanHarianManajemen extends Public_Controller {
                         from cn c
                         where
                             c.tanggal <= '".$tanggal."'
+                        
+                        /*
+                        select
+                            konfir.no_order as nomor,
+                            konfir.supplier,
+                            0 as debet,
+                            sum(cpd.pakai) as kredit,
+                            case
+                                when cp.jenis_cn = 'PKN' then
+                                    'PAKAN'
+                                else
+                                    cp.jenis_cn 
+                            end as jenis,
+                            konfir.unit as unit
+                        from cn_post_det cpd
+                        left join
+                            cn_post cp 
+                            on
+                                cpd.id_header = cp.id
+                        left join
+                            (
+                                select kpdd.no_order, kpd.nomor, kpd.supplier, SUBSTRING(kpdd.no_order, 5, 3) as unit from konfirmasi_pembayaran_doc_det kpdd
+                                left join
+                                    konfirmasi_pembayaran_doc kpd 
+                                    on
+                                        kpdd.id_header = kpd.id
+                                        
+                                union all
+                                
+                                select kppd.no_order, kpp.nomor, kpp.supplier, SUBSTRING(kppd.no_order , 5, 3)  as unit from konfirmasi_pembayaran_pakan_det kppd
+                                left join
+                                    konfirmasi_pembayaran_pakan kpp
+                                    on
+                                        kppd.id_header = kpp.id
+                            ) konfir
+                            on
+                                cpd.nomor = konfir.nomor
+                        where
+                            cp.tanggal <= '".$tanggal."'
+                        group by
+                            konfir.no_order,
+                            konfir.supplier,
+                            cp.jenis_cn,
+                            konfir.unit
+                        */
     
                         union all
                 
