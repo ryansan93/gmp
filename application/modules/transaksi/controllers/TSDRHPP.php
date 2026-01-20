@@ -3738,7 +3738,20 @@ class TSDRHPP extends Public_Controller {
         try {
             $m_conf = new \Model\Storage\Conf();
             $sql = "
-                select rs.noreg, l.tanggal as tgl_lhk, r_sj.tanggal as tgl_panen, (l.pakai_pakan * 50) as pakai_pakan, tp.jumlah as jml_terima, pp.jumlah as jml_pindah, rp.jumlah as jml_retur, l.ekor_mati, r_sj.jml_panen, td.jml_ekor as populasi from rdim_submit rs
+                select 
+                    rs.noreg,
+                    l.tanggal as tgl_lhk,
+                    r_sj.tanggal as tgl_panen,
+                    (l.pakai_pakan * 50) as pakai_pakan,
+                    tp.jumlah as jml_terima,
+                    pp.jumlah as jml_pindah,
+                    rp.jumlah as jml_retur,
+                    l.ekor_mati,
+                    r_sj.jml_panen,
+                    td.jml_ekor as populasi,
+                    pp_akhir_siklus.jumlah as jml_pindah_akhir_siklus,
+                    (l.sisa_pakan * 50) as sisa_pakan
+                from rdim_submit rs
                 left join
                     (
                         select l1.* from lhk l1
@@ -3792,6 +3805,54 @@ class TSDRHPP extends Public_Controller {
                     ) pp
                     on
                         pp.noreg = rs.noreg
+                left join
+                    (
+                        select
+                            pp.noreg,
+                            sum(pp.jumlah) as jumlah
+                        from
+                        (
+                            select kp.asal as noreg, tp.tgl_terima as tanggal, sum(dtp.jumlah) as jumlah from det_terima_pakan dtp
+                            left join
+                                terima_pakan tp
+                                on
+                                    dtp.id_header = tp.id
+                            left join
+                                kirim_pakan kp
+                                on
+                                    tp.id_kirim_pakan = kp.id
+                            where
+                                kp.jenis_kirim = 'opkp' and
+                                kp.asal = '".$params['noreg']."'
+                            group by
+                                kp.asal,
+                                tp.tgl_terima
+
+                            union all
+
+                            select rp.id_asal as noreg, rp.tgl_retur as tanggal, sum(drp.jumlah) as jumlah from det_retur_pakan drp
+                            left join
+                                retur_pakan rp
+                                on
+                                    drp.id_header = rp.id
+                            where
+                                rp.jenis_retur = 'opkp' and
+                                rp.id_asal = '".$params['noreg']."'
+                            group by
+                                rp.id_asal,
+                                rp.tgl_retur
+                        ) pp
+                        left join
+                            (select noreg, max(tanggal) as tanggal from lhk group by noreg) l
+                            on
+                                l.noreg = pp.noreg
+                        where
+                            pp.tanggal >= l.tanggal
+                        group by
+                            pp.noreg
+                    ) pp_akhir_siklus
+                    on
+                        pp_akhir_siklus.noreg = rs.noreg
                 left join
                     (
                         select rp.id_asal as noreg, sum(drp.jumlah) as jumlah from det_retur_pakan drp
@@ -3848,24 +3909,37 @@ class TSDRHPP extends Public_Controller {
                     $status = 0;
                     $message = 'Data LHK akhir siklus belum di submit, segera hubungi PPL yang bersangkutan untuk melakukan submit data LHK akhir siklus.';
                 } else {
-                    if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah']-$d_conf['jml_retur'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
+                    if ($d_conf['jml_pindah_akhir_siklus'] != $d_conf['sisa_pakan']) {
                         $status = 0;
 
-                        $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
+                        $message = 'Data pindah pakan dan sisa pakan tidak sama dengan distribusi. Harap hubungi PPL cross check data sisa pakan.';
                         $message .= '<br>';
                         $message .= '<b><u>Pakan</u></b><br>';
-                        $message .= 'Terima Pakan : '.angkaRibuan($d_conf['jml_terima']).'<br>';
-                        $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']+$d_conf['jml_retur']).'<br>';
-                        $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-($d_conf['jml_pindah']+$d_conf['jml_retur']))).'<br>';
-                        $message .= 'Pemakaian Pakan LHK : '.angkaRibuan($d_conf['pakai_pakan']).'<br>';
-                        $message .= '<br>';
-                        $message .= '<b><u>Kematian</u></b><br>';
-                        $message .= 'Populasi : '.angkaRibuan($d_conf['populasi']).'<br>';
-                        $message .= 'Jumlah Panen : '.angkaRibuan($d_conf['jml_panen']).'<br>';
-                        $message .= 'Selisih Populasi dan Jumlah Panen : '.angkaRibuan(($d_conf['populasi']-$d_conf['jml_panen'])).'<br>';
-                        $message .= 'Jumlah Kematian LHK : '.angkaRibuan($d_conf['ekor_mati']).'<br>';
+                        $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah_akhir_siklus']).'<br>';
+                        $message .= 'Sisa Pakan : '.angkaRibuan($d_conf['sisa_pakan']).'<br>';
+                        $message .= 'Selisih Pindah Pakan dan Sisa Pakan : '.angkaRibuan(($d_conf['jml_pindah_akhir_siklus']-$d_conf['sisa_pakan'])).'<br>';
                         $message .= '<br>';
                         $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
+                    } else {
+                        if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah']-$d_conf['jml_retur'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
+                            $status = 0;
+    
+                            $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
+                            $message .= '<br>';
+                            $message .= '<b><u>Pakan</u></b><br>';
+                            $message .= 'Terima Pakan : '.angkaRibuan($d_conf['jml_terima']).'<br>';
+                            $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']+$d_conf['jml_retur']).'<br>';
+                            $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-($d_conf['jml_pindah']+$d_conf['jml_retur']))).'<br>';
+                            $message .= 'Pemakaian Pakan LHK : '.angkaRibuan($d_conf['pakai_pakan']).'<br>';
+                            $message .= '<br>';
+                            $message .= '<b><u>Kematian</u></b><br>';
+                            $message .= 'Populasi : '.angkaRibuan($d_conf['populasi']).'<br>';
+                            $message .= 'Jumlah Panen : '.angkaRibuan($d_conf['jml_panen']).'<br>';
+                            $message .= 'Selisih Populasi dan Jumlah Panen : '.angkaRibuan(($d_conf['populasi']-$d_conf['jml_panen'])).'<br>';
+                            $message .= 'Jumlah Kematian LHK : '.angkaRibuan($d_conf['ekor_mati']).'<br>';
+                            $message .= '<br>';
+                            $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
+                        }
                     }
                 }
             }
