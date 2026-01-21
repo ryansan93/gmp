@@ -326,7 +326,8 @@ class UmurKartuPiutang extends Public_Controller {
                         union all
 
                         select
-                            pp.tgl_bayar as tanggal,
+                            rs.tgl_panen as tanggal,
+                            -- pp.tgl_bayar as tanggal,
                             pp.no_pelanggan as pelanggan,
                             dpp.no_inv as nomor,
                             0 as debet,

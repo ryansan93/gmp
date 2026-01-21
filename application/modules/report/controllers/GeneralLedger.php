@@ -760,7 +760,7 @@ class GeneralLedger extends Public_Controller {
 
         $i = $bulan-1;
 
-        $angka_bulan = (strlen($i+1) == 1) ? '0'.$i+1 : $i+1;
+        $angka_bulan = (strlen($i+1) == 1) ? '0'.($i+1) : $i+1;
 
         $date = $tahun.'-'.$angka_bulan.'-01';
         $start_date = date("Y-m-d", strtotime($date));
@@ -941,7 +941,7 @@ class GeneralLedger extends Public_Controller {
 
         $i = $bulan-1;
 
-        $angka_bulan = (strlen($i+1) == 1) ? '0'.$i+1 : $i+1;
+        $angka_bulan = (strlen($i+1) == 1) ? '0'.($i+1) : $i+1;
 
         $date = $tahun.'-'.$angka_bulan.'-01';
         $start_date = date("Y-m-d", strtotime($date));
