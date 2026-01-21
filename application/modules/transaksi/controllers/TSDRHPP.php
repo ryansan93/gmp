@@ -745,9 +745,9 @@ class TSDRHPP extends Public_Controller {
                 $data_doc_plasma = isset($get_data_doc['plasma']) ? $get_data_doc['plasma'] : null;
                 $data_pakan_plasma = $get_data_pakan['plasma'];
                 $data_pindah_pakan_plasma = $get_data_pindah_pakan['plasma'];
-                $data_retur_pakan_plasma = $get_data_retur_pakan['plasma'];
+                $data_retur_pakan_plasma = isset($get_data_retur_pakan['plasma']) ? $get_data_retur_pakan['plasma'] : null;
                 $data_voadip_plasma = $get_data_voadip['plasma'];
-                $data_retur_voadip_plasma = $get_data_retur_voadip['plasma'];
+                $data_retur_voadip_plasma = isset($get_data_retur_voadip['plasma']) ? $get_data_retur_voadip['plasma'] : null;
             }
 
             $data_doc_inti = isset($get_data_doc['inti']) ? $get_data_doc['inti'] : null;
@@ -755,10 +755,10 @@ class TSDRHPP extends Public_Controller {
             $data_oa_pakan_inti = isset($get_data_pakan['ongkos_angkut']) ? $get_data_pakan['ongkos_angkut'] : null;
             $data_pindah_pakan_inti = $get_data_pindah_pakan['inti'];
             $data_oa_pindah_pakan_inti = isset($get_data_pindah_pakan['ongkos_angkut']) ? $get_data_pindah_pakan['ongkos_angkut'] : null;;
-            $data_retur_pakan_inti = $get_data_retur_pakan['inti'];
+            $data_retur_pakan_inti = isset($get_data_retur_pakan['inti']) ? $get_data_retur_pakan['inti'] : null;
             $data_oa_retur_pakan_inti = isset($get_data_retur_pakan['ongkos_angkut']) ? $get_data_retur_pakan['ongkos_angkut'] : null;
             $data_voadip_inti = $get_data_voadip['inti'];
-            $data_retur_voadip_inti = $get_data_retur_voadip['inti'];
+            $data_retur_voadip_inti = isset($get_data_retur_voadip['inti']) ? $get_data_retur_voadip['inti'] : null;
 
             $total_jumlah_pakan = 0;
             if ( !empty($data_pakan_inti) ) {

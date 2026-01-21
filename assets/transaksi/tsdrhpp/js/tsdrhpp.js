@@ -565,11 +565,11 @@ var tsdrhpp = {
 			beforeSend : function(){ showLoading('Cek data LHK . . .'); },
 			success : function(data){
 				hideLoading();
-				tsdrhpp.tutup_siklus(elm);
-				// if ( data.status == 1 ) {
-				// } else {
-				// 	bootbox.alert( data.message );
-				// }
+				if ( data.status == 1 ) {
+					tsdrhpp.tutup_siklus(elm);
+				} else {
+					bootbox.alert( data.message );
+				}
 			},
 		});
 	}, // end - cekDataLhk
