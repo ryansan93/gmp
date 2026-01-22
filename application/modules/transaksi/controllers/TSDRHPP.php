@@ -744,7 +744,7 @@ class TSDRHPP extends Public_Controller {
             if ( $jenis_mitra == 'ME' ) {
                 $data_doc_plasma = isset($get_data_doc['plasma']) ? $get_data_doc['plasma'] : null;
                 $data_pakan_plasma = $get_data_pakan['plasma'];
-                $data_pindah_pakan_plasma = $get_data_pindah_pakan['plasma'];
+                $data_pindah_pakan_plasma = isset($get_data_pindah_pakan['plasma']) ? $get_data_pindah_pakan['plasma'] : null;
                 $data_retur_pakan_plasma = isset($get_data_retur_pakan['plasma']) ? $get_data_retur_pakan['plasma'] : null;
                 $data_voadip_plasma = $get_data_voadip['plasma'];
                 $data_retur_voadip_plasma = isset($get_data_retur_voadip['plasma']) ? $get_data_retur_voadip['plasma'] : null;
@@ -753,7 +753,7 @@ class TSDRHPP extends Public_Controller {
             $data_doc_inti = isset($get_data_doc['inti']) ? $get_data_doc['inti'] : null;
             $data_pakan_inti = $get_data_pakan['inti'];
             $data_oa_pakan_inti = isset($get_data_pakan['ongkos_angkut']) ? $get_data_pakan['ongkos_angkut'] : null;
-            $data_pindah_pakan_inti = $get_data_pindah_pakan['inti'];
+            $data_pindah_pakan_inti = isset($get_data_pindah_pakan['inti']) ? $get_data_pindah_pakan['inti'] : null;
             $data_oa_pindah_pakan_inti = isset($get_data_pindah_pakan['ongkos_angkut']) ? $get_data_pindah_pakan['ongkos_angkut'] : null;;
             $data_retur_pakan_inti = isset($get_data_retur_pakan['inti']) ? $get_data_retur_pakan['inti'] : null;
             $data_oa_retur_pakan_inti = isset($get_data_retur_pakan['ongkos_angkut']) ? $get_data_retur_pakan['ongkos_angkut'] : null;
@@ -3743,14 +3743,14 @@ class TSDRHPP extends Public_Controller {
                     l.tanggal as tgl_lhk,
                     r_sj.tanggal as tgl_panen,
                     (l.pakai_pakan * 50) as pakai_pakan,
-                    tp.jumlah as jml_terima,
-                    pp.jumlah as jml_pindah,
-                    rp.jumlah as jml_retur,
+                    isnull(tp.jumlah, 0) as jml_terima,
+                    isnull(pp.jumlah, 0) as jml_pindah,
+                    isnull(rp.jumlah, 0) as jml_retur,
                     l.ekor_mati,
                     r_sj.jml_panen,
                     td.jml_ekor as populasi,
-                    pp_akhir_siklus.jumlah as jml_pindah_akhir_siklus,
-                    (l.sisa_pakan * 50) as sisa_pakan
+                    isnull(pp_akhir_siklus.jumlah, 0) as jml_pindah_akhir_siklus,
+                    (isnull(l.sisa_pakan, 0) * 50) as sisa_pakan
                 from rdim_submit rs
                 left join
                     (
