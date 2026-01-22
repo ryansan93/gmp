@@ -3843,11 +3843,11 @@ class TSDRHPP extends Public_Controller {
                                 rp.tgl_retur
                         ) pp
                         left join
-                            (select noreg, max(tanggal) as tanggal from lhk group by noreg) l
+                            (select noreg, max(tgl_panen) as tanggal from real_sj where ekor > 0 group by noreg) rs
                             on
-                                l.noreg = pp.noreg
+                                rs.noreg = pp.noreg
                         where
-                            pp.tanggal >= l.tanggal
+                            pp.tanggal >= rs.tanggal
                         group by
                             pp.noreg
                     ) pp_akhir_siklus
