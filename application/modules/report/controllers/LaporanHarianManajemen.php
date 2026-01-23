@@ -206,7 +206,41 @@ class LaporanHarianManajemen extends Public_Controller {
                         SUBSTRING(nb.kode, 1, 4) = c.kode
                 left join
                     (
-                        select 'kk' as tbl_name, no_kk as tbl_id, nilai as nominal, tgl_kk as tanggal from kk
+                        select 
+                            'kk' as tbl_name, 
+                            k.no_kk as tbl_id, 
+                            k.nilai as nominal,
+                            k.tgl_kk as tanggal 
+                        from kk k
+                        left join
+                            coa c
+                            on
+                                c.coa = k.coa_bank
+                        where
+                            c.kode = 'BCA2'
+
+                        union all
+
+                        select 
+                            'kk' as tbl_name, 
+                            k.no_kk as tbl_id, 
+                            sum(ki.nilai) as nominal,
+                            k.tgl_kk as tanggal 
+                        from kkitem ki
+                        left join
+                            kk k
+                            on
+    	                        ki.no_kk = k.no_kk
+                        left join
+                            coa c
+                            on
+                                c.coa = k.coa_bank
+                        where
+                            c.kode = 'BCA1' and
+                            ki.coa_tujuan <> '27001.000'
+                        group by
+                            k.no_kk,
+                            k.tgl_kk
                         
                         union all
                         
