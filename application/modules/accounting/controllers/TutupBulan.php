@@ -233,6 +233,7 @@ class TutupBulan extends Public_Controller
             $angka_bulan = (strlen($bulan) == 1) ? '0'.$bulan : $bulan;
             
             $tgl_awal_tahun = $tahun.'-01-01';
+            $tgl_next_awal_tahun = ($tahun+1).'-01-01';
             $date = $tahun.'-'.$angka_bulan.'-01';
             $start_date = date("Y-m-d", strtotime($date));
             $end_date = date("Y-m-t", strtotime($date));
@@ -554,65 +555,161 @@ class TutupBulan extends Public_Controller
 
                 foreach ($d_conf as $k_conf => $v_conf) {
                     $m_sb = new \Model\Storage\SaldoBulanan_model();
-                    $now = $m_conf->getDate();
+                    $d_sb = $m_sb->where('tanggal', $start_date)
+                                ->where('coa', $v_conf['coa'])
+                                ->where('unit', $v_conf['unit'])
+                                ->where('noreg', $v_conf['noreg'])
+                                ->first();
 
-                    $m_sb->tgl_trans = $now['waktu'];
-                    $m_sb->coa = $v_conf['coa'];
-                    $m_sb->tanggal = $tgl_next_saldo;
-                    // $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
-                    $m_sb->saldo_awal = $v_conf['saldo_akhir'];
-                    $m_sb->saldo_akhir = 0;
-                    $m_sb->periode_fiskal = $start_date;
-                    $m_sb->unit = $v_conf['unit'];
-                    $m_sb->noreg = $v_conf['noreg'];
-                    $m_sb->save();
+                    if ( $d_sb ) {
+                        $m_sb = new \Model\Storage\SaldoBulanan_model();
+                        $m_sb->where('tanggal', $start_date)
+                            ->where('coa', $v_conf['coa'])
+                            ->where('unit', $v_conf['unit'])
+                            ->where('noreg', $v_conf['noreg'])
+                            ->update(
+                                array(
+                                    'saldo_akhir' => $v_conf['saldo_akhir']
+                                )
+                            );
+                    } else {
+                        $firstDayOfMonth = date('Y-m-01', strtotime(prev_date( $start_date )));
+
+                        $m_sb = new \Model\Storage\SaldoBulanan_model();
+                        $now = $m_conf->getDate();
+
+                        $m_sb->tgl_trans = $now['waktu'];
+                        $m_sb->coa = $v_conf['coa'];
+                        $m_sb->tanggal = $start_date;
+                        // $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
+                        $m_sb->saldo_awal = 0;
+                        $m_sb->saldo_akhir = $v_conf['saldo_akhir'];
+                        $m_sb->periode_fiskal = $firstDayOfMonth;
+                        $m_sb->unit = $v_conf['unit'];
+                        $m_sb->noreg = $v_conf['noreg'];
+                        $m_sb->save();
+                    }
+
+                    $save = 1;
+                    if ( substr($v_conf['coa'], 0, 1) >= 5 && $tgl_next_awal_tahun == $tgl_next_saldo) {
+                        $save = 0;
+                    }
+
+                    if ( $save == 1 ) {
+                        $m_sb = new \Model\Storage\SaldoBulanan_model();
+                        $now = $m_conf->getDate();
+    
+                        $m_sb->tgl_trans = $now['waktu'];
+                        $m_sb->coa = $v_conf['coa'];
+                        $m_sb->tanggal = $tgl_next_saldo;
+                        // $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
+                        $m_sb->saldo_awal = $v_conf['saldo_akhir'];
+                        $m_sb->saldo_akhir = 0;
+                        $m_sb->periode_fiskal = $start_date;
+                        $m_sb->unit = $v_conf['unit'];
+                        $m_sb->noreg = $v_conf['noreg'];
+                        $m_sb->save();
+                    }
                 }
             }
 
-            // /* UPDATE COA LABA RUGI */
-            // $m_conf = new \Model\Storage\Conf();
-            // $sql = "
-            //     select noreg, sum(kredit) as kredit, sum(debet) as debet, unit from (
-            //         select
-            //             dj.noreg,
-            //             dj.coa_asal as no_coa, 
-            //             sum(dj.nominal) as kredit, 
-            //             0 as debet, 
-            //             dj.unit
-            //         from det_jurnal dj 
-            //         where 
-            //             dj.tanggal between '".$tgl_awal_tahun."' and '".$end_date."'
-            //             -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
-            //         group by dj.noreg, dj.coa_asal, dj.unit
-                    
-            //         union all
-                    
-            //         select 
-            //             dj.noreg,
-            //             dj.coa_tujuan as no_coa, 
-            //             0 as kredit, 
-            //             sum(dj.nominal) as debet, 
-            //             case
-            //                 when dj.unit_tujuan is not null then
-            //                     dj.unit_tujuan
-            //                 else
-            //                     dj.unit
-            //             end as unit
-            //         from det_jurnal dj 
-            //         where 
-            //             dj.tanggal between '".$tgl_awal_tahun."' and '".$end_date."'
-            //             -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
-            //         group by dj.noreg, dj.coa_tujuan, dj.unit, dj.unit_tujuan
-            //     ) data
-            //     where
-            //         SUBSTRING(data.no_coa, 1, 1) >= 5
-            //     group by
-            //         noreg, no_coa, unit
-            // ";
-            // if ( $d_conf->count() > 0 ) {
-            //     $d_conf = $d_conf->toArray()[0];
-            // }
-            // /* END - UPDATE COA LABA RUGI */
+            if ( $tgl_next_awal_tahun == $tgl_next_saldo ) {
+                /* UPDATE COA LABA RUGI TAHUN LALU */
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select noreg, '29200.000' as no_coa, isnull(sum(kredit), 0) - isnull(sum(debet), 0) as saldo_akhir, unit from (
+                        select 
+                            null as noreg,
+                            no_coa,
+                            sum(kredit) as kredit,
+                            sum(debet) as debet,
+                            unit 
+                        from sacoa 
+                        where
+                            SUBSTRING(periode, 0, 5) = SUBSTRING('".$tgl_awal_tahun."', 0, 5)
+                        group by 
+                            no_coa, unit
+
+                        union all
+
+                        select
+                            dj.noreg,
+                            dj.coa_asal as no_coa, 
+                            sum(dj.nominal) as kredit, 
+                            0 as debet, 
+                            dj.unit
+                        from det_jurnal dj 
+                        where 
+                            dj.tanggal between '".$tgl_awal_tahun."' and '".$end_date."'
+                            -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+                        group by dj.noreg, dj.coa_asal, dj.unit
+                        
+                        union all
+                        
+                        select 
+                            dj.noreg,
+                            dj.coa_tujuan as no_coa, 
+                            0 as kredit, 
+                            sum(dj.nominal) as debet, 
+                            case
+                                when dj.unit_tujuan is not null then
+                                    dj.unit_tujuan
+                                else
+                                    dj.unit
+                            end as unit
+                        from det_jurnal dj 
+                        where 
+                            dj.tanggal between '".$tgl_awal_tahun."' and '".$end_date."'
+                            -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
+                        group by dj.noreg, dj.coa_tujuan, dj.unit, dj.unit_tujuan
+                    ) data
+                    where
+                        SUBSTRING(data.no_coa, 1, 1) >= 5
+                    group by
+                        noreg, unit
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+                if ( $d_conf->count() > 0 ) {
+                    $d_conf = $d_conf->toArray();
+
+                    foreach ($d_conf as $k_conf => $v_conf) {
+                        $m_sb = new \Model\Storage\SaldoBulanan_model();
+                        $d_sb = $m_sb->where('tanggal', $tgl_next_saldo)
+                                    ->where('coa', $v_conf['no_coa'])
+                                    ->where('unit', $v_conf['unit'])
+                                    ->where('noreg', $v_conf['noreg'])
+                                    ->first();
+
+                        if ( $d_sb ) {
+                            $m_sb = new \Model\Storage\SaldoBulanan_model();
+                            $m_sb->where('tanggal', $tgl_next_saldo)
+                                ->where('coa', $v_conf['no_coa'])
+                                ->where('unit', $v_conf['unit'])
+                                ->where('noreg', $v_conf['noreg'])
+                                ->update(
+                                    array(
+                                        'saldo_akhir' => $v_conf['saldo_akhir']
+                                    )
+                                );
+                        } else {
+                            $m_sb = new \Model\Storage\SaldoBulanan_model();
+                            $now = $m_conf->getDate();
+
+                            $m_sb->tgl_trans = $now['waktu'];
+                            $m_sb->coa = $v_conf['no_coa'];
+                            $m_sb->tanggal = $tgl_next_saldo;
+                            // $m_sb->saldo_awal = $v_conf['debet']-$v_conf['kredit'];
+                            $m_sb->saldo_awal = $v_conf['saldo_akhir'];
+                            $m_sb->saldo_akhir = 0;
+                            $m_sb->periode_fiskal = $start_date;
+                            $m_sb->unit = $v_conf['unit'];
+                            $m_sb->noreg = $v_conf['noreg'];
+                            $m_sb->save();
+                        }
+                    }
+                }
+                /* END - UPDATE COA LABA RUGI TAHUN LALU */
+            }
 
             /* PERIODE FISKAL */
             $m_bo = new \Model\Storage\PeriodeFiskal_model();
@@ -726,5 +823,9 @@ class TutupBulan extends Public_Controller
         }
 
         display_json( $this->result );
+    }
+
+    public function tes() {
+        cetak_r( substr('21180.100', 0, 1) );
     }
 }
