@@ -160,10 +160,10 @@
 				<th style="width: 5%;">Periode</th>
 				<th class="col-xs-2">Nama Penerima</th>
 				<th class="col-xs-1">Bruto</th>
-				<th style="width: 5%;">Potongan PPH</th>
-				<th class="col-xs-1">Netto</th>
 				<th style="width: 5%;">DN</th>
 				<th style="width: 5%;">CN</th>
+				<th style="width: 5%;">Potongan PPH</th>
+				<th class="col-xs-1">Netto</th>
 				<th class="col-xs-1">Transfer</th>
 				<th class="col-xs-1">Bayar</th>
 				<th class="col-xs-1">Sisa</th>

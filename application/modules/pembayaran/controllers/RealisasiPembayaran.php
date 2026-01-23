@@ -47,7 +47,7 @@ class RealisasiPembayaran extends Public_Controller
         $params = $this->input->get('params');
         $edit = $this->input->get('edit');
 
-        $id = $params['id'];
+        $id = isset($params['id']) ? $params['id'] : null;
 
         $content = array();
         $html = "url not found";
@@ -638,6 +638,14 @@ class RealisasiPembayaran extends Public_Controller
                     $cn = $v_kpp['cn'];
                     $dn = $v_kpp['dn'];
 
+                    if ( $v_kpp['tgl_bayar'] >= '2026-01-01' ) {
+                        $netto = ($v_kpp['total'] + $dn) - $cn;
+                        $jumlah = ($netto > $bayar) ? $netto - $bayar : 0;
+                    } else {
+                        $netto = $v_kpp['total'];
+                        $jumlah = (($v_kpp['total'] + $dn) > ($bayar + $cn)) ? ($v_kpp['total'] + $dn) - ($bayar + $cn) : 0;
+                    }
+
                     $data[] = array(
                         'tgl_bayar' => $v_kpp['tgl_bayar'],
                         'transaksi' => 'PLASMA',
@@ -646,13 +654,13 @@ class RealisasiPembayaran extends Public_Controller
                         'periode' => $v_kpp['periode'],
                         'nama_penerima' => $v_kpp['nama_mitra'],
                         'tagihan' => $v_kpp['total'],
-                        'pph' => 0,
-                        'netto' => $v_kpp['total'],
                         'dn' => $dn,
                         'cn' => $cn,
+                        'netto' => $netto,
+                        'pph' => 0,
                         'transfer' => $transfer,
                         'bayar' => $bayar,
-                        'jumlah' => (($v_kpp['total'] + $dn) > ($bayar + $cn)) ? ($v_kpp['total'] + $dn) - ($bayar + $cn) : 0,
+                        'jumlah' => $jumlah,
                         'checked' => ($d_rpd) ? true : false
                     );
                 }
@@ -849,10 +857,18 @@ class RealisasiPembayaran extends Public_Controller
                 }
 
                 $cn = $v_kpd['cn'];
-                $dn = $v_kpd['dn'];
+                $dn = !empty($v_kpd['dn']) ? $v_kpd['dn'] : 0;
 
-                $pph = ($v_kpd['total'] * (0.25/100));
-                $netto = $v_kpd['total'] - $pph;
+                if ( $v_kpd['tgl_bayar'] >= '2026-01-01' ) {
+                    $_netto = (($v_kpd['total'] + $dn) - $cn);
+                    $pph = ($_netto * (0.25/100));
+                    $netto = $_netto - $pph;
+                    $jumlah = (($netto) > $bayar) ? ($netto) - $bayar : 0;
+                } else {
+                    $pph = ($v_kpd['total'] * (0.25/100));
+                    $netto = $v_kpd['total'] - $pph;
+                    $jumlah = (($netto + $dn) > ($bayar + $cn)) ? ($netto + $dn) - ($bayar + $cn) : 0;
+                }
 
                 $data[] = array(
                     'tgl_bayar' => $v_kpd['tgl_bayar'],
@@ -861,14 +877,14 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpd['periode'],
                     'nama_penerima' => $v_kpd['nama_supplier'],
                     'tagihan' => $v_kpd['total'],
+                    'dn' => $dn,
+                    'cn' => $cn,
                     'pph' => $pph,
                     'netto' => $netto,
                     'lampiran' => $v_kpd['lampiran'],
-                    'dn' => $dn,
-                    'cn' => $cn,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
-                    'jumlah' => (($netto + $dn) > ($bayar + $cn)) ? ($netto + $dn) - ($bayar + $cn) : 0,
+                    'jumlah' => round($jumlah, 2),
                     'kode_unit' => $v_kpd['kode_unit'],
                     'checked' => ($d_rpd) ? true : false
                 );
@@ -1001,6 +1017,16 @@ class RealisasiPembayaran extends Public_Controller
                 $cn = $v_kpp['cn'];
                 $dn = $v_kpp['dn'];
 
+                if ( $v_kpp['tgl_bayar'] >= '2026-01-01' ) {
+                    $netto = ($v_kpp['total'] + $dn) - $cn;
+                    $pph = 0;
+                    $jumlah = (($netto-$pph) > $bayar) ? ($netto-$pph) - $bayar : 0;
+                } else {
+                    $pph = 0;
+                    $netto = $v_kpp['total'] - $pph;
+                    $jumlah = (($netto + $dn) > ($bayar + $cn)) ? ($netto + $dn) - ($bayar + $cn) : 0;
+                }
+
                 $data[] = array(
                     'tgl_bayar' => $v_kpp['tgl_bayar'],
                     'transaksi' => 'PAKAN',
@@ -1009,13 +1035,13 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpp['periode'],
                     'nama_penerima' => $v_kpp['nama_supplier'],
                     'tagihan' => $v_kpp['total'],
-                    'pph' => 0,
-                    'netto' => $v_kpp['total'],
                     'dn' => $dn,
                     'cn' => $cn,
+                    'pph' => $pph,
+                    'netto' => $netto,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
-                    'jumlah' => (($v_kpp['total'] + $dn) > ($bayar + $cn)) ? ($v_kpp['total'] + $dn) - ($bayar + $cn) : 0,
+                    'jumlah' => $jumlah,
                     'kode_unit' => $v_kpp['kode_unit'],
                     'checked' => ($d_rpd) ? true : false
                 );
@@ -1144,6 +1170,16 @@ class RealisasiPembayaran extends Public_Controller
                 $cn = $v_kpv['cn'];
                 $dn = $v_kpv['dn'];
 
+                if ( $v_kpv['tgl_bayar'] >= '2026-01-01' ) {
+                    $netto = ($v_kpv['total'] + $dn) - $cn;
+                    $pph = 0;
+                    $jumlah = (($netto-$pph) > $bayar) ? ($netto-$pph) - $bayar : 0;
+                } else {
+                    $pph = 0;
+                    $netto = $v_kpv['total'] - $pph;
+                    $jumlah = (($netto + $dn) > ($bayar + $cn)) ? ($netto + $dn) - ($bayar + $cn) : 0;
+                }
+
                 $data[] = array(
                     'tgl_bayar' => $v_kpv['tgl_bayar'],
                     'transaksi' => 'VOADIP',
@@ -1151,14 +1187,14 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpv['periode'],
                     'nama_penerima' => $v_kpv['nama_supplier'],
                     'tagihan' => $v_kpv['total'],
-                    'pph' => 0,
-                    'netto' => $v_kpv['total'],
                     'dn' => $dn,
                     'cn' => $cn,
+                    'pph' => $pph,
+                    'netto' => $$netto,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
                     'kode_unit' => $v_kpv['kode_unit'],
-                    'jumlah' => (($v_kpv['total'] + $dn) > ($bayar + $cn)) ? ($v_kpv['total'] + $dn) - ($bayar + $cn) : 0,
+                    'jumlah' => $jumlah,
                     'checked' => ($d_rpd) ? true : false
                 );
             }
@@ -1281,6 +1317,16 @@ class RealisasiPembayaran extends Public_Controller
                     $dn = $d_dn->toArray()[0]['tot_dn'];
                 }
 
+                if ( $v_kpoap['tgl_bayar'] >= '2026-01-01' ) {
+                    $netto = (($v_kpoap['total']+$v_kpoap['potongan_pph_23']) + $dn) - $cn;
+                    $pph = $v_kpoap['potongan_pph_23'];
+                    $jumlah = (($netto-$pph) > $bayar) ? ($netto-$pph) - $bayar : 0;
+                } else {
+                    $pph = $v_kpoap['potongan_pph_23'];
+                    $netto = ($v_kpoap['total']+$v_kpoap['potongan_pph_23']) - $pph;
+                    $jumlah = (($netto + $dn) > ($bayar + $cn)) ? ($netto + $dn) - ($bayar + $cn) : 0;
+                }
+
                 $data[] = array(
                     'tgl_bayar' => $v_kpoap['tgl_bayar'],
                     'transaksi' => 'OA PAKAN',
@@ -1288,13 +1334,13 @@ class RealisasiPembayaran extends Public_Controller
                     'periode' => $v_kpoap['periode'],
                     'nama_penerima' => $d_ekspedisi[0]['nama'],
                     'tagihan' => ($v_kpoap['total']+$v_kpoap['potongan_pph_23']),
-                    'pph' => $v_kpoap['potongan_pph_23'],
-                    'netto' => $v_kpoap['total'],
                     'dn' => $dn,
                     'cn' => $cn,
+                    'pph' => $pph,
+                    'netto' => $netto,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
-                    'jumlah' => (($v_kpoap['total'] + $dn) > ($bayar + $cn)) ? ($v_kpoap['total'] + $dn) - ($bayar + $cn) : 0,
+                    'jumlah' => $jumlah,
                     'checked' => ($d_rpd) ? true : false,
                     'lampiran' => $v_kpoap['lampiran']
                 );

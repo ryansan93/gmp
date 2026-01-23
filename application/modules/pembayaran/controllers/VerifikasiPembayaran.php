@@ -464,8 +464,18 @@ class VerifikasiPembayaran extends Public_Controller
                                 kpd.nomor as kode_trans,
                                 td.no_sj as no_inv,
                                 td.no_sj as no_sj,
-                                kpdd.total as bruto,
-                                kpdd.total * (0.25/100) as pph,
+                                case
+                                    when kpd.tgl_bayar >= '2026-01-01' then
+                                        ((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0))
+                                    else
+                                        kpdd.total
+                                end as bruto,
+                                case
+                                    when kpd.tgl_bayar >= '2026-01-01' then
+                                        ((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0)) * (0.25/100)
+                                    else
+                                        kpdd.total * (0.25/100)
+                                end as pph,
                                 '' as lampiran,
                                 'DOC' as jenis
                             from konfirmasi_pembayaran_doc_det kpdd
@@ -483,6 +493,14 @@ class VerifikasiPembayaran extends Public_Controller
                                 ) td
                                 on
                                     td.no_order = kpdd.no_order
+                            left join
+                                (select nomor, sum(pakai) as nilai from cn_post_det group by nomor) _cn
+                                on
+                                    _cn.nomor = kpd.nomor
+                            left join
+                                (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
+                                on
+                                    _dn.nomor = kpd.nomor
         
                             union all
         
@@ -491,11 +509,24 @@ class VerifikasiPembayaran extends Public_Controller
                                 kpp.nomor as kode_trans,
                                 kpp.invoice as no_inv,
                                 kpp.invoice as no_sj,
-                                kpp.total as bruto,
+                                case
+                                    when kpp.tgl_bayar >= '2026-01-01' then
+                                        ((kpp.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0))
+                                    else
+                                        kpp.total
+                                end as bruto,
                                 0 as pph,
                                 '' as lampiran,
                                 'PAKAN' as jenis
                             from konfirmasi_pembayaran_pakan kpp
+                            left join
+                                (select nomor, sum(pakai) as nilai from cn_post_det group by nomor) _cn
+                                on
+                                    _cn.nomor = kpp.nomor
+                            left join
+                                (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
+                                on
+                                    _dn.nomor = kpp.nomor
         
                             union all
         
@@ -504,7 +535,12 @@ class VerifikasiPembayaran extends Public_Controller
                                 kpv.nomor as kode_trans,
                                 null as no_inv,
                                 kpvd.no_sj as no_sj,
-                                kpvd.total as bruto,
+                                case
+                                    when kpv.tgl_bayar >= '2026-01-01' then
+                                        ((kpv.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0))
+                                    else
+                                        kpv.total
+                                end as bruto,
                                 0 as pph,
                                 '' as lampiran,
                                 'OVK' as jenis
@@ -513,6 +549,14 @@ class VerifikasiPembayaran extends Public_Controller
                                 konfirmasi_pembayaran_voadip kpv
                                 on
                                     kpvd.id_header = kpv.id
+                            left join
+                                (select nomor, sum(pakai) as nilai from cn_post_det group by nomor) _cn
+                                on
+                                    _cn.nomor = kpv.nomor
+                            left join
+                                (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
+                                on
+                                    _dn.nomor = kpv.nomor
         
                             union all
         
@@ -521,11 +565,24 @@ class VerifikasiPembayaran extends Public_Controller
                                 kpop.nomor as kode_trans,
                                 kpop.invoice as no_inv,
                                 null as no_sj,
-                                (kpop.total+kpop.potongan_pph_23) as bruto,
+                                case
+                                    when kpop.tgl_bayar >= '2026-01-01' then
+                                        ((kpop.total+kpop.potongan_pph_23+isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0))
+                                    else
+                                        (kpop.total+kpop.potongan_pph_23)
+                                end as bruto,
                                 kpop.potongan_pph_23 as pph,
                                 kpop.lampiran,
                                 'OA PAKAN' as jenis
                             from konfirmasi_pembayaran_oa_pakan kpop
+                            left join
+                                (select nomor, sum(pakai) as nilai from cn_post_det group by nomor) _cn
+                                on
+                                    _cn.nomor = kpop.nomor
+                            left join
+                                (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
+                                on
+                                    _dn.nomor = kpop.nomor
         
                             union all
         
@@ -534,11 +591,24 @@ class VerifikasiPembayaran extends Public_Controller
                                 kpp.nomor as kode_trans,
                                 kpp.invoice as no_inv,
                                 null as no_sj,
-                                kpp.total as bruto,
+                                case
+                                    when kpp.tgl_bayar >= '2026-01-01' then
+                                        ((kpp.total+isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0))
+                                    else
+                                        kpp.total
+                                end as bruto,
                                 0 as pph,
                                 kpp.lampiran,
                                 'RHPP' as jenis
                             from konfirmasi_pembayaran_peternak kpp
+                            left join
+                                (select nomor, sum(pakai) as nilai from cn_post_det group by nomor) _cn
+                                on
+                                    _cn.nomor = kpp.nomor
+                            left join
+                                (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
+                                on
+                                    _dn.nomor = kpp.nomor
                         ) konfir_pembayaran
                         on
                             rpd.no_bayar = konfir_pembayaran.kode_trans
@@ -662,6 +732,7 @@ class VerifikasiPembayaran extends Public_Controller
                 data.tanggal asc,
                 data.no_inv asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
@@ -1191,6 +1262,6 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function tes() {
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 622, 622, 2, 'realisasi_pembayaran', '2025-12-02');
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 1155, 1155, 2, 'realisasi_pembayaran', '2026-01-06');
     }
 }
