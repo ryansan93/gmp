@@ -617,7 +617,7 @@ class TutupBulan extends Public_Controller
                 /* UPDATE COA LABA RUGI TAHUN LALU */
                 $m_conf = new \Model\Storage\Conf();
                 $sql = "
-                    select noreg, '29200.000' as no_coa, isnull(sum(kredit), 0) - isnull(sum(debet), 0) as saldo_akhir, unit from (
+                    select noreg, '29200.000' as no_coa, isnull(sum(debet), 0) - isnull(sum(kredit), 0) as saldo_akhir, unit from (
                         select 
                             null as noreg,
                             no_coa,
