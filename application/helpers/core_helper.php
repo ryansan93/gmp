@@ -827,7 +827,7 @@ if (! function_exists ( 'renderHTMLDateJSTree' )) {
 
 if (! function_exists ( 'fJam' )) {
   function fJam($value){
-    if( ( strlen($value) > 3 )  &&  $value{2} === ':'){
+    if( ( strlen($value) > 3 )  &&  $value[2] === ':'){
       $value = substr($value,0,5);
     }
     return $value;

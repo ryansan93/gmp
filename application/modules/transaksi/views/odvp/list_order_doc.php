@@ -47,7 +47,7 @@
 							<a class="cursor-p edit" title="EDIT ORDER" onclick="odvp.order_doc_edit_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>"><i class="fa fa-edit"></i></a>
 						<?php endif ?>
 					</td>
-					<td class="text-center lock_btn_fiskal" data-date="<?php echo substr($v_od['terima_doc']['datang'], 0, 10); ?>">
+					<td class="text-center lock_btn_fiskal" data-date="<?php echo !empty($v_od['terima_doc']['datang']) ? substr($v_od['terima_doc']['datang'], 0, 10) : null; ?>">
 						<?php if ( $odc ): ?>
 							<?php if ( !$tdc ): ?>
 								<a class="cursor-p" title="ADD TERIMA" onclick="odvp.terima_doc_form(this)" data-noreg="<?php echo $v_data['noreg']; ?>"><i class="fa fa-plus"></i></a>

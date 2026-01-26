@@ -82,7 +82,7 @@ class Home extends Public_Controller
 		// LHK
 		$url = 'report/LHK/formAck';
 		$akses = hakAkses('/transaksi/LHK');
-		if ( $akses['a_ack'] == 1 ) {
+		if ( !empty($akses['a_ack']) && $akses['a_ack'] == 1 ) {
 			$status = getStatus('submit');
 
 			$m_kry = new \Model\Storage\Karyawan_model();
