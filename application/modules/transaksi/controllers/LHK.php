@@ -83,7 +83,7 @@ class LHK extends Public_Controller
         if ( $d_lhk->count() > 0 ) {
             $d_lhk = $d_lhk->toArray();
             foreach ($d_lhk as $k_lhk => $v_lhk) {
-                $data[ $v_lhk['umur'] ] = array(
+                $data[ $v_lhk['id'].'|'.$v_lhk['umur'] ] = array(
                     'id' => $v_lhk['id'],
                     'umur' => $v_lhk['umur'],
                     'pakai_pakan' => $v_lhk['pakai_pakan'],
@@ -1974,7 +1974,7 @@ class LHK extends Public_Controller
                 on
                     data.kode_trans = dj.tbl_id
             where
-                data.tgl_trans >= '2025-12-01'
+                data.tgl_trans >= '2026-01-01'
                 and (data.total - dj.nominal) <> 0
             order by
                 data.tgl_trans asc,
