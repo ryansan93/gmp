@@ -3756,7 +3756,7 @@ class TSDRHPP extends Public_Controller {
                     (
                         select l1.* from lhk l1
                         right join
-                            (select noreg, max(tanggal) as tanggal from lhk group by noreg) l2
+                            (select noreg, max(tanggal) as tanggal from lhk where noreg = '".$params['noreg']."' group by noreg) l2
                             on
                                 l1.noreg = l2.noreg and
                                 l1.tanggal = l2.tanggal
@@ -3765,7 +3765,7 @@ class TSDRHPP extends Public_Controller {
                         l.noreg = rs.noreg
                 left join
                     (
-                        select noreg, max(tgl_panen) as tanggal, sum(netto_ekor) as jml_panen from real_sj where ekor > 0 group by noreg
+                        select noreg, max(tgl_panen) as tanggal, sum(netto_ekor) as jml_panen from real_sj where ekor > 0 and noreg = '".$params['noreg']."' group by noreg
                     ) r_sj
                     on
                         r_sj.noreg = rs.noreg
@@ -3781,7 +3781,8 @@ class TSDRHPP extends Public_Controller {
                             on
                                 tp.id_kirim_pakan = kp.id
                         where
-                            kp.jenis_kirim <> 'opks'
+                            kp.jenis_kirim <> 'opks' and
+                            kp.tujuan = '".$params['noreg']."'
                         group by
                             kp.tujuan
                     ) tp
@@ -3799,7 +3800,8 @@ class TSDRHPP extends Public_Controller {
                             on
                                 tp.id_kirim_pakan = kp.id
                         where
-                            kp.jenis_kirim = 'opkp'
+                            kp.jenis_kirim = 'opkp' and
+                            kp.asal = '".$params['noreg']."'
                         group by
                             kp.asal
                     ) pp
@@ -3846,9 +3848,13 @@ class TSDRHPP extends Public_Controller {
                             (
                                 select 
                                     noreg,
-                                    max(tanggal) as tanggal
+                                    min(tanggal) as tanggal
                                 from
                                 (
+                                    select noreg, max(tgl_panen) as tanggal from real_sj where noreg = '".$params['noreg']."' group by noreg
+
+                                    union all
+
                                     select
                                         kp.asal as noreg,
                                         max(tgl_terima) as tanggal
@@ -3895,7 +3901,8 @@ class TSDRHPP extends Public_Controller {
                             on
                                 drp.id_header = rp.id
                         where
-                            rp.jenis_retur = 'opkp'
+                            rp.jenis_retur = 'opkp' and
+                            rp.id_asal = '".$params['noreg']."'
                         group by
                             rp.id_asal
                     ) rp
