@@ -1083,7 +1083,7 @@ class ODVP extends Public_Controller {
             }
 
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-            $d_terima_doc = $m_terima_doc->where('id', $params['id'])->orderBy('id', 'desc')->first();
+            $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
 
             $path_name = $d_terima_doc->path;
             $id_old = $d_terima_doc->id;
