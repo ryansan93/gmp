@@ -3844,18 +3844,39 @@ class TSDRHPP extends Public_Controller {
                         ) pp
                         left join
                             (
-                                select
-                                    l.noreg, 
-                                    max(l.tanggal) as tanggal 
-                                from lhk l
-                                left join
-                                    (select noreg, max(tgl_panen) as tanggal from real_sj where ekor > 0 group by noreg) rs
-                                    on
-                                        l.noreg = rs.noreg
-                                where
-                                    l.tanggal < rs.tanggal
+                                select 
+                                    noreg,
+                                    max(tanggal) as tanggal
+                                from
+                                (
+                                    select
+                                        kp.asal as noreg,
+                                        max(tgl_terima) as tanggal
+                                    from terima_pakan tp
+                                    left join
+                                        kirim_pakan kp
+                                        on
+                                            tp.id_kirim_pakan = kp.id
+                                    where
+                                        kp.jenis_kirim = 'opkp' and
+                                        kp.asal = '".$params['noreg']."'
+                                    group by
+                                        kp.asal
+
+                                    union all
+
+                                    select
+                                        rp.id_asal as noreg,
+                                        max(tgl_retur) as tanggal
+                                    from retur_pakan rp
+                                    where
+                                        rp.jenis_retur = 'opkp' and
+                                        rp.id_asal = '".$params['noreg']."'
+                                    group by
+                                        rp.id_asal
+                                ) data
                                 group by
-                                    l.noreg
+                                    noreg
                             ) rs
                             on
                                 rs.noreg = pp.noreg
@@ -3905,6 +3926,7 @@ class TSDRHPP extends Public_Controller {
                 where
                     rs.noreg = '".$params['noreg']."'
             ";
+            // cetak_r( $sql, 1 );
             $d_conf = $m_conf->hydrateRaw( $sql );
 
             $status = 1;
@@ -3914,6 +3936,8 @@ class TSDRHPP extends Public_Controller {
             $tgl_panen = null;
             if ( $d_conf->count() > 0 ) {
                 $d_conf = $d_conf->toArray()[0];
+
+                // cetak_r($d_conf, 1);
 
                 $tgl_lhk = $d_conf['tgl_lhk'];
                 $tgl_panen = $d_conf['tgl_panen'];
