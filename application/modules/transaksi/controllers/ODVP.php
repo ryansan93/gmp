@@ -1124,6 +1124,8 @@ class ODVP extends Public_Controller {
                     )
                 );
 
+                $d_terima_doc = $m_terima_doc->where('id', $id)->first();
+
                 // Modules::run( 'base/InsertJurnal/exec', $this->url, $id_old, $id_old, 3);
 
                 // $m_terima_doc = new \Model\Storage\TerimaDoc_model();
@@ -1166,7 +1168,7 @@ class ODVP extends Public_Controller {
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
 
                 $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/update', $m_terima_doc, $deskripsi_log);
+                Modules::run( 'base/event/update', $d_terima_doc, $deskripsi_log);
 
                 $this->result['status'] = 1;
                 $this->result['message'] = 'Data Terima DOC berhasil diupdate.';
