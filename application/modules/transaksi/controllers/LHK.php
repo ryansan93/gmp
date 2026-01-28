@@ -77,25 +77,25 @@ class LHK extends Public_Controller
         $params = $this->input->post('params');
 
         $m_lhk = new \Model\Storage\Lhk_model();
-        $d_lhk = $m_lhk->where('noreg', $params['noreg'])->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi'])->orderBy('id', 'asc')->get();
+        $d_lhk = $m_lhk->select('id', 'umur', 'pakai_pakan', 'sisa_pakan', 'ekor_mati', 'bb', 'fcr', 'ip')->where('noreg', $params['noreg'])->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi'])->orderBy('umur', 'desc')->get();
 
         $data = array();
         if ( $d_lhk->count() > 0 ) {
-            $d_lhk = $d_lhk->toArray();
-            foreach ($d_lhk as $k_lhk => $v_lhk) {
-                $data[ $v_lhk['id'].'|'.$v_lhk['umur'] ] = array(
-                    'id' => $v_lhk['id'],
-                    'umur' => $v_lhk['umur'],
-                    'pakai_pakan' => $v_lhk['pakai_pakan'],
-                    'sisa_pakan' => $v_lhk['sisa_pakan'],
-                    'ekor_mati' => $v_lhk['ekor_mati'],
-                    'bb' => $v_lhk['bb'],
-                    'fcr' => $v_lhk['fcr'],
-                    'ip' => $v_lhk['ip'],
-                );
+            $data = $d_lhk->toArray();
+            // foreach ($d_lhk as $k_lhk => $v_lhk) {
+            //     $data[ $v_lhk['umur'].'|'.$v_lhk['id'] ] = array(
+            //         'id' => $v_lhk['id'],
+            //         'umur' => $v_lhk['umur'],
+            //         'pakai_pakan' => $v_lhk['pakai_pakan'],
+            //         'sisa_pakan' => $v_lhk['sisa_pakan'],
+            //         'ekor_mati' => $v_lhk['ekor_mati'],
+            //         'bb' => $v_lhk['bb'],
+            //         'fcr' => $v_lhk['fcr'],
+            //         'ip' => $v_lhk['ip'],
+            //     );
 
-                krsort($data);
-            }
+            //     krsort($data);
+            // }
         }
 
         $content['data'] = $data;
@@ -866,6 +866,7 @@ class LHK extends Public_Controller
             $umur = $params['umur'];
             $noreg = $params['noreg'];
             $pakai_pakan = $params['pakai_pakan'];
+            $sisa_pakan = $params['sisa_pakan'];
             $ekor_mati = $params['ekor_mati'];
             $tanggal = $params['tanggal'];
 
@@ -889,6 +890,7 @@ class LHK extends Public_Controller
                 $status = 0;
                 $message = 'Data LHK umur '.$umur.' sudah ada, cek kembali data yang anda masukkan.';
             } else {
+                /* CEK LHK PREV */
                 $m_conf = new \Model\Storage\Conf();
                 $sql = "
                     select top 1 * from lhk where noreg = '".$noreg."' and umur < '".$umur."' order by umur desc
@@ -914,6 +916,85 @@ class LHK extends Public_Controller
                         $message .= 'Data yang di masukkan adalah data akumulasi, cek kembali data yang anda masukkan.';
                     }
                 }
+                /* END - CEK LHK PREV */
+
+                /* CEK DATA PAKAI PAKAN */
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select l.noreg, isnull(max(l.umur), 0) as umur, isnull(max(l.pakai_pakan), 0) as pakai_pakan from lhk l
+                    where
+                        l.noreg = '".$noreg."'
+                        and l.tanggal < '".$tanggal."'
+                    group by
+                        l.noreg
+
+                    /*
+                    select l.noreg, l.tanggal, isnull(max(l_prev.umur), 0) as umur_prev, l.id, l.umur, l.pakai_pakan, l.sisa_pakan, isnull(max(l_prev.pakai_pakan), 0) as pp_prev, l.pakai_pakan-isnull(max(l_prev.pakai_pakan), 0) as selisih from lhk l
+                    left join
+                        (select * from lhk) l_prev
+                        on
+                            l_prev.noreg = l.noreg and
+                            l_prev.umur < l.umur
+                    where 
+                        l.noreg = '".$noreg."'
+                        and l.tanggal = '".$tanggal."' 
+                    group by
+                        l.noreg, l.tanggal, l.id, l.umur, l.pakai_pakan, l.sisa_pakan
+                    */
+                ";
+                $d_conf_pp = $m_conf->hydrateRaw( $sql );
+                $_pakai_pakan_sebelumnya = 0;
+                $_pakai_pakan_sekarang = 0;
+                $_pakai_pakan = 0;
+                $_sisa_pakan = 0;
+                if ( $d_conf_pp->count() > 0 ) {
+                    $d_conf_pp = $d_conf_pp->toArray()[0];
+
+                    $_pakai_pakan_sebelumnya = $d_conf_pp['pakai_pakan'] * 50;
+                    $_pakai_pakan_sekarang = $pakai_pakan * 50;
+                    $_pakai_pakan = $_pakai_pakan_sekarang - $_pakai_pakan_sebelumnya;
+                    $_sisa_pakan = $sisa_pakan * 50;
+                }
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        dss.noreg,
+                        sum(dss.jml_stok) as stok
+                    from det_stok_siklus dss
+                    where
+                        dss.jenis_barang = 'pakan' and
+                        dss.noreg = '".$noreg."' and
+                        dss.tgl_trans <= '".$tanggal."'
+                    group by
+                        dss.noreg
+                ";
+                $d_conf_sisa_stok = $m_conf->hydrateRaw( $sql );
+                $_sisa_stok = 0;
+                if ( $d_conf_sisa_stok->count() > 0 ) {
+                    $d_conf_sisa_stok = $d_conf_sisa_stok->toArray()[0];
+
+                    $_sisa_stok = $d_conf_sisa_stok['stok'];
+                }
+
+                if ( ($_pakai_pakan+$_sisa_pakan) > $_sisa_stok ) {
+                    $status = 0;
+
+                    $message = '<span style="color: red;">Data pakai pakan dan sisa pakan yang anda masukkan melebihi dengan stok di kandang !!!</span>';
+                    $message .= '<br>';
+                    $message .= '<b><u>SISA STOK PAKAN DI KANDANG PER TANGGAL '.strtoupper(tglIndonesia($tanggal, '-', ' ')).'</u></b><br>';
+                    $message .= '<b>'.($_sisa_stok/50).' Zak</b><br>';
+                    $message .= '<br>';
+                    $message .= '<b><u>PEMAKAIAN PAKAN ANDA</u></b><br>';
+                    $message .= 'LHK SEBELUMNYA = '.($_pakai_pakan_sebelumnya/50).' Zak<br>';
+                    $message .= 'LHK SEKARANG = '.($_pakai_pakan_sekarang/50).' Zak<br>';
+                    $message .= 'PEMAKAIAN = '.($_pakai_pakan/50).' Zak<br>';
+                    $message .= 'SISA PAKAN = '.($_sisa_pakan/50).' Zak<br>';
+                    $message .= '<b>TOTAL PAKAN YANG ANDA INPUT = '.(($_pakai_pakan/50)+($_sisa_pakan/50)).' Zak</b><br>';
+                    $message .= '<br>';
+                    $message .= 'Harap cek kembali data LHK yang anda masukkan / bisa komunikasi dengan Admin untuk melihat laporan kartu stok siklus .';
+                }
+                /* END - CEK DATA PAKAI PAKAN */
             }
 
             $this->result['status'] = $status;
