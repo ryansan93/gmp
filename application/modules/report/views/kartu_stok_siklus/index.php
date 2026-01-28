@@ -70,7 +70,17 @@
 				</div>
 			</div>
 		</div>
-		<div class="col-xs-12 no-padding contain bulanan" style="margin-bottom: 10px;">
+		<div class="col-xs-3 no-padding contain bulanan" style="margin-bottom: 10px; padding-right: 5px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Jenis Barang</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control jenis_barang" data-required="1">
+					<option value="all">ALL</option>
+					<option value="PAKAN">PAKAN</option>
+					<option value="OBAT">OVK</option>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-9 no-padding contain bulanan" style="margin-bottom: 10px; padding-left: 5px;">
 			<div class="col-xs-12 no-padding"><label class="control-label">Barang</label></div>
 			<div class="col-xs-12 no-padding">
 				<select class="form-control barang" data-required="1">

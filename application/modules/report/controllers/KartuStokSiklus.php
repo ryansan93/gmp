@@ -159,7 +159,7 @@ class KartuStokSiklus extends Public_Controller {
         echo json_encode($data);
     }
 
-    public function mappingDataReport($_unit = null, $tutup_siklus = null, $_noreg = null, $_kode_brg = null, $_start_date, $_end_date)
+    public function mappingDataReport($_unit = null, $tutup_siklus = null, $_noreg = null, $_kode_brg = null, $_jenis_brg = null, $_start_date, $_end_date)
     {
         $sql_condition = "where data.jenis_barang <> 'doc'";
         if ( $_unit != 'all' ) {
@@ -192,6 +192,14 @@ class KartuStokSiklus extends Public_Controller {
                 $sql_condition .= " and data.kode_barang = '".$_kode_brg."'";
             } else {
                 $sql_condition = "where data.kode_barang = '".$_kode_brg."'";
+            }
+        }
+
+        if ( $_jenis_brg != 'all' ) {
+            if ( !empty($sql_condition) ) {
+                $sql_condition .= " and data.jenis_barang = '".$_jenis_brg."'";
+            } else {
+                $sql_condition = "where data.jenis_barang = '".$_jenis_brg."'";
             }
         }
 
@@ -454,6 +462,7 @@ class KartuStokSiklus extends Public_Controller {
         $tutup_siklus = $params['tutup_siklus'];
         $noreg = $params['plasma'];
         $kode_barang = $params['barang'];
+        $jenis_barang = ($params['jenis_barang'] == 'OBAT') ? 'VOADIP' : $params['jenis_barang'];
 
         if ( $bulan != 'all' ) {
             $i = $bulan;
@@ -475,7 +484,7 @@ class KartuStokSiklus extends Public_Controller {
             $end_date = date("Y-m-t", strtotime($_end_date));
         }
 
-        $data = $this->mappingDataReport($unit, $tutup_siklus, $noreg, $kode_barang, $start_date, $end_date);
+        $data = $this->mappingDataReport($unit, $tutup_siklus, $noreg, $kode_barang, $jenis_barang, $start_date, $end_date);
 
         // cetak_r( $data, 1 );
 

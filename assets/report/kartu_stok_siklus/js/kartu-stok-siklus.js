@@ -65,32 +65,27 @@ var stok = {
         $('select.bulan').select2();
         $('select.unit').select2();
         $('select.tutup_siklus').select2();
+        $('select.jenis_barang').select2().on("select2:select", function (e) {
+            var jenis = e.params.data.id;
+
+            $('select.barang').find('option').removeAttr('disabled');
+            if ( jenis != 'all' ) {
+                $('select.barang').find('option:not([data-jenis="'+jenis+'"])').attr('disabled', 'disabled');
+                $('select.barang').find('option[value="all"]').removeAttr('disabled');
+            }
+            $('select.barang').select2();
+        });
         $('select.barang').select2();
-        // $('select.gudang').select2().on("select2:select", function (e) {
-        //     stok.getBarang();
-        // });
 
         $('#Tahun').datetimepicker({
             locale: 'id',
             format: 'Y'
         });
 
-        // stok.getBarang();
-
         $(document).ready(function () {
             stok.setSelect2Plasma( $('.plasma') );
         });
     }, // end - stok
-
-    // getBarang: function() {
-    //     var jenis_gudang = $('select.gudang').find('option:selected').attr('data-jenis');
-
-    //     $('select.barang').find('option').removeAttr('disabled');
-    //     $('select.barang').find('option:not([data-jenis="'+jenis_gudang+'"])').attr('disabled', 'disabled');
-    //     $('select.barang').find('option[value="all"]').removeAttr('disabled');
-
-    //     $('select.barang').select2();
-    // }, // end - getData
 
     getData: function() {
         var err = 0;
@@ -112,6 +107,7 @@ var stok = {
 				'unit': $('.unit').select2().val(),
 				'tutup_siklus': $('.tutup_siklus').select2().val(),
 				'plasma': $('.plasma').select2().val(),
+				'jenis_barang': $('.jenis_barang').select2().val(),
 				'barang': $('.barang').select2().val(),
 				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
 			};
