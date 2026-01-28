@@ -561,6 +561,7 @@ var lhk = {
 		var umur = $(div_transaksi).find('input[name=umur]').val();
 		var noreg = $(div_transaksi).find('select#select_noreg').val();
 		var pakai_pakan = numeral.unformat($(div_transaksi).find('input[name=pakai_pakan]').val());
+		var sisa_pakan = numeral.unformat($(div_transaksi).find('input[name=sisa_pakan]').val());
 		var ekor_mati = numeral.unformat($(div_transaksi).find('input[name=ekor_mati]').val());
 		var tanggal = dateSQL($(div_transaksi).find('#tanggal').data('DateTimePicker').date());
 
@@ -569,6 +570,7 @@ var lhk = {
 			'umur': umur,
 			'noreg': noreg,
 			'pakai_pakan': pakai_pakan,
+			'sisa_pakan': sisa_pakan,
 			'ekor_mati': ekor_mati,
 			'tanggal': tanggal,
 		};
