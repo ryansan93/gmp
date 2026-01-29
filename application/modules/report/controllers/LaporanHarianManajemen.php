@@ -338,7 +338,19 @@ class LaporanHarianManajemen extends Public_Controller {
                         select
                             od.no_order as nomor,
                             od.supplier,
-                            od.total as debet,
+                            case
+                                when cast(od.tgl_submit as date) <= '2025-09-20' then
+                                    od.total - isnull(cn.pakai, 0)
+                                else
+                                    case
+                                        when cast(od.tgl_submit as date) < '2026-01-01' then
+                                            (od.total - (od.total * (0.25/100))) - isnull(cn.pakai, 0)
+                                            -- ((od.total - isnull(cn.pakai, 0)) - ((od.total - isnull(cn.pakai, 0)) * (0.25/100)))
+                                        else
+                                            ((od.total - isnull(cn.pakai, 0)) - ((od.total - isnull(cn.pakai, 0)) * (0.25/100)))
+                                    end
+                            end as debet,
+                            -- od.total as debet,
                             0 as kredit,
                             'DOC' as jenis,
                             SUBSTRING(od.no_order, 5, 3) as unit
@@ -350,6 +362,30 @@ class LaporanHarianManajemen extends Public_Controller {
                                 on
                                     od1.id = od2.id
                         ) od
+                        left join
+                            (
+                                select isnull(sum(cpd.pakai), 0) as pakai, kpdd.no_order from cn_post_det cpd 
+                                left join
+                                    cn_post cp
+                                    on
+                                        cpd.id_header = cp.id
+                                left join
+                                    (
+                                        select kpdd.*, kpd.nomor from konfirmasi_pembayaran_doc_det kpdd
+                                        left join
+                                            konfirmasi_pembayaran_doc kpd 
+                                            on
+                                                kpdd.id_header = kpd.id
+                                    ) kpdd 
+                                    on
+                                        kpdd.nomor = cpd.nomor
+                                where
+                                    kpdd.no_order is not null
+                                group by
+                                    kpdd.no_order
+                            ) cn
+                            on
+                                od.no_order = cn.no_order
                         where
                             cast(od.tgl_submit as date) <= '".$tanggal."' 
                             -- and not exists (select * from konfirmasi_pembayaran_doc_det where no_order = od.no_order)
@@ -428,7 +464,8 @@ class LaporanHarianManajemen extends Public_Controller {
                             null as unit
                         from cn c
                         where
-                            c.tanggal <= '".$tanggal."'
+                            c.tanggal <= '".$tanggal."' and
+                            c.jenis_cn <> 'DOC'
                         
                         /*
                         select
@@ -504,8 +541,8 @@ class LaporanHarianManajemen extends Public_Controller {
                                         when konfir.tanggal <= '2025-09-20' then
                                             rpd.transfer
                                         else
-                                            rpd.transfer+konfir.pph
-                                            -- rpd.transfer
+                                            -- rpd.transfer+konfir.pph
+                                            rpd.transfer
                                     end
                                 else
                                     rpd.transfer
