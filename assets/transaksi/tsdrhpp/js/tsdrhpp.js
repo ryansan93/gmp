@@ -764,6 +764,7 @@ var tsdrhpp = {
 					'ekor': $(tr).find('td.ekor').data('val'),
 					'tonase': $(tr).find('td.tonase').data('val'),
 					'bb': $(tr).find('td.bb').data('val'),
+					'jenis_ayam': $(tr).find('td.jenis_ayam').data('val'),
 					'harga_kontrak': ($(tab_pane).attr('id') == 'rhpp_plasma') ? $(tr).find('td.harga_kontrak').data('val') : 0,
 					'total_kontrak': ($(tab_pane).attr('id') == 'rhpp_plasma') ? $(tr).find('td.total_kontrak').data('val') : 0,
 					'harga_pasar': $(tr).find('td.harga_pasar').data('val'),
