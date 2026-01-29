@@ -635,11 +635,13 @@ class LaporanHarianManajemen extends Public_Controller {
                     sum(data.box) as jml_box,
                     sum(data.jumlah) as jml_doc,
                     sum(data.tot_doc) as total_doc,
-                    sum(data.tonase) as tonase,
-                    sum(data.tot_jual) as tot_jual
+                    -- sum(data.tonase) as tonase,
+                    -- sum(data.tot_jual) as tot_jual,
+                    sum(data.tonase_non_afkir) as tonase,
+                    sum(data.tot_jual_non_afkir) as tot_jual
                 from
                 (
-                    select r.lr_inti, rd.box, rd.jumlah, rd.total as tot_doc, rp.tonase, rp.total as tot_jual
+                    select r.lr_inti, rd.box, rd.jumlah, rd.total as tot_doc, rp.tonase, rp.total as tot_jual, rp_non_afkir.tonase as tonase_non_afkir, rp_non_afkir.total as tot_jual_non_afkir
                     from rhpp r
                     left join
                         (select id_header, sum(box) as box, sum(jumlah) as jumlah, sum(total) as total from rhpp_doc group by id_header) rd
@@ -649,6 +651,10 @@ class LaporanHarianManajemen extends Public_Controller {
                         (select id_header, sum(ekor) as ekor, sum(tonase) as tonase, sum(total_pasar) as total from rhpp_penjualan group by id_header) rp
                         on
                             r.id = rp.id_header
+                    left join
+                        (select id_header, sum(ekor) as ekor, sum(tonase) as tonase, sum(total_pasar) as total from rhpp_penjualan where jenis_ayam <> 'a' group by id_header) rp_non_afkir
+                        on
+                            r.id = rp_non_afkir.id_header
                     left join
                         tutup_siklus ts
                         on
@@ -660,7 +666,7 @@ class LaporanHarianManajemen extends Public_Controller {
     
                     union all
     
-                    select rg.lr_inti, rgd.box, rgd.jumlah, rgd.total as tot_doc, rgp.tonase, rgp.total as tot_jual
+                    select rg.lr_inti, rgd.box, rgd.jumlah, rgd.total as tot_doc, rgp.tonase, rgp.total as tot_jual, rgp_non_afkir.tonase as tonase_non_afkir, rgp_non_afkir.total as tot_jual_non_afkir
                     from rhpp_group rg
                     left join
                         (select id_header, sum(box) as box, sum(jumlah) as jumlah, sum(total) as total from rhpp_group_doc group by id_header) rgd
@@ -670,6 +676,10 @@ class LaporanHarianManajemen extends Public_Controller {
                         (select id_header, sum(ekor) as ekor, sum(tonase) as tonase, sum(total_pasar) as total from rhpp_group_penjualan group by id_header) rgp
                         on
                             rg.id = rgp.id_header
+                    left join
+                        (select id_header, sum(ekor) as ekor, sum(tonase) as tonase, sum(total_pasar) as total from rhpp_group_penjualan where jenis_ayam <> 'a' group by id_header) rgp_non_afkir
+                        on
+                            rg.id = rgp_non_afkir.id_header
                     left join
                         rhpp_group_header rgh
                         on
