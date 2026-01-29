@@ -3483,7 +3483,8 @@ class TSDRHPP extends Public_Controller {
                                         'total_pasar' => $total_pasar,
                                         'selisih' => $selisih,
                                         'insentif' => $insentif,
-                                        'total_insentif' => $total_insentif
+                                        'total_insentif' => $total_insentif,
+                                        'jenis_ayam' => $v_drs['jenis_ayam']
                                     );
 
                                     ksort( $_data_real );
@@ -3992,7 +3993,7 @@ class TSDRHPP extends Public_Controller {
             $this->result['message'] = $message;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
-        }
+        } 
 
         display_json( $this->result );
     }
@@ -4266,6 +4267,7 @@ class TSDRHPP extends Public_Controller {
                             $m_rhpp_penjualan->selisih = $v_penjualan['selisih'];
                             $m_rhpp_penjualan->insentif = $v_penjualan['insentif'];
                             $m_rhpp_penjualan->total_insentif = $v_penjualan['total_insentif'];
+                            $m_rhpp_penjualan->jenis_ayam = $v_penjualan['jenis_ayam'];
                             $m_rhpp_penjualan->save();
                         }
                     }
@@ -5949,6 +5951,6 @@ class TSDRHPP extends Public_Controller {
         //     }
         // }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 1509, 1509, 3);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 2366, 2366, 2);
     }
 }
