@@ -959,19 +959,113 @@ class LHK extends Public_Controller
                 $m_conf = new \Model\Storage\Conf();
                 $sql = "
                     select
-                        dss.noreg,
-                        sum(dss.jml_stok) + isnull(sum(dsts.jumlah), 0) as stok
-                    from det_stok_siklus dss
+                        data.*,
+                        isnull(pp.jumlah, 0) as jml_prev,
+                        data.stok+data.lhk_prev+isnull(pp.jumlah, 0) as stok
+                    from
+                    (
+                        select
+                            dss.noreg,
+                            sum(dss.jml_stok) as stok,
+                            isnull(sum(dsts.jumlah), 0) as lhk_prev
+                        from det_stok_siklus dss
+                        left join
+                            (select id_header, sum(jumlah) as jumlah from det_stok_trans_siklus where kode_trans = '".$id."' group by id_header) dsts
+                            on
+                                dss.id = dsts.id_header
+                        where
+                            dss.jenis_barang = 'pakan' and
+                            dss.noreg = '".$noreg."' and
+                            dss.tgl_trans <= '".$tanggal."'
+                        group by
+                            dss.noreg
+                    ) data
                     left join
-                        (select id_header, sum(jumlah) as jumlah from det_stok_trans_siklus where kode_trans = '".$id."' group by id_header) dsts
-                        on
-                            dss.id = dsts.id_header
-                    where
-                        dss.jenis_barang = 'pakan' and
-                        dss.noreg = '".$noreg."' and
-                        dss.tgl_trans <= '".$tanggal."'
-                    group by
-                        dss.noreg
+                    (
+                        select
+                            pp.noreg,
+                            sum(pp.jumlah) as jumlah
+                        from
+                        (
+                            select kp.asal as noreg, tp.tgl_terima as tanggal, sum(dtp.jumlah) as jumlah from det_terima_pakan dtp
+                            left join
+                                terima_pakan tp
+                                on
+                                    dtp.id_header = tp.id
+                            left join
+                                kirim_pakan kp
+                                on
+                                    tp.id_kirim_pakan = kp.id
+                            where
+                                kp.jenis_kirim = 'opkp' and
+                                kp.asal = '".$noreg."'
+                            group by
+                                kp.asal,
+                                tp.tgl_terima
+                        
+                            union all
+                        
+                            select rp.id_asal as noreg, rp.tgl_retur as tanggal, sum(drp.jumlah) as jumlah from det_retur_pakan drp
+                            left join
+                                retur_pakan rp
+                                on
+                                    drp.id_header = rp.id
+                            where
+                                rp.jenis_retur = 'opkp' and
+                                rp.id_asal = '".$noreg."'
+                            group by
+                                rp.id_asal,
+                                rp.tgl_retur
+                        ) pp
+                        left join
+                            (
+                                select 
+                                    noreg,
+                                    min(tanggal) as tanggal
+                                from
+                                (
+                                    select noreg, max(tgl_panen) as tanggal from real_sj where noreg = '".$noreg."' group by noreg
+                        
+                                    union all
+                        
+                                    select
+                                        kp.asal as noreg,
+                                        max(tgl_terima) as tanggal
+                                    from terima_pakan tp
+                                    left join
+                                        kirim_pakan kp
+                                        on
+                                            tp.id_kirim_pakan = kp.id
+                                    where
+                                        kp.jenis_kirim = 'opkp' and
+                                        kp.asal = '".$noreg."'
+                                    group by
+                                        kp.asal
+                        
+                                    union all
+                        
+                                    select
+                                        rp.id_asal as noreg,
+                                        max(tgl_retur) as tanggal
+                                    from retur_pakan rp
+                                    where
+                                        rp.jenis_retur = 'opkp' and
+                                        rp.id_asal = '".$noreg."'
+                                    group by
+                                        rp.id_asal
+                                ) data
+                                group by
+                                    noreg
+                            ) rs
+                            on
+                                rs.noreg = pp.noreg
+                        where
+                            pp.tanggal >= rs.tanggal
+                        group by
+                            pp.noreg
+                    ) pp
+                    on
+                        pp.noreg = data.noreg
                 ";
                 $d_conf_sisa_stok = $m_conf->hydrateRaw( $sql );
                 $_sisa_stok = 0;
