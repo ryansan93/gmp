@@ -960,8 +960,12 @@ class LHK extends Public_Controller
                 $sql = "
                     select
                         dss.noreg,
-                        sum(dss.jml_stok) as stok
+                        sum(dss.jml_stok) + isnull(sum(dsts.jumlah), 0) as stok
                     from det_stok_siklus dss
+                    left join
+                        (select id_header, sum(jumlah) as jumlah from det_stok_trans_siklus where kode_trans = '".$id."' group by id_header) dsts
+                        on
+                            dss.id = dsts.id_header
                     where
                         dss.jenis_barang = 'pakan' and
                         dss.noreg = '".$noreg."' and
