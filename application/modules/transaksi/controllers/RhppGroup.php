@@ -730,7 +730,8 @@ class RhppGroup extends Public_Controller {
                         'total_pasar' => $v_penjualan['total_pasar'],
                         'selisih' => $v_penjualan['selisih'],
                         'insentif' => $v_penjualan['insentif'],
-                        'total_insentif' => $v_penjualan['total_insentif']
+                        'total_insentif' => $v_penjualan['total_insentif'],
+                        'jenis_ayam' => $v_penjualan['jenis_ayam']
                     );
 
                     $umur_panen = abs(selisihTanggal($v_penjualan['tanggal'], $d_rhpp_inti['tgl_docin']));
@@ -1027,7 +1028,8 @@ class RhppGroup extends Public_Controller {
                         'total_pasar' => $v_penjualan['total_pasar'],
                         'selisih' => $v_penjualan['selisih'],
                         'insentif' => $v_penjualan['insentif'],
-                        'total_insentif' => $v_penjualan['total_insentif']
+                        'total_insentif' => $v_penjualan['total_insentif'],
+                        'jenis_ayam' => $v_penjualan['jenis_ayam']
                     );
                 }
 
@@ -1673,6 +1675,7 @@ class RhppGroup extends Public_Controller {
                         $m_rhpp_penjualan->selisih = $v_penjualan['selisih'];
                         $m_rhpp_penjualan->insentif = $v_penjualan['insentif'];
                         $m_rhpp_penjualan->total_insentif = $v_penjualan['total_insentif'];
+                        $m_rhpp_penjualan->jenis_ayam = $v_penjualan['jenis_ayam'];
                         $m_rhpp_penjualan->save();
                     }
                 }
