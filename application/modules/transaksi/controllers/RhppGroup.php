@@ -550,7 +550,8 @@ class RhppGroup extends Public_Controller {
                             'total_pasar' => $v_penjualan['total_pasar'],
                             'selisih' => $v_penjualan['selisih'],
                             'insentif' => $v_penjualan['insentif'],
-                            'total_insentif' => $v_penjualan['total_insentif']
+                            'total_insentif' => $v_penjualan['total_insentif'],
+                            'jenis_ayam' => $v_penjualan['jenis_ayam']
                         );
                     }
                     if ( !empty($data_rpah_plasma) ) {
@@ -1221,7 +1222,8 @@ class RhppGroup extends Public_Controller {
                     'total_pasar' => $v_penjualan['total_pasar'],
                     'selisih' => $v_penjualan['selisih'],
                     'insentif' => $v_penjualan['insentif'],
-                    'total_insentif' => $v_penjualan['total_insentif']
+                    'total_insentif' => $v_penjualan['total_insentif'],
+                    'jenis_ayam' => $v_penjualan['jenis_ayam']
                 );
             }
 
