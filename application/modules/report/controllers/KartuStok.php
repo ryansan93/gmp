@@ -299,7 +299,8 @@ class KartuStok extends Public_Controller {
 
                 /* KELUAR */
                 select
-                    klwr.tanggal,
+                    -- klwr.tanggal,
+                    jt.tanggal,
                     klwr.kode_gudang,
                     klwr.kode_barang,
                     klwr.jenis_barang,
@@ -315,7 +316,7 @@ class KartuStok extends Public_Controller {
                 from
                 (
                     select
-                        s.periode as tanggal,
+                        -- dst.tgl_trans as tanggal,
                         ds.kode_gudang,
                         ds.kode_barang,
                         ds.jenis_barang,
@@ -333,11 +334,11 @@ class KartuStok extends Public_Controller {
                         on
                             ds.id_header = s.id
                     where
-                        s.periode between '".$_start_date."' and '".$_end_date."' and
+                        -- dst.tgl_trans between '".$_start_date."' and '".$_end_date."' and
                         ds.kode_gudang = '".$_kode_gudang."' and
                         (dst.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
                     group by
-                        s.periode,
+                        -- dst.tgl_trans,
                         ds.kode_gudang,
                         ds.kode_barang,
                         ds.jenis_barang,
@@ -351,8 +352,10 @@ class KartuStok extends Public_Controller {
                     ) jt
                     on
                         klwr.kode_trans = jt.no_order 
-                        and
-                        klwr.tanggal = jt.tanggal
+                        -- and
+                        -- klwr.tanggal = jt.tanggal
+                where
+                    jt.tanggal between '".$_start_date."' and '".$_end_date."'
                 /* END - KELUAR */
             ) data
             left join

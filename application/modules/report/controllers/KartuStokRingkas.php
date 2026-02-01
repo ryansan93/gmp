@@ -92,61 +92,121 @@ class KartuStokRingkas extends Public_Controller {
 
     public function mappingDataReport($_kode_brg, $_kode_gudang, $_jenis, $_start_date, $_end_date)
     {
+        // cetak_r( $_start_date );
+        // cetak_r( $_end_date, 1);
+
         $sql_jenis = null;
         $sql_jenis_trans_masuk = null;
         $sql_jenis_trans_keluar = null;
         $jenis = null;
+        // if ( !empty($_jenis) ) {
+        //     $jenis = $_jenis;
+        //     if ( stristr($jenis, 'obat') !== false ) {
+        //         $jenis = 'voadip';
+
+        //         $sql_jenis_trans_masuk = "
+        //             select kv.no_order as kode_trans, kv.no_order, 'ORDER' as jenis_trans from kirim_voadip kv where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+
+        //             union all
+
+        //             select rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_voadip rv where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
+
+        //             union all
+
+        //             select av.kode as kode_trans, av.kode, 'ADJUSTMENT IN' as jenis_trans from adjin_voadip av where av.tanggal between '".$_start_date."' and '".$_end_date."'
+        //         ";
+
+        //         $sql_jenis_trans_keluar = "
+        //             select kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+
+        //             union all
+
+        //             select rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_voadip rv where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
+
+        //             union all
+
+        //             select av.kode as kode_trans, av.kode, 'ADJUSTMENT OUT' as jenis_trans from adjout_voadip av where av.tanggal between '".$_start_date."' and '".$_end_date."'
+        //         ";
+        //     } else {
+        //         $sql_jenis_trans_masuk = "
+        //             select kp.no_order as kode_trans, kp.no_order, 'ORDER' as jenis_trans from kirim_pakan kp where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+
+        //             union all
+
+        //             select rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_pakan rp where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+
+        //             union all
+
+        //             select ap.kode as kode_trans, ap.kode, 'ADJUSTMENT IN' as jenis_trans from adjin_pakan ap where ap.tanggal between '".$_start_date."' and '".$_end_date."'
+        //         ";
+
+        //         $sql_jenis_trans_keluar = "
+        //             select kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+
+        //             union all
+
+        //             select rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+
+        //             union all
+
+        //             select ap.kode as kode_trans, ap.kode, 'ADJUSTMENT OUT' as jenis_trans from adjout_pakan ap where ap.tanggal between '".$_start_date."' and '".$_end_date."'
+        //         ";
+        //     }
+
+        //     $sql_jenis = "and ds.jenis_barang = '".$jenis."'";
+        // }
+
         if ( !empty($_jenis) ) {
             $jenis = $_jenis;
             if ( stristr($jenis, 'obat') !== false ) {
                 $jenis = 'voadip';
 
                 $sql_jenis_trans_masuk = "
-                    select kv.no_order as kode_trans, kv.no_order, 'ORDER' as jenis_trans from kirim_voadip kv where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tv.tgl_terima as tanggal, kv.no_order as kode_trans, kv.no_order, 'ORDER' as jenis_trans from kirim_voadip kv left join terima_voadip tv on tv.id_kirim_voadip = kv.id -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_voadip rv where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_voadip rv -- where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select av.kode as kode_trans, av.kode, 'ADJUSTMENT IN' as jenis_trans from adjin_voadip av where av.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_voadip av -- where av.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
 
                 $sql_jenis_trans_keluar = "
-                    select kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tv.tgl_terima as tanggal, kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv left join terima_voadip tv on tv.id_kirim_voadip = kv.id -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_voadip rv where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_voadip rv -- where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select av.kode as kode_trans, av.kode, 'ADJUSTMENT OUT' as jenis_trans from adjout_voadip av where av.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_voadip av -- where av.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
             } else {
                 $sql_jenis_trans_masuk = "
-                    select kp.no_order as kode_trans, kp.no_order, 'ORDER' as jenis_trans from kirim_pakan kp where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tp.tgl_terima as tanggal, kp.no_order as kode_trans, kp.no_order, 'ORDER' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_pakan rp where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_pakan rp -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select ap.kode as kode_trans, ap.kode, 'ADJUSTMENT IN' as jenis_trans from adjin_pakan ap where ap.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_pakan ap -- where ap.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
 
                 $sql_jenis_trans_keluar = "
-                    select kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tp.tgl_terima as tanggal, kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
-                    select ap.kode as kode_trans, ap.kode, 'ADJUSTMENT OUT' as jenis_trans from adjout_pakan ap where ap.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_pakan ap -- where ap.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
             }
 
@@ -318,8 +378,10 @@ class KartuStokRingkas extends Public_Controller {
                 union all
 
                 /* KELUAR */
+                /*
                 select
                     -- klwr.tanggal,
+                    -- jt.tanggal,
                     klwr.kode_gudang,
                     klwr.kode_barang,
                     klwr.jenis_barang,
@@ -337,7 +399,7 @@ class KartuStokRingkas extends Public_Controller {
                 from
                 (
                     select
-                        s.periode as tanggal,
+                        -- s.periode as tanggal,
                         ds.kode_gudang,
                         ds.kode_barang,
                         ds.jenis_barang,
@@ -355,11 +417,11 @@ class KartuStokRingkas extends Public_Controller {
                         on
                             ds.id_header = s.id
                     where
-                        s.periode between '".$_start_date."' and '".$_end_date."' and
+                        -- s.periode between '".$_start_date."' and '".$_end_date."' and
                         (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                         (dst.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
                     group by
-                        s.periode,
+                        -- s.periode,
                         ds.kode_gudang,
                         ds.kode_barang,
                         ds.jenis_barang,
@@ -373,6 +435,77 @@ class KartuStokRingkas extends Public_Controller {
                     ) jt
                     on
                         klwr.kode_trans = jt.kode_trans
+                where
+                    jt.tanggal between '".$_start_date."' and '".$_end_date."'
+                group by
+                    klwr.kode_gudang,
+                    klwr.kode_barang,
+                    klwr.jenis_barang,
+                    klwr.hrg_beli
+                */
+                /* END - KELUAR */
+
+                /* KELUAR */
+                select
+                    -- klwr.tanggal,
+                    -- jt.tanggal,
+                    klwr.kode_gudang,
+                    klwr.kode_barang,
+                    klwr.jenis_barang,
+                    klwr.hrg_beli,
+                    0 as jml_saldo_awal,
+                    0 as saldo_awal,
+                    0 as jml_debet,
+                    0 as debet,
+                    isnull(sum(klwr.jumlah), 0) as jml_kredit,
+                    isnull(sum((klwr.jumlah * klwr.hrg_beli)), 0) as kredit
+                    -- klwr.kode_trans as kode_trans,
+                    -- klwr.jenis_trans as jenis_trans,
+                    -- jt.jenis_trans,
+                    -- 3 as urut
+                from
+                (
+                    select
+                        -- dst.tgl_trans as tanggal,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        dst.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli,
+                        sum(isnull(dst.jumlah, 0)) as jumlah
+                    from det_stok_trans dst
+                    left join
+                        det_stok ds
+                        on
+                            ds.id = dst.id_header
+                    left join
+                        stok s
+                        on
+                            ds.id_header = s.id
+                    where
+                        -- dst.tgl_trans between '".$_start_date."' and '".$_end_date."' and
+                        ds.kode_gudang = '".$_kode_gudang."' and
+                        (dst.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        -- dst.tgl_trans,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        dst.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli
+                ) klwr
+                left join
+                    (
+                        ".$sql_jenis_trans_keluar."
+                    ) jt
+                    on
+                        klwr.kode_trans = jt.no_order 
+                        -- and
+                        -- klwr.tanggal = jt.tanggal
+                where
+                    jt.tanggal between '".$_start_date."' and '".$_end_date."'
                 group by
                     klwr.kode_gudang,
                     klwr.kode_barang,
@@ -414,6 +547,7 @@ class KartuStokRingkas extends Public_Controller {
                 -- data.tanggal asc,
                 -- data.urut asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         if ( $d_conf->count() > 0 ) {
