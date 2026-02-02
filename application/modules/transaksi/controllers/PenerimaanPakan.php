@@ -1195,20 +1195,52 @@ class PenerimaanPakan extends Public_Controller {
     }
 
     public function tes() {
-        $arr = array(
-            14238,
-            14232,
-            13650,
-            13864,
-            13840,
-            15758,
-            15831,
-            16337,
-            16496
-        );
+        // $arr = array(
+        //     17485,
+        //     17486,
+        //     19343,
+        //     19369,
+        // );
 
-        foreach ($arr as $key => $value) {
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+        $conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.tgl_trans,
+                data.kode_trans,
+                data.total as nominal_terima,
+                dj.nominal as nominal_jurnal,
+                data.total - dj.nominal as selisih
+            from
+            (
+                select dsts.tgl_trans, dsts.kode_trans, sum(dsts.jumlah*dss.hrg_beli) as total from det_stok_trans_siklus dsts
+                left join
+                    det_stok_siklus dss 
+                    on
+                        dsts.id_header = dss.id
+                where
+                    dsts.tbl_name = 'lhk' and
+                    dss.jenis_barang = 'pakan'
+                group by
+                    dsts.tgl_trans, dsts.kode_trans
+            ) data
+            left join
+                (select * from det_jurnal where coa_tujuan = '71101.000') dj
+                on
+                    data.kode_trans = dj.tbl_id
+            where
+                data.tgl_trans >= '2026-01-01'
+                and (data.total - dj.nominal) <> 0
+            order by
+                data.tgl_trans asc,
+                data.kode_trans asc
+        ";
+        $d_conf = $conf->hydrateRaw($sql);
+
+        if ( $d_conf->count() > 0 ) {
+            $arr = $d_conf->toArray();
+            foreach ($arr as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['kode_trans'], $value['kode_trans'], 2);
+            }
         }
     }
 }

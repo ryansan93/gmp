@@ -814,42 +814,30 @@ class PenerimaanDocMobile extends Public_Controller {
     public function tes() {
         // $m_conf = new \Model\Storage\Conf();
         // $sql = "
-        //     select od.noreg, td.* from (
-        //         select td1.* from terima_doc td1
-        //         right join
-        //             (
-        //                 select no_order, max(version) as version from terima_doc group by no_order
-        //             ) td2
-        //             on
-        //                 td1.no_order = td2.no_order and
-        //                 td1.version = td2.version
-        //     ) td
+        //     select td.* from terima_doc td 
         //     left join
-        //         (
-        //             select od1.* from order_doc od1
-        //             right join
-        //                 (select max(id) as id, no_order from order_doc group by no_order) od2
-        //                 on
-        //                     od1.id = od2.id
-        //         ) od
+        //         (select * from det_jurnal dj where coa_asal = '21180.200') dj
         //         on
-        //             td.no_order = od.no_order
+        //             cast(td.id as varchar(max)) = dj.tbl_id
         //     where
-        //         td.datang >= '2025-10-01'
-        //     order by
-        //         od.noreg asc
+        //         td.datang >= '2026-01-01' and
+        //         dj.id is null
         // ";
         // $d_conf = $m_conf->hydrateRaw( $sql );
 
         // if ( $d_conf->count() > 0 ) {
         //     $d_conf = $d_conf->toArray();
 
-        //     foreach ($d_conf as $key => $value) {
-        //         $tanggal = substr( $value['datang'], 0, 10 );
+        //     // cetak_r($d_conf, 1);
 
-        //         $conf = new \Model\Storage\Conf();
-        //         $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
-        //         $conf->hydrateRaw($sql);
+        //     foreach ($d_conf as $key => $value) {
+        //         // $tanggal = substr( $value['datang'], 0, 10 );
+
+        //         // $conf = new \Model\Storage\Conf();
+        //         // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
+        //         // $conf->hydrateRaw($sql);
+
+        //         cetak_r( $value['id'] );
 
         //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
         //     }
@@ -863,6 +851,7 @@ class PenerimaanDocMobile extends Public_Controller {
         // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '758', '2025-11-21', 2, null, null";
         // $conf->hydrateRaw($sql);
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 996, 996, 2, 'terima_doc', '2025-12-12');
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 1490, 1490, 3);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 1559, 1559, 2);
     }
 }

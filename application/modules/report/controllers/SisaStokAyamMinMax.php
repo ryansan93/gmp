@@ -80,12 +80,12 @@ class SisaStokAyamMinMax extends Public_Controller {
                     l.tanggal,
                     w.kode,
                     l.noreg,
-                    td.jml_ekor,
+                    (td.jml_ekor+isnull(ad.jumlah, 0)) as jml_ekor,
                     l.umur,
                     l.ekor_mati,
                     l.bb,
-                    (td.jml_ekor - l.ekor_mati) as sisa_ekor,
-                    (td.jml_ekor - l.ekor_mati) * l.bb as tonase
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) as sisa_ekor,
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) * l.bb as tonase
                 from 
                 (
                     select max(id) as id, kode from wilayah
@@ -150,6 +150,12 @@ class SisaStokAyamMinMax extends Public_Controller {
                     ) td
                     on
                         l.noreg = td.noreg
+                left join
+                    (
+                        select noreg, sum(jumlah) as jumlah from adjin_doc group by noreg
+                    ) ad
+                    on
+                        l.noreg = ad.noreg
                 where
                     ts.id is null and
                     l.id is not null

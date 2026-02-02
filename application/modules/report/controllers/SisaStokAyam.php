@@ -72,16 +72,16 @@ class SisaStokAyam extends Public_Controller {
                 td.datang as tgl_chick_in, 
                 lhk.tanggal as tgl_datang_ppl,
                 lhk.umur,
-                td.jml_ekor as populasi,
+                (td.jml_ekor+isnull(ad.jumlah, 0)) as populasi,
                 isnull(lhk.ekor_mati, 0) as ekor_mati_real,
-                td.jml_ekor - isnull(lhk.ekor_mati, 0) as sisa_ekor_lhk,
+                (td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(lhk.ekor_mati, 0) as sisa_ekor_lhk,
                 lhk.bb as bw_rata_lhk,
-                ((td.jml_ekor - isnull(lhk.ekor_mati, 0)) * lhk.bb) as tonase_lhk,
+                (((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(lhk.ekor_mati, 0)) * lhk.bb) as tonase_lhk,
                 panen.tgl_panen_terakhir as tgl_panen_terakhir,
                 isnull(panen.ekor, 0) as ekor_jual,
                 isnull(panen.tonase, 0) as tonase_jual,
-                td.jml_ekor - isnull(lhk.ekor_mati, 0) - isnull(panen.ekor, 0) as sisa_ekor, 
-                ((td.jml_ekor - isnull(lhk.ekor_mati, 0)) * lhk.bb) - isnull(panen.tonase, 0) as sisa_tonase,
+                (td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(lhk.ekor_mati, 0) - isnull(panen.ekor, 0) as sisa_ekor, 
+                (((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(lhk.ekor_mati, 0)) * lhk.bb) - isnull(panen.tonase, 0) as sisa_tonase,
                 ts.tgl_tutup as tgl_tutup_siklus
             from 
             (
@@ -118,6 +118,12 @@ class SisaStokAyam extends Public_Controller {
                 ) panen
                 on
                     panen.noreg = od.noreg
+            left join
+                (
+                    select noreg, sum(jumlah) as jumlah from adjin_doc group by noreg
+                ) ad
+                on
+                    ad.noreg = od.noreg
             left join
                 (select * from tutup_siklus where tgl_tutup <= '".$tanggal."' ) ts 
                 on

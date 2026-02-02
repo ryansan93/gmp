@@ -808,6 +808,10 @@ class PengirimanPakan extends Public_Controller {
         display_json($this->result);
     }
 
+    public function cekStokGudang()
+    {
+    }
+
     public function save()
     {
         $params = $this->input->post('params');

@@ -84,7 +84,7 @@ class RealisasiChickIn extends Public_Controller {
                 td.datang as real_tgl_docin,
                 td.jml_ekor as real_jml_ekor,
                 td.jml_box as real_jml_box,
-                td.bb,
+                -- td.bb,
                 td.harga,
                 k.alamat_jalan+' RT.'+cast(k.alamat_rt as varchar(3))+'/RW.'+cast(k.alamat_rw as varchar(3))+', '+k.alamat_kelurahan+', '+k.kecamatan+', '+k.kab_kota+', '+k.provinsi as alamat,
                 k.kecamatan,
@@ -138,7 +138,7 @@ class RealisasiChickIn extends Public_Controller {
                         td.datang,
                         sum(td.jml_ekor) as jml_ekor,
                         sum(td.jml_box) as jml_box,
-                        td.bb,
+                        -- td.bb,
                         td.harga
                     from
                     (
@@ -164,6 +164,17 @@ class RealisasiChickIn extends Public_Controller {
                         td.datang,
                         td.bb,
                         td.harga
+
+                    union all
+
+                    select
+                        noreg,
+                        tanggal as datang,
+                        jumlah as jml_ekor,
+                        jumlah / 100 as jml_box,
+                        -- td.bb,
+                        harga
+                    from adjin_doc
                 ) td
                 on
                     rs.noreg = td.noreg
@@ -174,7 +185,6 @@ class RealisasiChickIn extends Public_Controller {
                 rs.tgl_docin asc,
                 m.nama asc
         ";
-        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

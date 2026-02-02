@@ -23,21 +23,32 @@
                 </td>
             </tr>
         <?php } ?>
+        <?php
+            $row_span = 1;
+            $idx = $key+1;
+            while ( $value['noreg'] == $data[ $idx ]['noreg'] ) {
+                $row_span++;
+
+                $idx++;
+            }
+        ?>
         <tr>
-            <td><?php echo strtoupper($value['kode_unit']); ?></td>
-            <td>
-                <div class="col-xs-12 no-padding" style="border-bottom: 1px solid #dedede;">
-                    <?php echo strtoupper($value['nama_plasma']); ?>
-                </div>
-                <div class="col-xs-12 no-padding">
-                    <?php echo strtoupper($value['alamat']); ?>
-                </div>
-            </td>
-            <td class="text-center"><?php echo strtoupper($value['kandang']); ?></td>
-            <td class="text-center"><?php echo strtoupper($value['noreg']); ?></td>
-            <td class="text-center"><?php echo strtoupper(tglIndonesia($value['rcn_tgl_docin'], '-', ' ')); ?></td>
-            <td class="text-right"><?php echo angkaRibuan($value['rcn_jml_box']); ?></td>
-            <td class="text-right"><?php echo angkaRibuan($value['rcn_jml_ekor']); ?></td>
+            <?php if ( !isset($data[ $key-1 ]) || $value['noreg'] <> $data[ $key-1 ]['noreg'] ) { ?>
+                <td rowspan="<?php echo $row_span; ?>"><?php echo strtoupper($value['kode_unit']); ?></td>
+                <td rowspan="<?php echo $row_span; ?>">
+                    <div class="col-xs-12 no-padding" style="border-bottom: 1px solid #dedede;">
+                        <?php echo strtoupper($value['nama_plasma']); ?>
+                    </div>
+                    <div class="col-xs-12 no-padding">
+                        <?php echo strtoupper($value['alamat']); ?>
+                    </div>
+                </td>
+                <td rowspan="<?php echo $row_span; ?>" class="text-center"><?php echo strtoupper($value['kandang']); ?></td>
+                <td rowspan="<?php echo $row_span; ?>" class="text-center"><?php echo strtoupper($value['noreg']); ?></td>
+                <td rowspan="<?php echo $row_span; ?>" class="text-center"><?php echo strtoupper(tglIndonesia($value['rcn_tgl_docin'], '-', ' ')); ?></td>
+                <td rowspan="<?php echo $row_span; ?>" class="text-right"><?php echo angkaRibuan($value['rcn_jml_box']); ?></td>
+                <td rowspan="<?php echo $row_span; ?>" class="text-right"><?php echo angkaRibuan($value['rcn_jml_ekor']); ?></td>
+            <?php } ?>
             <td class="text-center"><?php echo strtoupper(tglIndonesia($value['real_tgl_docin'], '-', ' ')).' '.substr($value['real_tgl_docin'], 11, 5); ?></td>
             <td class="text-right"><?php echo angkaRibuan($value['real_jml_box']); ?></td>
             <td class="text-right"><?php echo angkaRibuan($value['real_jml_ekor']); ?></td>

@@ -1318,66 +1318,187 @@ class TSDRHPP extends Public_Controller {
         $m_rs = new \Model\Storage\RdimSubmit_model();
         $d_rs = $m_rs->where('noreg', $noreg)->with(['data_vaksin'])->first()->toArray();
 
-        // DOCIN
-        $m_od = new \Model\Storage\OrderDoc_model();
-        $d_od = $m_od->where('noreg', $noreg)->with(['d_supplier', 'd_barang'])->orderBy('id', 'desc')->first();
+        $harga_vaksin = $d_rs['data_vaksin']['harga'];
 
-        if ( $d_od ) {
-            $d_od = $d_od->toArray();
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                dss.*,
+                sj.no_sj,
+                sj.tgl_docin,
+                b.nama as nama_barang,
+                od.jns_box
+            from det_stok_siklus dss
+            left join
+                (
+                    select td1.no_order as kode_trans, td1.no_sj, td1.datang as tgl_docin from terima_doc td1
+                    right join
+                        (select max(id) as id, no_order from terima_doc group by no_order) td2
+                        on
+                            td1.id = td2.id
 
-            $m_td = new \Model\Storage\TerimaDoc_model();
-            $d_td = $m_td->where('no_order', $d_od['no_order'])->orderBy('id', 'desc')->first();
+                    union all
 
-            if ( $d_td ) {
-                $d_td = $d_td->toArray();
+                    select kode as kode_trans, null as no_sj, null as tg_docin from adjin_doc
+                ) sj
+                on
+                    dss.kode_trans = sj.kode_trans
+            left join
+                (
+                    select od1.* from order_doc od1
+                    right join
+                        (select max(id) as id, no_order from order_doc group by no_order) od2
+                        on
+                            od1.id = od2.id
+                ) od
+                on
+                    dss.kode_trans = od.no_order
+            left join
+                (
+                    select brg1.* from barang brg1
+                    right join
+                        (select max(id) as id, kode from barang group by kode) brg2
+                        on
+                            brg1.id = brg2.id
+                ) b
+                on
+                    b.kode = dss.kode_barang
+            where
+                dss.noreg = '".$noreg."' and
+                dss.jenis_barang = 'doc'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-                $jml_ekor = $d_td['jml_ekor'];
-                $jml_box = $d_td['jml_box'];
+            $tgl_docin = null;
+            $no_sj = null;
+            $nama_barang = null;
+            $jenis_box = null;
+            $jml_ekor = 0;
 
-                $harga_vaksin = $d_rs['data_vaksin']['harga'];
-                $total_vaksin = $jml_ekor * $harga_vaksin;
-
-                $harga_kontrak_doc_peternak = 0;
-                $harga_kontrak_doc_supplier = 0;
+            $harga_kontrak_doc_peternak = 0;
+            $harga_kontrak_doc_supplier = 0;
+            foreach ($d_conf as $key => $value) {
                 if ( !empty($harga_sapronak) && count($harga_sapronak) > 0 ) {
                     foreach ($harga_sapronak as $k_hs => $v_hs) {
                         foreach ($v_hs['detail'] as $k_det => $v_det) {
-                            if ( $v_det['kode_brg'] == $d_od['item'] ) {
+                            if ( $v_det['kode_brg'] == $value['kode_barang'] ) {
                                 $harga_kontrak_doc_peternak = $v_det['hrg_peternak'];
                             }
                         }
                     }
                 }
-                $harga_kontrak_doc_supplier = $d_od['harga'];
+                $harga_kontrak_doc_supplier = $value['hrg_beli'];
 
-                $total_doc_peternak = $harga_kontrak_doc_peternak * $jml_ekor;
-                $total_doc_supplier = $harga_kontrak_doc_supplier * $jml_ekor;
+                $jml_ekor += $value['jumlah'];
 
-                $data['plasma']['doc'] = array(
-                    'tgl_docin' => $d_td['datang'],
-                    'sj' => $d_td['no_sj'],
-                    'barang' => strtoupper($d_od['d_barang']['nama']) . ' BOX ' . strtoupper($d_od['jns_box']),
-                    'box' => $jml_box,
-                    'jumlah' => $jml_ekor,
-                    'harga' => $harga_kontrak_doc_peternak,
-                    'total' => $total_doc_peternak
-                );
-                $data['inti']['doc'] = array(
-                    'tgl_docin' => $d_td['datang'],
-                    'sj' => $d_td['no_sj'],
-                    'barang' => strtoupper($d_od['d_barang']['nama']) . ' BOX ' . strtoupper($d_od['jns_box']),
-                    'box' => $jml_box,
-                    'jumlah' => $jml_ekor,
-                    'harga' => $harga_kontrak_doc_supplier,
-                    'total' => $total_doc_supplier
-                );
-                $data['plasma']['vaksin'] = array(
-                    'barang' => $d_rs['data_vaksin']['nama_vaksin'],
-                    'harga' => $harga_vaksin,
-                    'total' => $total_vaksin
-                );
+                if ( !empty($value['tgl_docin']) ) {
+                    $tgl_docin = $value['tgl_docin'];
+                }
+
+                if ( !empty($value['no_sj']) ) {
+                    $no_sj = $value['no_sj'];
+                }
+
+                if ( !empty($value['nama_barang']) ) {
+                    $nama_barang = $value['nama_barang'];
+                }
+
+                if ( !empty($value['jenis_box']) ) {
+                    $jenis_box = $value['jns_box'];
+                }
             }
+
+            $total_vaksin = $jml_ekor * $harga_vaksin;
+            $total_doc_peternak = $harga_kontrak_doc_peternak * $jml_ekor;
+            $total_doc_supplier = $harga_kontrak_doc_supplier * $jml_ekor;
+
+            $data['plasma']['doc'] = array(
+                'tgl_docin' => $tgl_docin,
+                'sj' => $no_sj,
+                'barang' => strtoupper($nama_barang) . ' BOX ' . strtoupper($jenis_box),
+                'box' => $jml_ekor / 100,
+                'jumlah' => $jml_ekor,
+                'harga' => $harga_kontrak_doc_peternak,
+                'total' => $total_doc_peternak
+            );
+            $data['inti']['doc'] = array(
+                'tgl_docin' => $tgl_docin,
+                'sj' => $no_sj,
+                'barang' => strtoupper($nama_barang) . ' BOX ' . strtoupper($jenis_box),
+                'box' => $jml_ekor / 50,
+                'jumlah' => $jml_ekor,
+                'harga' => $harga_kontrak_doc_supplier,
+                'total' => $total_doc_supplier
+            );
+            $data['plasma']['vaksin'] = array(
+                'barang' => $d_rs['data_vaksin']['nama_vaksin'],
+                'harga' => $harga_vaksin,
+                'total' => $total_vaksin
+            );
         }
+
+        // // DOCIN
+        // $m_od = new \Model\Storage\OrderDoc_model();
+        // $d_od = $m_od->where('noreg', $noreg)->with(['d_supplier', 'd_barang'])->orderBy('id', 'desc')->first();
+
+        // if ( $d_od ) {
+        //     $d_od = $d_od->toArray();
+
+        //     $m_td = new \Model\Storage\TerimaDoc_model();
+        //     $d_td = $m_td->where('no_order', $d_od['no_order'])->orderBy('id', 'desc')->first();
+
+        //     if ( $d_td ) {
+        //         $d_td = $d_td->toArray();
+
+        //         $jml_ekor = $d_td['jml_ekor'];
+        //         $jml_box = $d_td['jml_box'];
+
+        //         $harga_vaksin = $d_rs['data_vaksin']['harga'];
+        //         $total_vaksin = $jml_ekor * $harga_vaksin;
+
+        //         $harga_kontrak_doc_peternak = 0;
+        //         $harga_kontrak_doc_supplier = 0;
+        //         if ( !empty($harga_sapronak) && count($harga_sapronak) > 0 ) {
+        //             foreach ($harga_sapronak as $k_hs => $v_hs) {
+        //                 foreach ($v_hs['detail'] as $k_det => $v_det) {
+        //                     if ( $v_det['kode_brg'] == $d_od['item'] ) {
+        //                         $harga_kontrak_doc_peternak = $v_det['hrg_peternak'];
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         $harga_kontrak_doc_supplier = $d_od['harga'];
+
+        //         $total_doc_peternak = $harga_kontrak_doc_peternak * $jml_ekor;
+        //         $total_doc_supplier = $harga_kontrak_doc_supplier * $jml_ekor;
+
+        //         $data['plasma']['doc'] = array(
+        //             'tgl_docin' => $d_td['datang'],
+        //             'sj' => $d_td['no_sj'],
+        //             'barang' => strtoupper($d_od['d_barang']['nama']) . ' BOX ' . strtoupper($d_od['jns_box']),
+        //             'box' => $jml_box,
+        //             'jumlah' => $jml_ekor,
+        //             'harga' => $harga_kontrak_doc_peternak,
+        //             'total' => $total_doc_peternak
+        //         );
+        //         $data['inti']['doc'] = array(
+        //             'tgl_docin' => $d_td['datang'],
+        //             'sj' => $d_td['no_sj'],
+        //             'barang' => strtoupper($d_od['d_barang']['nama']) . ' BOX ' . strtoupper($d_od['jns_box']),
+        //             'box' => $jml_box,
+        //             'jumlah' => $jml_ekor,
+        //             'harga' => $harga_kontrak_doc_supplier,
+        //             'total' => $total_doc_supplier
+        //         );
+        //         $data['plasma']['vaksin'] = array(
+        //             'barang' => $d_rs['data_vaksin']['nama_vaksin'],
+        //             'harga' => $harga_vaksin,
+        //             'total' => $total_vaksin
+        //         );
+        //     }
+        // }
 
         return $data;
     }

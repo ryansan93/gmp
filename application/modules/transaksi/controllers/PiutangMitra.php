@@ -602,13 +602,15 @@ class PiutangMitra extends Public_Controller
     }
 
     public function tes() {
-        $_kode = 'PM';
+        // $_kode = 'PM';
 
-        cetak_r( strlen($_kode) );
+        // cetak_r( strlen($_kode) );
 
-        $m_pm = new \Model\Storage\Piutang_model();
-        $kode = $m_pm->getNextId_piutang($_kode);
+        // $m_pm = new \Model\Storage\Piutang_model();
+        // $kode = $m_pm->getNextId_piutang($_kode);
 
-        cetak_r( $kode );
+        // cetak_r( $kode );
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 5, 5, 2);
     }
 }

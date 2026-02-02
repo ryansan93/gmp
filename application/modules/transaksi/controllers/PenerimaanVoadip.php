@@ -1045,55 +1045,55 @@ class PenerimaanVoadip extends Public_Controller {
         // $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '1665', '2025-10-11', 2, null, null";
         // $d_conf = $conf->hydrateRaw($sql);
 
-        // $conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select
-        //         data.tgl_trans,
-        //         data.kode_trans,
-        //         data.total as nominal_terima,
-        //         dj.nominal as nominal_jurnal
-        //     from
-        //     (
-        //         select dss.tgl_trans, tv.id as kode_trans, sum(dss.jumlah*dss.hrg_beli) as total from det_stok_siklus dss 
-        //         left join
-        //             kirim_voadip kv
-        //             on
-        //                 kv.no_order = dss.kode_trans
-        //         left join
-        //             terima_voadip tv
-        //             on
-        //                 tv.id_kirim_voadip = kv.id
-        //         where
-        //             dss.jenis_barang = 'voadip'
-        //         group by
-        //             dss.tgl_trans, tv.id
-        //     ) data
-        //     left join
-        //         (select * from det_jurnal where coa_tujuan = '71102.000') dj
-        //         on
-        //             data.kode_trans = dj.tbl_id
-        //     where
-        //         data.tgl_trans >= '2025-12-01'
-        //         and (data.total - dj.nominal) <> 0
-        //     order by
-        //         data.tgl_trans asc,
-        //         data.kode_trans asc
-        // ";
-        // $d_conf = $conf->hydrateRaw($sql);
+        $conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.tgl_trans,
+                data.kode_trans,
+                data.total as nominal_terima,
+                dj.nominal as nominal_jurnal
+            from
+            (
+                select dss.tgl_trans, tv.id as kode_trans, sum(dss.jumlah*dss.hrg_beli) as total from det_stok_siklus dss 
+                left join
+                    kirim_voadip kv
+                    on
+                        kv.no_order = dss.kode_trans
+                left join
+                    terima_voadip tv
+                    on
+                        tv.id_kirim_voadip = kv.id
+                where
+                    dss.jenis_barang = 'voadip'
+                group by
+                    dss.tgl_trans, tv.id
+            ) data
+            left join
+                (select * from det_jurnal where coa_tujuan = '71102.000') dj
+                on
+                    data.kode_trans = dj.tbl_id
+            where
+                data.tgl_trans >= '2026-01-01'
+                and (data.total - dj.nominal) <> 0
+            order by
+                data.tgl_trans asc,
+                data.kode_trans asc
+        ";
+        $d_conf = $conf->hydrateRaw($sql);
 
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
-        //     foreach ($d_conf as $key => $value) {
-        //         $id = $value['kode_trans'];
-        //         $id_old = $value['kode_trans'];
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+            foreach ($d_conf as $key => $value) {
+                $id = $value['kode_trans'];
+                $id_old = $value['kode_trans'];
     
-        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
-        //     }
-        // }
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+            }
+        }
 
-        $id = '5224';
-        $id_old = '5224';
+        // $id = '6305';
+        // $id_old = '6305';
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
     }
 }

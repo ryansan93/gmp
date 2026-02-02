@@ -19,7 +19,7 @@
             <td class="text-right page3"><?php echo angkaDecimal($value['beli_doc']); ?></td>
             <td class="text-right page3"><?php echo angkaDecimal($value['mutasi_msk_doc']); ?></td>
             <td class="text-right page3"><?php echo angkaDecimal($value['mutasi_klwr_doc']); ?></td>
-            <td class="text-right page3"><?php echo angkaDecimal(0); ?></td>
+            <td class="text-right page3"><?php echo angkaDecimal($value['koreksi_doc']); ?></td>
             <td class="text-right page3"><?php echo ($value['pemakaian_doc'] >= 0) ? angkaDecimal($value['pemakaian_doc']) : '('.angkaDecimal(abs($value['pemakaian_doc'])).')'; ?></td>
             <td class="text-right page4"><?php echo angkaDecimal($value['beli_oa']); ?></td>
             <td class="text-right page4"><?php echo angkaDecimal($value['mutasi_msk_oa']); ?></td>
