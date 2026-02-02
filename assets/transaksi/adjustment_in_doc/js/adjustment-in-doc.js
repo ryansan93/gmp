@@ -347,7 +347,11 @@ var aid = {
 				hideLoading();
 				if ( data.status == 1 ) {
 					bootbox.alert(data.content.message, function() {
-                        aid.loadForm(data.content.id);
+                        if ( data.content.status == 3 ) {
+                            aid.loadForm(null, null, 'action');
+                        } else {
+                            aid.loadForm(data.content.id, null, 'action');
+                        }
                     });
 				} else {
 					bootbox.alert(data.message);
