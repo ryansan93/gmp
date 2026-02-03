@@ -1427,7 +1427,7 @@ class TSDRHPP extends Public_Controller {
                 'tgl_docin' => $tgl_docin,
                 'sj' => $no_sj,
                 'barang' => strtoupper($nama_barang) . ' BOX ' . strtoupper($jenis_box),
-                'box' => $jml_ekor / 50,
+                'box' => $jml_ekor / 100,
                 'jumlah' => $jml_ekor,
                 'harga' => $harga_kontrak_doc_supplier,
                 'total' => $total_doc_supplier

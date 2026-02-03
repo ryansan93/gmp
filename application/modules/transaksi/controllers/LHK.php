@@ -1138,6 +1138,12 @@ class LHK extends Public_Controller
                 }
             }
 
+            $m_ad = new \Model\Storage\AdjinDoc_model();
+            $d_ad = $m_ad->where('tanggal', '<=', $params['tanggal'])->where('noreg', $params['noreg'])->first();
+            if ( $d_ad ) {
+                $populasi += $d_ad->jumlah;
+            }
+
             $umur = $params['umur'];
 
             $total = 0;
@@ -1429,6 +1435,12 @@ class LHK extends Public_Controller
                     $bb_first = $d_td->bb;
                     $populasi = $d_td->jml_ekor;
                 }
+            }
+
+            $m_ad = new \Model\Storage\AdjinDoc_model();
+            $d_ad = $m_ad->where('tanggal', '<=', $d_lhk_by_id->tanggal)->where('noreg', $params['noreg'])->first();
+            if ( $d_ad ) {
+                $populasi += $d_ad->jumlah;
             }
             
             $umur = $params['umur'];
@@ -1991,6 +2003,112 @@ class LHK extends Public_Controller
         }
 
         display_json( $this->result );
+    }
+
+    public function hitUlang($id) {
+        $m_lhk = new \Model\Storage\Lhk_model();
+        $d_lhk_by_id = $m_lhk->where('id', $id)->with(['lhk_sekat'])->first()->toArray();
+
+        // cetak_r( $d_lhk_by_id, 1 );
+
+        $noreg = $d_lhk_by_id['noreg'];
+        $umur = $d_lhk_by_id['umur'];
+
+        $d_lhk_last_data = $m_lhk->where('noreg', $noreg)->where('umur', '<', $umur)->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi'])->orderBy('umur', 'desc')->first();
+
+        $pakai_pakan = $d_lhk_by_id['pakai_pakan'];
+        $sisa_pakan = $d_lhk_by_id['sisa_pakan'];
+        $ekor_mati = $d_lhk_by_id['ekor_mati'];
+
+        $m_rs = new \Model\Storage\RdimSubmit_model();
+        $d_rs = $m_rs->where('noreg', $noreg)->first();
+
+        $m_ov = new \Model\Storage\OrderDoc_model();
+        $d_ov = $m_ov->where('noreg', $noreg)->first();
+
+        $populasi = $d_rs->populasi;
+        $bb_first = 0;
+        if ( $d_ov ) {
+            $m_td = new \Model\Storage\TerimaDoc_model();
+            $d_td = $m_td->where('no_order', $d_ov->no_order)->orderBy('version', 'desc')->first();
+            if ( $d_td ) {
+                $bb_first = $d_td->bb;
+                $populasi = $d_td->jml_ekor;
+            }
+        }
+
+        $m_ad = new \Model\Storage\AdjinDoc_model();
+        $d_ad = $m_ad->where('tanggal', '<=', $d_lhk_by_id['tanggal'])->where('noreg', $noreg)->first();
+        if ( $d_ad ) {
+            $populasi += $d_ad->jumlah;
+        }
+
+        $total = 0;
+        for ($i = 0; $i < count($d_lhk_by_id['lhk_sekat']); $i++) {
+            $total += $d_lhk_by_id['lhk_sekat'][$i]['bb'];
+        }
+
+        $bb_rata = 0;
+        if ( $total != 0 && count($d_lhk_by_id['lhk_sekat']) != 0 ) {
+            $bb_rata = $total / count($d_lhk_by_id['lhk_sekat']);
+        }
+
+        // HITUNG ADG
+        $selisih_umur = 0;
+
+        if ( empty($d_lhk_last_data) ) {
+            $selisih_umur = $umur;
+        } else {
+            $bb_first = $d_lhk_last_data->bb;
+
+            $selisih_umur = $umur - $d_lhk_last_data->umur;
+        }
+
+
+        $adg = 0;
+        if ( ($bb_rata - $bb_first) != 0 && $selisih_umur != 0 ) {
+            $adg = ($bb_rata - $bb_first) / $selisih_umur;
+        }
+        // END - HITUNG ADG
+
+        // HITUNG FCR
+        $fcr = 0;
+        $kg_konsumsi = $pakai_pakan * 50;
+        $ekor_sisa = $populasi - $ekor_mati;
+        $kg_panen = $ekor_sisa * $bb_rata;
+        
+        if ($kg_konsumsi > 0 && $kg_panen > 0) {
+            $fcr = (($kg_konsumsi / $kg_panen) * 1000) / 1000;
+        }
+        // END - HITUNG FCR
+        
+        // HITUNG DH
+        $ekor_panen = $ekor_sisa;
+        $dh = 0;
+        if ( $ekor_sisa != 0 && $populasi != 0 ) {
+            $dh = (($ekor_sisa / $populasi) * 10000) / 10000;
+        }
+
+        $persen_dh = $dh * 100;
+        // END - HITUNG DH
+
+        // HITUNG IP
+        // $up = (($params['umur'] * $ekor_panen) / $ekor_panen) * 100;
+        $ip = 0;
+        if ( ($dh * $bb_rata * 10000) != 0 && ($fcr * $umur) != 0 ) {
+            $ip = ($dh * $bb_rata * 10000) / ($fcr * $umur);
+        }
+        // END - HIUTNG IP
+
+        $m_kry = new \Model\Storage\Karyawan_model();
+        $m_lhk = new \Model\Storage\Lhk_model();
+        $m_lhk->where('id', $id)->update(
+            array(
+                'adg' => $adg,
+                'fcr' => $fcr,
+                'ip' => $ip
+            )
+        );
     }
 
     public function hitStokTanpaJurnal($tanggal = null, $noreg) {
