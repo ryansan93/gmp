@@ -131,7 +131,7 @@ class KartuStok extends Public_Controller {
 
                     union all
 
-                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_pakan rp -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI PLASMA' as jenis_trans from retur_pakan rp where rp.jenis_retur = 'opkp' -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
@@ -143,7 +143,7 @@ class KartuStok extends Public_Controller {
 
                     union all
 
-                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp where rp.jenis_retur = 'opkg' -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
 
                     union all
 
