@@ -1503,6 +1503,7 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 7117, 7117, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 9142, 9142, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 13188, 13188, 3);
 	}
 }

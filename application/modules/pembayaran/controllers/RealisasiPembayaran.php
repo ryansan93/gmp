@@ -1190,7 +1190,7 @@ class RealisasiPembayaran extends Public_Controller
                     'dn' => $dn,
                     'cn' => $cn,
                     'pph' => $pph,
-                    'netto' => $$netto,
+                    'netto' => $netto,
                     'transfer' => $transfer,
                     'bayar' => $bayar,
                     'kode_unit' => $v_kpv['kode_unit'],
