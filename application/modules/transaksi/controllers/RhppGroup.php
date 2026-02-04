@@ -498,22 +498,24 @@ class RhppGroup extends Public_Controller {
                         ksort($data_retur_pakan_plasma);
                     }
 
-                    foreach ($d_rhpp_plasma['voadip'] as $k_voadip => $v_voadip) {
-                        $m_brg = new \Model\Storage\Barang_model();
-                        $d_brg = $m_brg->where('nama', 'like', '%'.$v_voadip['barang'].'%')->orderBy('id', 'desc')->first();
-
-                        $key_voadip = $v_voadip['tanggal'].' | '.$v_voadip['nota'].' | '.$v_voadip['barang'].' | '.$v_voadip['harga'];
-                        $data_voadip_plasma[ $key_voadip ] = array(
-                            'tanggal' => $v_voadip['tanggal'],
-                            'sj' => $v_voadip['nota'],
-                            'barang' => $v_voadip['barang'],
-                            'jumlah' => $v_voadip['jumlah'],
-                            'harga' => $v_voadip['harga'],
-                            'total' => $v_voadip['total'],
-                            'decimal' => !empty($d_brg) ? $d_brg->desimal_harga : 2
-                        );
+                    if ( !empty($d_rhpp_plasma['voadip']) ) {
+                        foreach ($d_rhpp_plasma['voadip'] as $k_voadip => $v_voadip) {
+                            $m_brg = new \Model\Storage\Barang_model();
+                            $d_brg = $m_brg->where('nama', 'like', '%'.$v_voadip['barang'].'%')->orderBy('id', 'desc')->first();
+    
+                            $key_voadip = $v_voadip['tanggal'].' | '.$v_voadip['nota'].' | '.$v_voadip['barang'].' | '.$v_voadip['harga'];
+                            $data_voadip_plasma[ $key_voadip ] = array(
+                                'tanggal' => $v_voadip['tanggal'],
+                                'sj' => $v_voadip['nota'],
+                                'barang' => $v_voadip['barang'],
+                                'jumlah' => $v_voadip['jumlah'],
+                                'harga' => $v_voadip['harga'],
+                                'total' => $v_voadip['total'],
+                                'decimal' => !empty($d_brg) ? $d_brg->desimal_harga : 2
+                            );
+                        }
+                        ksort($data_voadip_plasma);
                     }
-                    ksort($data_voadip_plasma);
 
                     if ( !empty($d_rhpp_plasma['retur_voadip']) ) {
                         foreach ($d_rhpp_plasma['retur_voadip'] as $k_rvoadip => $v_rvoadip) {
@@ -679,22 +681,24 @@ class RhppGroup extends Public_Controller {
                     ksort($data_oa_retur_pakan_inti);
                 }
 
-                foreach ($d_rhpp_inti['voadip'] as $k_voadip => $v_voadip) {
-                    $m_brg = new \Model\Storage\Barang_model();
-                    $d_brg = $m_brg->where('nama', 'like', '%'.$v_voadip['barang'].'%')->orderBy('id', 'desc')->first();
-
-                    $key_voadip = $v_voadip['tanggal'].' | '.$v_voadip['nota'].' | '.$v_voadip['barang'].' | '.$v_voadip['harga'];
-                    $data_voadip_inti[ $key_voadip ] = array(
-                        'tanggal' => $v_voadip['tanggal'],
-                        'sj' => $v_voadip['nota'],
-                        'barang' => $v_voadip['barang'],
-                        'jumlah' => $v_voadip['jumlah'],
-                        'harga' => $v_voadip['harga'],
-                        'total' => $v_voadip['total'],
-                        'decimal' => !empty($d_brg) ? $d_brg->desimal_harga : 2
-                    );
+                if ( !empty($d_rhpp_inti['voadip']) ) {
+                    foreach ($d_rhpp_inti['voadip'] as $k_voadip => $v_voadip) {
+                        $m_brg = new \Model\Storage\Barang_model();
+                        $d_brg = $m_brg->where('nama', 'like', '%'.$v_voadip['barang'].'%')->orderBy('id', 'desc')->first();
+    
+                        $key_voadip = $v_voadip['tanggal'].' | '.$v_voadip['nota'].' | '.$v_voadip['barang'].' | '.$v_voadip['harga'];
+                        $data_voadip_inti[ $key_voadip ] = array(
+                            'tanggal' => $v_voadip['tanggal'],
+                            'sj' => $v_voadip['nota'],
+                            'barang' => $v_voadip['barang'],
+                            'jumlah' => $v_voadip['jumlah'],
+                            'harga' => $v_voadip['harga'],
+                            'total' => $v_voadip['total'],
+                            'decimal' => !empty($d_brg) ? $d_brg->desimal_harga : 2
+                        );
+                    }
+                    ksort($data_voadip_inti);
                 }
-                ksort($data_voadip_inti);
 
                 if ( !empty($d_rhpp_inti['retur_voadip']) ) {
                     foreach ($d_rhpp_inti['retur_voadip'] as $k_rvoadip => $v_rvoadip) {
