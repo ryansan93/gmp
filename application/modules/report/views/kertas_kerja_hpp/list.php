@@ -11,6 +11,7 @@
             <td class="text-right page1"><?php echo angkaDecimal($value['mutasi_klwr_pkn']); ?></td>
             <td class="text-right page1"><?php echo angkaDecimal(0); ?></td>
             <td class="text-right page1"><?php echo ($value['pemakaian_pkn'] >= 0) ? angkaDecimal($value['pemakaian_pkn']) : '('.angkaDecimal(abs($value['pemakaian_pkn'])).')'; ?></td>
+            <td class="text-right page1"><?php echo ($value['sisa_pkn'] >= 0) ? angkaDecimal($value['sisa_pkn']) : '('.angkaDecimal(abs($value['sisa_pkn'])).')'; ?></td>
             <td class="text-right page2"><?php echo angkaDecimal($value['beli_ovk']); ?></td>
             <td class="text-right page2"><?php echo angkaDecimal($value['mutasi_msk_ovk']); ?></td>
             <td class="text-right page2"><?php echo angkaDecimal($value['mutasi_klwr_ovk']); ?></td>
@@ -32,6 +33,6 @@
     <?php } ?>
 <?php else: ?>
 	<tr>
-        <td colspan="23">Data tidak ditemukan.</td>
+        <td colspan="24">Data tidak ditemukan.</td>
     </tr>
 <?php endif ?>
