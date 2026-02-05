@@ -32,6 +32,24 @@
 						</div>
 					</div>
 					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Tipe Pelanggan</span>
+						<div class="col-sm-6">
+							<select class="form-control" name="tipe_plg">
+								<?php if ( !empty($tipe_pelanggan) ) { ?>
+									<?php foreach ($tipe_pelanggan as $key => $value) { ?>
+										<?php
+											$selected = '';
+											if ( $value['id'] == $data['tipe'] ) {
+												$selected = 'selected';
+											}
+										?>
+										<option value="<?php echo $value['id']; ?>" <?php echo $selected; ?> ><?php echo $value['nama']; ?></option>
+									<?php } ?>
+								<?php } ?>
+							</select>
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-6 text-right">Nama Pelanggan</span>
 						<div class="col-sm-6">
 							<input required="required" class="form-control" type="text" name="nama_plg" placeholder="Perusahaan/Perseorangan" value="<?php echo $data['nama']; ?>" >
@@ -102,9 +120,11 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<!-- <span class="file"><?php echo $l_ktp['filename']; ?></span> -->
-							<a href="uploads/<?php echo $l_ktp['path']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a>
+							<?php if (isset($l_ktp['path']) && !empty($l_ktp['path'])) { ?>
+								<a href="uploads/<?php echo $l_ktp['path']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a>
+							<?php } ?>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_pelanggan['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo $l_ktp['path']; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo !empty($l_ktp['path']) ? $l_ktp['path'] : null; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDP"></i>
 							</label>
 						</div>
@@ -230,9 +250,11 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<!-- <span class="file"><?php echo $l_npwp['filename']; ?></span> -->
-							<a href="uploads/<?php echo $l_npwp['path']; ?>" target="_blank"><?php echo $l_npwp['filename']; ?></a>
+							<?php if (isset($l_npwp['path']) && !empty($l_npwp['path'])) { ?>
+								<a href="uploads/<?php echo $l_npwp['path']; ?>" target="_blank"><?php echo $l_npwp['filename']; ?></a>
+							<?php } ?>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_usaha_pelanggan['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo $l_npwp['path']; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo (!empty($l_npwp['path'])) ? $l_npwp['path'] : null; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran NPWP"></i>
 							</label>
 						</div>
@@ -383,8 +405,8 @@
 							<?php if ( !empty($data['banks']) ): ?>
 								<?php foreach ($data['banks'] as $bank) : ?>
 									<?php 
-										$path = $bank['lampiran']['path'];
-										$filename = $bank['lampiran']['filename'];
+										$path = (!empty($bank['lampiran']['path'])) ? $bank['lampiran']['path'] : null;
+										$filename = !empty($bank['lampiran']['filename']) ? $bank['lampiran']['filename'] : null;
 									?>
 									<tr class="detail_rekening v-center">
 										<td><input class="form-control" type="text" name="rekening_plg" data-id="<?php echo $bank['id']; ?>" placeholder="No Rekeneing" value="<?php echo $bank['rekening_nomor']; ?>" ></td>
@@ -430,9 +452,11 @@
 			<div id="lampiran_pelanggan">
 				<div class="col-sm-12"><b>Lampiran DDP</b></div>
 				<!-- <span class="file"><?php echo $l_ddp['filename']; ?></span> -->
-				<a href="uploads/<?php echo $l_ddp['path']; ?>" target="_blank"><?php echo $l_ddp['filename']; ?></a>
+				<?php if ( !empty($l_ddp['path']) ) { ?>
+					<a href="uploads/<?php echo $l_ddp['path']; ?>" target="_blank"><?php echo $l_ddp['filename']; ?></a>
+				<?php } ?>
 				<label class="col-sm-2 text-right" data-idnama="<?php echo $list_lampiran_ddp_pelanggan['id'] ?>">
-					<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ddp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDP" data-old="<?php echo $l_ddp['path']; ?>">
+					<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ddp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDP" data-old="<?php echo !empty($l_ddp['path']) ? $l_ddp['path'] : null; ?>">
 					<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDP"></i>
 				</label>
 			</div>

@@ -20,6 +20,12 @@
 						</div>
 					</div>
 					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Tipe Pelanggan</span>
+						<div class="col-sm-6">
+							<input class="form-control" type="text" name="tipe_plg" value="<?php echo (isset($data['d_tipe']['nama']) && !empty($data['d_tipe']['nama'])) ? $data['d_tipe']['nama'] : '-'; ?>" readonly>
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-6 text-right">Nama Pelanggan</span>
 						<div class="col-sm-6">
 							<input required="required" class="form-control" type="text" name="nama_plg" placeholder="Perusahaan/Perseorangan" value="<?php echo $data['nama']; ?>" readonly>
@@ -57,7 +63,7 @@
 									$disabled = null;
 								} 
 							?>
-							<a type="button" class="col-xs-12 btn btn-default pull-right <?php echo $disabled; ?>" href="https://www.google.com/maps/?q=<?php echo $data['posisi']['lat_long']; ?>" target="_blank">
+							<a type="button" class="col-xs-12 btn btn-default pull-right <?php echo $disabled; ?>" href="https://www.google.com/maps/?q=<?php echo !empty($data['posisi']['lat_long']) ? $data['posisi']['lat_long'] : null; ?>" target="_blank">
 								<i class="fa fa-map-marker"></i> Lokasi
 							</a>
 						</div>
@@ -68,7 +74,7 @@
 									$disabled = null;
 								} 
 							?>
-							<a type="button" class="col-xs-12 btn btn-default pull-right <?php echo $disabled; ?>" href="uploads/<?php echo $data['posisi']['foto_kunjungan'] ?>" target="_blank">
+							<a type="button" class="col-xs-12 btn btn-default pull-right <?php echo $disabled; ?>" href="uploads/<?php echo !empty($data['posisi']['foto_kunjungan']) ? $data['posisi']['foto_kunjungan'] : null; ?>" target="_blank">
 								<i class="fa fa-camera"></i> Foto
 							</a>
 						</div>
@@ -106,11 +112,13 @@
 						<div class="col-sm-2" style="margin-left: 11px; padding-right: 20px;">
 							<input required="required" class="form-control" type="text" name="ktp_plg" placeholder="Nomer KTP" value="<?php echo $data['nik']; ?>" readonly>
 						</div>
-						<div class="col-sm-8 no-padding">
-							<div class="col-sm-12">
-								<a target="_blank" href="<?php echo 'uploads/'.$l_ktp['path']; ?>" ><?php echo $l_ktp['filename']; ?></a>
+						<?php if (isset($l_ktp['path']) && !empty($l_ktp['path'])) { ?>
+							<div class="col-sm-8 no-padding">
+								<div class="col-sm-12">
+									<a target="_blank" href="<?php echo 'uploads/'.$l_ktp['path']; ?>" ><?php echo $l_ktp['filename']; ?></a>
+								</div>
 							</div>
-						</div>
+						<?php } ?>
 					</div>
 				</div>
 				<div class="col-sm-4">
@@ -198,11 +206,13 @@
 						<div class="col-sm-2" style="margin-left: 11px; padding-right: 20px;">
 							<input required="required" class="form-control" type="text" name="npwp_plg" placeholder="Nomer NPWP" value="<?php echo (!empty($data['npwp']) && $data['npwp'] != '') ? $data['npwp'] : '-'; ?>" readonly>
 						</div>
-						<div class="col-sm-8 no-padding">
-							<div class="col-sm-12">
-								<a target="_blank" href="<?php echo 'uploads/'.$l_npwp['path']; ?>" ><?php echo $l_npwp['filename']; ?></a>
+						<?php if (isset($l_npwp['path']) && !empty($l_npwp['path'])) { ?>
+							<div class="col-sm-8 no-padding">
+								<div class="col-sm-12">
+									<a target="_blank" href="<?php echo 'uploads/'.$l_npwp['path']; ?>" ><?php echo $l_npwp['filename']; ?></a>
+								</div>
 							</div>
-						</div>
+						<?php } ?>
 					</div>
 				</div>
 				<div class="col-sm-12 no-padding">

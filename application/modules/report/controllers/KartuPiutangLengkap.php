@@ -38,9 +38,12 @@ class KartuPiutangLengkap extends Public_Controller {
             ));
 
             $data = $this->includes;
-
+            $m_tp = new \Model\Storage\TipePelanggan_model();
+            $d_tp = $m_tp->getData();
+            
             $content['akses'] = $akses;
             $content['title_menu'] = 'Laporan Kartu Piutang Lengkap';
+            $content['tipe_pelanggan'] = $d_tp;
 
             // Load Indexx
             $data['view'] = $this->load->view($this->pathView.'index', $content, TRUE);
@@ -55,6 +58,7 @@ class KartuPiutangLengkap extends Public_Controller {
 
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
+        $tipe_pelanggan = $params['tipe_pelanggan'];
 
         if ( $bulan != 'all' ) {
             $i = $bulan;
@@ -76,6 +80,11 @@ class KartuPiutangLengkap extends Public_Controller {
             $end_date = date("Y-m-t", strtotime($_end_date));
         }
 
+        $sql_tipe_plg = "";
+        if ( !empty($tipe_pelanggan) && stristr($tipe_pelanggan, 'all') === FALSE ) {
+            $sql_tipe_plg = "where tp.id = ".$tipe_pelanggan."";
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
@@ -83,6 +92,7 @@ class KartuPiutangLengkap extends Public_Controller {
                 plg.nama as nama_pelanggan
             from (
                 /* SALDO AWAL */
+                /*
                 select 
                     '".$start_date."' as tanggal,
                     inv.pelanggan,
@@ -327,11 +337,90 @@ class KartuPiutangLengkap extends Public_Controller {
                         inv.nomor = byr.nomor
                 group by
                     inv.pelanggan
+                */
+
+                /* SALDO AWAL */
+                select 
+                    '".$start_date."' as tanggal,
+                    inv.pelanggan,
+                    'Saldo Awal' as jenis_trans,
+                    sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0)) as debet,
+                    0 as kredit,
+                    /*
+                    case
+                        when sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0)) > 0 then
+                            sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                        else
+                            0
+                    end as debet,
+                    case
+                        when sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0)) < 0 then
+                            sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0))
+                        else
+                            0
+                    end as kredit,
+                    */
+                    1 as urut
+                from (
+                    select
+                        rs.tgl_panen as tanggal,
+                        drsi.no_inv as nomor,
+                        drs.no_pelanggan as pelanggan,
+                        drsi.total as debet,
+                        0 as kredit,
+                        drsi.no_inv as kode_trans
+                    from det_real_sj_inv drsi
+                    left join
+                        (select id_header, no_sj, no_pelanggan from det_real_sj group by id_header, no_sj, no_pelanggan) drs
+                        on
+                            drsi.no_sj = drs.no_sj
+                    left join
+                        real_sj rs
+                        on
+                            drs.id_header = rs.id
+                    where
+                        rs.tgl_panen < '".$start_date."'
+
+                    union all
+
+                    select 
+                        pp.tgl_bayar as tanggal,
+                        dpp.no_inv as nomor,
+                        pp.no_pelanggan as pelanggan,
+                        0 as debet,
+                        isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as kredit,
+                        pp.nomor as kode_trans
+                    from det_pembayaran_pelanggan dpp
+                    left join
+                        pembayaran_pelanggan pp
+                        on
+                            dpp.id_header = pp.id
+                    left join
+                        det_real_sj_inv drsi
+                        on
+                            dpp.no_inv = drsi.no_inv 
+                    left join
+                        (select id_header, no_sj, no_pelanggan from det_real_sj group by id_header, no_sj, no_pelanggan) drs
+                        on
+                            drsi.no_sj = drs.no_sj
+                    left join
+                        real_sj rs
+                        on
+                            drs.id_header = rs.id
+                    where
+                        pp.tgl_bayar < '".$start_date."'
+                        and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) > 0
+                ) inv
+                group by
+                    inv.pelanggan
+                having
+                    sum(isnull(inv.debet, 0 ) - isnull(inv.kredit, 0)) <> 0
                 /* END - SALDO AWAL */
 
                 union all
 
                 /* TRANSAKSI DI BULAN ITU */
+                /*
                 select 
                     inv.tanggal as tanggal,
                     inv.pelanggan, 
@@ -372,8 +461,72 @@ class KartuPiutangLengkap extends Public_Controller {
                         d.tanggal between '".$start_date."' and '".$end_date."' and
                         (d.pelanggan is not null and d.pelanggan <> '')
                 ) inv
+                */
+
+                select 
+                    inv.tanggal,
+                    inv.pelanggan, 
+                    inv.nomor as jenis_trans,
+                    isnull(sum(inv.total), 0) as debet,
+                    0 as kredit,
+                    2 as urut
+                from (
+                    select
+                        rs.tgl_panen as tanggal,
+                        drsi.no_inv as nomor,
+                        drs.no_pelanggan as pelanggan,
+                        drsi.total,
+                        drsi.no_inv as kode_trans
+                    from det_real_sj_inv drsi
+                    left join
+                        (select id_header, no_sj, no_pelanggan from det_real_sj group by id_header, no_sj, no_pelanggan) drs
+                        on
+                            drsi.no_sj = drs.no_sj
+                    left join
+                        real_sj rs
+                        on
+                            drs.id_header = rs.id
+                    where
+                        rs.tgl_panen between '".$start_date."' and '".$end_date."'
+                ) inv
+                group by
+                    inv.tanggal,
+                    inv.pelanggan,
+                    inv.nomor
+
+                union all
+
+                select
+                    byr.tanggal,
+                    byr.pelanggan,
+                    byr.nomor as jenis_trans,
+                    0 as debet,
+                    isnull(sum(byr.bayar), 0) as kredit,
+                    3 as urut
+                from
+                (
+                    select 
+                        pp.tgl_bayar as tanggal,
+                        pp.no_pelanggan as pelanggan,
+                        dpp.no_inv as nomor,
+                        isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as bayar,
+                        pp.nomor as kode_trans
+                    from det_pembayaran_pelanggan dpp
+                    left join
+                        pembayaran_pelanggan pp
+                        on
+                            dpp.id_header = pp.id
+                    where
+                        pp.tgl_bayar between '".$start_date."' and '".$end_date."' 
+                        and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) <> 0
+                ) byr
+                group by
+                    byr.tanggal,
+                    byr.pelanggan,
+                    byr.nomor
                 /* END - TRANSAKSI DI BULAN ITU */
 
+                /*
                 union all
 
                 select
@@ -416,10 +569,11 @@ class KartuPiutangLengkap extends Public_Controller {
                         c.tanggal between '".$start_date."' and '".$end_date."' and
                         (c.pelanggan is not null and c.pelanggan <> '')
                 ) byr
+                */
             ) data
             left join
                 (
-                    select p1.nomor, p1.nama from pelanggan p1
+                    select p1.nomor, p1.nama, p1.tipe_plg from pelanggan p1
                     right join
                         (select max(id) as id, nomor from pelanggan p where tipe = 'pelanggan' group by nomor) p2
                         on
@@ -427,12 +581,18 @@ class KartuPiutangLengkap extends Public_Controller {
                 ) plg
                 on
                     plg.nomor = data.pelanggan
+            left join
+                tipe_pelanggan tp
+                on
+                    tp.id = plg.tipe_plg
+            ".$sql_tipe_plg."
             order by
                 data.pelanggan asc,
                 data.urut asc,
                 data.tanggal asc,
                 data.jenis_trans asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

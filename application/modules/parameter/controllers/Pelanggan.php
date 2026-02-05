@@ -459,9 +459,12 @@ class Pelanggan extends Public_Controller {
         $akses = hakAkses($this->url);
 
         $content['akses'] = $akses;
-		$m_model = new \Model\Storage\Jenis_model();
-        $d_jns = $m_model->getData();
+		$m_jns = new \Model\Storage\Jenis_model();
+        $d_jns = $m_jns->getData();
+		$m_tp = new \Model\Storage\TipePelanggan_model();
+        $d_tp = $m_tp->getData();
         $content['jenis'] = !empty($d_jns) ? $d_jns : null;
+        $content['tipe_pelanggan'] = !empty($d_tp) ? $d_tp : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "KTP Pelanggan")->first();
 		$content['list_lampiran_usaha_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "NPWP Pelanggan")->first();
@@ -528,9 +531,12 @@ class Pelanggan extends Public_Controller {
 		$content['l_ddp'] = $lampiran_ddp;
         $content['akses'] = $akses;
 
-		$m_model = new \Model\Storage\Jenis_model();
-        $d_jns = $m_model->getData();
+		$m_jns = new \Model\Storage\Jenis_model();
+        $d_jns = $m_jns->getData();
+		$m_tp = new \Model\Storage\TipePelanggan_model();
+        $d_tp = $m_tp->getData();
         $content['jenis'] = !empty($d_jns) ? $d_jns : null;
+		$content['tipe_pelanggan'] = !empty($d_tp) ? $d_tp : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "KTP Pelanggan")->first();
 		$content['list_lampiran_usaha_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "NPWP Pelanggan")->first();
@@ -548,7 +554,7 @@ class Pelanggan extends Public_Controller {
 
         // mengambil data pelanggan
 		$m_pelanggan = new \Model\Storage\Pelanggan_model();
-		$d_pelanggan = $m_pelanggan->where('tipe', 'pelanggan')->where('id', $id)->with(['d_jenis', 'telepons', 'banks', 'posisi', 'logs'])->first();
+		$d_pelanggan = $m_pelanggan->where('tipe', 'pelanggan')->where('id', $id)->with(['d_jenis', 'd_tipe', 'telepons', 'banks', 'posisi', 'logs'])->first();
 		
 		// mengambil lokasi
 		$lokasi = new \Model\Storage\Lokasi_model();
@@ -699,6 +705,7 @@ class Pelanggan extends Public_Controller {
 			$m_pelanggan->plafon = $params['plafon'];
 			$m_pelanggan->jatuh_tempo = $params['jatuh_tempo'];
 			$m_pelanggan->version = 1;
+			$m_pelanggan->tipe_plg = $params['tipe_pelanggan'];
 			$m_pelanggan->save();
 
 			$deskripsi_log_pelanggan = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -797,6 +804,7 @@ class Pelanggan extends Public_Controller {
 			$m_pelanggan->plafon = $params['plafon'];
 			$m_pelanggan->jatuh_tempo = $params['jatuh_tempo'];
 			$m_pelanggan->version = $version;
+			$m_pelanggan->tipe_plg = $params['tipe_pelanggan'];
 			$m_pelanggan->save();
 
 			$deskripsi_log_pelanggan = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];

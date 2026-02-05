@@ -39,8 +39,12 @@ class UmurKartuPiutang extends Public_Controller {
 
             $data = $this->includes;
 
+            $m_tp = new \Model\Storage\TipePelanggan_model();
+            $d_tp = $m_tp->getData();
+
             $content['akses'] = $akses;
             $content['title_menu'] = 'Laporan Umur Kartu Piutang';
+            $content['tipe_pelanggan'] = $d_tp;
 
             // Load Indexx
             $data['view'] = $this->load->view($this->pathView.'index', $content, TRUE);
@@ -53,6 +57,7 @@ class UmurKartuPiutang extends Public_Controller {
     public function getData( $params ) {
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
+        $tipe_pelanggan = $params['tipe_pelanggan'];
 
         if ( $bulan != 'all' ) {
             $i = $bulan;
@@ -77,6 +82,11 @@ class UmurKartuPiutang extends Public_Controller {
         $today = date("Y-m-d");
         if ( $end_date > $today ) {
             $end_date = $today;
+        }
+
+        $sql_tipe_plg = "";
+        if ( !empty($tipe_pelanggan) && stristr($tipe_pelanggan, 'all') === FALSE ) {
+            $sql_tipe_plg = "where tp.id = ".$tipe_pelanggan."";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -364,7 +374,7 @@ class UmurKartuPiutang extends Public_Controller {
             ) data
             left join
                 (
-                    select p1.nomor, p1.nama from pelanggan p1
+                    select p1.nomor, p1.nama, p1.tipe_plg from pelanggan p1
                     right join
                         (select max(id) as id, nomor from pelanggan p where tipe = 'pelanggan' group by nomor) p2
                         on
@@ -372,6 +382,11 @@ class UmurKartuPiutang extends Public_Controller {
                 ) plg
                 on
                     plg.nomor = data.pelanggan
+            left join
+                tipe_pelanggan tp
+                on
+                    tp.id = plg.tipe_plg
+            ".$sql_tipe_plg."
             order by
                 data.pelanggan asc
         ";

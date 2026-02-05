@@ -38,6 +38,19 @@
 				</div>
 			</div>
         </div>
+		<div class="col-xs-12 no-padding contain bulanan" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding">
+                <div class="col-xs-12 no-padding"><label class="control-label">Tipe Pelanggan</label></div>
+				<div class="col-sm-12 no-padding">
+					<select class="form-control tipe_pelanggan" data-required="1">
+						<option value="all">ALL</option>
+						<?php foreach ($tipe_pelanggan as $key => $value) { ?>
+							<option value="<?php echo $value['id']; ?>"><?php echo strtoupper($value['nama']); ?></option>
+						<?php } ?>
+					</select>
+				</div>
+			</div>
+		</div>
 		<div class="col-xs-12 no-padding">
 			<div class="col-xs-12 no-padding">
 				<button type="button" class="col-xs-12 btn btn-primary" onclick="khl.getData()"><i class="fa fa-search"></i> Tampilkan</button>

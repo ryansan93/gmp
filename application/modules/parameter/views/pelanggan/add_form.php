@@ -24,6 +24,18 @@
 						</div>
 					</div>
 					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Tipe Pelanggan</span>
+						<div class="col-sm-6">
+							<select class="form-control" name="tipe_plg">
+								<?php if ( !empty($tipe_pelanggan) ) { ?>
+									<?php foreach ($tipe_pelanggan as $key => $value) { ?>
+										<option value="<?php echo $value['id']; ?>"><?php echo $value['nama']; ?></option>
+									<?php } ?>
+								<?php } ?>
+							</select>
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-6 text-right">Nama Pelanggan</span>
 						<div class="col-sm-6">
 							<input required="required" class="form-control" type="text" name="nama_plg" placeholder="Perusahaan/Perseorangan" />

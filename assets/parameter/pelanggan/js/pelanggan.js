@@ -451,6 +451,7 @@ var plg = {
 
     				// data pelanggan
     				var jenis_pelanggan = $(div_pelanggan).find('select[name=jenis_plg]').val();
+    				var tipe_pelanggan = $(div_pelanggan).find('select[name=tipe_plg]').val();
     				var nama_pelanggan = $(div_pelanggan).find('input[name=nama_plg]').val();
     				var contact_person = $(div_pelanggan).find('input[name=contact_plg]').val();
     				var plafon = numeral.unformat( $(div_pelanggan).find('input[name=plafon]').val() );
@@ -484,6 +485,7 @@ var plg = {
 
 					var data_pelanggan = {
 						'jenis_pelanggan' : jenis_pelanggan,
+						'tipe_pelanggan' : tipe_pelanggan,
 						'ktp' : ktp,
 						'nama' : nama_pelanggan,
 						'cp' : contact_person,
@@ -565,6 +567,7 @@ var plg = {
 
     				// data pelanggan
     				var jenis_pelanggan = $(div_pelanggan).find('select[name=jenis_plg]').val();
+    				var tipe_pelanggan = $(div_pelanggan).find('select[name=tipe_plg]').val();
     				var nama_pelanggan = $(div_pelanggan).find('input[name=nama_plg]').val();
     				var contact_person = $(div_pelanggan).find('input[name=contact_plg]').val();
     				var plafon = numeral.unformat( $(div_pelanggan).find('input[name=plafon]').val() );
@@ -603,6 +606,7 @@ var plg = {
 						'mstatus' : mstatus,
 						'version' : version,
 						'jenis_pelanggan' : jenis_pelanggan,
+						'tipe_pelanggan' : tipe_pelanggan,
 						'ktp' : ktp,
 						'nama' : nama_pelanggan,
 						'cp' : contact_person,
