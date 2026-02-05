@@ -27,6 +27,11 @@ class Pelanggan_model extends Conf {
 		return $this->hasOne('\Model\Storage\Jenis_model', 'kode', 'jenis');
 	}
 
+	public function d_tipe()
+	{
+		return $this->hasOne('\Model\Storage\TipePelanggan_model', 'id', 'tipe_plg');
+	}
+
 	public function telepons()
 	{
 		return $this->hasMany('\Model\Storage\TelpPelanggan_model', 'pelanggan', 'id');
