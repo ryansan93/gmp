@@ -1208,6 +1208,8 @@ class KertasKerjaHpp extends Public_Controller {
                 ) sa
                 on
                     data.noreg = sa.noreg
+            where
+                data.noreg is not null
             order by
                 data.noreg asc,
 				data.tgl_chick_in asc
