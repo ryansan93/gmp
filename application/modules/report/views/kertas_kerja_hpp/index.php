@@ -104,32 +104,36 @@
 							<th rowspan="2" class="page0 text-center col-xs-1">Noreg</th>
 							<th rowspan="2" class="page0 text-center col-xs-1">Nama</th>
 							<th colspan="2" class="page0 text-center">Chick In</th>
-							<th colspan="6" class="page1 text-center">Pakan</th>
-							<th colspan="5" class="page2 text-center">OVK</th>
-							<th colspan="5" class="page3 text-center">DOC</th>
-							<th colspan="5" class="page4 text-center">OA</th>
+							<th colspan="7" class="page1 text-center">Pakan</th>
+							<th colspan="6" class="page2 text-center">OVK</th>
+							<th colspan="6" class="page3 text-center">DOC</th>
+							<th colspan="6" class="page4 text-center">OA</th>
 							<th rowspan="2" class="page0 text-center  col-xs-1">RHPP</th>
 							<th rowspan="2" class="page0 text-center  col-xs-1">Total</th>
 						</tr>
 						<tr>
 							<th class="page0 text-center col-xs-1">Tgl</th>
 							<th class="page0 text-center col-xs-1">Populasi</th>
+							<th class="page1 text-center col-xs-1">Saldo Awal</th>
 							<th class="page1 text-center col-xs-1">Beli</th>
 							<th class="page1 text-center col-xs-1">Mutasi (+)</th>
 							<th class="page1 text-center col-xs-1">Mutasi (-)</th>
 							<th class="page1 text-center col-xs-1">Koreksi (+/-)</th>
 							<th class="page1 text-center col-xs-1">Pemakaian</th>
 							<th class="page1 text-center col-xs-1">Sisa</th>
+							<th class="page2 text-center col-xs-1">Saldo Awal</th>
 							<th class="page2 text-center col-xs-1">Beli</th>
 							<th class="page2 text-center col-xs-1">Mutasi (+)</th>
 							<th class="page2 text-center col-xs-1">Mutasi (-)</th>
 							<th class="page2 text-center col-xs-1">Koreksi (+/-)</th>
 							<th class="page2 text-center col-xs-1">Pemakaian</th>
+							<th class="page3 text-center col-xs-1">Saldo Awal</th>
 							<th class="page3 text-center col-xs-1">Beli</th>
 							<th class="page3 text-center col-xs-1">Mutasi (+)</th>
 							<th class="page3 text-center col-xs-1">Mutasi (-)</th>
 							<th class="page3 text-center col-xs-1">Koreksi (+/-)</th>
 							<th class="page3 text-center col-xs-1">Pemakaian</th>
+							<th class="page4 text-center col-xs-1">Saldo Awal</th>
 							<th class="page4 text-center col-xs-1">Beli</th>
 							<th class="page4 text-center col-xs-1">Mutasi (+)</th>
 							<th class="page4 text-center col-xs-1">Mutasi (-)</th>
@@ -139,7 +143,7 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td colspan="24">Data tidak ditemukan.</td>
+							<td colspan="28">Data tidak ditemukan.</td>
 						</tr>
 					</tbody>
 				</table>
