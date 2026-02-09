@@ -1203,9 +1203,9 @@ class LHK extends Public_Controller
             cetak_r(substr($d_rs->tgl_docin, 0, 10));
             cetak_r($umur);
             cetak_r($bb_rata);
-            cetak_r($adg);
-            cetak_r($fcr);
-            cetak_r($ip);
+            cetak_r(round($adg, 3));
+            cetak_r(round($fcr, 3));
+            cetak_r(round($ip, 3));
             cetak_r($pakai_pakan);
             cetak_r($sisa_pakan);
             cetak_r($ekor_mati);
@@ -1221,9 +1221,9 @@ class LHK extends Public_Controller
             $m_lhk->tgl_docin = substr($d_rs->tgl_docin, 0, 10);
             $m_lhk->umur = $umur;
             $m_lhk->bb = $bb_rata;
-            $m_lhk->adg = $adg;
-            $m_lhk->fcr = $fcr;
-            $m_lhk->ip = $ip;
+            $m_lhk->adg = round($adg, 3);
+            $m_lhk->fcr = round($fcr, 3);
+            $m_lhk->ip = round($ip, 3);
             $m_lhk->pakai_pakan = $pakai_pakan;
             $m_lhk->sisa_pakan = $sisa_pakan;
             $m_lhk->ekor_mati = $ekor_mati;
