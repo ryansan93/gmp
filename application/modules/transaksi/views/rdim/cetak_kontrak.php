@@ -342,17 +342,19 @@
 
 									$hide = null;
 									if ($data_kontrak['mulai'] >= '2026-02-09') {
-										if ( $v_sp['range_awal'] == 0 || $v_sp['range_awal'] == 0.051 ) {
-											$hide = 'hide';
-											$tarif = angkaRibuan(0);
+										if ( $v_sp['range_awal'] != 0 && $v_sp['range_awal'] != 0.051 ) {
+								?>
+											<tr>
+												<td align="center"><?php echo $no; ?></td>
+												<td align="center"><?php echo $range; ?></td>
+												<td align="right"><?php echo 'Rp. ' . $tarif; ?></td>
+											</tr>
+								<?php
+											// $hide = 'hide';
+											// $tarif = angkaRibuan(0);
 										}
 									}
 								?>
-								<tr>
-									<td align="center"><?php echo $no; ?></td>
-									<td align="center"><?php echo $range; ?></td>
-									<td align="right"><?php echo 'Rp. ' . $tarif; ?></td>
-								</tr>
 							<?php endforeach ?>
 						<?php else: ?>
 							<tr>
