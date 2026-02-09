@@ -330,7 +330,6 @@
 							<?php $no = 0; ?>
 							<?php foreach ($data_kontrak['selisih_pakan'] as $k_sp => $v_sp): ?>
 								<?php
-									$no++;
 									$range_awal = angkaDecimalFormat($v_sp['range_awal'], 3);
 									$range_akhir = ($v_sp['range_akhir'] != 0) ? angkaDecimalFormat($v_sp['range_akhir'], 3) : '>';
 
@@ -343,6 +342,7 @@
 									$hide = null;
 									if ($data_kontrak['mulai'] >= '2026-02-09') {
 										if ( $v_sp['range_awal'] != 0 && $v_sp['range_awal'] != 0.051 ) {
+											$no++;
 								?>
 											<tr>
 												<td align="center"><?php echo $no; ?></td>
