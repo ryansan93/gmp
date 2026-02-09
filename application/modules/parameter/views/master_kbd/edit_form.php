@@ -447,11 +447,22 @@
 						</thead>
 						<tbody>
 							<?php foreach ($data['selisih_pakan'] as $key => $v_sp): ?>
-								<tr class="data v-center">
+								<?php 
+									// $today = date('Y-m-d'); 
+									$hide = null;
+									$value = $v_sp['tarif'];
+									if ( $data['mulai'] >= '2026-02-09' ) {
+										if ( $v_sp['range_awal'] == 0 || $v_sp['range_awal'] == 0.051 ) {
+											$hide = 'hide';
+											$value = 0;
+										}
+									}
+								?>
+								<tr class="data v-center <?php echo $hide; ?>">
 									<td class="text-center range_awal"><?php echo ($v_sp['range_awal'] == 0) ? '<=' : angkaDecimalFormat($v_sp['range_awal'], 3); ?></td>
 									<td class="text-center">-</td>
 									<td class="text-center range_akhir"><?php echo ($v_sp['range_akhir'] == 0) ? '>=' : angkaDecimalFormat($v_sp['range_akhir'], 3); ?></td>
-									<td><input class="form-control tarif text-right" type="text" data-tipe="integer" maxlength="6" value="<?php echo angkaRibuan($v_sp['tarif']); ?>" ></td>
+									<td><input class="form-control tarif text-right" type="text" data-tipe="integer" maxlength="6" value="<?php echo angkaRibuan($value); ?>" ></td>
 								</tr>
 							<?php endforeach ?>
 						</tbody>

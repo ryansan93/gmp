@@ -417,7 +417,11 @@
 			<ol type="1">
 				<li style="page-break-inside: avoid;">Semua penjualan menjadi tanggung jawab <b>Pihak Pertama</b>, sehingga <b>Pihak Kedua</b> tidak berhak menjual ayam saat panen.</li>
 				<li style="page-break-inside: avoid;"><b>Pihak Kedua</b> wajib membantu dalam pemeliharaan ayam dengan kontrol/pengawasan manajemen dari <b>Pihak Pertama</b>.</li>
-				<li style="page-break-inside: avoid;">Jika ayam sakit atau kualitasnya jelek (termasuk ayam afkir) atau hasil panen tidak rasional (<span style="font-style: italic;">bobot x FCR tidak standart</span>), maka <b>Pihak Pertama</b> akan melakukan pemotongan harga kontrak (sesuai dengan harga ayam sakit/afkir di pasar).</li>
+				<?php if ($data_kontrak['mulai'] >= '2026-02-09') { ?>
+					<li style="page-break-inside: avoid;">Jika ayam sakit atau kualitasnya jelek (termasuk ayam afkir) atau hasil panen tidak rasional (<span style="font-style: italic;">bobot x FCR tidak standart</span>), maka <b>Pihak Pertama</b> akan melakukan pemotongan harga kontrak (sesuai dengan harga ayam sakit/afkir di pasar).</li>
+				<?php } else { ?>
+					<li style="page-break-inside: avoid;">Jika ayam sakit atau kualitasnya jelek (termasuk ayam afkir) atau hasil panen tidak rasional (<span style="font-style: italic;">bobot x FCR tidak standart</span>), maka <b>Pihak Pertama</b> akan melakukan pemotongan harga kontrak (sesuai dengan harga ayam sakit/afkir di pasar), seluruh Penjualan Ayam baik secara JUMLAH dan Penentuan CUSTOMER / BAKUL merupakan Hak Penuh <b>Pihak Pertama</b>.</li>
+				<?php } ?>
 				<li style="page-break-inside: avoid;">Menunjuk pasal 3 di atas, yang dimaksud dengan harga pasar adalah harga pasar yang berlaku di GMP.</li>
 				<li style="page-break-inside: avoid;">Harga kontrak sewaktu-waktu bisa berubah, jika terjadi perubahan harga DOC atau harga pakan tanpa pemberitahuan lebih dahulu.</li>
 				<li style="page-break-inside: avoid;">
@@ -428,7 +432,11 @@
 							<span style="font-style:italic; text-align: center;"><b><u>Jumlah ayam hilang x BB x harga kontrak x 2</u></b></span>
 						</div>
 					<br>
-					Dalam hal ini <b>Pihak Pertama</b> hanya memberikan toleransi atas ayam hilang tersebut kepada <b>Pihak Kedua</b> dengan syarat tidak lebih dari 0.5% dari DOC datang.
+					<?php if ($data_kontrak['mulai'] >= '2026-02-09') { ?>
+						Dalam hal ini <b>Pihak Pertama</b> hanya memberikan toleransi atas ayam hilang tersebut kepada <b>Pihak Kedua</b> dengan syarat tidak lebih dari 0.5% dari jumlah DOC datang.
+					<?php } else { ?>
+						Dalam hal ini <b>Pihak Pertama</b> hanya memberikan toleransi atas ayam hilang tersebut kepada <b>Pihak Kedua</b> dengan syarat tidak lebih dari 0.5% dari DOC datang.
+					<?php } ?>
 				</li>
 				<li style="page-break-inside: avoid;">
 					Apabila terjadi selisih jumlah pakan (pakan hilang) antara yang ada pada daftar stok pakan (Recording) dengan kenyataan fisik di lapangan, baik selama pemeliharaan maupun pada saat akhir masa pemeliharaan ayam (panen). Maka <b>Pihak Kedua</b> di wajibkan untuk mengganti selisih jumlah pakan tersebut kepada <b>Pihak Pertama</b> dengan perhitungan:
@@ -450,7 +458,11 @@
 					<br>
 					<br>
 					<div style="font-size: 12pt; text-align: center;">
-						<span style="font-style:italic; text-align: center;"><b><u>Dari total keuntungan maximum 7(tujuh)hari kerja, setelah panen terakhir</u></b></span>
+						<?php if ($data_kontrak['mulai'] >= '2026-02-09') { ?>
+							<span style="font-style:italic; text-align: center;"><b><u>Dari total pendapatan maximum 7(tujuh)hari kerja, setelah panen terakhir</u></b></span>
+						<?php } else { ?>
+							<span style="font-style:italic; text-align: center;"><b><u>Dari total keuntungan maximum 7(tujuh)hari kerja, setelah panen terakhir</u></b></span>
+						<?php } ?>
 					</div>
 					<br>
 				</li>

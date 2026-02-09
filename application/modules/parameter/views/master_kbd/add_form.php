@@ -350,17 +350,26 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr class="data v-center">
+							<?php 
+								$today = date('Y-m-d'); 
+								$hide = null;
+								$value = null;
+								if ( $today >= '2026-02-09' ) {
+									$hide = 'hide';
+									$value = 0;
+								}
+							?>
+							<tr class="data v-center <?php echo $hide; ?>">
 								<td class="text-center range_awal"><=</td>
 								<td class="text-center">-</td>
 								<td class="text-center range_akhir">0,050</td>
-								<td><input class="form-control tarif text-right" type="text" data-tipe="integer" maxlength="6"></td>
+								<td><input class="form-control tarif text-right" type="text" data-tipe="integer" maxlength="6" value="<?php echo $value; ?>"></td>
 							</tr>
-							<tr class="data v-center">
+							<tr class="data v-center <?php echo $hide; ?>">
 								<td class="text-center range_awal">0,051</td>
 								<td class="text-center">-</td>
 								<td class="text-center range_akhir">0,100</td>
-								<td><input class="form-control tarif text-right" type="text" data-tipe="integer" maxlength="6"></td>
+								<td><input class="form-control tarif text-right" type="text" data-tipe="integer" maxlength="6" value="<?php echo $value; ?>"></td>
 							</tr>
 							<tr class="data v-center">
 								<td class="text-center range_awal">0,101</td>

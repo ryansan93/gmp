@@ -349,9 +349,20 @@
 								<?php 
 									$range_awal_pp = ($v_slsp['range_awal'] > 0) ? angkaDecimalFormat($v_slsp['range_awal'], 3) : '<=';
 									$range_akhir_pp = ($v_slsp['range_akhir'] > 0) ? angkaDecimalFormat($v_slsp['range_akhir'], 3) : '>=';
-									$tarif_pp = ($v_slsp['tarif'] > 0) ? angkaDecimal($v_slsp['tarif']) : 0;
+									
+									// $today = date('Y-m-d'); 
+									$hide = null;
+									$value = $v_slsp['tarif'];
+									if ( $data['mulai'] >= '2026-02-09' ) {
+										if ( $v_slsp['range_awal'] == 0 || $v_slsp['range_awal'] == 0.051 ) {
+											$hide = 'hide';
+											$value = 0;
+										}
+									}
+
+									$tarif_pp = ($value > 0) ? angkaDecimal($value) : 0;
 								?>
-								<tr class="data v-center">
+								<tr class="data v-center <?php echo $hide; ?>">
 									<td class="text-center range_awal"><label><?php echo $range_awal_pp ?></label></td>
 									<td class="text-center"><label>-</label></td>
 									<td class="text-center range_akhir"><label><?php echo $range_akhir_pp ?></label></td>
