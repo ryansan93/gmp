@@ -335,6 +335,14 @@
 										$range = '>= ' . $range_awal;
 									}
 									$tarif = angkaRibuan($v_sp['tarif']);
+
+									$hide = null;
+									if ($data_kontrak['mulai'] >= '2026-02-09') {
+										if ( $v_sp['range_awal'] == 0 || $v_sp['range_awal'] == 0.051 ) {
+											$hide = 'hide';
+											$tarif = angkaRibuan(0);
+										}
+									}
 								?>
 								<tr>
 									<td align="center"><?php echo $no; ?></td>
