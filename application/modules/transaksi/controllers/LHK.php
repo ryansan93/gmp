@@ -1198,22 +1198,22 @@ class LHK extends Public_Controller
             }
             // END - HIUTNG IP
 
-            $m_kry = new \Model\Storage\Karyawan_model();
-            cetak_r($params['noreg']);
-            cetak_r(substr($d_rs->tgl_docin, 0, 10));
-            cetak_r($umur);
-            cetak_r($bb_rata);
-            cetak_r(round($adg, 3));
-            cetak_r(round($fcr, 3));
-            cetak_r(round($ip, 3));
-            cetak_r($pakai_pakan);
-            cetak_r($sisa_pakan);
-            cetak_r($ekor_mati);
-            cetak_r($params['keterangan']);
-            cetak_r($params['tanggal']);
-            cetak_r($m_kry->getNik( $this->userdata['detail_user']['nama_detuser'] ));
-            cetak_r($params['lat'].','.$params['long']);
-            cetak_r(1, 1);
+            // $m_kry = new \Model\Storage\Karyawan_model();
+            // cetak_r($params['noreg']);
+            // cetak_r(substr($d_rs->tgl_docin, 0, 10));
+            // cetak_r($umur);
+            // cetak_r($bb_rata);
+            // cetak_r(round($adg, 3));
+            // cetak_r(round($fcr, 3));
+            // cetak_r(round($ip, 3));
+            // cetak_r($pakai_pakan);
+            // cetak_r($sisa_pakan);
+            // cetak_r($ekor_mati);
+            // cetak_r($params['keterangan']);
+            // cetak_r($params['tanggal']);
+            // cetak_r($m_kry->getNik( $this->userdata['detail_user']['nama_detuser'] ));
+            // cetak_r($params['lat'].','.$params['long']);
+            // cetak_r(1, 1);
 
             $m_kry = new \Model\Storage\Karyawan_model();
             $m_lhk = new \Model\Storage\Lhk_model();
