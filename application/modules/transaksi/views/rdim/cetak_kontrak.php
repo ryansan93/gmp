@@ -429,13 +429,13 @@
 		</div>
 		<div style="font-size: 12pt; text-align: left;">
 			<ol type="1">
-				<li style="page-break-inside: avoid;">Semua penjualan menjadi tanggung jawab <b>Pihak Pertama</b>, sehingga <b>Pihak Kedua</b> tidak berhak menjual ayam saat panen.</li>
-				<li style="page-break-inside: avoid;"><b>Pihak Kedua</b> wajib membantu dalam pemeliharaan ayam dengan kontrol/pengawasan manajemen dari <b>Pihak Pertama</b>.</li>
 				<?php if ($data_kontrak['mulai'] >= '2026-02-09') { ?>
-					<li style="page-break-inside: avoid;">Jika ayam sakit atau kualitasnya jelek (termasuk ayam afkir) atau hasil panen tidak rasional (<span style="font-style: italic;">bobot x FCR tidak standart</span>), maka <b>Pihak Pertama</b> akan melakukan pemotongan harga kontrak (sesuai dengan harga ayam sakit/afkir di pasar), seluruh Penjualan Ayam baik secara JUMLAH dan Penentuan CUSTOMER / BAKUL merupakan Hak Penuh <b>Pihak Pertama</b>.</li>
+					<li style="page-break-inside: avoid;">Semua penjualan menjadi tanggung jawab <b>Pihak Pertama</b>, sehingga <b>Pihak Kedua</b> tidak berhak menjual ayam saat panen. Seluruh Penjualan Ayam baik secara JUMLAH dan Penentuan CUSTOMER / BAKUL merupakan Hak Penuh <b>Pihak Pertama</b>.</li>
 				<?php } else { ?>
-					<li style="page-break-inside: avoid;">Jika ayam sakit atau kualitasnya jelek (termasuk ayam afkir) atau hasil panen tidak rasional (<span style="font-style: italic;">bobot x FCR tidak standart</span>), maka <b>Pihak Pertama</b> akan melakukan pemotongan harga kontrak (sesuai dengan harga ayam sakit/afkir di pasar).</li>
+					<li style="page-break-inside: avoid;">Semua penjualan menjadi tanggung jawab <b>Pihak Pertama</b>, sehingga <b>Pihak Kedua</b> tidak berhak menjual ayam saat panen.</li>
 				<?php } ?>
+				<li style="page-break-inside: avoid;"><b>Pihak Kedua</b> wajib membantu dalam pemeliharaan ayam dengan kontrol/pengawasan manajemen dari <b>Pihak Pertama</b>.</li>
+				<li style="page-break-inside: avoid;">Jika ayam sakit atau kualitasnya jelek (termasuk ayam afkir) atau hasil panen tidak rasional (<span style="font-style: italic;">bobot x FCR tidak standart</span>), maka <b>Pihak Pertama</b> akan melakukan pemotongan harga kontrak (sesuai dengan harga ayam sakit/afkir di pasar).</li>
 				<li style="page-break-inside: avoid;">Menunjuk pasal 3 di atas, yang dimaksud dengan harga pasar adalah harga pasar yang berlaku di GMP.</li>
 				<li style="page-break-inside: avoid;">Harga kontrak sewaktu-waktu bisa berubah, jika terjadi perubahan harga DOC atau harga pakan tanpa pemberitahuan lebih dahulu.</li>
 				<li style="page-break-inside: avoid;">
