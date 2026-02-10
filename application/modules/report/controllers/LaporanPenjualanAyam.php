@@ -69,7 +69,7 @@ class LaporanPenjualanAyam extends Public_Controller {
 
         $sql_pelanggan = null;
         if ( !in_array('all', $pelanggan) ) {
-            $sql_pelanggan = "and drs.no_pelanggan in ('".implode("', '", $unit)."')";
+            $sql_pelanggan = "and drs.no_pelanggan in ('".implode("', '", $pelanggan)."')";
         }
 
         $m_conf = new \Model\Storage\Conf();
