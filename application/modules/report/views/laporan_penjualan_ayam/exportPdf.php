@@ -366,12 +366,12 @@
 							</tbody>
 						</table>
 					</div>
-                    <br>
+                    <!-- <br>
 					<div class="col-xs-12" style="display: inline-block; text-align: left; font-size: 10pt;">
                         <div class="col-xs-12" style="display: inline; text-align: left; font-size: 9pt;">
                             <label style="display: inline-block; width: 100%;">di-cetak oleh : <?php echo $data['nama_karyawan'].' '.str_replace('-', '/', substr($data['waktu'], 0, 16)); ?></label>
                         </div>
-                    </div>
+                    </div> -->
 				</div>
 			</div>
 		</div>
