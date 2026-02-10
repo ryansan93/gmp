@@ -1,0 +1,113 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="col-xs-12 no-padding contain bulanan" style="margin-bottom: 10px;">
+			<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+                <div class="col-xs-12 no-padding"><label class="control-label">Bulan</label></div>
+				<div class="col-sm-12 no-padding">
+					<select class="form-control bulan" data-required="1">
+						<option value="all">ALL</option>
+						<?php for ($i=1; $i <= 12; $i++) { ?>
+							<?php
+								$bulan[1] = 'JANUARI';
+								$bulan[2] = 'FEBRUARI';
+								$bulan[3] = 'MARET';
+								$bulan[4] = 'APRIL';
+								$bulan[5] = 'MEI';
+								$bulan[6] = 'JUNI';
+								$bulan[7] = 'JULI';
+								$bulan[8] = 'AGUSTUS';
+								$bulan[9] = 'SEPTEMBER';
+								$bulan[10] = 'OKTOBER';
+								$bulan[11] = 'NOVEMBER';
+								$bulan[12] = 'DESEMBER';
+							?>
+							<option value="<?php echo $i; ?>"><?php echo $bulan[ $i ]; ?></option>
+						<?php } ?>
+					</select>
+				</div>
+			</div>
+			<div class="col-xs-6 no-padding" style="padding-left: 5px;">
+                <div class="col-xs-12 no-padding"><label class="control-label">Tahun</label></div>
+				<div class="col-xs-12 no-padding">
+					<div class="input-group date datetimepicker" name="tahun" id="Tahun">
+						<input type="text" class="form-control text-center" placeholder="Tahun" data-required="1" />
+						<span class="input-group-addon">
+							<span class="glyphicon glyphicon-calendar"></span>
+						</span>
+					</div>
+				</div>
+			</div>
+        </div>
+		<div class="col-xs-12 no-padding contain bulanan" style="margin-bottom: 10px;">
+			<div class="col-xs-2 no-padding" style="padding-right: 5px;">
+				<div class="col-xs-12 no-padding"><label class="control-label">Unit</label></div>
+				<div class="col-xs-12 no-padding">
+					<select class="form-control unit" data-required="1">
+						<option value="all">ALL</option>
+						<?php if ( !empty($unit) && count($unit) > 0 ) { ?>
+							<?php foreach ($unit as $k_unit => $v_unit) { ?>
+								<option value="<?php echo $v_unit['kode']; ?>"><?php echo strtoupper($v_unit['nama']); ?></option>
+							<?php } ?>
+						<?php } ?>
+					</select>
+				</div>
+			</div>
+			<div class="col-xs-2 no-padding" style="padding-left: 5px; padding-right: 5px;">
+				<div class="col-xs-12 no-padding"><label class="control-label">Tutup Siklus</label></div>
+				<div class="col-xs-12 no-padding">
+					<select class="form-control tutup_siklus" data-required="1">
+						<option value="all">ALL</option>
+						<option value="1">BELUM TUTUP SIKLUS</option>
+						<option value="2">TUTUP SIKLUS</option>
+					</select>
+				</div>
+			</div>
+			<div class="col-xs-8 no-padding" style="padding-left: 5px;">
+				<div class="col-xs-12 no-padding"><label class="control-label">Plasma</label></div>
+				<div class="col-xs-12 no-padding">
+					<select class="form-control plasma">
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="col-xs-3 no-padding contain bulanan" style="margin-bottom: 10px; padding-right: 5px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Jenis Barang</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control jenis_barang" data-required="1">
+					<option value="all">ALL</option>
+					<option value="PAKAN">PAKAN</option>
+					<option value="OBAT">OVK</option>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-9 no-padding contain bulanan" style="margin-bottom: 10px; padding-left: 5px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Barang</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control barang" data-required="1">
+					<option value="all">ALL</option>
+					<?php foreach ($barang as $k_barang => $v_barang) { ?>
+						<option value="<?php echo $v_barang['kode']; ?>" data-jenis="<?php echo strtoupper($v_barang['tipe']); ?>"><?php echo strtoupper($v_barang['nama']); ?></option>
+					<?php } ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding">
+			<div class="col-xs-12 no-padding">
+				<button type="button" class="col-xs-12 btn btn-primary" onclick="stok.getData()"><i class="fa fa-search"></i> Tampilkan</button>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+		<div class="col-xs-12 no-padding">
+            <small>
+                <table class="table table-bordered" style="margin-bottom: 0px;">
+                    <tbody>
+                    </tbody>
+                </table>
+            </small>
+		</div>
+		<!-- <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+		<div class="col-xs-12 no-padding">
+			<button type="button" class="btn btn-default pull-right" onclick="bank.excryptParams(this)"><i class="fa fa-file-excel-o"></i> Export Excel</button>
+		</div> -->
+	</div>
+</div>

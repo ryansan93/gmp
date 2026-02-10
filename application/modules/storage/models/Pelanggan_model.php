@@ -65,51 +65,97 @@ class Pelanggan_model extends Conf {
 		return $this->hasOne('\Model\Storage\DaftarKunjungan_model', 'no_pelanggan', 'nomor')->orderBy('id', 'desc');
 	}
 
-	public function getDataPelanggan($with_bank = 1)
+	public function getDataPelanggan($with_bank = 1, $with_lokasi = 0)
 	{
 		$sql_bank = null;
 		if ( $with_bank == 1 ) {
-			$sql_bank = "
-				union all
+			if ( $with_lokasi == 0 ) {
+				$sql_bank = "
+					union all
 
-				select
-					coa as nomor,
-					nama_coa as nama
-				from coa
-				where 
-					bank = 1
-			";
+					select
+						coa as nomor,
+						nama_coa as nama
+					from coa
+					where 
+						bank = 1
+				";
+			} else {
+				$sql_bank = "
+					union all
+
+					select
+						coa as nomor,
+						nama_coa as nama,
+						null as kab_kota
+					from coa
+					where 
+						bank = 1
+				";
+			}
 		}
 
-		$sql = "
-			select * from 
-			(
-				select
-					p.nomor,
-					p.nama
-					-- , kab_kota.nama as kab_kota
-				from pelanggan p
-				right join
-					( select max(id) as id, nomor from pelanggan where tipe='pelanggan' group by nomor ) p1
-					on
-						p.id = p1.id
-				-- right join
-				--     lokasi kec
-				--     on
-				--         kec.id = p.alamat_kecamatan
-				-- right join
-				--     lokasi kab_kota
-				--     on
-				--         kab_kota.id = kec.induk
-				where
-					p.mstatus = 1 and
-					p.tipe = 'pelanggan'
-
-				".$sql_bank."
-			) data
-			order by
-				data.nama asc
-		";
+		if ( $with_lokasi == 0 ) {
+			$sql = "
+				select * from 
+				(
+					select
+						p.nomor,
+						p.nama
+						-- , kab_kota.nama as kab_kota
+					from pelanggan p
+					right join
+						( select max(id) as id, nomor from pelanggan where tipe='pelanggan' group by nomor ) p1
+						on
+							p.id = p1.id
+					-- right join
+					--     lokasi kec
+					--     on
+					--         kec.id = p.alamat_kecamatan
+					-- right join
+					--     lokasi kab_kota
+					--     on
+					--         kab_kota.id = kec.induk
+					where
+						p.mstatus = 1 and
+						p.tipe = 'pelanggan'
+	
+					".$sql_bank."
+				) data
+				order by
+					data.nama asc
+			";
+		} else {
+			$sql = "
+				select * from 
+				(
+					select
+						p.nomor,
+						p.nama
+						, kab_kota.nama as kab_kota
+					from pelanggan p
+					right join
+						( select max(id) as id, nomor from pelanggan where tipe='pelanggan' group by nomor ) p1
+						on
+							p.id = p1.id
+					left join
+					    lokasi kec
+					    on
+					        kec.id = p.alamat_kecamatan
+					left join
+					    lokasi kab_kota
+					    on
+					        kab_kota.id = kec.induk
+					where
+						p.mstatus = 1 and
+						p.tipe = 'pelanggan'
+	
+					".$sql_bank."
+				) data
+				order by
+					data.nama asc
+			";
+		}
 		$d_pelanggan = $this->hydrateRaw( $sql );
 
 		$data = null;

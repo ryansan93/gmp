@@ -43,4 +43,30 @@ class Karyawan_model extends Conf {
 
 		return $nik;
 	}
+
+	public function getKaryawanByUserId($userId) {
+		$sql_det_user = "
+			select * from detail_user where id_user = '".$userId."'
+		";
+		$d_det_user = $this->hydrateRaw( $sql_det_user );
+		
+		$data = null;
+		if ( $d_det_user->count() > 0 ) {
+			$d_det_user = $d_det_user->toArray()[0];
+	
+			$m_karyawan = new \Model\Storage\Karyawan_model();
+			$d_karyawan = $m_karyawan->where('nama', 'like', strtolower(trim($d_det_user['nama_detuser'])).'%')->orderBy('id', 'desc')->first();
+
+			$sql_karyawan = "
+			select * from karyawan where nama like '".strtolower(trim(str_replace("'", "''", $d_det_user['nama_detuser'])))."%' order by id desc
+			";
+			$d_karyawan = $this->hydrateRaw( $sql_karyawan );
+	
+			if ( $d_karyawan->count() > 0 ) {
+				$data = $d_karyawan->toArray();
+			}
+		}
+
+		return $data;
+	}
 }
