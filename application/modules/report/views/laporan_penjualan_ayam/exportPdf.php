@@ -309,7 +309,7 @@
 							<thead>
 								<tr>
 									<th class="text-center" style="width: 20%;">No. BTPA</th>
-									<th class="text-center" style="width: 30%;">Jns Ayam</th>
+									<th class="text-center" style="width: 30%;">Jenis Ayam</th>
 									<th class="text-center" style="width: 10%;">Ekor</th>
 									<th class="text-center" style="width: 10%;">Tonase</th>
 									<th class="text-center" style="width: 10%;">Harga</th>
