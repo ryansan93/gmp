@@ -597,6 +597,8 @@ var lhk = {
 		var div_transaksi = $('#transaksi');
 		var div = $(div_transaksi).find('div.row:first');
 
+		$(elm).attr('disabled', true);
+
 		var err = 0;
 		$.map( $(div).find('[data-required=1]'), function(ipt) {
 			if ( empty($(ipt).val()) ) {
@@ -654,7 +656,9 @@ var lhk = {
 		});
 
 		if ( err > 0 ) {
-			bootbox.alert('Harap lengkapi data terlebih dahulu.');
+			bootbox.alert('Harap lengkapi data terlebih dahulu.', function() {
+				$(elm).attr('disabled', false);
+			});
 		} else {
 			// if ( empty(data_nekropsi) && empty(data_solusi) ) {
 			// 	bootbox.alert('Harap isi data nekropsi dan data solusi terlebih dahulu.');
@@ -700,7 +704,9 @@ var lhk = {
 
 				ket_err += ' terlebih dahulu.';
 
-				bootbox.alert(ket_err);
+				bootbox.alert(ket_err, function() {
+					$(elm).attr('disabled', false);
+				});
 			} else {
 				var ket_confirm = null;
 				if ( ket_err_nekropsi.length > 0 ) {
@@ -712,7 +718,9 @@ var lhk = {
 
 				lhk.cekDataPrev(function(data) {
 					if ( data.status != 1 ) {
-						bootbox.alert(data.message);
+						bootbox.alert(data.message, function() {
+							$(elm).attr('disabled', false);
+						});
 					} else {
 						bootbox.confirm(ket_confirm, function(result) {
 							if ( result ) {
