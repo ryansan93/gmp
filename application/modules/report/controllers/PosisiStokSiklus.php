@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-class KartuStokSiklus extends Public_Controller {
+class PosisiStokSiklus extends Public_Controller {
 
     private $url;
 
@@ -22,11 +22,11 @@ class KartuStokSiklus extends Public_Controller {
         if ( $akses['a_view'] == 1 ) {
             $this->add_external_js(array(
                 'assets/select2/js/select2.min.js',
-                "assets/report/kartu_stok_siklus/js/kartu-stok-siklus.js",
+                "assets/report/posisi_stok_siklus/js/posisi-stok-siklus.js",
             ));
             $this->add_external_css(array(
                 'assets/select2/css/select2.min.css',
-                "assets/report/kartu_stok_siklus/css/kartu-stok-siklus.css",
+                "assets/report/posisi_stok_siklus/css/posisi-stok-siklus.css",
             ));
 
             $data = $this->includes;
@@ -36,10 +36,10 @@ class KartuStokSiklus extends Public_Controller {
             $content['akses'] = $akses;
             $content['unit'] = $m_wil->getDataUnit();
             $content['barang'] = $this->getBarang();
-            $content['title_menu'] = 'Laporan Kartu Stok Siklus';
+            $content['title_menu'] = 'Laporan Posisi Stok Siklus';
 
             // Load Indexx
-            $data['view'] = $this->load->view('report/kartu_stok_siklus/index', $content, TRUE);
+            $data['view'] = $this->load->view('report/posisi_stok_siklus/index', $content, TRUE);
             $this->load->view($this->template, $data);
         } else {
             showErrorAkses();
@@ -106,10 +106,19 @@ class KartuStokSiklus extends Public_Controller {
             select * from
             (
                 select
+                    'all' as id,
+                    'ALL' as text,
+                    'a' as nama,
+                    0 as kandang,
+                    'all' as unit
+
+                union all
+
+                select
                     rs.noreg as id,
                     UPPER(w.kode+' | '+rs.noreg+' | '+m.nama+' (KDG:'+cast(k.kandang as varchar(2))+')') as text,
-                    rs.noreg,
-                    mm.nim,
+                    -- rs.noreg,
+                    -- mm.nim,
                     m.nama,
                     k.kandang,
                     w.kode as unit
@@ -208,36 +217,137 @@ class KartuStokSiklus extends Public_Controller {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
-                data.*,
-                brg.nama as nama_barang,
-                rs.nama as nama_plasma,
-                rs.kandang,
-                rs.unit,
-                case
-                    when rs.id_ts is not null then
-                        'SUDAH TUTUP SIKLUS'
-                    else
-                        'BELUM TUTUP SIKLUS'
-                end as status
+                data.noreg,
+                data.kode_barang,
+                data.jenis_barang,
+                data.nama_barang,
+                data.nama_plasma,
+                data.kandang,
+                data.unit,
+                data.status,
+                sum(jml_sa) as jml_sa,
+                sum(sa) as sa,
+                sum(jml_debet) as jml_debet,
+                sum(debet) as debet,
+                sum(jml_kredit) as jml_kredit,
+                sum(kredit) as kredit,
+                (sum(jml_sa)+sum(jml_debet))-sum(jml_kredit) as jumlah,
+                (sum(sa)+sum(debet))-sum(kredit) as total
             from
             (
-                /* SALDO AWAL */
                 select
-                    data.noreg,
-                    '' as tanggal,
-                    '' as jenis_trans,
-                    'Saldo Awal' as kode_trans,
-                    data.kode_barang,
-                    data.jenis_barang,
-                    0 as hrg_beli,
-                    -- data.hrg_beli,
-                    sum(isnull(data.jml_debet, 0)-isnull(data.jml_kredit, 0)) as jml_debet,
-                    sum(isnull(data.debet, 0) - isnull(data.kredit, 0)) as debet,
-                    0 as jml_kredit,
-                    0 as kredit,
-                    1 as urut
+                    data.*,
+                    brg.nama as nama_barang,
+                    rs.nama as nama_plasma,
+                    rs.kandang,
+                    rs.unit,
+                    case
+                        when rs.id_ts is not null then
+                            'SUDAH TUTUP SIKLUS'
+                        else
+                            'BELUM TUTUP SIKLUS'
+                    end as status
                 from
                 (
+                    /* SALDO AWAL */
+                    select
+                        data.noreg,
+                        '' as tanggal,
+                        '' as jenis_trans,
+                        'Saldo Awal' as kode_trans,
+                        data.kode_barang,
+                        data.jenis_barang,
+                        0 as hrg_beli,
+                        -- data.hrg_beli,
+                        sum(isnull(data.jml_debet, 0)-isnull(data.jml_kredit, 0)) as jml_sa,
+                        sum(isnull(data.debet, 0) - isnull(data.kredit, 0)) as sa,
+                        0 as jml_debet,
+                        0 as debet,
+                        0 as jml_kredit,
+                        0 as kredit,
+                        1 as urut
+                    from
+                    (
+                        select
+                            dss.noreg,
+                            dss.tgl_trans as tanggal,
+                            case
+                                when dss.jenis_trans like '%order%' then
+                                    'DISTRIBUSI'
+                                else
+                                    dss.jenis_trans
+                            end as jenis_trans,
+                            dss.kode_trans,
+                            dss.kode_barang,
+                            dss.jenis_barang,
+                            dss.jumlah,
+                            -- dss.hrg_beli,
+                            (dss.jumlah * dss.hrg_beli) as nilai,
+                            dss.jumlah as jml_debet,
+                            (dss.jumlah * dss.hrg_beli) as debet,
+                            0 as jml_kredit,
+                            0 as kredit
+                        from det_stok_siklus dss 
+                        
+                        union all
+                        
+                        select
+                            dss.noreg,
+                            dsts.tgl_trans as tanggal,
+                            case
+                                when dsts.tbl_name like '%terima%' then
+                                    'MUTASI'
+                                when dsts.tbl_name like '%retur%' then
+                                    'RETUR'
+                                else
+                                    dss.jenis_trans
+                            end as jenis_trans,
+                            case
+                                when dsts.tbl_name = 'lhk' then
+                                    'LHK UMUR '+cast(l.umur as varchar(5))
+                                else
+                                    dsts.kode_trans
+                            end as kode_trans,
+                            dsts.kode_barang,
+                            dss.jenis_barang,
+                            dsts.jumlah,
+                            -- dss.hrg_beli,
+                            (dsts.jumlah * dss.hrg_beli) as nilai,
+                            0 as jml_debet,
+                            0 as debet,
+                            dsts.jumlah as jml_kredit,
+                            (dsts.jumlah * dss.hrg_beli) as kredit
+                        from det_stok_trans_siklus dsts
+                        left join
+                            det_stok_siklus dss 
+                            on
+                                dsts.id_header = dss.id
+                        left join
+                            lhk l
+                            on
+                                cast(l.id as varchar(20)) = dsts.kode_trans
+                    ) data
+                    left join
+                        rdim_submit rs
+                        on
+                            rs.noreg = data.noreg
+                    where
+                        data.noreg is not null and
+                        rs.noreg is not null and
+                        data.tanggal < '".$_start_date."'
+                    group by
+                        data.noreg,
+                        data.kode_barang,
+                        data.jenis_barang
+                        -- ,data.hrg_beli
+                    having
+                        sum(isnull(data.jml_debet, 0)-isnull(data.jml_kredit, 0)) <> 0 and
+                        sum(isnull(data.debet, 0) - isnull(data.kredit, 0)) <> 0
+                    /* END - SALDO AWAL */
+    
+                    union all
+    
+                    /* MASUK */
                     select
                         dss.noreg,
                         dss.tgl_trans as tanggal,
@@ -250,17 +360,27 @@ class KartuStokSiklus extends Public_Controller {
                         dss.kode_trans,
                         dss.kode_barang,
                         dss.jenis_barang,
-                        dss.jumlah,
-                        -- dss.hrg_beli,
-                        (dss.jumlah * dss.hrg_beli) as nilai,
+                        dss.hrg_beli,
+                        0 as jml_sa,
+                        0 as sa,
                         dss.jumlah as jml_debet,
                         (dss.jumlah * dss.hrg_beli) as debet,
                         0 as jml_kredit,
-                        0 as kredit
-                    from det_stok_siklus dss 
-                    
+                        0 as kredit,
+                        2 as urut
+                    from det_stok_siklus dss
+                    left join
+                        rdim_submit rs
+                        on
+                            rs.noreg = dss.noreg
+                    where
+                        rs.noreg is not null and
+                        dss.tgl_trans between '".$_start_date."' and '".$_end_date."'
+                    /* END - MASUK */
+    
                     union all
-                    
+    
+                    /* KELUAR */
                     select
                         dss.noreg,
                         dsts.tgl_trans as tanggal,
@@ -270,7 +390,8 @@ class KartuStokSiklus extends Public_Controller {
                             when dsts.tbl_name like '%retur%' then
                                 'RETUR'
                             else
-                                dss.jenis_trans
+                                -- dss.jenis_trans
+                                'PEMAKAIAN'
                         end as jenis_trans,
                         case
                             when dsts.tbl_name = 'lhk' then
@@ -280,13 +401,14 @@ class KartuStokSiklus extends Public_Controller {
                         end as kode_trans,
                         dsts.kode_barang,
                         dss.jenis_barang,
-                        dsts.jumlah,
-                        -- dss.hrg_beli,
-                        (dsts.jumlah * dss.hrg_beli) as nilai,
+                        dss.hrg_beli,
+                        0 as jml_sa,
+                        0 as sa,
                         0 as jml_debet,
                         0 as debet,
                         dsts.jumlah as jml_kredit,
-                        (dsts.jumlah * dss.hrg_beli) as kredit
+                        (dsts.jumlah * dss.hrg_beli) as kredit,
+                        2 as urut
                     from det_stok_trans_siklus dsts
                     left join
                         det_stok_siklus dss 
@@ -296,156 +418,93 @@ class KartuStokSiklus extends Public_Controller {
                         lhk l
                         on
                             cast(l.id as varchar(20)) = dsts.kode_trans
-                ) data
-                where
-                    data.noreg is not null and
-                    data.tanggal < '".$_start_date."'
-                group by
-                    data.noreg,
-                    data.kode_barang,
-                    data.jenis_barang
-                    -- ,data.hrg_beli
-                having
-                    sum(isnull(data.jml_debet, 0)-isnull(data.jml_kredit, 0)) <> 0 and
-                    sum(isnull(data.debet, 0) - isnull(data.kredit, 0)) <> 0
-                /* END - SALDO AWAL */
-
-                union all
-
-                /* MASUK */
-                select
-                    dss.noreg,
-                    dss.tgl_trans as tanggal,
-                    case
-                        when dss.jenis_trans like '%order%' then
-                            'DISTRIBUSI'
-                        else
-                            dss.jenis_trans
-                    end as jenis_trans,
-                    dss.kode_trans,
-                    dss.kode_barang,
-                    dss.jenis_barang,
-                    dss.hrg_beli,
-                    dss.jumlah as jml_debet,
-                    (dss.jumlah * dss.hrg_beli) as debet,
-                    0 as jml_kredit,
-                    0 as kredit,
-                    2 as urut
-                from det_stok_siklus dss
-                where
-                    dss.tgl_trans between '".$_start_date."' and '".$_end_date."'
-                /* END - MASUK */
-
-                union all
-
-                /* KELUAR */
-                select
-                    dss.noreg,
-                    dsts.tgl_trans as tanggal,
-                    case
-                        when dsts.tbl_name like '%terima%' then
-                            'MUTASI'
-                        when dsts.tbl_name like '%retur%' then
-                            'RETUR'
-                        else
-                            -- dss.jenis_trans
-                            'PEMAKAIAN'
-                    end as jenis_trans,
-                    case
-                        when dsts.tbl_name = 'lhk' then
-                            'LHK UMUR '+cast(l.umur as varchar(5))
-                        else
-                            dsts.kode_trans
-                    end as kode_trans,
-                    dsts.kode_barang,
-                    dss.jenis_barang,
-                    dss.hrg_beli,
-                    0 as jml_debet,
-                    0 as debet,
-                    dsts.jumlah as jml_kredit,
-                    (dsts.jumlah * dss.hrg_beli) as kredit,
-                    2 as urut
-                from det_stok_trans_siklus dsts
-                left join
-                    det_stok_siklus dss 
-                    on
-                        dsts.id_header = dss.id
-                left join
-                    lhk l
-                    on
-                        cast(l.id as varchar(20)) = dsts.kode_trans
-                where
-                    dsts.tgl_trans between '".$_start_date."' and '".$_end_date."'
-                /* END - KELUAR */
-            ) data
-            left join
-                (
-                    select brg1.* from barang brg1
-                    right join
-                        (
-                            select max(id) as id, kode from barang group by kode
-                        ) brg2
+                    left join
+                        rdim_submit rs
                         on
-                            brg1.id = brg2.id
-                ) brg
-                on
-                    data.kode_barang = brg.kode
-            left join
-                (
-                    select * from
+                            rs.noreg = dss.noreg
+                    where
+                        rs.noreg is not null and
+                        dsts.tgl_trans between '".$_start_date."' and '".$_end_date."'
+                    /* END - KELUAR */
+                ) data
+                left join
                     (
-                        select
-                            rs.noreg,
-                            mm.nim,
-                            m.nama,
-                            k.kandang,
-                            w.kode as unit,
-                            ts.id as id_ts
-                        from rdim_submit rs
-                        left join
-                            tutup_siklus ts
-                            on
-                                ts.noreg = rs.noreg
-                        left join
+                        select brg1.* from barang brg1
+                        right join
                             (
-                                select mm1.* from mitra_mapping mm1
-                                right join
-                                    (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                                    on
-                                        mm1.id = mm2.id
-                            ) mm
+                                select max(id) as id, kode from barang group by kode
+                            ) brg2
                             on
-                                mm.nim = rs.nim
-                        left join
-                            mitra m
-                            on
-                                mm.mitra = m.id
-                        left join
-                            kandang k
-                            on
-                                rs.kandang = k.id
-                        left join
-                            wilayah w
-                            on
-                                w.id = k.unit
-                    ) data
-                ) rs
-                on
-                    data.noreg = rs.noreg
-            ".$sql_condition."
+                                brg1.id = brg2.id
+                    ) brg
+                    on
+                        data.kode_barang = brg.kode
+                left join
+                    (
+                        select * from
+                        (
+                            select
+                                rs.noreg,
+                                mm.nim,
+                                m.nama,
+                                k.kandang,
+                                w.kode as unit,
+                                ts.id as id_ts
+                            from rdim_submit rs
+                            left join
+                                tutup_siklus ts
+                                on
+                                    ts.noreg = rs.noreg
+                            left join
+                                (
+                                    select mm1.* from mitra_mapping mm1
+                                    right join
+                                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                        on
+                                            mm1.id = mm2.id
+                                ) mm
+                                on
+                                    mm.nim = rs.nim
+                            left join
+                                mitra m
+                                on
+                                    mm.mitra = m.id
+                            left join
+                                kandang k
+                                on
+                                    rs.kandang = k.id
+                            left join
+                                wilayah w
+                                on
+                                    w.id = k.unit
+                        ) data
+                    ) rs
+                    on
+                        data.noreg = rs.noreg
+                ".$sql_condition."
+            ) data
+            group by
+                data.noreg,
+                data.kode_barang,
+                data.jenis_barang,
+                data.nama_barang,
+                data.nama_plasma,
+                data.kandang,
+                data.unit,
+                data.status
             order by
-                data.noreg asc,
+                data.unit asc,
                 data.jenis_barang asc,
-                brg.nama asc,
-                data.tanggal asc,
-                data.urut asc
+                data.nama_barang asc,
+                data.noreg asc
         ";
-        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
-
+        
         if ( $d_conf->count() > 0 ) {
             $data = $d_conf->toArray();
         }
+
+        // cetak_r( $data, 1 );
 
         return $data;
     }
@@ -489,7 +548,7 @@ class KartuStokSiklus extends Public_Controller {
         // cetak_r( $data, 1 );
 
         $content['data'] = $data;
-        $html = $this->load->view('report/kartu_stok_siklus/list', $content, TRUE);
+        $html = $this->load->view('report/posisi_stok_siklus/list', $content, TRUE);
 
         echo $html;
     }
