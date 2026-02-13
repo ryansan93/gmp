@@ -261,7 +261,7 @@ class VerifikasiPembayaran extends Public_Controller
                         nb.tbl_id = p.kode
                 where
                     p.status = ".$status." and
-                    p.tf_bank <> 0
+                    p.tf_bank <> '0'
 
                 union all
 
@@ -354,6 +354,7 @@ class VerifikasiPembayaran extends Public_Controller
             order by
                 lt.waktu asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
