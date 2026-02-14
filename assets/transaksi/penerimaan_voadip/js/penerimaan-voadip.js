@@ -189,21 +189,23 @@ var pv = {
 					var selected = '';
 					var option = '<option value="">-- Pilih No. SJ --</option>';
 					if ( !empty(no_order) && no_order != 'undefined' ) {
-						selected = 'selected';
-                        option += '<option value="'+id+'" '+selected+' >'+no_order.toUpperCase()+'</option>';
+						// selected = 'selected';
+                        option += '<option value="'+id+'" selected >'+no_order.toUpperCase()+'</option>';
                     }
 					if ( data.content.length > 0 ) {
 						for (var i = 0; i < data.content.length; i++) {
-							if ( !empty(id) ) {
-								if ( id == data.content[i].id ) {
-									if ( empty(selected) ) {
-										selected = 'selected';
-									}
-								}
-							}
+							// if ( !empty(id) ) {
+							// 	if ( id == data.content[i].id ) {
+							// 		if ( empty(selected) ) {
+							// 			selected = 'selected';
+							// 		}
+							// 	}
+							// }
 							option += '<option value="'+data.content[i].id+'" '+selected+' >'+data.content[i].no_sj+'</option>';
 						}
 					}
+
+					console.log( option );
 
 					$(div_action).find('select.no_sj').removeAttr('disabled');
 					$(div_action).find('select.no_sj').html(option);

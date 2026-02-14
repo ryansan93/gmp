@@ -43,7 +43,7 @@
     <div class="col-xs-6 d-flex align-items-center no-padding">
         <div class="col-xs-3 text-left">No. SJ</div>
         <div class="col-xs-6">
-            <select class="form-control no_sj" data-required="1" onchange="pv.get_data_by_sj(this)" data-id="<?php echo $data['kirim_voadip']['id']; ?>" data-noorder="<?php echo $data['kirim_voadip']['no_order']; ?>">
+            <select class="form-control no_sj" data-required="1" onchange="pv.get_data_by_sj(this)" data-id="<?php echo $data['kirim_voadip']['id']; ?>" data-noorder="<?php echo $data['kirim_voadip']['no_sj']; ?>">
                 <option value="">-- Pilih No. SJ --</option>
                 <!-- <?php if ( count($get_sj_not_terima) > 0 ): ?>
                 	<?php foreach ($get_sj_not_terima as $k => $val): ?>
@@ -142,6 +142,8 @@
                 <tr>
                     <th class="col-xs-2 text-center" rowspan="2">Jenis Pakan</th>
                     <th class="col-xs-2 text-center" colspan="2">Kirim</th>
+                    <th class="col-xs-1 text-center hide" rowspan="2">Harga Beli</th>
+                    <th class="col-xs-1 text-center hide" rowspan="2">Harga Jual</th>
                     <th class="col-xs-2 text-center" colspan="2">Terima</th>
                 </tr>
                 <tr>
