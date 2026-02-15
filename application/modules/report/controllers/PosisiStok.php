@@ -391,7 +391,7 @@ class PosisiStok extends Public_Controller {
                 ) klwr
                 left join
                     (
-                        ".$sql_jenis_trans_masuk."
+                        ".$sql_jenis_trans_keluar."
                     ) jt
                     on
                         klwr.kode_trans = jt.no_order and
