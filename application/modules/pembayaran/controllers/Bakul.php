@@ -307,7 +307,8 @@ class Bakul extends Public_Controller
                     dj.unit,
                     dj.pelanggan as no_pelanggan,
                     sum(dj.nominal) as nominal,
-                    isnull(pps.nominal, 0) as pakai, (sum(dj.nominal) - isnull(pps.nominal, 0)) as sisa
+                    isnull(pps.nominal, 0) as pakai, 
+                    (sum(dj.nominal) - isnull(pps.nominal, 0) - isnull(sum(pengembalian.nominal), 0)) as sisa
                 from det_jurnal dj
                 left join
                     (
@@ -315,6 +316,12 @@ class Bakul extends Public_Controller
                     ) pps
                     on
                         dj.kode_trans = pps.nomor
+                left join
+                    (
+                        select * from det_jurnal where coa_tujuan = '23100.000'
+                    ) pengembalian
+                    on
+                        dj.kode_trans = pengembalian.ref_kode
                 where
                     dj.coa_asal = '23100.000' and
                     -- (dj.nominal - isnull(pps.nominal, 0)) > 0 and
@@ -326,7 +333,7 @@ class Bakul extends Public_Controller
                     dj.pelanggan,
                     pps.nominal
                 having
-	                (sum(dj.nominal) - isnull(pps.nominal, 0)) > 0
+	                (sum(dj.nominal) - isnull(pps.nominal, 0) - isnull(sum(pengembalian.nominal), 0)) > 0
             ";
             $d_pps = $m_conf->hydrateRaw( $sql );
 
@@ -1503,7 +1510,7 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 9142, 9142, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 14750, 14750, 2);
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 13188, 13188, 3);
 	}
 }
