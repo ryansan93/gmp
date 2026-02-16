@@ -224,12 +224,39 @@ class RealisasiSJ extends Public_Controller
                     sum(drs.tonase) as tonase,
                     sum(drs.ekor) as ekor,
                     (sum(drs.tonase) / sum(drs.ekor)) as bb,
-                    sum(drs.tonase * drs.harga) as total
+                    sum(drs.tonase * drs.harga) as bruto,
+                    case
+                        when tp.pph > 0 then
+                            sum(drs.tonase * drs.harga) * (tp.pph/100)
+                        else 
+                            0
+                    end as pph,
+                    case
+                        when tp.pph > 0 then
+                            sum(drs.tonase * drs.harga) - (sum(drs.tonase * drs.harga) * (tp.pph/100))
+                        else 
+                            sum(drs.tonase * drs.harga)
+                    end as total
                 from det_real_sj drs
+                left join
+                    (
+                        select plg1.* from pelanggan plg1
+                        right join
+                            (select max(id) as id, nomor from pelanggan group by nomor) plg2
+                            on
+                                plg1.id = plg2.id
+                    ) plg
+                    on
+                        drs.no_pelanggan = plg.nomor
+                left join
+                    tipe_pelanggan tp
+                    on
+                        tp.id = plg.tipe_plg
                 where
                     drs.id_header = ".$id_real_sj."
                 group by
-                    drs.no_sj
+                    drs.no_sj,
+                    tp.pph
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
             if ( $d_conf->count() > 0 ) {
@@ -242,6 +269,8 @@ class RealisasiSJ extends Public_Controller
                     $m_drsi->tonase = $v_drsi['tonase'];
                     $m_drsi->ekor = $v_drsi['ekor'];
                     $m_drsi->bb = $v_drsi['bb'];
+                    $m_drsi->bruto = $v_drsi['bruto'];
+                    $m_drsi->pph = $v_drsi['pph'];
                     $m_drsi->total = $v_drsi['total'];
                     $m_drsi->save();
                 }
@@ -329,12 +358,39 @@ class RealisasiSJ extends Public_Controller
                     sum(drs.tonase) as tonase,
                     sum(drs.ekor) as ekor,
                     (sum(drs.tonase) / sum(drs.ekor)) as bb,
-                    sum(drs.tonase * drs.harga) as total
+                    sum(drs.tonase * drs.harga) as bruto,
+                    case
+                        when tp.pph > 0 then
+                            sum(drs.tonase * drs.harga) * (tp.pph/100)
+                        else 
+                            0
+                    end as pph,
+                    case
+                        when tp.pph > 0 then
+                            sum(drs.tonase * drs.harga) - (sum(drs.tonase * drs.harga) * (tp.pph/100))
+                        else 
+                            sum(drs.tonase * drs.harga)
+                    end as total
                 from det_real_sj drs
+                left join
+                    (
+                        select plg1.* from pelanggan plg1
+                        right join
+                            (select max(id) as id, nomor from pelanggan group by nomor) plg2
+                            on
+                                plg1.id = plg2.id
+                    ) plg
+                    on
+                        drs.no_pelanggan = plg.nomor
+                left join
+                    tipe_pelanggan tp
+                    on
+                        tp.id = plg.tipe_plg
                 where
                     drs.id_header = ".$id_real_sj."
                 group by
-                    drs.no_sj
+                    drs.no_sj,
+                    tp.pph
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
             if ( $d_conf->count() > 0 ) {
@@ -347,6 +403,8 @@ class RealisasiSJ extends Public_Controller
                     $m_drsi->tonase = $v_drsi['tonase'];
                     $m_drsi->ekor = $v_drsi['ekor'];
                     $m_drsi->bb = $v_drsi['bb'];
+                    $m_drsi->bruto = $v_drsi['bruto'];
+                    $m_drsi->pph = $v_drsi['pph'];
                     $m_drsi->total = $v_drsi['total'];
                     $m_drsi->save();
                 }
@@ -407,5 +465,6 @@ class RealisasiSJ extends Public_Controller
 
     public function tes()
     {
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 4312, 4312, 2);
     }
 }
