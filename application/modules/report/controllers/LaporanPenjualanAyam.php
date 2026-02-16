@@ -416,7 +416,7 @@ class LaporanPenjualanAyam extends Public_Controller {
             left join
                 (
                     select plg1.* from pelanggan plg1
-                    left join
+                    right join
                         (select max(id) as id, nomor from pelanggan group by nomor) plg2
                         on
                             plg1.id = plg2.id
