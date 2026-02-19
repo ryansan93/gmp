@@ -69,7 +69,7 @@ var lhk = {
                 lhk.setting_lhk('transaksi', 'div#transaksi');
 
                 if ( !empty(edit) ) {
-                	lhk.get_noreg( $('div#'+href).find('#select_mitra') );
+                	lhk.get_noreg( $('div#'+href).find('#select_mitra'), edit );
                 }
 
                 formData = new FormData();
@@ -153,7 +153,7 @@ var lhk = {
 		}
 	}, // end - remove_row
 
-    get_noreg: function(elm) {
+    get_noreg: function(elm, edit = null) {
     	var div = $(elm).closest('.tab-pane');
     	var div_id = $(div).attr('id');
 
@@ -187,7 +187,9 @@ var lhk = {
 	                		option += '<option data-tokens="'+data.content[i].tgl_docin+' | '+data.content[i].kandang+' | '+data.content[i].noreg+'" data-umur="'+data.content[i].umur+'" data-tgldocin="'+data.content[i].real_tgl_docin+'" data-tgllhkterakhir="'+data.content[i].tgl_lhk_terakhir+'" value="'+data.content[i].noreg+'" '+selected+'>'+data.content[i].tgl_docin+' | '+data.content[i].kandang+' | '+data.content[i].noreg+'</option>';
 	                	}
 	                }
-	                $(div).find('select#select_noreg').removeAttr('disabled');
+					if ( empty(edit) ) {
+						$(div).find('select#select_noreg').removeAttr('disabled');
+					}
 	                $(div).find('select#select_noreg').html(option);
 	                $(div).find('#select_noreg').selectpicker('refresh');
 
@@ -804,6 +806,8 @@ var lhk = {
 										}
 									}
 								});
+							} else {
+								$(elm).attr('disabled', false);
 							}
 						});
 					}
@@ -1016,6 +1020,8 @@ var lhk = {
 										}
 									}
 								});
+							} else {
+								$(elm).attr('disabled', false);
 							}
 						});
 					}

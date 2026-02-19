@@ -601,102 +601,112 @@ class PenerimaanDocMobile extends Public_Controller {
             $m_order_doc = new \Model\Storage\OrderDoc_model();
             $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
 
-            $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-            $now = $m_terima_doc->getDate();
+            $noreg = $d_order_doc->noreg;
 
-            $path_name = $params['lampiran_sj_old'];
-            $file = isset($mappingFiles[ $params['no_sj'] ]) ? $mappingFiles[ $params['no_sj'] ] : null;
-            if ( !empty($file) ) {
-                $moved = uploadFile($file);
-                $isMoved = $moved['status'];
-                if ($isMoved) {
-                    $path_name = $moved['path'];
-                }
-            }
+            $m_lhk = new \Model\Storage\Lhk_model();
+            $sql = "select * from lhk where noreg = '".$noreg."'";
+            $d_lhk = $m_lhk->hydrateRaw($sql);
 
-            $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order_old'])->orderBy('id', 'desc')->first();
-
-            $tgl_stok = $params['tiba'];
-            if ( $d_terima_doc->datang < $tgl_stok ) {
-                $tgl_stok = $d_terima_doc->datang;
-            }
-
-            // $id = $d_terima_doc->id;
-            $id = $params['id'];
-
-            $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
-
-            $m_terima_doc->where('id', $id)->update(
-                array(
-                    'no_order' => $params['no_order'],
-                    'no_sj' => $params['no_sj'],
-                    'no_bbm' => $no_bbm,
-                    'nopol' => $params['nopol'],
-                    'datang' => $params['tiba'],
-                    'supplier' => $d_order_doc->supplier,
-                    'jml_ekor' => $params['jml_ekor'],
-                    'jml_box' => $params['jml_box'],
-                    'user_submit' => $this->userid,
-                    'tgl_submit' => $now['waktu'],
-                    'kondisi' => $params['kondisi'],
-                    'keterangan' => null,
-                    'kirim' => $params['kirim'],
-                    'bb' => $params['bb'],
-                    'harga' => $d_order_doc->harga,
-                    'total' => $d_order_doc->harga * $params['jml_ekor'],
-                    'path' => $path_name,
-                    'uniformity' => $params['uniformity']
-                )
-            );
-
-            $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
-            $m_terima_doc_ket->where('id_header', $id)->delete();
-            if ( !empty($params['data_ket']) ) {
-                foreach ($params['data_ket'] as $k_dk => $v_dk) {
-                    $path_name_ket = isset($v_dk['lampiran_old']) ? $v_dk['lampiran_old'] : null;
-                    $file = isset($mappingFiles[ $v_dk['keterangan'] ]) ? $mappingFiles[ $v_dk['keterangan'] ] : null;
-                    if ( !empty($file) ) {
-                        $moved = uploadFile($file);
-                        $isMoved = $moved['status'];
-                        if ($isMoved) {
-                            $path_name_ket = $moved['path'];
-                        }
+            if ( $d_lhk->count() > 0 ) {
+                $this->result['message'] = "Data LHK / Recording sudah ada, jadi anda tidak bisa merubah data penerimaan DOC.";
+            } else {
+                $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+                $now = $m_terima_doc->getDate();
+    
+                $path_name = $params['lampiran_sj_old'];
+                $file = isset($mappingFiles[ $params['no_sj'] ]) ? $mappingFiles[ $params['no_sj'] ] : null;
+                if ( !empty($file) ) {
+                    $moved = uploadFile($file);
+                    $isMoved = $moved['status'];
+                    if ($isMoved) {
+                        $path_name = $moved['path'];
                     }
-
-                    $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
-                    $m_terima_doc_ket->id_header = $id;
-                    $m_terima_doc_ket->keterangan = $v_dk['keterangan'];
-                    $m_terima_doc_ket->lampiran = $path_name_ket;
-                    $m_terima_doc_ket->save();
                 }
+    
+                $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order_old'])->orderBy('id', 'desc')->first();
+    
+                $tgl_stok = $params['tiba'];
+                if ( $d_terima_doc->datang < $tgl_stok ) {
+                    $tgl_stok = $d_terima_doc->datang;
+                }
+    
+                // $id = $d_terima_doc->id;
+                $id = $params['id'];
+    
+                $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
+    
+                $m_terima_doc->where('id', $id)->update(
+                    array(
+                        'no_order' => $params['no_order'],
+                        'no_sj' => $params['no_sj'],
+                        'no_bbm' => $no_bbm,
+                        'nopol' => $params['nopol'],
+                        'datang' => $params['tiba'],
+                        'supplier' => $d_order_doc->supplier,
+                        'jml_ekor' => $params['jml_ekor'],
+                        'jml_box' => $params['jml_box'],
+                        'user_submit' => $this->userid,
+                        'tgl_submit' => $now['waktu'],
+                        'kondisi' => $params['kondisi'],
+                        'keterangan' => null,
+                        'kirim' => $params['kirim'],
+                        'bb' => $params['bb'],
+                        'harga' => $d_order_doc->harga,
+                        'total' => $d_order_doc->harga * $params['jml_ekor'],
+                        'path' => $path_name,
+                        'uniformity' => $params['uniformity']
+                    )
+                );
+    
+                $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
+                $m_terima_doc_ket->where('id_header', $id)->delete();
+                if ( !empty($params['data_ket']) ) {
+                    foreach ($params['data_ket'] as $k_dk => $v_dk) {
+                        $path_name_ket = isset($v_dk['lampiran_old']) ? $v_dk['lampiran_old'] : null;
+                        $file = isset($mappingFiles[ $v_dk['keterangan'] ]) ? $mappingFiles[ $v_dk['keterangan'] ] : null;
+                        if ( !empty($file) ) {
+                            $moved = uploadFile($file);
+                            $isMoved = $moved['status'];
+                            if ($isMoved) {
+                                $path_name_ket = $moved['path'];
+                            }
+                        }
+    
+                        $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
+                        $m_terima_doc_ket->id_header = $id;
+                        $m_terima_doc_ket->keterangan = $v_dk['keterangan'];
+                        $m_terima_doc_ket->lampiran = $path_name_ket;
+                        $m_terima_doc_ket->save();
+                    }
+                }
+    
+                // $conf = new \Model\Storage\Conf();
+                // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
+                // $d_conf = $conf->hydrateRaw($sql);
+    
+                // $m_conf = new \Model\Storage\Conf();
+                // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", ".$id.", 2";
+                // // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
+                // $m_conf->hydrateRaw( $sql );
+                $d_terima_doc = $m_terima_doc->where('id', $id)->first();
+    
+                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
+    
+                $deskripsi_log_terima_doc = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/save', $d_terima_doc, $deskripsi_log_terima_doc);
+    
+                $this->result['status'] = 1;
+                $this->result['content'] = array(
+                    'id' => $id,
+                    'tanggal' => $tgl_stok,
+                    'delete' => 0,
+                    'message' => 'Data Terima DOC berhasil di-update.',
+                    'status_jurnal' => 2,
+                    'status' => 2,
+                    'noreg' => $d_order_doc->noreg
+                );
+                // $this->result['message'] = 'Data Terima DOC berhasil di-update.';
             }
-
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
-            // $d_conf = $conf->hydrateRaw($sql);
-
-            // $m_conf = new \Model\Storage\Conf();
-            // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", ".$id.", 2";
-            // // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
-            // $m_conf->hydrateRaw( $sql );
-            $d_terima_doc = $m_terima_doc->where('id', $id)->first();
-
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
-
-            $deskripsi_log_terima_doc = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/save', $d_terima_doc, $deskripsi_log_terima_doc);
-
-            $this->result['status'] = 1;
-            $this->result['content'] = array(
-                'id' => $id,
-                'tanggal' => $tgl_stok,
-                'delete' => 0,
-                'message' => 'Data Terima DOC berhasil di-update.',
-                'status_jurnal' => 2,
-                'status' => 2,
-                'noreg' => $d_order_doc->noreg
-            );
-            // $this->result['message'] = 'Data Terima DOC berhasil di-update.';
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
@@ -848,10 +858,10 @@ class PenerimaanDocMobile extends Public_Controller {
         // $conf->hydrateRaw($sql);
 
         // $conf = new \Model\Storage\Conf();
-        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '758', '2025-11-21', 2, null, null";
+        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '1815', '2026-02-01', 2, null, null";
         // $conf->hydrateRaw($sql);
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 1490, 1490, 3);
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 1559, 1559, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 1490, 1490, 3);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 1815, 1815, 2);
     }
 }

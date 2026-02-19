@@ -1066,112 +1066,125 @@ class ODVP extends Public_Controller {
         $file = isset($_FILES['file']) ? $_FILES['file'] : null;
 
         try {
-            $execute = null;
-            $path_name = null;
-            $id_old = null;
-            if ( !empty($file) ) {
-                $moved = uploadFile($file);
-                if ( $moved ) {
-                    $path_name = $moved['path'];
+            $m_order_doc = new \Model\Storage\OrderDoc_model();
+            $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
 
-                    $execute = 1;
-                } else {
-                    $this->result['message'] = 'Upload gagal, hubungi tim IT.';
-                }
+            $noreg = $d_order_doc->noreg;
+
+            $m_lhk = new \Model\Storage\Lhk_model();
+            $sql = "select * from lhk where noreg = '".$noreg."'";
+            $d_lhk = $m_lhk->hydrateRaw($sql);
+
+            if ( $d_lhk->count() > 0 ) {
+                $this->result['message'] = "Data LHK / Recording sudah ada, jadi anda tidak bisa merubah data penerimaan DOC.";
             } else {
-                $execute = 1;
-            }
-
-            $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-            $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
-
-            $path_name = $d_terima_doc->path;
-            $id_old = $d_terima_doc->id;
-
-            if ( $execute == 1 ) {
-                $tgl_stok = $params['datang'];
-                if ( $d_terima_doc->datang < $tgl_stok ) {
-                    $tgl_stok = $d_terima_doc->datang;
+                $execute = null;
+                $path_name = null;
+                $id_old = null;
+                if ( !empty($file) ) {
+                    $moved = uploadFile($file);
+                    if ( $moved ) {
+                        $path_name = $moved['path'];
+    
+                        $execute = 1;
+                    } else {
+                        $this->result['message'] = 'Upload gagal, hubungi tim IT.';
+                    }
+                } else {
+                    $execute = 1;
                 }
-
+    
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-                $now = $m_terima_doc->getDate();
-
-                $id = $params['id'];
-
-                $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
-
-                $m_terima_doc->where('id', $id)->update(
-                    array(
-                        'no_order' => $params['no_order'],
-                        'no_sj' => $params['no_sj'],
-                        'no_bbm' => $no_bbm,
-                        'nopol' => $params['nopol'],
-                        'datang' => $params['datang'],
-                        'supplier' => $params['supplier'],
-                        'jml_ekor' => $params['jml_ekor'],
-                        'jml_box' => $params['jml_box'],
-                        'user_submit' => $this->userid,
-                        'tgl_submit' => $now['waktu'],
-                        'kondisi' => $params['kondisi'],
-                        'keterangan' => $params['keterangan'],
-                        'kirim' => $params['kirim'],
-                        'bb' => $params['bb'],
-                        'harga' => $params['harga'],
-                        'total' => $params['total'],
-                        'path' => $path_name,
-                        'uniformity' => $params['uniformity']
-                    )
-                );
-
-                $d_terima_doc = $m_terima_doc->where('id', $id)->first();
-
-                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id_old, $id_old, 3);
-
-                // $m_terima_doc = new \Model\Storage\TerimaDoc_model();
-                // $now = $m_terima_doc->getDate();
-
-                // $id_terima = $m_terima_doc->getNextIdentity();
-                
-                // $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
-
-                // $m_terima_doc->id = $id_terima;
-                // $m_terima_doc->no_terima = $params['no_terima'];
-                // $m_terima_doc->no_order = $params['no_order'];
-                // $m_terima_doc->no_sj = $params['no_sj'];
-                // $m_terima_doc->no_bbm = $no_bbm;
-                // $m_terima_doc->nopol = $params['nopol'];
-                // $m_terima_doc->datang = $params['datang'];
-                // $m_terima_doc->supplier = $params['supplier'];
-                // $m_terima_doc->jml_ekor = $params['jml_ekor'];
-                // $m_terima_doc->jml_box = $params['jml_box'];
-                // $m_terima_doc->user_submit = $this->userid;
-                // $m_terima_doc->tgl_submit = $now['waktu'];
-                // $m_terima_doc->kondisi = $params['kondisi'];
-                // $m_terima_doc->keterangan = $params['keterangan'];
-                // $m_terima_doc->version = $params['version'] + 1;
-                // $m_terima_doc->kirim = $params['kirim'];
-                // $m_terima_doc->bb = $params['bb'];
-                // $m_terima_doc->harga = $params['harga'];
-                // $m_terima_doc->total = $params['total'];
-                // $m_terima_doc->path = $path_name;
-                // $m_terima_doc->uniformity = $params['uniformity'];
-                // $m_terima_doc->save();
-
-                $conf = new \Model\Storage\Conf();
-                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
-                $d_conf = $conf->hydrateRaw($sql);
-                
-                // $m_conf = new \Model\Storage\Conf();
-                // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id.", ".$id_old.", 2";
-                // $d_conf = $m_conf->hydrateRaw( $sql );
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
-
-                $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/update', $d_terima_doc, $deskripsi_log);
-
-                $this->result['status'] = 1;
-                $this->result['message'] = 'Data Terima DOC berhasil diupdate.';
+                $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
+    
+                $path_name = $d_terima_doc->path;
+                $id_old = $d_terima_doc->id;
+    
+                if ( $execute == 1 ) {
+                    $tgl_stok = $params['datang'];
+                    if ( $d_terima_doc->datang < $tgl_stok ) {
+                        $tgl_stok = $d_terima_doc->datang;
+                    }
+    
+                    $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+                    $now = $m_terima_doc->getDate();
+    
+                    $id = $params['id'];
+    
+                    $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
+    
+                    $m_terima_doc->where('id', $id)->update(
+                        array(
+                            'no_order' => $params['no_order'],
+                            'no_sj' => $params['no_sj'],
+                            'no_bbm' => $no_bbm,
+                            'nopol' => $params['nopol'],
+                            'datang' => $params['datang'],
+                            'supplier' => $params['supplier'],
+                            'jml_ekor' => $params['jml_ekor'],
+                            'jml_box' => $params['jml_box'],
+                            'user_submit' => $this->userid,
+                            'tgl_submit' => $now['waktu'],
+                            'kondisi' => $params['kondisi'],
+                            'keterangan' => $params['keterangan'],
+                            'kirim' => $params['kirim'],
+                            'bb' => $params['bb'],
+                            'harga' => $params['harga'],
+                            'total' => $params['total'],
+                            'path' => $path_name,
+                            'uniformity' => $params['uniformity']
+                        )
+                    );
+    
+                    $d_terima_doc = $m_terima_doc->where('id', $id)->first();
+    
+                    // Modules::run( 'base/InsertJurnal/exec', $this->url, $id_old, $id_old, 3);
+    
+                    // $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+                    // $now = $m_terima_doc->getDate();
+    
+                    // $id_terima = $m_terima_doc->getNextIdentity();
+                    
+                    // $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
+    
+                    // $m_terima_doc->id = $id_terima;
+                    // $m_terima_doc->no_terima = $params['no_terima'];
+                    // $m_terima_doc->no_order = $params['no_order'];
+                    // $m_terima_doc->no_sj = $params['no_sj'];
+                    // $m_terima_doc->no_bbm = $no_bbm;
+                    // $m_terima_doc->nopol = $params['nopol'];
+                    // $m_terima_doc->datang = $params['datang'];
+                    // $m_terima_doc->supplier = $params['supplier'];
+                    // $m_terima_doc->jml_ekor = $params['jml_ekor'];
+                    // $m_terima_doc->jml_box = $params['jml_box'];
+                    // $m_terima_doc->user_submit = $this->userid;
+                    // $m_terima_doc->tgl_submit = $now['waktu'];
+                    // $m_terima_doc->kondisi = $params['kondisi'];
+                    // $m_terima_doc->keterangan = $params['keterangan'];
+                    // $m_terima_doc->version = $params['version'] + 1;
+                    // $m_terima_doc->kirim = $params['kirim'];
+                    // $m_terima_doc->bb = $params['bb'];
+                    // $m_terima_doc->harga = $params['harga'];
+                    // $m_terima_doc->total = $params['total'];
+                    // $m_terima_doc->path = $path_name;
+                    // $m_terima_doc->uniformity = $params['uniformity'];
+                    // $m_terima_doc->save();
+    
+                    $conf = new \Model\Storage\Conf();
+                    $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
+                    $d_conf = $conf->hydrateRaw($sql);
+                    
+                    // $m_conf = new \Model\Storage\Conf();
+                    // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id.", ".$id_old.", 2";
+                    // $d_conf = $m_conf->hydrateRaw( $sql );
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
+    
+                    $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                    Modules::run( 'base/event/update', $d_terima_doc, $deskripsi_log);
+    
+                    $this->result['status'] = 1;
+                    $this->result['message'] = 'Data Terima DOC berhasil diupdate.';
+                }
             }
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();

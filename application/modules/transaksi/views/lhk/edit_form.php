@@ -13,7 +13,7 @@
 					<label class="control-label">Nama Mitra</label>
 				</div>
 				<div class="col-xs-12 no-padding">
-					<select id="select_mitra" data-placeholder="Pilih Mitra" class="form-control selectpicker" data-live-search="true" type="text" data-required="1">
+					<select id="select_mitra" data-placeholder="Pilih Mitra" class="form-control selectpicker" data-live-search="true" type="text" data-required="1" disabled>
 						<option value="">Pilih Mitra</option>
 						<?php foreach ($data_mitra as $k_dm => $v_dm): ?>
 							<?php
