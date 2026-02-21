@@ -1566,6 +1566,7 @@ class LHK extends Public_Controller
                     'sisa_pakan' => $sisa_pakan,
                     'ekor_mati' => $ekor_mati,
                     'keterangan' => $params['keterangan'],
+                    'tanggal' => $params['tanggal'],
                     'nik' => $m_kry->getNik( $this->userdata['detail_user']['nama_detuser'] ),
                     'lat_long' => $params['lat'].','.$params['long'],
                     'status' => 1

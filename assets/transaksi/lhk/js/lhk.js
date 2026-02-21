@@ -990,6 +990,7 @@ var lhk = {
 									'sisa_pakan': numeral.unformat($(div_transaksi).find('input[name=sisa_pakan]').val()),
 									'ekor_mati': numeral.unformat($(div_transaksi).find('input[name=ekor_mati]').val()),
 									'keterangan': $(div_transaksi).find('textarea').val(),
+									'tanggal': dateSQL($(div_transaksi).find('#tanggal').data('DateTimePicker').date()),
 									'lat': $(elm).attr('data-lat'),
 									'long': $(elm).attr('data-long'),
 									'data_sekat': data_sekat,
