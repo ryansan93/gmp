@@ -454,7 +454,7 @@ class TSDRHPP extends Public_Controller {
                 $non_group = 0;
             }
 
-            $berita_acara = $d_rhpp_plasma['berita_acara'];
+            $berita_acara = (isset($d_rhpp_plasma['berita_acara']) && !empty($d_rhpp_plasma['berita_acara'])) ? $d_rhpp_plasma['berita_acara'] : null;
 
             $id_tutup_siklus = $d_rhpp_inti['id_ts'];
             $no_mitra = $d_rs['mitra']['d_mitra']['nomor'];
@@ -469,7 +469,7 @@ class TSDRHPP extends Public_Controller {
             $tgl_tutup = $d_ts->tgl_tutup;
             $rata_umur_panen = $d_rhpp_inti['rata_umur'];
             $biaya_opr = $d_rhpp_inti['biaya_operasional'];
-            $bonus_insentif_fcr = $d_rhpp_plasma['bonus_insentif_fcr'];
+            $bonus_insentif_fcr = !empty($d_rhpp_plasma['bonus_insentif_fcr']) ? $d_rhpp_plasma['bonus_insentif_fcr'] : 0;
             $populasi_bonus_insentif_listrik = !empty($d_rhpp_plasma) ? $d_rhpp_plasma['populasi_bonus_insentif_listrik'] : 0;
             $bonus_insentif_listrik = !empty($d_rhpp_plasma) ? $d_rhpp_plasma['bonus_insentif_listrik'] : 0;
             $total_bonus_insentif_listrik = !empty($d_rhpp_plasma) ? $d_rhpp_plasma['total_bonus_insentif_listrik'] : 0;
@@ -699,16 +699,16 @@ class TSDRHPP extends Public_Controller {
                 );
             }
 
-            $bonus_pasar = $d_rhpp_plasma['persen_bonus_pasar'];
-            $bonus_kematian = $d_rhpp_plasma['bonus_kematian'];
+            $bonus_pasar = !empty($d_rhpp_plasma['persen_bonus_pasar']) ? $d_rhpp_plasma['persen_bonus_pasar'] : 0;
+            $bonus_kematian = !empty($d_rhpp_plasma['bonus_kematian']) ? $d_rhpp_plasma['bonus_kematian'] : 0;
             $fcr = $d_rhpp_inti['fcr'];
             $bb = $d_rhpp_inti['bb'];
             // $deplesi = $d_rhpp_inti['deplesi'];
             // $ip = $d_rhpp_inti['ip'];
             $deplesi_inti = $d_rhpp_inti['deplesi']; 
             $ip_inti = $d_rhpp_inti['ip'];
-            $deplesi_plasma = $d_rhpp_plasma['deplesi']; 
-            $ip_plasma = $d_rhpp_plasma['ip'];
+            $deplesi_plasma = !empty($d_rhpp_plasma['deplesi']) ? $d_rhpp_plasma['deplesi'] : 0; 
+            $ip_plasma = !empty($d_rhpp_plasma['ip']) ? $d_rhpp_plasma['ip'] : 0;
             $cn = $d_rhpp_inti['cn'];
         } else {
             $m_bo = new \Model\Storage\BiayaOperasional_model();
@@ -1418,7 +1418,7 @@ class TSDRHPP extends Public_Controller {
                 'tgl_docin' => $tgl_docin,
                 'sj' => $no_sj,
                 'barang' => strtoupper($nama_barang) . ' BOX ' . strtoupper($jenis_box),
-                'box' => $jml_ekor / 100,
+                'box' => ceil($jml_ekor / 100),
                 'jumlah' => $jml_ekor,
                 'harga' => $harga_kontrak_doc_peternak,
                 'total' => $total_doc_peternak
@@ -1427,7 +1427,7 @@ class TSDRHPP extends Public_Controller {
                 'tgl_docin' => $tgl_docin,
                 'sj' => $no_sj,
                 'barang' => strtoupper($nama_barang) . ' BOX ' . strtoupper($jenis_box),
-                'box' => $jml_ekor / 100,
+                'box' => ceil($jml_ekor / 100),
                 'jumlah' => $jml_ekor,
                 'harga' => $harga_kontrak_doc_supplier,
                 'total' => $total_doc_supplier
@@ -4124,6 +4124,8 @@ class TSDRHPP extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            // cetak_r( $params, 1 );
+
             $id_plasma = null;
 
             $m_conf = new \Model\Storage\Conf();
@@ -4245,9 +4247,9 @@ class TSDRHPP extends Public_Controller {
                     $m_rhpp_doc->jumlah = $v_rhpp['data_doc']['jumlah'];
                     $m_rhpp_doc->harga = $v_rhpp['data_doc']['harga'];
                     $m_rhpp_doc->total = $v_rhpp['data_doc']['total'];
-                    $m_rhpp_doc->vaksin = $v_rhpp['data_doc']['vaksin'];
-                    $m_rhpp_doc->harga_vaksin = $v_rhpp['data_doc']['harga_vaksin'];
-                    $m_rhpp_doc->total_vaksin = $v_rhpp['data_doc']['total_vaksin'];
+                    $m_rhpp_doc->vaksin = (isset($v_rhpp['data_doc']['vaksin']) && !empty($v_rhpp['data_doc']['vaksin'])) ? $v_rhpp['data_doc']['vaksin'] : null;
+                    $m_rhpp_doc->harga_vaksin = (isset($v_rhpp['data_doc']['harga_vaksin']) && !empty($v_rhpp['data_doc']['harga_vaksin'])) ? $v_rhpp['data_doc']['harga_vaksin'] : null;
+                    $m_rhpp_doc->total_vaksin = (isset($v_rhpp['data_doc']['total_vaksin']) && !empty($v_rhpp['data_doc']['total_vaksin'])) ? $v_rhpp['data_doc']['total_vaksin'] : null;
                     $m_rhpp_doc->save();
 
                     if ( !empty($v_rhpp['data_pakan']) ) {
