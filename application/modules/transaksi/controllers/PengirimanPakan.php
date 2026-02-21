@@ -808,8 +808,204 @@ class PengirimanPakan extends Public_Controller {
         display_json($this->result);
     }
 
-    public function cekStokGudang()
+    public function cekStok()
     {
+        $params = $this->input->post('params');
+
+        try {
+            // cetak_r( $params, 1 );
+
+            $id = (isset($params['id']) && !empty($params['id'])) ? $params['id']: null;
+            $no_order = (isset($params['no_order']) && !empty($params['no_order'])) ? $params['no_order'] : null;
+            $tgl_kirim = $params['tgl_kirim'];
+            $jenis_kirim = $params['jenis_kirim'];
+            $asal = $params['asal'];
+            $detail = $params['detail'];
+
+            $status = 1;
+            $message = '';
+            if ( $jenis_kirim == 'opkg' ) {
+                foreach ($detail as $k_det => $v_det) {
+                    $kode_brg = $v_det['barang'];
+
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select * from
+                        (
+                            select brg1.* from barang brg1
+                            right join
+                                (select max(id) as id, kode from barang group by kode) brg2
+                                on
+                                    brg1.id = brg2.id
+                        ) brg
+                        where
+                            brg.kode = '".$kode_brg."'
+                    ";
+                    $d_brg = $m_conf->hydrateRaw( $sql );
+
+                    $nama_brg = '';
+                    if ( $d_brg->count() > 0 ) {
+                        $nama_brg = $d_brg->toArray()[0]['nama'];
+                    }
+
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select
+                            ds.kode_gudang,
+                            ds.kode_barang,
+                            sum(isnull(ds.jml_stok, 0)) as jumlah
+                        from det_stok ds
+                        left join
+                            stok s
+                            on
+                                ds.id_header = s.id
+                        where
+                            s.periode = '".$tgl_kirim."' and
+                            ds.kode_gudang = '".$asal."' and
+                            ds.kode_barang = '".$kode_brg."'
+                        group by
+                            ds.kode_gudang,
+                            ds.kode_barang
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+
+                    $jml_stok = 0;
+                    if ( $d_conf->count() > 0 ) {
+                        $jml_stok = $d_conf->toArray()[0]['jumlah'];
+                    }
+
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select
+                            kp.asal as kode_gudang,
+                            dkp.item as kode_barang,
+                            sum(isnull(dkp.jumlah, 0)) as jumlah
+                        from det_kirim_pakan dkp
+                        left join
+                            kirim_pakan kp
+                            on
+                                dkp.id_header = kp.id
+                        left join
+                            terima_pakan tp
+                            on
+                                kp.id = tp.id_kirim_pakan
+                        where
+                            kp.tgl_kirim = '".$tgl_kirim."' and
+                            kp.asal = '".$asal."' and
+                            dkp.item = '".$kode_brg."' and
+                            kp.id <> '".$id."' and
+                            tp.id is null
+                        group by
+                            kp.asal,
+                            dkp.item
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+
+                    $jml_kirim = 0;
+                    if ( $d_conf->count() > 0 ) {
+                        $jml_kirim = $d_conf->toArray()[0]['jumlah'];
+                    }
+
+                    if ( $jml_stok < ($jml_kirim+$v_det['jumlah']) ) {
+                        $status = 0;
+                        if ( empty($message)  ) {
+                            $message = 'Data yang anda masukkan tidak sesuai !!!<br><br>';
+                        }
+
+                        $message .= '<b>'.$nama_brg.'</b><br>';
+                        $message .= 'STOK : '.angkaRibuan($jml_stok).' KG<br>';
+                        $message .= 'PENGIRIMAN : '.angkaRibuan($jml_kirim).' KG<br>';
+                        $message .= 'JUMLAH ANDA : '.angkaRibuan($v_det['jumlah']).' KG<br><br>';
+                    }
+                }
+
+                if ( $status == 0 ) {
+                    $message .= 'Cek data stok dan pengiriman anda.';
+                }
+            } else if ( $jenis_kirim == 'opkp' ) {
+                foreach ($detail as $k_det => $v_det) {
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select * from
+                        (
+                            select brg1.* from barang brg1
+                            right join
+                                (select max(id) as id, kode from barang group by kode) brg2
+                                on
+                                    brg1.id = brg2.id
+                        ) brg
+                        where
+                            brg.kode = '".$v_det['barang']."'
+                    ";
+                    $d_brg = $m_conf->hydrateRaw( $sql );
+
+                    $nama_brg = '';
+                    if ( $d_brg->count() > 0 ) {
+                        $nama_brg = $d_brg->toArray()[0]['nama'];
+                    }
+
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select sum(dtp.jumlah) as jumlah from det_terima_pakan dtp
+                        left join
+                            terima_pakan tp
+                            on
+                                dtp.id_header = tp.id
+                        left join
+                            kirim_pakan kp
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        where
+                            kp.no_sj = '".$v_det['no_sj_asal']."' and
+                            dtp.item = '".$v_det['barang']."'
+                    ";
+                    $d_asal = $m_conf->hydrateRaw( $sql );
+
+                    $jml_terima = 0;
+                    if ( $d_asal->count() > 0 ) {
+                        $jml_terima = $d_asal->toArray()[0]['jumlah'];
+                    }
+
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select sum(dkp.jumlah) as jumlah from det_kirim_pakan dkp
+                        where
+                            dkp.no_sj_asal = '".$v_det['no_sj_asal']."' and
+                            dkp.item = '".$v_det['barang']."' and
+                            dkp.id_header <> '".$id."'
+                    ";
+                    $d_pakai = $m_conf->hydrateRaw( $sql );
+
+                    $jml_pakai = $v_det['jumlah'];
+                    if ( $d_pakai->count() > 0 ) {
+                        $jml_pakai += $d_pakai->toArray()[0]['jumlah'];
+                    }
+
+                    if ( $jml_terima < $jml_pakai ) {
+                        $status = 0;
+                        if ( empty($message)  ) {
+                            $message = 'Data yang anda masukkan tidak sesuai !!!<br><br>';
+                        }
+
+                        $message .= '<b>'.$nama_brg.'</b><br>';
+                        $message .= 'SJ ASAL : <b>'.$v_det['no_sj_asal'].'</b><br>';
+                        $message .= 'TERIMA DI KANDANG : '.angkaRibuan($jml_terima).' KG<br>';
+                        $message .= 'PINDAH : '.angkaRibuan($jml_pakai).' KG<br><br>';
+                    }
+                }
+
+                if ( $status == 0 ) {
+                    $message .= 'Cek data sj asal yang anda masukkan.';
+                }
+            }
+
+            $this->result['status'] = $status;
+            $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
     }
 
     public function save()

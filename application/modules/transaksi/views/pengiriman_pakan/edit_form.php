@@ -19,7 +19,7 @@
         </div>
         <div class="col-lg-2" style="padding-left: 0px;">
             <div class="input-group date datetimepicker" name="tgl_kirim_op" id="tgl_kirim_op">
-                <input type="text" class="form-control text-center" placeholder="Tanggal Kirim" data-tgl="<?php echo $data_op['rcn_kirim']; ?>" />
+                <input type="text" class="form-control text-center" placeholder="Tanggal Kirim" data-tgl="<?php echo (isset($data_op['rcn_kirim']) && !empty($data_op['rcn_kirim'])) ? $data_op['rcn_kirim'] : null; ?>" />
                 <span class="input-group-addon">
                     <span class="glyphicon glyphicon-calendar"></span>
                 </span>

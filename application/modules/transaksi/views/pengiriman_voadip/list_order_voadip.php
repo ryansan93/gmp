@@ -17,6 +17,7 @@
 			</td>
 			<td>
 				<input type="text" class="form-control text-right jumlah" placeholder="Jumlah" data-tipe="decimal" data-required="1" value="<?php echo angkaDecimal($v_data['jumlah']); ?>" onblur="pv.cek_stok_gudang(this)" disabled="disabled">
+				<!-- <input type="text" class="form-control text-right jumlah" placeholder="Jumlah" data-tipe="decimal" data-required="1" value="<?php echo angkaDecimal($v_data['jumlah']); ?>" disabled="disabled"> -->
 			</td>
 			<td>
 				<input type="text" class="form-control kondisi" placeholder="Kondisi" data-required="1">
@@ -46,6 +47,7 @@
 		</td>
 		<td>
 			<input type="text" class="form-control text-right jumlah" placeholder="Jumlah" data-tipe="decimal" data-required="1" value="0" onblur="pv.cek_stok_gudang(this)">
+			<!-- <input type="text" class="form-control text-right jumlah" placeholder="Jumlah" data-tipe="decimal" data-required="1" value="0"> -->
 		</td>
 		<td>
 			<input type="text" class="form-control kondisi" placeholder="Kondisi" data-required="1">

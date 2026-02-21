@@ -201,6 +201,7 @@
 					</td>
 					<td>
 						<input type="text" class="form-control text-right jumlah" placeholder="Jumlah" data-tipe="decimal" data-required="1" onblur="pv.cek_stok_gudang(this)">
+						<!-- <input type="text" class="form-control text-right jumlah" placeholder="Jumlah" data-tipe="decimal" data-required="1"> -->
 					</td>
 					<td>
 						<input type="text" class="form-control kondisi" placeholder="Kondisi" data-required="1">

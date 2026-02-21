@@ -29,7 +29,7 @@
 	<div class="col-lg-12 d-flex align-items-center no-padding">
 		<div class="col-lg-2">Perusahaan</div>
 		<div class="col-lg-10">
-			: <label class="control-label"><?php echo strtoupper($data_ov['nama_prs']); ?></label>
+			: <label class="control-label"><?php echo (isset($data_ov['nama_prs']) && !empty($data_ov['nama_prs'])) ? strtoupper($data_ov['nama_prs']) : null; ?></label>
 		</div>
 	</div>
 </div>

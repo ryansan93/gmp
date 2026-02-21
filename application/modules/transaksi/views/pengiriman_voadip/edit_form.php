@@ -317,6 +317,7 @@
 						</td>
 						<td>
 							<input type="text" class="form-control kondisi" placeholder="Kondisi" data-required="1" value="<?php echo angkaRibuan($v_det['kondisi']) ?>" onblur="pv.cek_stok_gudang(this)">
+							<!-- <input type="text" class="form-control kondisi" placeholder="Kondisi" data-required="1" value="<?php echo angkaRibuan($v_det['kondisi']) ?>"> -->
 							<?php
 								$jml_detail++;
 								$css = 'display: none;';
