@@ -3,6 +3,7 @@
 	<?php foreach ($data as $k_data => $v_data): ?>
 		<tr class="data search">
 			<td class="text-center"><?php echo tglIndonesia($v_data['tgl_bayar'], '-', ' '); ?></td>
+			<td class="text-left"><?php echo strtoupper($v_data['kode_umb']); ?></td> 
 			<td class="text-left"><?php echo strtoupper($v_data['perusahaan']); ?></td>
 			<td class="text-left"><?php echo strtoupper($v_data['pelanggan']); ?></td>
 			<td class="text-right jml_transfer"><?php echo angkaRibuan($v_data['jml_transfer']); ?></td>
@@ -36,7 +37,7 @@
 		<?php $grand_total += $v_data['jml_transfer']; ?>
 	<?php endforeach ?>
 	<tr>
-		<td class="text-right" colspan="3"><b>GRAND TOTAL</b></td>
+		<td class="text-right" colspan="4"><b>GRAND TOTAL</b></td>
 		<td class="text-right grand_total"><b><?php echo angkaRibuan($grand_total) ?></b></td>
 		<td class="text-left" colspan="3"></td>
 	</tr>

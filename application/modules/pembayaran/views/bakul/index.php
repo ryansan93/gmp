@@ -58,7 +58,8 @@
 									<thead>
 										<tr>
 											<th class="col-lg-1 text-center">Tgl Rek Koran</th>
-											<th class="col-lg-2 text-center">Perusahaan</th>
+											<th class="col-lg-1 text-center">Kode Bank</th>
+											<th class="col-lg-1 text-center">Perusahaan</th>
 											<th class="col-lg-2 text-center">Pelanggan</th>
 											<th class="col-lg-1 text-center">Jumlah Transfer</th>
 											<th class="col-lg-2 text-center">Bukti Transfer</th>

@@ -624,6 +624,7 @@ class Bakul extends Public_Controller
                 pp.tgl_bayar,
                 pp.jml_transfer,
                 pp.lampiran_transfer,
+                pp.kode_umb,
                 prs.perusahaan as nama_perusahaan,
                 plg.nama as nama_pelanggan,
                 lt.deskripsi,
@@ -680,6 +681,7 @@ class Bakul extends Public_Controller
                     'id' => $v_pp['id'],
                     'tgl_bayar' => $v_pp['tgl_bayar'],
                     'perusahaan' => $v_pp['nama_perusahaan'],
+                    'kode_umb' => $v_pp['kode_umb'],
                     'pelanggan' => $v_pp['nama_pelanggan'],
                     'jml_transfer' => $v_pp['jml_transfer'],
                     'lampiran_transfer' => $v_pp['lampiran_transfer'],
@@ -1510,7 +1512,75 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 14750, 14750, 2);
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 13188, 13188, 3);
+        // $arr = array(
+        //     15030,
+        //     15161,
+        //     15186,
+        //     15238,
+        //     15315,
+        //     15334,
+        //     15340,
+        //     15753,
+        //     16003,
+        //     16042,
+        //     16136,
+        //     16145,
+        //     16297,
+        //     16627,
+        //     16747,
+        //     16752,
+        //     16905,
+        //     17023,
+        //     17024,
+        //     17040,
+        //     17076,
+        //     17133,
+        //     17178,
+        //     17218
+
+        //     'BCA32602030168',
+        //     'BCA32602030184',
+        //     'BCA32602040009',
+        //     'BCA32602040140',
+        //     'BCA32602040143',
+        //     'BCA32602040168',
+        //     'BCA32602050093',
+        //     'BCA32602050150',
+        //     'BCA32602060060',
+        //     'BCA32602060062',
+        //     'BCA32602070002',
+        //     'BCA32602070055',
+        //     'BCA32602080001',
+        //     'BCA32602090112',
+        //     'BCA32602090174',
+        //     'BCA32602090183',
+        //     'BCA32602110016',
+        //     'BCA32602110026',
+        //     'BCA32602110049',
+        //     'BCA32602130104',
+        //     'BCA32602140038',
+        //     'BCA32602150104',
+        //     'BCA32602160001',
+        //     'BCA32602160020',
+        //     'BCA32602180007',
+        //     'BCA32602190049',
+        //     'BCA32602190058',
+        //     'BCA32602190086',
+        //     'BCA32602200101',
+        //     'BCA32602200106',
+        //     'BCA32602200120',
+        //     'BCA32602210067',
+        //     'BCA32602210091',
+        //     'BCA32602220059',
+        //     'BCA32602220065',
+
+        // );
+
+        // foreach ($arr as $key => $value) {
+        //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+        //     // Modules::run( 'base/InsertJurnal/exec', $this->url, 13188, 13188, 3);
+        // }
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 16905, 16905, 2);
 	}
 }

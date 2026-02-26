@@ -100,7 +100,7 @@
 			<input type="text" class="form-control text-center kode_umb" style="padding: 0px 1px 0px 0px;" placeholder="Kode" readonly value="<?php echo !empty($data_umb) ? strtoupper($data_umb['no_bukti']) : ''; ?>">
 		</div>
 		<div class="col-lg-2" style="padding: 0px 30px 0px 0px;">
-			<input type="text" class="form-control text-right jml_transfer" data-tipe="integer" placeholder="Jumlah" onblur="bakul.hit_total_uang()" data-required="1">
+			<input type="text" class="form-control text-right jml_transfer" data-tipe="decimal" placeholder="Jumlah" onblur="bakul.hit_total_uang()" data-required="1">
 		</div>
 		<!-- <div class="col-lg-1" style="padding: 0px 30px 0px 0px;">&nbsp;</div> -->
 		<div class="col-lg-2 no-padding"><label class="control-label text-left">Bukti Transfer</label></div>
@@ -125,8 +125,8 @@
 			<button type="button" class="btn btn-default formSaldo" onclick="bakul.formSaldo(this)" disabled>Pilih Saldo</button>
 		</div>
 	</div>
-	<div class="col-lg-12"></div>
-	<div class="col-lg-12 no-padding">
+	<div class="col-lg-12 hide"></div>
+	<div class="col-lg-12 no-padding hide">
 		<div class="col-lg-2 no-padding"><label class="control-label text-left">Nilai Pajak</label></div>
 		<div class="col-lg-1 no-padding" style="max-width: 2%;"><label class="control-label">:</label></div>
 		<div class="col-lg-2 no-padding">
