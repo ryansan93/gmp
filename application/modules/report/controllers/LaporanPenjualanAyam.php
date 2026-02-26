@@ -195,141 +195,80 @@ class LaporanPenjualanAyam extends Public_Controller {
     {
         $params = json_decode( exDecrypt($params_encrypt), true );
 
-        $kas = $params['kas'];
-        $bulan = $params['bulan'];
-        $tahun = substr($params['tahun'], 0, 4);
-
-        if ( $bulan != 'all' ) {
-            $i = $bulan;
-
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
-
-            $date = $tahun.'-'.$angka_bulan.'-01';
-            $start_date = date("Y-m-d", strtotime($date));
-            $end_date = date("Y-m-t", strtotime($date));
-        } else {
-            $i = 1;
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
-            $_start_date = $tahun.'-'.$angka_bulan.'-01';
-            $start_date = date("Y-m-d", strtotime($_start_date));
-
-            $i = 12;
-            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
-            $_end_date = $tahun.'-'.$angka_bulan.'-01';
-            $end_date = date("Y-m-t", strtotime($_end_date));
-        }
-
         $data = $this->getData( $params );
 
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select * from coa where coa = '".$kas."'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        $start_date = $params['start_date'];
+        $end_date = $params['end_date'];
 
-        $nama = null;
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray()[0];
-
-            $nama = $d_conf['nama_coa'];
-        }
-
-        $filename = strtoupper("LAPORAN_BANK_".str_replace(' ', '_', $d_conf['nama_coa'])."_");
+        $filename = strtoupper("LAPORAN_PENJUALAN_AYAM_");
         $filename = $filename.str_replace('-', '', $start_date).'_'.str_replace('-', '', $end_date).'.xls';
 
         $arr_column = null;
 
         $idx = 0;
         $arr_column[ $idx ] = array(
-            'Saldo' => array('value' => 'LAPORAN BANK '.strtoupper($nama), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+            'A' => array('value' => 'LAPORAN PENJUALAN AYAM', 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
         );
         $idx++;
         $arr_column[ $idx ] = array(
-            'Saldo' => array('value' => 'PERIODE '.str_replace('-', '/', $start_date).' - '.str_replace('-', '/', $end_date), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+            'A' => array('value' => 'PERIODE '.str_replace('-', '/', $start_date).' - '.str_replace('-', '/', $end_date), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+        );
+        $idx++;
+        $arr_column[ $idx ] = array(
+            'A' => array('value' => 'UNIT', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'B' => array('value' => 'TANGGAL', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'C' => array('value' => 'CUSTOMER', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'D' => array('value' => 'KANDANG', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'E' => array('value' => 'NOREG', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'F' => array('value' => 'NO. INVOICE', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'G' => array('value' => 'NOTA TIMBANG', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'H' => array('value' => 'JENIS AYAM', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'I' => array('value' => 'EKOR', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'J' => array('value' => 'TONASE', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'K' => array('value' => 'HARGA', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'L' => array('value' => 'TOTAL', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
         );
         $idx++;
 
         $start_row_header = $idx+1;
 
-        $arr_header = array('Tanggal', 'No', 'Keterangan', 'Masuk', 'Keluar', 'Saldo');
+        $arr_header = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L');
         if ( !empty($data) ) {
-            $kode_kas = null; 
-            $idx_kas = 0;
-            $saldo = 0;
-
-            $saldo_kas = 0;
-
-            $tot_debet_kas = 0;
-            $tot_kredit_kas = 0;
-
-            $gt_debet = 0;
-            $gt_kredit = 0;
-            $gt_saldo = 0;
-            foreach ($data as $key => $value) {
-                if ( $kode_kas <> $value['kas'] ) {
-                    $idx_kas = 0;
-                    $saldo = 0;
-                    $kode_kas = $value['kas'];
-                    
-                    $tot_debet_kas = 0;
-                    $tot_kredit_kas = 0;
-                }
-
-                $tanggal = !empty($value['tanggal']) ? (($value['tanggal'] < '2000-01-01') ? null : $value['tanggal']) : null;
-                $kode_trans = $value['kode'];
-                $keterangan = $value['keterangan'];
-
-                $debet = $value['debet'];
-                $kredit = $value['kredit'];
-                $saldo = ($saldo+$debet)-$kredit;
-
-                $tot_debet_kas += $debet;
-                $tot_kredit_kas += $kredit;
-
-                $gt_debet += $debet;
-                $gt_kredit += $kredit;
-
-                if ( $idx_kas == 0 ) {
-                    if ( stristr($value['keterangan'], 'saldo awal') === false ) {
-                        $arr_column[ $idx ] = array(
-                            'Tanggal' => array('value' => '', 'data_type' => 'date'),
-                            'No' => array('value' => '', 'data_type' => 'string'),
-                            'Keterangan' => array('value' => 'Saldo Awal', 'data_type' => 'string'),
-                            'Masuk' => array('value' => 0, 'data_type' => 'decimal2'),
-                            'Keluar' => array('value' => 0, 'data_type' => 'decimal2'),
-                            'Saldo' => array('value' => 0, 'data_type' => 'decimal2')
-                        );
-
-                        $idx++;
-                    }
-                }
-
+            $gt_ekor = 0;
+            $gt_tonase = 0;
+            $gt_total = 0;
+            foreach ($data as $k_data => $v_data) {
                 $arr_column[ $idx ] = array(
-                    'Tanggal' => array('value' => !empty($tanggal) ? $tanggal : '', 'data_type' => 'date'),
-                    'No' => array('value' => !empty($kode_trans) ? $kode_trans : '', 'data_type' => 'string'),
-                    'Keterangan' => array('value' => $keterangan, 'data_type' => 'string'),
-                    'Masuk' => array('value' => $debet, 'data_type' => 'decimal2'),
-                    'Keluar' => array('value' => $kredit, 'data_type' => 'decimal2'),
-                    'Saldo' => array('value' => $saldo, 'data_type' => 'decimal2')
+                    'A' => array('value' => $v_data['nama_unit'], 'data_type' => 'string', 'align' => 'left'),
+                    'B' => array('value' => $v_data['tgl_panen'], 'data_type' => 'date', 'align' => 'left'),
+                    'C' => array('value' => $v_data['nama_pelanggan'], 'data_type' => 'string', 'align' => 'left'),
+                    'D' => array('value' => $v_data['nama_mitra'], 'data_type' => 'string', 'align' => 'left'),
+                    'E' => array('value' => $v_data['noreg'], 'data_type' => 'string', 'align' => 'left'),
+                    'F' => array('value' => $v_data['no_inv'], 'data_type' => 'string', 'align' => 'left'),
+                    'G' => array('value' => $v_data['no_nota'], 'data_type' => 'string', 'align' => 'left'),
+                    'H' => array('value' => $this->config->item('jenis_ayam')[$v_data['jenis_ayam']], 'data_type' => 'string', 'align' => 'left'),
+                    'I' => array('value' => $v_data['ekor'], 'data_type' => 'integer', 'align' => 'right'),
+                    'J' => array('value' => $v_data['tonase'], 'data_type' => 'decimal2', 'align' => 'right'),
+                    'K' => array('value' => $v_data['harga'], 'data_type' => 'decimal2', 'align' => 'right'),
+                    'L' => array('value' => ($v_data['tonase'] * $v_data['harga']), 'data_type' => 'decimal2', 'align' => 'right'),
                 );
-
-                if ( !empty($kode_kas) && (!isset($data[$key+1]) || $kode_kas <> $data[$key+1]['kas']) ) {
-                    $idx++;
-
-                    $arr_column[ $idx ] = array(
-                        'Keterangan' => array('value' => 'Total', 'data_type' => 'string', 'colspan' => array('A','C'), 'align' => 'right', 'text_style' => 'bold'),
-                        'Masuk' => array('value' => $gt_debet, 'data_type' => 'decimal2', 'text_style' => 'bold'),
-                        'Keluar' => array('value' => $gt_kredit, 'data_type' => 'decimal2', 'text_style' => 'bold'),
-                        'Saldo' => array('value' => $saldo, 'data_type' => 'decimal2', 'text_style' => 'bold')
-                    );
-                }
-
                 $idx++;
-                $idx_kas++;
+
+                $gt_ekor += $v_data['ekor'];
+                $gt_tonase += $v_data['tonase'];
+                $gt_total += ($v_data['tonase'] * $v_data['harga']);
             }
+
+            $arr_column[ $idx ] = array(
+                'H' => array('value' => 'TOTAL', 'colspan' => array('A','H'), 'data_type' => 'string', 'align' => 'left', 'text_style' => 'bold'),
+                'I' => array('value' => $gt_ekor, 'data_type' => 'integer', 'align' => 'right', 'text_style' => 'bold'),
+                'J' => array('value' => $gt_tonase, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold'),
+                'K' => array('value' => '', 'data_type' => 'string', 'align' => 'right', 'text_style' => 'bold'),
+                'L' => array('value' => $gt_total, 'data_type' => 'decimal2', 'align' => 'right', 'text_style' => 'bold'),
+            );
         }
 
-        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column, $start_row_header );
+        Modules::run( 'base/ExportExcel/exportExcelUsingSpreadSheet', $filename, $arr_header, $arr_column, $start_row_header, 0 );
 
         $this->load->helper('download');
         force_download('export_excel/'.$filename.'.xlsx', NULL);

@@ -103,10 +103,10 @@ var kk = {
 		} else {
 			var dcontent = $('table tbody');
 			var params = {
-				'kas': $('.kas').select2('val'),
-				'perusahaan': $('.perusahaan').select2('val'),
-				'bulan': $('.bulan').select2().val(),
-				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() )
+				'start_date': dateSQL( $('#StartDate').data('DateTimePicker').date() ),
+				'end_date': dateSQL( $('#EndDate').data('DateTimePicker').date() ),
+				'unit': $('select.unit').select2('val'),
+				'pelanggan': $('.pelanggan').select2('val')
 			};
 
 			$.ajax({
