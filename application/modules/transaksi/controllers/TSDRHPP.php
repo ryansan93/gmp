@@ -1628,7 +1628,15 @@ class TSDRHPP extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select dsts.*, dss.oa, dss.hrg_beli, kp.no_sj, brg.nama as nama_barang, kp.ekspedisi, kp.no_polisi from det_stok_trans_siklus dsts
+            select 
+                -- dsts.*, dss.oa, dss.hrg_beli, kp.no_sj, brg.nama as nama_barang, kp.ekspedisi, kp.no_polisi 
+                dsts.tgl_trans,
+                dsts.kode_trans,
+                sum(dsts.jumlah) as jumlah,
+                dsts.kode_barang,
+                dsts.tbl_name,
+                dss.oa, dss.hrg_beli, kp.no_sj, brg.nama as nama_barang, kp.ekspedisi, kp.no_polisi
+            from det_stok_trans_siklus dsts
             left join
                 det_stok_siklus dss 
                 on
@@ -1651,6 +1659,17 @@ class TSDRHPP extends Public_Controller {
                 (dsts.tbl_name <> 'lhk' and dsts.tbl_name <> 'retur_pakan') and
                 dss.jenis_barang = 'pakan' and
                 dss.noreg = '".$noreg."'
+            group by
+                dsts.tgl_trans,
+                dsts.kode_trans,
+                dsts.kode_barang,
+                dsts.tbl_name,
+                dss.oa, 
+                dss.hrg_beli, 
+                kp.no_sj, 
+                brg.nama, 
+                kp.ekspedisi, 
+                kp.no_polisi
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
