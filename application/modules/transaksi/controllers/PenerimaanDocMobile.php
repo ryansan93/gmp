@@ -558,18 +558,10 @@ class PenerimaanDocMobile extends Public_Controller {
                     }
                 }
     
-                // $conf = new \Model\Storage\Conf();
-                // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$params['tiba']."', 1, null, null";
-                // $d_conf = $conf->hydrateRaw($sql);
-    
-                // $m_conf = new \Model\Storage\Conf();
-                // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", NULL, 1";
-                // $m_conf->hydrateRaw( $sql );
-
-                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
-    
                 $deskripsi_log_terima_doc = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log_terima_doc);
+            } else {
+                $id = $d_terima_doc->id;
             }
 
             $this->result['status'] = 1;
@@ -680,17 +672,7 @@ class PenerimaanDocMobile extends Public_Controller {
                     }
                 }
     
-                // $conf = new \Model\Storage\Conf();
-                // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
-                // $d_conf = $conf->hydrateRaw($sql);
-    
-                // $m_conf = new \Model\Storage\Conf();
-                // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".($d_order_doc->harga * $params['jml_ekor']).", 'terima_doc', ".$id.", ".$id.", 2";
-                // // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", ".$id_old.", 2";
-                // $m_conf->hydrateRaw( $sql );
                 $d_terima_doc = $m_terima_doc->where('id', $id)->first();
-    
-                // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
     
                 $deskripsi_log_terima_doc = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $d_terima_doc, $deskripsi_log_terima_doc);
@@ -726,16 +708,6 @@ class PenerimaanDocMobile extends Public_Controller {
 
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $d_terima_doc = $m_terima_doc->where('id', $id)->first();
-
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".$d_terima_doc->datang."', 3, '".$d_order_doc->noreg."', null";
-            // $d_conf = $conf->hydrateRaw($sql);
-
-            // $m_conf = new \Model\Storage\Conf();
-            // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$d_terima_doc->id.", ".$d_terima_doc->id.", 3";
-            // $m_conf->hydrateRaw( $sql );
-
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, null, $d_terima_doc->id, 3);
 
             $m_terima_doc->where('id', $d_terima_doc->id)->delete();
             $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
@@ -857,11 +829,20 @@ class PenerimaanDocMobile extends Public_Controller {
         // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
         // $conf->hydrateRaw($sql);
 
+        // 1833 -> 2026-02-17 11:23:37.203
+        // 1849 -> 2026-02-18 20:53:29.750
+        // 1908 -> 2026-02-21 17:39:07.057
+
         // $conf = new \Model\Storage\Conf();
-        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '1815', '2026-02-01', 2, null, null";
+        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '1908', '2026-02-21', 2, null, null";
         // $conf->hydrateRaw($sql);
 
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 1490, 1490, 3);
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 1815, 1815, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 1908, 1908, 2);
+
+        $conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '1441', '2026-01-18', 2, null, null";
+        // $sql = "EXEC hitung_stok_siklus_doc 'doc', 'terima_doc', '1441', '2026-01-18', 2, null, null";
+        $d_conf = $conf->hydrateRaw($sql);
     }
 }
