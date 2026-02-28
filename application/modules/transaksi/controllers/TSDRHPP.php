@@ -1514,7 +1514,21 @@ class TSDRHPP extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select dss.*, kp.no_sj, brg.nama as nama_barang, kp.ekspedisi, kp.no_polisi, kp.jenis_kirim from det_stok_siklus dss 
+            select 
+                -- dss.*, kp.no_sj, brg.nama as nama_barang, kp.ekspedisi, kp.no_polisi, kp.jenis_kirim 
+                dss.tgl_trans,
+                dss.noreg,
+                dss.kode_barang,
+                sum(dss.jumlah) as jumlah,
+                dss.hrg_jual,
+                dss.hrg_beli,
+                dss.oa,
+                dss.kode_trans,
+                dss.jenis_barang,
+                dss.jenis_trans,
+                sum(dss.jml_stok) as jml_stok,
+                kp.no_sj, brg.nama as nama_barang, kp.ekspedisi, kp.no_polisi, kp.jenis_kirim 
+            from det_stok_siklus dss 
             left join
                 kirim_pakan kp 
                 on
@@ -1532,6 +1546,17 @@ class TSDRHPP extends Public_Controller {
             where 
                 dss.jenis_barang = 'pakan' and
                 dss.noreg = '".$noreg."'
+            group by
+                dss.tgl_trans,
+                dss.noreg,
+                dss.kode_barang,
+                dss.hrg_jual,
+                dss.hrg_beli,
+                dss.oa,
+                dss.kode_trans,
+                dss.jenis_barang,
+                dss.jenis_trans,
+                kp.no_sj, brg.nama, kp.ekspedisi, kp.no_polisi, kp.jenis_kirim 
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
