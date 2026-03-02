@@ -276,7 +276,7 @@ class RealisasiSJ extends Public_Controller
                 }
             }
 
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id_real_sj, null, 1);
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id_real_sj, $id_real_sj, 2);
 
             $d_real_sj = $m_real_sj->where('id', $id_real_sj)->with(['det_real_sj'])->first();
 
@@ -465,6 +465,12 @@ class RealisasiSJ extends Public_Controller
 
     public function tes()
     {
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 4312, 4312, 2);
+        // $arr = array(3985,4006,4005,3896,3939,3975,4045,4046,4043,4068,4076,4262,4312,4078,4095);
+
+        // foreach ($arr as $key => $value) {
+        //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+        // }
+        
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 4427, 4427, 2);
     }
 }

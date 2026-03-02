@@ -833,7 +833,7 @@ class RealisasiSjMobile extends Public_Controller {
                     }
                 }
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_real_sj, null, 1);
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id_real_sj, $id_real_sj, 2);
 
                 $d_real_sj = $m_real_sj->where('id', $id_real_sj)->first();
 
@@ -1140,36 +1140,38 @@ class RealisasiSjMobile extends Public_Controller {
 
     public function tes()
     {        
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select rs.id from det_real_sj_inv drsi 
-            left join
-                det_jurnal dj 
-                on
-                    drsi.no_inv = dj.kode_trans
-            left join
-                (
-                    select id_header, no_sj from det_real_sj drs group by id_header, no_sj
-                ) drs
-                on
-                    drsi.no_sj = drs.no_sj
-            left join
-                real_sj rs 
-                on
-                    drs.id_header = rs.id
-            where
-                dj.id is null 
-            group by
-                rs.id
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select rs.id from det_real_sj_inv drsi 
+        //     left join
+        //         det_jurnal dj 
+        //         on
+        //             drsi.no_inv = dj.kode_trans
+        //     left join
+        //         (
+        //             select id_header, no_sj from det_real_sj drs group by id_header, no_sj
+        //         ) drs
+        //         on
+        //             drsi.no_sj = drs.no_sj
+        //     left join
+        //         real_sj rs 
+        //         on
+        //             drs.id_header = rs.id
+        //     where
+        //         dj.id is null 
+        //     group by
+        //         rs.id
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $k_rs => $v_rs) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
-            }
-        }
+        //     foreach ($d_conf as $k_rs => $v_rs) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $v_rs['id'], $v_rs['id'], 2);
+        //     }
+        // }
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 4934, 4934, 2);
     }
 }
