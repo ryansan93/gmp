@@ -4119,36 +4119,62 @@ class TSDRHPP extends Public_Controller {
                     $status = 0;
                     $message = 'Data LHK akhir siklus belum di submit, segera hubungi PPL yang bersangkutan untuk melakukan submit data LHK akhir siklus.';
                 } else {
-                    if ($d_conf['jml_pindah_akhir_siklus'] != $d_conf['sisa_pakan']) {
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select ts.*, dss.stok from tutup_siklus ts
+                        left join
+                            (select dss.noreg, sum(dss.jml_stok) as stok from det_stok_siklus dss where dss.jenis_barang = 'pakan' group by dss.noreg) dss
+                            on
+                                ts.noreg = dss.noreg
+                        where 
+                            ts.noreg = '".$params['noreg']."'
+                            and dss.stok > 0
+                    ";
+                    $d_stok = $m_conf->hydrateRaw( $sql );
+
+                    if ( $d_stok->count() > 0 ) {
+                        $d_stok = $d_stok->toArray()[0]['stok'];
+
                         $status = 0;
 
-                        $message = 'Data pindah pakan dan sisa pakan tidak sama dengan distribusi. Harap hubungi PPL cross check data sisa pakan.';
+                        $message = 'Data pakan anda masih belum 0.';
                         $message .= '<br>';
                         $message .= '<b><u>Pakan</u></b><br>';
-                        $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah_akhir_siklus']).'<br>';
-                        $message .= 'Sisa Pakan : '.angkaRibuan($d_conf['sisa_pakan']).'<br>';
-                        $message .= 'Selisih Pindah Pakan dan Sisa Pakan : '.angkaRibuan(($d_conf['jml_pindah_akhir_siklus']-$d_conf['sisa_pakan'])).'<br>';
+                        $message .= 'Sisa Stok Pakan di Kandang : '.angkaRibuan($d_stok['stok']).'<br>';
                         $message .= '<br>';
-                        $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
+                        $message .= 'Cek data di laporan kartu stok siklus, dan segera perbaiki data.';
                     } else {
-                        if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah']-$d_conf['jml_retur'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
+                        if ($d_conf['jml_pindah_akhir_siklus'] != $d_conf['sisa_pakan']) {
                             $status = 0;
     
-                            $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
+                            $message = 'Data pindah pakan dan sisa pakan tidak sama dengan distribusi. Harap hubungi PPL cross check data sisa pakan.';
                             $message .= '<br>';
                             $message .= '<b><u>Pakan</u></b><br>';
-                            $message .= 'Terima Pakan : '.angkaRibuan($d_conf['jml_terima']).'<br>';
-                            $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']+$d_conf['jml_retur']).'<br>';
-                            $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-($d_conf['jml_pindah']+$d_conf['jml_retur']))).'<br>';
-                            $message .= 'Pemakaian Pakan LHK : '.angkaRibuan($d_conf['pakai_pakan']).'<br>';
-                            $message .= '<br>';
-                            $message .= '<b><u>Kematian</u></b><br>';
-                            $message .= 'Populasi : '.angkaRibuan($d_conf['populasi']).'<br>';
-                            $message .= 'Jumlah Panen : '.angkaRibuan($d_conf['jml_panen']).'<br>';
-                            $message .= 'Selisih Populasi dan Jumlah Panen : '.angkaRibuan(($d_conf['populasi']-$d_conf['jml_panen'])).'<br>';
-                            $message .= 'Jumlah Kematian LHK : '.angkaRibuan($d_conf['ekor_mati']).'<br>';
+                            $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah_akhir_siklus']).'<br>';
+                            $message .= 'Sisa Pakan : '.angkaRibuan($d_conf['sisa_pakan']).'<br>';
+                            $message .= 'Selisih Pindah Pakan dan Sisa Pakan : '.angkaRibuan(($d_conf['jml_pindah_akhir_siklus']-$d_conf['sisa_pakan'])).'<br>';
                             $message .= '<br>';
                             $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
+                        } else {
+                            if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah']-$d_conf['jml_retur'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
+                                $status = 0;
+        
+                                $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
+                                $message .= '<br>';
+                                $message .= '<b><u>Pakan</u></b><br>';
+                                $message .= 'Terima Pakan : '.angkaRibuan($d_conf['jml_terima']).'<br>';
+                                $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']+$d_conf['jml_retur']).'<br>';
+                                $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-($d_conf['jml_pindah']+$d_conf['jml_retur']))).'<br>';
+                                $message .= 'Pemakaian Pakan LHK : '.angkaRibuan($d_conf['pakai_pakan']).'<br>';
+                                $message .= '<br>';
+                                $message .= '<b><u>Kematian</u></b><br>';
+                                $message .= 'Populasi : '.angkaRibuan($d_conf['populasi']).'<br>';
+                                $message .= 'Jumlah Panen : '.angkaRibuan($d_conf['jml_panen']).'<br>';
+                                $message .= 'Selisih Populasi dan Jumlah Panen : '.angkaRibuan(($d_conf['populasi']-$d_conf['jml_panen'])).'<br>';
+                                $message .= 'Jumlah Kematian LHK : '.angkaRibuan($d_conf['ekor_mati']).'<br>';
+                                $message .= '<br>';
+                                $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
+                            }
                         }
                     }
                 }
