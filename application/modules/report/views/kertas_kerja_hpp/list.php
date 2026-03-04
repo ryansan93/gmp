@@ -10,7 +10,7 @@
             <td class="text-right page1"><?php echo angkaDecimal($value['beli_pkn']); ?></td>
             <td class="text-right page1"><?php echo angkaDecimal($value['mutasi_msk_pkn']); ?></td>
             <td class="text-right page1"><?php echo angkaDecimal($value['mutasi_klwr_pkn']); ?></td>
-            <td class="text-right page1"><?php echo angkaDecimal(0); ?></td>
+            <td class="text-right page1"><?php echo ($value['koreksi_pkn'] >= 0) ? angkaDecimal($value['koreksi_pkn']) : '('.angkaDecimal(abs($value['koreksi_pkn'])).')'; ?></td>
             <td class="text-right page1"><?php echo ($value['pemakaian_pkn'] >= 0) ? angkaDecimal($value['pemakaian_pkn']) : '('.angkaDecimal(abs($value['pemakaian_pkn'])).')'; ?></td>
             <td class="text-right page1"><?php echo ($value['sisa_pkn'] >= 0) ? angkaDecimal($value['sisa_pkn']) : '('.angkaDecimal(abs($value['sisa_pkn'])).')'; ?></td>
             <td class="text-right page2"><?php echo angkaDecimal($value['sa_ovk']); ?></td>
@@ -29,7 +29,7 @@
             <td class="text-right page4"><?php echo angkaDecimal($value['beli_oa']); ?></td>
             <td class="text-right page4"><?php echo angkaDecimal($value['mutasi_msk_oa']); ?></td>
             <td class="text-right page4"><?php echo angkaDecimal($value['mutasi_klwr_oa']); ?></td>
-            <td class="text-right page4"><?php echo angkaDecimal(0); ?></td>
+            <td class="text-right page4"><?php echo ($value['koreksi_oa'] >= 0) ? angkaDecimal($value['koreksi_oa']) : '('.angkaDecimal(abs($value['koreksi_oa'])).')'; ?></td>
             <td class="text-right page4"><?php echo ($value['pemakaian_oa'] >= 0) ? angkaDecimal($value['pemakaian_oa']) : '('.angkaDecimal(abs($value['pemakaian_oa'])).')'; ?></td>
             <td class="text-right page0"><?php echo ($value['pdpt_peternak'] >= 0) ? angkaDecimal($value['pdpt_peternak']) : '('.angkaDecimal(abs($value['pdpt_peternak'])).')'; ?></td>
             <td class="text-right page0"><?php echo ($value['total'] >= 0) ? angkaDecimal($value['total']) : '('.angkaDecimal(abs($value['total'])).')'; ?></td>

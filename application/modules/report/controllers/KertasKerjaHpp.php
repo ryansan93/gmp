@@ -112,8 +112,9 @@ class KertasKerjaHpp extends Public_Controller {
                 data.beli_pkn,
                 data.mutasi_msk_pkn,
                 data.mutasi_klwr_pkn,
+                data.koreksi_pkn,
                 data.pemakaian_pkn,
-                ((isnull(data.sa_pkn, 0)+data.beli_pkn+data.mutasi_msk_pkn) - (data.mutasi_klwr_pkn+data.pemakaian_pkn)) as sisa_pkn,
+                ((isnull(data.sa_pkn, 0)+data.beli_pkn+data.mutasi_msk_pkn) - (data.mutasi_klwr_pkn+data.pemakaian_pkn)) + isnull(data.koreksi_pkn, 0) as sisa_pkn,
                 isnull(data.sa_ovk, 0) as sa_ovk,
                 data.beli_ovk,
                 data.mutasi_msk_ovk,
@@ -131,8 +132,9 @@ class KertasKerjaHpp extends Public_Controller {
                 data.beli_oa,
                 data.mutasi_msk_oa,
                 data.mutasi_klwr_oa,
+                data.koreksi_oa,
                 data.pemakaian_oa,
-                ((isnull(data.sa_oa, 0)+data.beli_oa+data.mutasi_msk_oa) - (data.mutasi_klwr_oa+data.pemakaian_oa)) as sisa_oa,
+                ((isnull(data.sa_oa, 0)+data.beli_oa+data.mutasi_msk_oa) - (data.mutasi_klwr_oa+data.pemakaian_oa)) + isnull(data.koreksi_oa, 0) as sisa_oa,
                 data.pdpt_peternak,
                 data.pdpt_peternak + data.pemakaian_pkn + data.pemakaian_ovk + data.pemakaian_doc + data.pemakaian_oa as total
             from
@@ -157,6 +159,7 @@ class KertasKerjaHpp extends Public_Controller {
                     sum(data.beli_pkn) as beli_pkn,
                     sum(data.mutasi_msk_pkn) as mutasi_msk_pkn,
                     sum(data.mutasi_klwr_pkn) as mutasi_klwr_pkn,
+                    sum(data.koreksi_pkn) as koreksi_pkn,
                     sum(data.pemakaian_pkn) as pemakaian_pkn,
                     sum(data.sa_ovk) as sa_ovk,
                     sum(data.beli_ovk) as beli_ovk,
@@ -173,6 +176,7 @@ class KertasKerjaHpp extends Public_Controller {
                     sum(data.beli_oa) as beli_oa,
                     sum(data.mutasi_msk_oa) as mutasi_msk_oa,
                     sum(data.mutasi_klwr_oa) as mutasi_klwr_oa,
+                    sum(data.koreksi_oa) as koreksi_oa,
                     sum(data.pemakaian_oa) as pemakaian_oa,
                     isnull(rhpp_p.pdpt_peternak_belum_pajak, 0) as pdpt_peternak,
                     isnull(rhpp_p.pdpt_peternak_belum_pajak, 0) + sum(data.pemakaian_pkn) + sum(data.pemakaian_ovk) + sum(data.pemakaian_doc) + sum(data.pemakaian_oa) as total
@@ -184,6 +188,7 @@ class KertasKerjaHpp extends Public_Controller {
                         pkn.beli_pkn,
                         pkn.mutasi_msk_pkn,
                         pkn.mutasi_klwr_pkn,
+                        pkn.koreksi_pkn,
                         pkn.pemakaian_pkn,
                         pkn.sisa_pkn,
                         0 as sa_ovk,
@@ -201,6 +206,7 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as beli_oa,
                         0 as mutasi_msk_oa,
                         0 as mutasi_klwr_oa,
+                        0 as koreksi_oa,
                         0 as pemakaian_oa
                     from
                     (
@@ -209,8 +215,9 @@ class KertasKerjaHpp extends Public_Controller {
                             isnull(sum(pkn.jml_beli * pkn.hrg_beli), 0) as beli_pkn,
                             isnull(sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk), 0) as mutasi_msk_pkn,
                             isnull(sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr), 0) as mutasi_klwr_pkn,
+                            isnull(sum(pkn.jml_koreksi * pkn.hrg_koreksi), 0) as koreksi_pkn,
                             isnull(sum(pkn.jml_pemakaian * pkn.hrg_pemakaian), 0) as pemakaian_pkn,
-                            isnull(sum(pkn.jml_beli * pkn.hrg_beli), 0) + isnull(sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk), 0) - (isnull(sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr), 0) + isnull(sum(pkn.jml_pemakaian * pkn.hrg_pemakaian), 0)) as sisa_pkn
+                            isnull(sum(pkn.jml_beli * pkn.hrg_beli), 0) + isnull(sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk), 0) - (isnull(sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr), 0) + isnull(sum(pkn.jml_pemakaian * pkn.hrg_pemakaian), 0)) + isnull(sum(pkn.jml_koreksi * pkn.hrg_koreksi), 0) as sisa_pkn
                         from (
                             select 
                                 dss.noreg,
@@ -221,6 +228,8 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_msk,
                                 0 as jml_mutasi_klwr,
                                 0 as hrg_mutasi_klwr,
+                                0 as jml_koreksi,
+                                0 as hrg_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_siklus dss
@@ -246,6 +255,8 @@ class KertasKerjaHpp extends Public_Controller {
                                 dss.hrg_beli as hrg_mutasi_msk,
                                 0 as jml_mutasi_klwr,
                                 0 as hrg_mutasi_klwr,
+                                0 as jml_koreksi,
+                                0 as hrg_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_siklus dss
@@ -271,6 +282,8 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_msk,
                                 sum(dsts.jumlah) as jml_mutasi_klwr,
                                 dss.hrg_beli as hrg_mutasi_klwr,
+                                0 as jml_koreksi,
+                                0 as hrg_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_trans_siklus dsts
@@ -290,6 +303,37 @@ class KertasKerjaHpp extends Public_Controller {
                                 dss.noreg, dsts.kode_trans, dss.hrg_beli
     
                             union all
+
+                            select 
+                                dss.noreg,
+                                dsts.kode_trans,
+                                0 as jml_beli,
+                                0 as hrg_beli,
+                                0 as jml_mutasi_msk,
+                                0 as hrg_mutasi_msk,
+                                0 as jml_mutasi_klwr,
+                                0 as hrg_mutasi_klwr,
+                                0-isnull(sum(dsts.jumlah), 0) as jml_koreksi,
+                                dss.hrg_beli as hrg_koreksi,
+                                0 as jml_pemakaian,
+                                0 as hrg_pemakaian
+                            from det_stok_trans_siklus dsts
+                            left join 
+                                det_stok_siklus dss
+                                on
+                                    dsts.id_header = dss.id
+                            left join
+                                retur_pakan rp
+                                on
+                                    dsts.kode_trans = rp.no_retur
+                            where
+                                dss.jenis_barang = 'pakan' and
+                                dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                                rp.jenis_retur = 'opkp'
+                            group by
+                                dss.noreg, dsts.kode_trans, dss.hrg_beli
+    
+                            union all
     
                             select 
                                 dss.noreg,
@@ -300,6 +344,8 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_msk,
                                 0 as jml_mutasi_klwr,
                                 0 as hrg_mutasi_klwr,
+                                0 as jml_koreksi,
+                                0 as hrg_koreksi,
                                 sum(dsts.jumlah) as jml_pemakaian,
                                 dss.hrg_beli as hrg_pemakaian
                             from det_stok_trans_siklus dsts
@@ -371,6 +417,7 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as beli_pkn,
                         0 as mutasi_msk_pkn,
                         0 as mutasi_klwr_pkn,
+                        0 as koreksi_pkn,
                         0 as pemakaian_pkn,
                         0 as sisa_pkn,
                         isnull(sa.saldo_awal, 0) as sa_ovk,
@@ -388,6 +435,7 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as beli_oa,
                         0 as mutasi_msk_oa,
                         0 as mutasi_klwr_oa,
+                        0 as koreksi_oa,
                         0 as pemakaian_oa
                     from
                     (
@@ -552,6 +600,7 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as beli_pkn,
                         0 as mutasi_msk_pkn,
                         0 as mutasi_klwr_pkn,
+                        0 as koreksi_pkn,
                         0 as pemakaian_pkn,
                         0 as sisa_pkn,
                         0 as sa_ovk,
@@ -569,6 +618,7 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as beli_oa,
                         0 as mutasi_msk_oa,
                         0 as mutasi_klwr_oa,
+                        0 as koreksi_oa,
                         0 as pemakaian_oa
                     from
                     (
@@ -702,6 +752,7 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as beli_pkn,
                         0 as mutasi_msk_pkn,
                         0 as mutasi_klwr_pkn,
+                        0 as koreksi_pkn,
                         0 as pemakaian_pkn,
                         0 as sisa_pkn,
                         0 as sa_ovk,
@@ -719,6 +770,7 @@ class KertasKerjaHpp extends Public_Controller {
                         oa.beli_oa,
                         oa.mutasi_msk_oa,
                         oa.mutasi_klwr_oa,
+                        oa.koreksi_oa,
                         oa.pemakaian_oa
                     from 
                     (
@@ -727,7 +779,8 @@ class KertasKerjaHpp extends Public_Controller {
                             isnull(sum(oa.jml_beli * oa.hrg_beli), 0) as beli_oa,
                             isnull(sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk), 0) as mutasi_msk_oa,
                             isnull(sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr), 0) as mutasi_klwr_oa,
-                            isnull(sum(oa.jml_beli * oa.hrg_beli), 0) + isnull(sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk), 0) - isnull(sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr), 0) as pemakaian_oa
+                            isnull(sum(oa.jml_koreksi * oa.hrg_koreksi), 0) as koreksi_oa,
+                            isnull(sum(oa.jml_beli * oa.hrg_beli), 0) + isnull(sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk), 0) - isnull(sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr), 0) + isnull(sum(oa.jml_koreksi * oa.hrg_koreksi), 0) as pemakaian_oa
                         from (
                             select 
                                 dss.noreg,
@@ -738,6 +791,8 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_msk,
                                 0 as jml_mutasi_klwr,
                                 0 as hrg_mutasi_klwr,
+                                0 as jml_koreksi,
+                                0 as hrg_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_siklus dss
@@ -763,6 +818,8 @@ class KertasKerjaHpp extends Public_Controller {
                                 dss.oa as hrg_mutasi_msk,
                                 0 as jml_mutasi_klwr,
                                 0 as hrg_mutasi_klwr,
+                                0 as jml_koreksi,
+                                0 as hrg_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_siklus dss
@@ -788,6 +845,8 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_msk,
                                 sum(dsts.jumlah) as jml_mutasi_klwr,
                                 dss.oa as hrg_mutasi_klwr,
+                                0 as jml_koreksi,
+                                0 as hrg_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_trans_siklus dsts
@@ -805,6 +864,37 @@ class KertasKerjaHpp extends Public_Controller {
                                 kp.jenis_kirim = 'opkp'
                             group by
                                 dss.noreg, dsts.kode_trans, dss.oa
+
+                            union all
+    
+                            select 
+                                dss.noreg,
+                                dsts.kode_trans,
+                                0 as jml_beli,
+                                0 as hrg_beli,
+                                0 as jml_mutasi_msk,
+                                0 as hrg_mutasi_msk,
+                                0 as jml_mutasi_klwr,
+                                0 as hrg_mutasi_klwr,
+                                0-isnull(sum(dsts.jumlah), 0) as jml_koreksi,
+                                dss.oa as hrg_koreksi,
+                                0 as jml_pemakaian,
+                                0 as hrg_pemakaian
+                            from det_stok_trans_siklus dsts
+                            left join 
+                                det_stok_siklus dss
+                                on
+                                    dsts.id_header = dss.id
+                            left join
+                                retur_pakan rp
+                                on
+                                    dsts.kode_trans = rp.no_retur
+                            where
+                                dss.jenis_barang = 'pakan' and
+                                dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                                rp.jenis_retur = 'opkp'
+                            group by
+                                dss.noreg, dsts.kode_trans, dss.oa
     
                             union all
     
@@ -817,6 +907,8 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_msk,
                                 0 as jml_mutasi_klwr,
                                 0 as hrg_mutasi_klwr,
+                                0 as jml_koreksi,
+                                0 as hrg_koreksi,
                                 sum(dsts.jumlah) as jml_pemakaian,
                                 dss.oa as hrg_pemakaian
                             from det_stok_trans_siklus dsts
@@ -1135,7 +1227,7 @@ class KertasKerjaHpp extends Public_Controller {
                     'G' => array('value' => ($value['beli_pkn']), 'data_type' => 'decimal2'),
                     'H' => array('value' => ($value['mutasi_msk_pkn']), 'data_type' => 'decimal2'),
                     'I' => array('value' => ($value['mutasi_klwr_pkn']), 'data_type' => 'decimal2'),
-                    'J' => array('value' => (0), 'data_type' => 'decimal2'),
+                    'J' => array('value' => ($value['koreksi_pkn']), 'data_type' => 'decimal2'),
                     'K' => array('value' => ($value['pemakaian_pkn']), 'data_type' => 'decimal2'),
                     'L' => array('value' => ($value['sisa_pkn']), 'data_type' => 'decimal2'),
                     'M' => array('value' => ($value['sa_ovk']), 'data_type' => 'decimal2'),
@@ -1154,7 +1246,7 @@ class KertasKerjaHpp extends Public_Controller {
                     'Z' => array('value' => ($value['beli_oa']), 'data_type' => 'decimal2'),
                     'AA' => array('value' => ($value['mutasi_msk_oa']), 'data_type' => 'decimal2'),
                     'AB' => array('value' => ($value['mutasi_klwr_oa']), 'data_type' => 'decimal2'),
-                    'AC' => array('value' => (0), 'data_type' => 'decimal2'),
+                    'AC' => array('value' => ($value['koreksi_oa']), 'data_type' => 'decimal2'),
                     'AD' => array('value' => ($value['pemakaian_oa']), 'data_type' => 'decimal2'),
                     'AE' => array('value' => ($value['pdpt_peternak']), 'data_type' => 'decimal2'),
                     'AF' => array('value' => ($value['total']), 'data_type' => 'decimal2'),
