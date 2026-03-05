@@ -157,7 +157,7 @@
 		<?php if ( $akses['a_edit'] == 1 || $akses['a_delete'] == 1) { ?>
 			<label class="control-label pull-right btn_tutup_bulan" style="padding-left: 10px; padding-right: 10px;">|</label>
 			<!-- <div style="width: 1%; border: 1px solid black;"></div> -->
-			<button type="button" class="btn btn-default pull-right" onclick="kk.printPreview(this)" data-kode="<?php echo exEncrypt($data['no_kk']); ?>"><i class="fa fa-print"></i> Cetak</button>
+			<button type="button" class="btn btn-default pull-right cetak" onclick="kk.printPreview(this)" data-kode="<?php echo exEncrypt($data['no_kk']); ?>"><i class="fa fa-print"></i> Cetak</button>
 			<!-- <button type="button" class="btn btn-default pull-right" onclick="kk.exportPdf(this)" data-kode="<?php echo exEncrypt($data['no_kk']); ?>"><i class="fa fa-print"></i> Cetak</button> -->
 		<?php } ?>
 	</div>
