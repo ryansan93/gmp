@@ -258,7 +258,7 @@ if (! function_exists ( 'npwpFormat' )) {
         .substr($angka,5,3).'.'
         .substr($angka,8,1).'-'
         .substr($angka,9,3).'.'
-        .substr($angka,12,3);
+        .substr($angka,12,4);
         return $ret;
       } else {
         return $angka;
