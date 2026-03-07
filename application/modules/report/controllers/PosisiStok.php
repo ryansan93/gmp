@@ -158,6 +158,79 @@ class PosisiStok extends Public_Controller {
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
+                data.*,
+                jt.jenis_trans as jenis_trans,
+                gdg.nama as nama_gudang,
+                brg.nama as nama_barang
+            from
+            (
+                select
+                    ds.tgl_trans as tanggal,
+                    ds.kode_gudang,
+                    ds.kode_barang,
+                    ds.jenis_barang,
+                    ds.hrg_beli,
+                    ds.kode_trans,
+                    0 as jml_saldo_awal,
+                    0 as saldo_awal,
+                    0 as jml_debet,
+                    0 as debet,
+                    0 as jml_kredit,
+                    0 as kredit,
+                    sum(isnull(ds.jml_stok, 0)) as jml_saldo_akhir,
+                    (ds.hrg_beli * sum(isnull(ds.jml_stok, 0))) as saldo_akhir
+                from det_stok ds
+                left join
+                    stok s
+                    on
+                        ds.id_header = s.id
+                where
+                    s.periode = '".$_date."' and
+                    ds.tgl_trans < '".$_date."' and
+                    (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                    (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                group by
+                    ds.tgl_trans,
+                    ds.kode_gudang,
+                    ds.kode_barang,
+                    ds.jenis_barang,
+                    ds.hrg_beli,
+                    ds.kode_trans
+            ) data
+            left join
+                (
+                    ".$sql_jenis_trans_masuk."
+                ) jt
+                on
+                    data.kode_trans = jt.no_order and
+                    data.tanggal = jt.tanggal
+            left join
+                (
+                    select * from gudang
+                ) gdg
+                on
+                    data.kode_gudang = gdg.id
+            left join
+                (
+                    select brg1.* from barang brg1
+                    right join
+                        (
+                            select max(id) as id, kode from barang group by kode
+                        ) brg2
+                        on
+                            brg1.id = brg2.id
+                ) brg
+                on
+                    data.kode_barang = brg.kode
+            where
+                data.jml_saldo_akhir > 0 and
+                data.jenis_barang like '%".$jenis."%'
+            order by
+                data.kode_gudang asc,
+                brg.nama asc
+
+            /*
+            select
                 -- data.*,
                 data.tanggal,
                 data.kode_gudang,
@@ -442,6 +515,7 @@ class PosisiStok extends Public_Controller {
                 -- ,
                 -- data.tanggal asc,
                 -- data.urut asc
+            */
         ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
