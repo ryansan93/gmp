@@ -510,12 +510,12 @@ class PosisiStok extends Public_Controller {
                 data.jenis_trans,
                 gdg.nama,
                 brg.nama
-            having
-                (
-                    (isnull(sum(data.jml_saldo_awal), 0) + isnull(sum(data.jml_debet), 0)) - isnull(sum(data.jml_kredit), 0) <> 0
-                    or
-                    (isnull(sum(data.saldo_awal), 0) + isnull(sum(data.debet), 0)) - isnull(sum(data.kredit), 0) <> 0
-                )
+            -- having
+            --     (
+            --         (isnull(sum(data.jml_saldo_awal), 0) + isnull(sum(data.jml_debet), 0)) - isnull(sum(data.jml_kredit), 0) <> 0
+            --         or
+            --         (isnull(sum(data.saldo_awal), 0) + isnull(sum(data.debet), 0)) - isnull(sum(data.kredit), 0) <> 0
+            --     )
             order by
                 data.kode_gudang asc,
                 brg.nama asc
