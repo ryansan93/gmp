@@ -419,7 +419,6 @@ class VerifikasiPembayaran extends Public_Controller
         $end_date = $params['end_date'];
         $jenis_transaksi = $params['jenis'];
         $bank = $params['bank'];
-        $tbl_name = $params['tbl_name'];
 
         $data = $this->getData(null, 2, $start_date, $end_date, $jenis_transaksi, $bank);
 
@@ -436,7 +435,6 @@ class VerifikasiPembayaran extends Public_Controller
         // // echo "<pre>";
         // // print_r($temp_file);
         // // die;
-
 
         $content['data'] = $data;
         $content['akses'] = $this->hakAkses;
