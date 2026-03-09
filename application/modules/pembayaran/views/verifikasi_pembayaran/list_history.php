@@ -8,7 +8,19 @@
             <td class="text-left"><?php echo strtoupper($value['ket_realisasi']); ?></td>
             <td class="text-right"><?php echo strtoupper(angkaDecimal($value['jml_transfer'])); ?></td>
             <td>
-                
+                <?php if ( !empty($value['filename']) ) { ?>
+                    <?php $filename = explode(', ', $value['filename']); ?>
+                    <?php foreach ($filename as $key => $value) { ?>
+                        <a href="uploads/<?php echo $value; ?>" target="_blank">
+                            <?php echo $value; ?>
+                        </a>
+                    <?php } ?>
+                <?php } else { ?>
+                    -
+                <?php } ?>
+
+
+                <!--
                 <?php if (isset($attachment[$value['id']]) && count($attachment[$value['id']]) > 0) { ?>
 
                     <?php foreach ($attachment[$value['id']] as $file) { ?>
@@ -26,7 +38,7 @@
                 <?php } else { ?>
                     -
                 <?php } ?>
-
+                -->
             </td>
             <td>
                 <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" data-table="<?php echo $value['tbl_name']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>

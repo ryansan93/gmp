@@ -160,7 +160,13 @@ class VerifikasiPembayaran extends Public_Controller
                     else
                         0
                 end as verifikasi,
-                c.unit
+                c.unit,
+                case
+                    when att.filename is not null then
+                        att.filename
+                    else
+                        data.lampiran_realisasi
+                end as filename
             from
             (
                 select
@@ -350,6 +356,35 @@ class VerifikasiPembayaran extends Public_Controller
                 on
                     data.no_rek = rek.id and
                     data.jenis_supl = rek.jenis
+            left join
+                (
+                	SELECT 
+					    realisasi_id,
+						tbl_name,
+					    path = STUFF((
+					        SELECT ', ' + path
+					        FROM attachment_realisasi_pembayaran att2
+					        WHERE 
+					        	att2.realisasi_id = att1.realisasi_id and
+					        	att2.tbl_name = att1.tbl_name
+					        FOR XML PATH('')
+					    ), 1, 2, ''),
+					    filename = STUFF((
+					        SELECT ', ' + file_name
+					        FROM attachment_realisasi_pembayaran att2
+					        WHERE 
+					        	att2.realisasi_id = att1.realisasi_id and
+					        	att2.tbl_name = att1.tbl_name
+					        FOR XML PATH('')
+					    ), 1, 2, '')
+					FROM attachment_realisasi_pembayaran att1 
+					GROUP BY
+						realisasi_id,
+						tbl_name
+                ) att
+                on
+                    cast(data.id as varchar(20)) = cast(att.realisasi_id as varchar(20)) and
+                    data.tbl_name = att.tbl_name
             ".$sql_condition."
             order by
                 lt.waktu asc
@@ -388,19 +423,19 @@ class VerifikasiPembayaran extends Public_Controller
 
         $data = $this->getData(null, 2, $start_date, $end_date, $jenis_transaksi, $bank);
 
-        $files = \Model\Storage\AttachmentRealisasiPembayaran_model::showLastData($data['id'], $tbl_name);
+        // $files = \Model\Storage\AttachmentRealisasiPembayaran_model::showLastData($data['id'], $data['tbl_name']);
 
-        $temp_file =[];
-        foreach($files as $f){
-            if($f['tbl_name']){
-                $temp_file[$f['realisasi_id']][] = $f;
-            }
-        }
+        // $temp_file =[];
+        // foreach($files as $f){
+        //     if($f['tbl_name']){
+        //         $temp_file[$f['realisasi_id']][] = $f;
+        //     }
+        // }
       
-        $content['attachment'] =  $temp_file;
-        // echo "<pre>";
-        // print_r($temp_file);
-        // die;
+        // $content['attachment'] =  $temp_file;
+        // // echo "<pre>";
+        // // print_r($temp_file);
+        // // die;
 
 
         $content['data'] = $data;
