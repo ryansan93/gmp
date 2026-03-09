@@ -157,6 +157,7 @@ class PosisiStok extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
+            /*
             select
                 data.*,
                 jt.jenis_trans as jenis_trans,
@@ -228,8 +229,8 @@ class PosisiStok extends Public_Controller {
             order by
                 data.kode_gudang asc,
                 brg.nama asc
+            */
 
-            /*
             select
                 -- data.*,
                 data.tanggal,
@@ -464,7 +465,7 @@ class PosisiStok extends Public_Controller {
                 ) klwr
                 left join
                     (
-                        ".$sql_jenis_trans_keluar."
+                        ".$sql_jenis_trans_masuk."
                     ) jt
                     on
                         klwr.kode_trans = jt.no_order and
@@ -509,13 +510,18 @@ class PosisiStok extends Public_Controller {
                 data.jenis_trans,
                 gdg.nama,
                 brg.nama
+            having
+                (
+                    (isnull(sum(data.jml_saldo_awal), 0) + isnull(sum(data.jml_debet), 0)) - isnull(sum(data.jml_kredit), 0) <> 0
+                    or
+                    (isnull(sum(data.saldo_awal), 0) + isnull(sum(data.debet), 0)) - isnull(sum(data.kredit), 0) <> 0
+                )
             order by
                 data.kode_gudang asc,
                 brg.nama asc
                 -- ,
                 -- data.tanggal asc,
                 -- data.urut asc
-            */
         ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
