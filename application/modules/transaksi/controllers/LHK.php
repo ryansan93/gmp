@@ -875,12 +875,12 @@ class LHK extends Public_Controller
 
             $sql_id = null;
             if ( !empty($id) ) {
-                $sql_id = " and id <> '".$id."'";
+                $sql_id = " and l.id <> '".$id."'";
             }
 
             $m_conf = new \Model\Storage\Conf();
             $sql = "
-                select top 1 * from lhk where noreg = '".$noreg."' and umur = '".$umur."' ".$sql_id." order by umur desc
+                select top 1 * from lhk l where noreg = '".$noreg."' and umur = '".$umur."' ".$sql_id." order by umur desc
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -893,7 +893,7 @@ class LHK extends Public_Controller
                 /* CEK LHK NEXT*/
                 $m_conf = new \Model\Storage\Conf();
                 $sql = "
-                    select * from lhk where noreg = '".$noreg."' and umur > '".$umur."' ".$sql_id." order by umur asc
+                    select * from lhk l where noreg = '".$noreg."' and umur > '".$umur."' ".$sql_id." order by umur asc
                 ";
                 $d_conf_next = $m_conf->hydrateRaw( $sql );
                 $next = 0;
@@ -924,7 +924,7 @@ class LHK extends Public_Controller
                 if ( $next == 0 ) {
                     $m_conf = new \Model\Storage\Conf();
                     $sql = "
-                        select top 1 * from lhk where noreg = '".$noreg."' and umur < '".$umur."' order by umur desc
+                        select top 1 * from lhk l where noreg = '".$noreg."' and umur < '".$umur."' ".$sql_id." order by umur desc
                     ";
                     $d_conf_prev = $m_conf->hydrateRaw( $sql );
     
@@ -1465,6 +1465,11 @@ class LHK extends Public_Controller
 
             $d_lhk_last_data = $m_lhk->where('noreg', $params['noreg'])->where('umur', '<', $params['umur'])->with(['lhk_sekat', 'lhk_nekropsi', 'lhk_solusi'])->orderBy('umur', 'desc')->first();
 
+            $tgl_hitung = $d_lhk_by_id->tanggal;
+            if ( $params['tanggal'] < $tgl_hitung ) {
+                $tgl_hitung = $params['tanggal'];
+            }
+
             $pakai_pakan = $params['pakai_pakan'];
             $sisa_pakan = $params['sisa_pakan'];
             $ekor_mati = $params['ekor_mati'];
@@ -1758,7 +1763,7 @@ class LHK extends Public_Controller
             // $this->result['content'] = array('id' => $params['id']);
             $this->result['content'] = array(
                 'id' => $params['id'],
-                'tanggal' => $d_lhk_by_id->tanggal,
+                'tanggal' => $tgl_hitung,
                 'noreg' => $params['noreg'],
                 'status' => 2,
                 'message' => 'Data berhasil di update.'
@@ -2297,15 +2302,10 @@ class LHK extends Public_Controller
         //  cetak_r( $this->url );
 
         $arr = array(
-            23549,
-            23055,
-            23293,
-            23460,
-            24078,
-            24195,
-            24399,
-            24411,
-            25310
+            28123,
+            28433,
+            28518,
+            28876
         );
 
         foreach ($arr as $key => $value) {
@@ -2366,5 +2366,77 @@ class LHK extends Public_Controller
         // $d_conf = $conf->hydrateRaw($sql);
 
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 23543, 23543, 2);
+    }
+
+    public function fDelete($id)
+    {
+        $m_lhk = new \Model\Storage\Lhk_model();
+        $d_lhk = $m_lhk->where('id', $id)->first();
+
+        $id_lhk = $id;
+
+        // $conf = new \Model\Storage\Conf();
+        // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
+        // $d_conf = $conf->hydrateRaw($sql);
+
+        // $conf = new \Model\Storage\Conf();
+        // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
+        // $d_conf = $conf->hydrateRaw($sql);
+
+        // $id_old = $d_lhk->id;
+
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 3);
+
+        /* SISA PAKAN */
+        $folder_name = $id_lhk;
+        $dir_name = "uploads/LHK/SISA_PAKAN/".$folder_name;
+        if ( is_dir($dir_name) ) {
+            $this->deleteDirectory($dir_name);
+        }
+
+        $m_lfsp = new \Model\Storage\LhkFotoSisaPakan_model();
+        $m_lfsp->where('id_header', $id_lhk)->delete();
+        /* END - SISA PAKAN */
+
+        /* KEMATIAN */
+        $folder_name = $id_lhk;
+        $dir_name = "uploads/LHK/KEMATIAN/".$folder_name;
+        if ( is_dir($dir_name) ) {
+            $this->deleteDirectory($dir_name);
+        }
+
+        $m_lfem = new \Model\Storage\LhkFotoEkorMati_model();
+        $m_lfem->where('id_header', $id_lhk)->delete();
+        /* END - KEMATIAN */
+
+        $m_lfem = new \Model\Storage\LhkSekat_model();
+        $m_lfem->where('id_header', $id_lhk)->delete();
+
+        $m_ln = new \Model\Storage\LhkNekropsi_model();
+        $d_ln = $m_ln->where('id_header', $id_lhk)->get();
+        if ( $d_ln->count() > 0 ) {
+            $d_ln = $d_ln->toArray();
+
+            foreach ($d_ln as $key => $value) {
+                $folder_name = $id_lhk.'_'.$value['id_nekropsi'];
+                $dir_name = "uploads/LHK/NEKROPSI/".$folder_name;
+                if ( is_dir($dir_name) ) {
+                    $this->deleteDirectory($dir_name);
+                }
+
+                $m_lfem = new \Model\Storage\LhkFotoNekropsi_model();
+                $m_lfem->where('id_header', $value['id'])->delete();
+
+                $m_ln->where('id', $value['id'])->delete();
+            }
+        }
+
+        $m_lp = new \Model\Storage\LhkPeralatan_model();
+        $m_lp->where('id_header', $id_lhk)->delete();
+
+        $m_lhk->where('id', $id)->delete();
+
+        $deskripsi_log = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
+        Modules::run( 'base/event/delete', $d_lhk, $deskripsi_log);
     }
 }
