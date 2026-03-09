@@ -74,3 +74,7 @@ tr.kuning td {
 tr.biru td {
 	background-color: #c7f2fc;
 }
+
+td.red {
+	background-color: crimson;
+}

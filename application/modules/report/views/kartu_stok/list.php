@@ -144,8 +144,14 @@
             <td class="text-right"><?php echo angkaDecimal($debet); ?></td>
             <td class="text-right"><?php echo angkaDecimal($jml_kredit); ?></td>
             <td class="text-right"><?php echo angkaDecimal($kredit); ?></td>
-            <td class="text-right"><?php echo ($jml_saldo >= 0) ? angkaDecimal($jml_saldo) : '('.angkaDecimal(abs($jml_saldo)).')'; ?></td>
-            <td class="text-right"><?php echo ($saldo >= 0) ? angkaDecimal($saldo) : '('.angkaDecimal(abs($saldo)).')'; ?></td>
+            <?php
+                $red = null;
+                if ( $jml_saldo < 0 || $saldo < 0 ) {
+                    $red = 'red';
+                }
+            ?>
+            <td class="text-right <?php echo $red; ?>"><?php echo ($jml_saldo >= 0) ? angkaDecimal($jml_saldo) : '('.angkaDecimal(abs($jml_saldo)).')'; ?></td>
+            <td class="text-right <?php echo $red; ?>"><?php echo ($saldo >= 0) ? angkaDecimal($saldo) : '('.angkaDecimal(abs($saldo)).')'; ?></td>
         </tr>
         <?php if ( !empty($kode_barang) && $kode_barang <> $data[$key+1]['kode_barang'] ) { ?>
             <?php // $gt_saldo += $saldo; ?>

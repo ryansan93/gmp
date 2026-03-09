@@ -157,7 +157,7 @@ class KartuStok extends Public_Controller {
         $data = null;
 
         $m_conf = new \Model\Storage\Conf();
-        $sql = "
+        $sql_old = "
             select
                 data.*,
                 gdg.nama as nama_gudang,
@@ -333,6 +333,351 @@ class KartuStok extends Public_Controller {
                         stok s
                         on
                             ds.id_header = s.id
+                    where
+                        -- dst.tgl_trans between '".$_start_date."' and '".$_end_date."' and
+                        ds.kode_gudang = '".$_kode_gudang."' and
+                        (dst.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        -- dst.tgl_trans,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        dst.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli
+                ) klwr
+                left join
+                    (
+                        ".$sql_jenis_trans_keluar."
+                    ) jt
+                    on
+                        klwr.kode_trans = jt.no_order 
+                        -- and
+                        -- klwr.tanggal = jt.tanggal
+                where
+                    jt.tanggal between '".$_start_date."' and '".$_end_date."'
+                /* END - KELUAR */
+            ) data
+            left join
+                (
+                    select * from gudang
+                ) gdg
+                on
+                    data.kode_gudang = gdg.id
+            left join
+                (
+                    select brg1.* from barang brg1
+                    right join
+                        (
+                            select max(id) as id, kode from barang group by kode
+                        ) brg2
+                        on
+                            brg1.id = brg2.id
+                ) brg
+                on
+                    data.kode_barang = brg.kode
+            order by
+                data.kode_gudang asc,
+                brg.nama asc,
+                data.tanggal asc,
+                data.urut asc
+        ";
+        $sql = "
+            select
+                data.*,
+                gdg.nama as nama_gudang,
+                brg.nama as nama_barang
+            from
+            (
+                /* SALDO AWAL */
+                select
+                    '".$_start_date."' as tanggal,
+                    sa.kode_gudang,
+                    sa.kode_barang,
+                    sa.jenis_barang,
+                    sum(sa.jumlah * sa.hrg_beli) / sum(sa.jumlah) as hrg_beli,
+                    sum(sa.jumlah) as jml_debet,
+                    sum(sa.jumlah * sa.hrg_beli) as debet,
+                    0 as jml_kredit,
+                    0 as kredit,
+                    'Saldo Awal' as kode_trans,
+                    null as jenis_trans,
+                    1 as urut
+                from
+                (
+                    select
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.hrg_beli,
+                        sum(isnull(ds.jml_stok, 0) + isnull(dst.jumlah, 0)) as jumlah
+                    from det_stok ds
+                    left join
+                        (select id_header, sum(jumlah) as jumlah from det_stok_trans group by id_header) dst
+                        on
+                            ds.id = dst.id_header
+                    left join
+                        stok s
+                        on
+                            ds.id_header = s.id
+                    where
+                        s.periode = '".$_start_date."' and
+                        ds.tgl_trans < '".$_start_date."' and
+                        ds.kode_gudang = '".$_kode_gudang."' and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.hrg_beli
+                ) sa
+                group by
+                    sa.kode_gudang,
+                    sa.kode_barang,
+                    sa.jenis_barang
+                /* END - SALDO AWAL */
+
+                union all
+
+                /* MASUK */
+                select
+                    msk.tanggal,
+                    msk.kode_gudang,
+                    msk.kode_barang,
+                    msk.jenis_barang,
+                    msk.hrg_beli,
+                    msk.jumlah as jml_debet,
+                    (msk.jumlah * msk.hrg_beli) as debet,
+                    0 as jml_kredit,
+                    0 as kredit,
+                    msk.kode_trans as kode_trans,
+                    -- msk.jenis_trans as jenis_trans,
+                    jt.jenis_trans,
+                    2 as urut
+                from
+                (
+                    select
+                        ds.tgl_trans as tanggal,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli,
+                        sum(isnull(ds.jumlah, 0)) as jumlah
+            --            sum(isnull(ds.jumlah, 0) + isnull(dst.jumlah, 0)) as jumlah
+                    from
+                    (
+                        select ds1.* from det_stok ds1
+                        right join
+                            (
+                                select min(ds.id_header) as id_header, ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli from det_stok ds
+                                left join
+                                    stok s
+                                    on
+                                        ds.id_header = s.id
+                                where
+                                    s.periode between '".$_start_date."' and '".$_end_date."' and
+                                    ds.tgl_trans >= '".$_start_date."'
+                                    -- ".$sql_jenis."
+                                group by
+                                    ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli
+                            ) ds2
+                            on
+                                ds1.id_header = ds2.id_header and
+                                ds1.tgl_trans = ds2.tgl_trans and
+                                ds1.kode_gudang = ds2.kode_gudang and
+                                ds1.kode_barang = ds2.kode_barang and
+                                ds1.kode_trans = ds2.kode_trans and
+                                ds1.jenis_barang = ds2.jenis_barang and
+                                ds1.jenis_trans = ds2.jenis_trans and
+                                ds1.hrg_beli = ds2.hrg_beli
+                    ) ds
+                    left join
+                        stok s
+                        on
+                            ds.id_header = s.id
+                    where
+                        s.periode between '".$_start_date."' and '".$_end_date."' and
+                        ds.tgl_trans between '".$_start_date."' and '".$_end_date."' and
+                        ds.kode_gudang = '".$_kode_gudang."' and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        ds.tgl_trans,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli
+                ) msk
+                left join
+                    (
+                        ".$sql_jenis_trans_masuk."
+                    ) jt
+                    on
+                        msk.kode_trans = jt.no_order and
+                        msk.tanggal = jt.tanggal
+                /* END - MASUK */
+
+                union all
+
+                /* KELUAR */
+                select
+                    -- klwr.tanggal,
+                    jt.tanggal,
+                    klwr.kode_gudang,
+                    klwr.kode_barang,
+                    klwr.jenis_barang,
+                    klwr.hrg_beli,
+                    0 as jml_debet,
+                    0 as debet,
+                    klwr.jumlah as jml_kredit,
+                    (klwr.jumlah * klwr.hrg_beli) as kredit,
+                    klwr.kode_trans as kode_trans,
+                    -- klwr.jenis_trans as jenis_trans,
+                    jt.jenis_trans,
+                    3 as urut
+                from
+                (
+                    select
+                        -- dst.tgl_trans as tanggal,
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        dst.kode_trans,
+                        ds.jenis_trans,
+                        ds.hrg_beli,
+                        case
+                            when sum(isnull(dst.jumlah, 0)) < sum(isnull(dk.jumlah, 0)) then
+                                sum(isnull(dk.jumlah, 0))
+                            else
+                                sum(isnull(dst.jumlah, 0))
+                        end as jumlah
+                        -- sum(isnull(dst.jumlah, 0)) as jumlah
+                    from det_stok_trans dst
+                    left join
+                        det_stok ds
+                        on
+                            ds.id = dst.id_header
+                    left join
+                        stok s
+                        on
+                            ds.id_header = s.id
+                    left join
+                        (
+                            select 
+                                dtp.item as kode_barang,
+                                sum(dtp.jumlah) as jumlah,
+                                'pakan' as jenis_barang,
+                                kp.no_order as kode_trans
+                            from det_terima_pakan dtp
+                            left join 
+                                terima_pakan tp 
+                                on 
+                                    tp.id = dtp.id_header
+                            left join
+                                kirim_pakan kp
+                                on
+                                    tp.id_kirim_pakan = kp.id
+                            where 
+                                tp.tgl_terima between '".$_start_date."' and '".$_end_date."'
+                            group by
+                                dtp.item,
+                                kp.no_order 
+
+                            union all
+
+                            select 
+                                drp.item as kode_barang,
+                                sum(drp.jumlah) as jumlah,
+                                'pakan' as jenis_barang,
+                                rp.no_retur as kode_trans
+                            from det_retur_pakan drp
+                            left join
+                                retur_pakan rp 
+                                on
+                                    drp.id_header = rp.id
+                            where 
+                                rp.jenis_retur = 'opkg' and
+                                rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                            group by
+                                drp.item,
+                                rp.no_retur
+
+                            union all
+
+                            select 
+                                ap.kode_barang,
+                                sum(ap.jumlah) as jumlah,
+                                'pakan' as jenis_barang,
+                                ap.kode as kode_trans
+                            from adjout_pakan ap
+                            where 
+                                ap.tanggal between '".$_start_date."' and '".$_end_date."'
+                            group by
+                                ap.kode_barang,
+                                ap.kode
+
+                            union all
+
+                            select 
+                                dtv.item as kode_barang,
+                                sum(dtv.jumlah) as jumlah,
+                                'voadip' as jenis_barang,
+                                kv.no_order as kode_trans
+                            from det_terima_voadip dtv
+                            left join 
+                                terima_voadip tv
+                                on 
+                                    tv.id = dtv.id_header
+                            left join
+                                kirim_voadip kv
+                                on
+                                    tv.id_kirim_voadip = tv.id
+                            where 
+                                tv.tgl_terima between '".$_start_date."' and '".$_end_date."'
+                            group by
+                                dtv.item,
+                                kv.no_order 
+
+                            union all
+
+                            select 
+                                drv.item as kode_barang,
+                                sum(drv.jumlah) as jumlah,
+                                'voadip' as jenis_barang,
+                                rv.no_retur as kode_trans
+                            from det_retur_voadip drv
+                            left join
+                                retur_voadip rv 
+                                on
+                                    drv.id_header = rv.id
+                            where 
+                                rv.jenis_retur = 'opkg' and
+                                rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                            group by
+                                drv.item,
+                                rv.no_retur
+
+                            union all
+
+                            select 
+                                av.kode_barang,
+                                sum(av.jumlah) as jumlah,
+                                'voadip' as jenis_barang,
+                                av.kode as kode_trans
+                            from adjout_voadip av
+                            where 
+                                av.tanggal between '".$_start_date."' and '".$_end_date."'
+                            group by
+                                av.kode_barang,
+                                av.kode
+                        ) dk
+                        on
+                            dk.kode_trans = dst.kode_trans and
+                            dk.kode_barang = dst.kode_barang and
+                            dk.jenis_barang = ds.jenis_barang
                     where
                         -- dst.tgl_trans between '".$_start_date."' and '".$_end_date."' and
                         ds.kode_gudang = '".$_kode_gudang."' and
