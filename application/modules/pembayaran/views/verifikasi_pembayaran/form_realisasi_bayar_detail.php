@@ -60,11 +60,30 @@
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-3 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>
 					<div class="col-xs-9 no-padding">
-						<?php if ( !empty($data['lampiran_realisasi']) ) { ?>
-							: <a href="uploads/<?php echo $data['lampiran_realisasi']; ?>" target="_blank"><?php echo $data['lampiran_realisasi']; ?></a>
+						
+						<?php if(count($attachment) > 0){ ?>
+
+							<div class="flex flex-row gap-2">
+								<span>:</span>							
+								<?php foreach($attachment as $file){ ?>
+									<a style="text-decoration:none;" href="<?php echo base_url() . 'uploads/'. $file['name_file_old']; ?>" target="_blank">
+										<button type="button" class="flex items-center justify-center border border-gray-300 rounded p-1 hover:bg-gray-100" style="width:auto;">
+											<?php echo strtoupper(htmlspecialchars($file['name_file_old'])); ?>
+										</button>
+									</a>
+								<?php } ?>	
+							</div>
+							
 						<?php } else { ?>
-							: -
+
+							<?php if ( !empty($data['lampiran_realisasi']) ) { ?>
+								: <a href="uploads/<?php echo $data['lampiran_realisasi']; ?>" target="_blank"><?php echo $data['lampiran_realisasi']; ?></a>
+							<?php } else { ?>
+								: -
+							<?php } ?>
+
 						<?php } ?>
+
 					</div>
 				</div>
                 <div class="col-xs-12 no-padding">

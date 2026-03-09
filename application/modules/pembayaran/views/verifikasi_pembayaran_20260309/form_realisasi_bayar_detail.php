@@ -46,49 +46,44 @@
                     <hr style="margin-top: 10px; margin-bottom: 10px;">
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<div class="col-xs-12 no-padding"><b>TGL PEMBAYARAN</b></div>
-					<div class="col-xs-12 no-padding">
-                        <div class="input-group date lock_date_fiskal" id="tglBayar">
-					        <input type="text" class="form-control text-center" data-required="1" placeholder="Tanggal" />
-					        <span class="input-group-addon">
-					            <span class="glyphicon glyphicon-calendar"></span>
-					        </span>
-					    </div>
-                    </div>
+					<div class="col-xs-3 no-padding"><b>KODE TRANSAKSI</b></div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['kode_trans']); ?></div>
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<div class="col-xs-12 no-padding"><b>NO BUKTI PEMBAYARAN</b></div>
-					<div class="col-xs-12 no-padding">
-                        <input type="text" class="form-control no_bukti" placeholder="NO. BUKTI" disabled>
-                    </div>
+					<div class="col-xs-3 no-padding"><b>TGL PEMBAYARAN</b></div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper(tglIndonesia($data['tgl_bayar'], '-', ' ')); ?></div>
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<div class="col-xs-12 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>
-					<div class="col-xs-12 no-padding form-area" style="display:flex; flex-direction:column; gap: 10px">
-
-						<div class="file-form d-flex align-items-center" style="position: relative;">
-							<label class="">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran" name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
-								<i class="glyphicon glyphicon-paperclip cursor-p"></i>
-							</label>
-
-							
-							<button type="button" class="btn btn-sm btn-warning" style="position:absolute; right:0;" onclick="vp.addRowLampiran(this, event)">
-									<i class="fa fa-plus"></i>
-							</button>
-							
-						</div>
-                    </div>
+					<div class="col-xs-3 no-padding"><b>NO BUKTI PEMBAYARAN</b></div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['kode_trans']); ?></div>
+				</div>
+                <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+					<div class="col-xs-3 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>
+					<div class="col-xs-9 no-padding">
+						<?php if ( !empty($data['lampiran_realisasi']) ) { ?>
+							: <a href="uploads/<?php echo $data['lampiran_realisasi']; ?>" target="_blank"><?php echo $data['lampiran_realisasi']; ?></a>
+						<?php } else { ?>
+							: -
+						<?php } ?>
+					</div>
 				</div>
                 <div class="col-xs-12 no-padding">
-					<div class="col-xs-12 no-padding"><b>KETERANGAN PEMBAYARAN</b></div>
-					<div class="col-xs-12 no-padding">
-                        <textarea class="form-control ket_bayar uppercase" placeholder="Keterangan" data-required="1"></textarea>
-                    </div>
+					<div class="col-xs-3 no-padding"><b>KETERANGAN PEMBAYARAN</b></div>
+					<div class="col-xs-9 no-padding">: <?php echo strtoupper($data['ket_realisasi']); ?></div>
 				</div>
 				<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
-				<div class="col-xs-12 no-padding">
-                    <button type="button" class="col-xs-12 btn btn-primary pull-right" onclick="vp.save(this)" data-id="<?php echo $data['id']; ?>" data-table="<?php echo $data['tbl_name']; ?>"><i class="fa fa-save"></i> Simpan</button>
+				<div class="col-xs-12 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_bayar'], 0, 10); ?>" style="margin-top: 5px;">
+                    <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+                        <button type="button" class="col-xs-12 btn btn-default" onclick="vp.printPreview(this)" data-id="<?php echo exEncrypt($data['id']); ?>"><i class="fa fa-print"></i> Cetak</button>
+                    </div>
+					<?php if ( $data['verifikasi'] == 1 ) { ?>
+						<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+							<button type="button" class="col-xs-12 btn btn-danger" onclick="vp.delete(this)" data-id="<?php echo $data['id']; ?>" data-table="<?php echo $data['tbl_name']; ?>"><i class="fa fa-trash"></i> Hapus</button>
+						</div>
+						<div class="col-xs-6 no-padding" style="padding-left: 5px;">
+							<button type="button" class="col-xs-12 btn btn-primary" onclick="vp.formRealisasiBayarEdit(this)" data-id="<?php echo $data['id']; ?>" data-table="<?php echo $data['tbl_name']; ?>"><i class="fa fa-edit"></i> Edit</button>
+						</div>
+					<?php } ?>
 				</div>
 			</form>
 		</div>

@@ -64,20 +64,11 @@
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 					<div class="col-xs-12 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>
-					<div class="col-xs-12 no-padding form-area" style="display:flex; flex-direction:column; gap: 10px">
-
-						<div class="file-form d-flex align-items-center" style="position: relative;">
-							<label class="">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran" name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
-								<i class="glyphicon glyphicon-paperclip cursor-p"></i>
-							</label>
-
-							
-							<button type="button" class="btn btn-sm btn-warning" style="position:absolute; right:0;" onclick="vp.addRowLampiran(this, event)">
-									<i class="fa fa-plus"></i>
-							</button>
-							
-						</div>
+					<div class="col-xs-12 no-padding">
+                        <label class="">
+                            <input type="file" onchange="showNameFile(this)" class="file_lampiran" name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
+                            <i class="glyphicon glyphicon-paperclip cursor-p"></i>
+                        </label>
                     </div>
 				</div>
                 <div class="col-xs-12 no-padding">
