@@ -544,27 +544,25 @@ var vp = {
 
     addRowLampiran: (elm, e) => {
         e.preventDefault();
+        let html = `
+            <div class="file-form" style="display:flex; flex-direction:row; gap:5px">
+                
+                <button type="button" class="name-file-button flex items-center justify-center border border-gray-300 rounded p-1 hover:bg-gray-100" style="width:auto;">
+                    Nama File
+                </button>
+             
+                <input type="file" class="file_lampiran" onchange="vp.get_lampiran(this, event)" style="display:none;">
+                <button type="button" class="btn btn-sm btn-warning" onclick="vp.edit_lampiran(this, event)">
+                    <i class="glyphicon glyphicon-paperclip cursor-p"></i>
+                </button>
 
-        let form = elm.closest(".file-form");
-        let clone = form.cloneNode(true);
+                <button type="button" onclick="vp.removeRowLampiran(this, event)" class="btn btn-remove btn-sm btn-danger">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        `;
 
-        clone.querySelectorAll("a").forEach(a => a.remove());
-
-        let input = clone.querySelector("input[type='file']");
-        if (input) input.value = "";
-
-        let cloneBtn = clone.querySelector("button");
-        if (cloneBtn) {
-            cloneBtn.setAttribute("onclick", "vp.removeRowLampiran(this, event)");
-            cloneBtn.classList.remove("btn-warning");
-            cloneBtn.classList.add("btn-danger");
-
-            let icon = cloneBtn.querySelector("i");
-            icon.classList.remove("fa-plus");
-            icon.classList.add("fa-trash");
-        }
-
-        form.parentElement.append(clone);
+        $(".attachment-area").append(html);
     },
 
     removeRowLampiran: (elm, e) => {
@@ -572,14 +570,14 @@ var vp = {
 
         let rows = $(".file-form");
 
-        if (rows.length <= 1) {
-            alert("minimal harus ada 1 baris");
-            return;
-        }
+        // if (rows.length <= 1) {
+        //     alert("minimal harus ada 1 baris");
+        //     return;
+        // }
 
         $(elm).closest(".file-form").remove();
 
-        let new_length = $(".file-form").length;
+        // let new_length = $(".file-form").length;
 
         // vp.first_row(new_length);
     },
@@ -604,16 +602,14 @@ var vp = {
     get_lampiran: (elm, e) =>{
         let file = $(elm)[0].files[0];
 
-        let html = `<button type="button" class="flex items-center justify-center border border-gray-300 rounded p-1 hover:bg-gray-100" style="width:auto;">
-                `+ file.name +`
-            </button>`;
-        $(elm).closest(".file-form").find("a").html(html);
+        let html = file.name;
+        $(elm).closest(".file-form").find(".name-file-button").html(html);
     },
 
     addRowLampiran_edit:() =>{
         let html =  `<div class="file-form" style="display:flex; flex-direction:row; gap:5px">
                         <a style="text-decoration:none;" href="<?php echo base_url() . 'uploads/'. $file['file_name']; ?>" target="_blank">
-                            <button type="button" class="flex items-center justify-center border border-gray-300 rounded p-1 hover:bg-gray-100" style="width:auto;">
+                            <button type="button" class="name-file-button flex items-center justify-center border border-gray-300 rounded p-1 hover:bg-gray-100" style="width:auto;">
                                 Nama File
                             </button>
                         </a>

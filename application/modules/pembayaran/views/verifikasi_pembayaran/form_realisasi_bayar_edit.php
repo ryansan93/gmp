@@ -79,7 +79,7 @@
 								<?php foreach($attachment as $file){?>
 									<div class="file-form" id_file="<?php echo $file["id"] ?>" style="display:flex; flex-direction:row; gap:5px">
 										<a style="text-decoration:none;" href="<?php echo base_url() . 'uploads/'. $file['file_name']; ?>" target="_blank">
-											<button type="button" class="flex items-center justify-center border border-gray-300 rounded p-1 hover:bg-gray-100" style="width:auto;">
+											<button type="button" class="name-file-button flex items-center justify-center border border-gray-300 rounded p-1 hover:bg-gray-100" style="width:auto;">
 												<?php echo strtoupper(htmlspecialchars($file['name_file_old'])); ?>
 											</button>
 										</a>
@@ -102,13 +102,13 @@
 										<a href="uploads/<?php echo $data['lampiran_realisasi']; ?>" target="_blank"><?php echo $data['lampiran_realisasi']; ?></a>
 									<?php } ?>
 
-									<?php if (count($attachment) < 1){?>
+									<!-- < ?php if (count($attachment) < 1){?>
 									<label class="">
 										<input type="file" onchange="showNameFile(this)" class="file_lampiran" name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
 										<i class="glyphicon glyphicon-paperclip cursor-p"></i>
 									</label>
-									<?php } ?>
-								</div>
+									< ?php } ?>
+								</div> -->
 
 							<?php } ?>							
 							

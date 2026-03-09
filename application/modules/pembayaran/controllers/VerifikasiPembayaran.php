@@ -384,8 +384,24 @@ class VerifikasiPembayaran extends Public_Controller
         $end_date = $params['end_date'];
         $jenis_transaksi = $params['jenis'];
         $bank = $params['bank'];
+        $tbl_name = $params['tbl_name'];
 
         $data = $this->getData(null, 2, $start_date, $end_date, $jenis_transaksi, $bank);
+
+        $files = \Model\Storage\AttachmentRealisasiPembayaran_model::showLastData($data['id'], $data['tbl_name']);
+
+        $temp_file =[];
+        foreach($files as $f){
+            if($f['tbl_name']){
+                $temp_file[$f['realisasi_id']][] = $f;
+            }
+        }
+      
+        $content['attachment'] =  $temp_file;
+        // echo "<pre>";
+        // print_r($temp_file);
+        // die;
+
 
         $content['data'] = $data;
         $content['akses'] = $this->hakAkses;
@@ -927,22 +943,22 @@ class VerifikasiPembayaran extends Public_Controller
         $data = json_decode($this->input->post('data'),TRUE);
         $files = isset($_FILES['files']) ? $_FILES['files'] : [];
 
+       // tambahan hafidz
 
-        // tambahan hafidz
+        if (isset($_FILES['files']) && !empty($_FILES['files']['name'])) {
+            $groupedFiles = [];
 
-        $groupedFiles = [];
+            foreach ($_FILES['files']['name'] as $index => $filename) {
+                $groupedFiles[$index] = [
+                    'name'      => $_FILES['files']['name'][$index],
+                    'type'      => $_FILES['files']['type'][$index],
+                    'tmp_name'  => $_FILES['files']['tmp_name'][$index],
+                    'size'      => $_FILES['files']['size'][$index],
+                    'error'     => $_FILES['files']['error'][$index],
+                ];
+            }
 
-        foreach ($_FILES['files']['name'] as $index => $filename) {
-            $groupedFiles[$index] = [
-                'name'      => $_FILES['files']['name'][$index],
-                'type'      => $_FILES['files']['type'][$index],
-                'tmp_name'  => $_FILES['files']['tmp_name'][$index],
-                'size'      => $_FILES['files']['size'][$index],
-                'error'     => $_FILES['files']['error'][$index],
-            ];
-        }
-
-        // check nama file
+            // check nama file
             $existing_files = \Model\Storage\AttachmentRealisasiPembayaran_model::showAll();
 
             $existing_names = [];
@@ -951,40 +967,39 @@ class VerifikasiPembayaran extends Public_Controller
             }
 
             $name_exits = false;
-        
 
-        // end check nama file
+            // end check nama file
 
-        $uploadDir = FCPATH . "uploads/"; 
+            $uploadDir = FCPATH . "uploads/";
 
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-            echo "Folder dibuat: $uploadDir<br>";
-        } 
-   
-        foreach ($groupedFiles as $file) {
-            if ($file['error'] === 0) {
-                $ext            = pathinfo($file['name'], PATHINFO_EXTENSION);
-                // $encryptedName  = md5(uniqid() . $file['name'] . time()) . '.' . $ext;
-                $targetFile     = $uploadDir . ubahNama($file['name']);
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+                echo "Folder dibuat: $uploadDir<br>";
+            }
 
-                if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+            foreach ($groupedFiles as $file) {
+                if ($file['error'] === 0) {
+                    $ext        = pathinfo($file['name'], PATHINFO_EXTENSION);
+                    $targetFile = $uploadDir . ubahNama($file['name']);
 
-                    $m_attach       = new \Model\Storage\AttachmentRealisasiPembayaran_model();
-                    $m_attach->insert([
-                        'realisasi_id' => $data['id'],
-                        'file_name'    => $file['name'],
-                        'path'         => $targetFile,
-                        'created_at'   => date("Y-m-d H:i:s"),
-                        'name_file_old'=> $file['name'],
-                        'tbl_name'     => $data['tbl_name']
-                    ]);
-                   
+                    if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+
+                        $m_attach = new \Model\Storage\AttachmentRealisasiPembayaran_model();
+                        $m_attach->insert([
+                            'realisasi_id' => $data['id'],
+                            'file_name'    => $file['name'],
+                            'path'         => $targetFile,
+                            'created_at'   => date("Y-m-d H:i:s"),
+                            'name_file_old'=> $file['name'],
+                            'tbl_name'     => $data['tbl_name']
+                        ]);
+
+                    } else {
+                        echo "Gagal upload file '{$file['name']}'<br>";
+                    }
                 } else {
-                    echo "Gagal upload file '{$file['name']}'<br>";
+                    echo "File '{$file['name']}' memiliki error saat upload<br>";
                 }
-            } else {
-                echo "File '{$file['name']}' memiliki error saat upload<br>";
             }
         }
 
@@ -1339,60 +1354,62 @@ class VerifikasiPembayaran extends Public_Controller
     {   
         \Model\Storage\AttachmentRealisasiPembayaran_model::deleteNotInOldFile($data['id'], $data['old_file'] ?? [], $data['tbl_name']);
 
-        $groupedFiles = [];
+        if (isset($_FILES['files']) && !empty($_FILES['files']['name'])) {
+            $groupedFiles = [];
 
-        foreach ($_FILES['files']['name'] as $index => $filename) {
-            $groupedFiles[$index] = [
-                'name'      => $_FILES['files']['name'][$index],
-                'type'      => $_FILES['files']['type'][$index],
-                'tmp_name'  => $_FILES['files']['tmp_name'][$index],
-                'size'      => $_FILES['files']['size'][$index],
-                'error'     => $_FILES['files']['error'][$index],
-            ];
-        }
-
-        $uploadDir = FCPATH . "uploads/"; 
-
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-            echo "Folder dibuat: $uploadDir<br>";
-        } 
-
-        // check nama file
-            $existing_files = \Model\Storage\AttachmentRealisasiPembayaran_model::showAll();
-            $existing_names = [];
-            foreach ($existing_files as $file) {
-                $existing_names[] = strtolower($file['name_file_old']);
+            foreach ($_FILES['files']['name'] as $index => $filename) {
+                $groupedFiles[$index] = [
+                    'name'      => $_FILES['files']['name'][$index],
+                    'type'      => $_FILES['files']['type'][$index],
+                    'tmp_name'  => $_FILES['files']['tmp_name'][$index],
+                    'size'      => $_FILES['files']['size'][$index],
+                    'error'     => $_FILES['files']['error'][$index],
+                ];
             }
-            $name_exits = false;
-        // end check nama file
-   
-        foreach ($groupedFiles as $file) {
-            if ($file['error'] === 0) {
-                $ext            = pathinfo($file['name'], PATHINFO_EXTENSION);
-                // $encryptedName  = md5(uniqid() . $file['name'] . time()) . '.' . $ext;
-                // $targetFile     = $uploadDir . $encryptedName;
-                $targetFile     = $uploadDir . ubahNama($file['name']);
 
-                if (move_uploaded_file($file['tmp_name'], $targetFile)) {
-                    if (in_array(strtolower($file['name']), $existing_names)) {
-                        $name_exits = true;
-                    }
-                    $m_attach       = new \Model\Storage\AttachmentRealisasiPembayaran_model();
-                    $m_attach->insert([
-                        'realisasi_id' => $data['id'],
-                        'file_name'    => ubahNama($file['name']),
-                        'path'         => $targetFile,
-                        'created_at'   => date("Y-m-d H:i:s"),
-                        'name_file_old'=> $name_exits ? ubahNama($file['name']) : $file['name'],
-                        'tbl_name' => $data['tbl_name'],
-                    ]);
-                   
-                } else {
-                    echo "Gagal upload file '{$file['name']}'<br>";
+            $uploadDir = FCPATH . "uploads/"; 
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+                echo "Folder dibuat: $uploadDir<br>";
+            } 
+
+            // check nama file
+                $existing_files = \Model\Storage\AttachmentRealisasiPembayaran_model::showAll();
+                $existing_names = [];
+                foreach ($existing_files as $file) {
+                    $existing_names[] = strtolower($file['name_file_old']);
                 }
-            } else {
-                echo "File '{$file['name']}' memiliki error saat upload<br>";
+                $name_exits = false;
+            // end check nama file
+    
+            foreach ($groupedFiles as $file) {
+                if ($file['error'] === 0) {
+                    $ext            = pathinfo($file['name'], PATHINFO_EXTENSION);
+                    // $encryptedName  = md5(uniqid() . $file['name'] . time()) . '.' . $ext;
+                    // $targetFile     = $uploadDir . $encryptedName;
+                    $targetFile     = $uploadDir . ubahNama($file['name']);
+
+                    if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+                        if (in_array(strtolower($file['name']), $existing_names)) {
+                            $name_exits = true;
+                        }
+                        $m_attach       = new \Model\Storage\AttachmentRealisasiPembayaran_model();
+                        $m_attach->insert([
+                            'realisasi_id' => $data['id'],
+                            'file_name'    => ubahNama($file['name']),
+                            'path'         => $targetFile,
+                            'created_at'   => date("Y-m-d H:i:s"),
+                            'name_file_old'=> $name_exits ? ubahNama($file['name']) : $file['name'],
+                            'tbl_name' => $data['tbl_name'],
+                        ]);
+                    
+                    } else {
+                        echo "Gagal upload file '{$file['name']}'<br>";
+                    }
+                } else {
+                    echo "File '{$file['name']}' memiliki error saat upload<br>";
+                }
             }
         }
     }

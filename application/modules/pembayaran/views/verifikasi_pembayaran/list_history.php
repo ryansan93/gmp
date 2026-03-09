@@ -8,11 +8,25 @@
             <td class="text-left"><?php echo strtoupper($value['ket_realisasi']); ?></td>
             <td class="text-right"><?php echo strtoupper(angkaDecimal($value['jml_transfer'])); ?></td>
             <td>
-                <?php if ( !empty($value['lampiran_realisasi']) ) { ?>
-                    <a href="uploads/<?php echo $value['lampiran_realisasi']; ?>" target="_blank"><?php echo $value['lampiran_realisasi']; ?></a>
+                
+                <?php if (isset($attachment[$value['id']]) && count($attachment[$value['id']]) > 0) { ?>
+
+                    <?php foreach ($attachment[$value['id']] as $file) { ?>
+                        <a href="uploads/<?php echo $file['file_name'] ?>" target="_blank">
+                            <?php echo $file['file_name'] ?>
+                        </a><br>
+                    <?php } ?>
+
+                <?php } elseif (!empty($value['lampiran_realisasi'])) { ?>
+
+                    <a href="uploads/<?php echo $value['lampiran_realisasi']; ?>" target="_blank">
+                        <?php echo $value['lampiran_realisasi']; ?>
+                    </a>
+
                 <?php } else { ?>
                     -
                 <?php } ?>
+
             </td>
             <td>
                 <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" data-table="<?php echo $value['tbl_name']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>

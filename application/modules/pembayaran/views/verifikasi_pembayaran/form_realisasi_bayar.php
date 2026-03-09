@@ -63,21 +63,41 @@
                     </div>
 				</div>
                 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<div class="col-xs-12 no-padding"><b>LAMPIRAN PEMBAYARAN</b></div>
+					<div class="row gap-2" style="margin-left:2px;">
+						<b>LAMPIRAN PEMBAYARAN</b>
+						<div onclick="vp.addRowLampiran(this, event)" style="margin-left:10px; height:20px; width:20px; background-color:#9BDE8A; border-radius:2px; text-align:center; cursor:pointer;">
+							<i class="fa fa-plus"></i>
+						</div>					
+					</div>
 					<div class="col-xs-12 no-padding form-area" style="display:flex; flex-direction:column; gap: 10px">
 
-						<div class="file-form d-flex align-items-center" style="position: relative;">
+						<!-- <div class="file-form d-flex align-items-center" style="position: relative;">
 							<label class="">
 								<input type="file" onchange="showNameFile(this)" class="file_lampiran" name="" placeholder="Bukti Transfer" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
 								<i class="glyphicon glyphicon-paperclip cursor-p"></i>
 							</label>
+						</div> -->
 
+						<div class="attachment-area" style="display:flex; flex-direction:column; gap:5px; margin-top:10px;">
 							
-							<button type="button" class="btn btn-sm btn-warning" style="position:absolute; right:0;" onclick="vp.addRowLampiran(this, event)">
-									<i class="fa fa-plus"></i>
-							</button>
-							
+									<div class="file-form" style="display:flex; flex-direction:row; gap:5px">
+										
+										<button type="button" class="name-file-button flex items-center justify-center border border-gray-300 rounded p-1 hover:bg-gray-100" style="width:auto;">
+											Nama File
+										</button>										
+
+										<input type="file" class="file_lampiran" onchange="vp.get_lampiran(this, event)" style="display:none;">
+										<button type="button" class="btn btn-sm btn-warning" onclick="vp.edit_lampiran(this, event)">
+											<i class="glyphicon glyphicon-paperclip cursor-p"></i>
+										</button>
+
+										<button type="button" onclick="vp.removeRowLampiran(this, event)" class="btn btn-remove btn-sm btn-danger">
+											<i class="fa fa-trash"></i>
+										</button>
+									</div>
+
 						</div>
+
                     </div>
 				</div>
                 <div class="col-xs-12 no-padding">
