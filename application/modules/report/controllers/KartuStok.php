@@ -157,7 +157,7 @@ class KartuStok extends Public_Controller {
         $data = null;
 
         $m_conf = new \Model\Storage\Conf();
-        $sql_old = "
+        $sql = "
             select
                 data.*,
                 gdg.nama as nama_gudang,
@@ -549,8 +549,8 @@ class KartuStok extends Public_Controller {
                         ds.jenis_trans,
                         ds.hrg_beli,
                         case
-                            when sum(isnull(dst.jumlah, 0)) < sum(isnull(dk.jumlah, 0)) then
-                                sum(isnull(dk.jumlah, 0))
+                            when sum(isnull(dst.jumlah, 0)) < isnull(dk.jumlah, 0) then
+                                isnull(dk.jumlah, 0)
                             else
                                 sum(isnull(dst.jumlah, 0))
                         end as jumlah
@@ -689,7 +689,8 @@ class KartuStok extends Public_Controller {
                         ds.jenis_barang,
                         dst.kode_trans,
                         ds.jenis_trans,
-                        ds.hrg_beli
+                        ds.hrg_beli,
+                        dk.jumlah
                 ) klwr
                 left join
                     (
