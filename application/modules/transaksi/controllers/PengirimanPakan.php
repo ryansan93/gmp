@@ -408,9 +408,9 @@ class PengirimanPakan extends Public_Controller {
                 $asal = $d_rs_asal['mitra']['d_mitra']['nama'].' ('.$d_kp['asal'].')';
 
                 if ( $d_kp['jenis_tujuan'] == 'peternak' ) {
-                    $d_rs_tujuan = $m_rs->where('noreg', $d_kp['tujuan'])->with(['mitra'])->orderBy('id', 'desc')->first()->toArray();
-                    $tgl_docin_tujuan = $d_rs_tujuan['tgl_docin'];
-                    $tujuan = $d_rs_tujuan['mitra']['d_mitra']['nama'].' ('.$d_kp['tujuan'].')';
+                    $d_rs_tujuan = $m_rs->where('noreg', $d_kp['tujuan'])->with(['mitra'])->orderBy('id', 'desc')->first();
+                    $tgl_docin_tujuan = ($d_rs_tujuan) ? $d_rs_tujuan->tgl_docin : null;
+                    $tujuan = ($d_rs_tujuan) ? $d_rs_tujuan->mitra->dMitra->nama.' ('.$d_kp['tujuan'].')' : null;
                 }
 
                 $a_content['no_sj_asal'] = $data = $this->getDataSjAsal( $d_kp['asal'] );
