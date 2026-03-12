@@ -1010,13 +1010,13 @@ class Peternak extends Public_Controller {
             $m_mitra->rekening_nomor = $params['d_bank']['rekening'] ?: null;
             $m_mitra->rekening_pemilik = $params['d_bank']['pemilik'] ?: null;
             $m_mitra->status = $status;
-            $m_mitra->keterangan_jaminan = $params['keterangan_jaminan'];
+            $m_mitra->keterangan_jaminan = $params['keterangan_jaminan'] ?: null;
             $m_mitra->jenis = $params['jenis_mitra'];
             $m_mitra->mstatus = 1;
             $m_mitra->version = 1;
-            $m_mitra->perusahaan = $params['perusahaan'];
-            $m_mitra->plafon = $params['plafon'];
-            $m_mitra->jatuh_tempo = $params['jatuh_tempo'];
+            $m_mitra->perusahaan = $params['perusahaan'] ?: null;
+            $m_mitra->plafon = $params['plafon'] ?: -1;
+            $m_mitra->jatuh_tempo = $params['jatuh_tempo'] ?: -1;
             $m_mitra->pemilik = (isset($params['pemilik']) && !empty($params['pemilik'])) ? $params['pemilik'] : $nomor_mitra;
             $m_mitra->save();
 
