@@ -84,105 +84,105 @@ class GeneralLedgerExternal extends Public_Controller {
         return $data;
     }
 
+    /* HAFIDZ
     public function getData($start_date, $end_date, $kode_gabung_perusahaan, $unit) {
-            $sql = "select
-                        data.no_coa,
-                        data.unit,
-                        data.nama_coa,
-                        sum(isnull(data.debet, 0)) as debet,
-                        -sum(isnull(data.kredit, 0)) as kredit
+        $sql = "select
+                    data.no_coa,
+                    data.unit,
+                    data.nama_coa,
+                    sum(isnull(data.debet, 0)) as debet,
+                    -sum(isnull(data.kredit, 0)) as kredit
+                from
+                (
+                    select
+                        case
+                            when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
+                                data.coa_asal
+                            else
+                                data.coa_tujuan
+                        end as no_coa,
+                        case
+                            when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
+                                data.unit
+                            else
+                                isnull(data.unit_tujuan, data.unit)
+                        end as unit,
+                        case
+                            when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
+                                data.asal
+                            else
+                                data.tujuan
+                        end as nama_coa,
+                        data.noreg,
+                        data.nama_mitra,
+                        case
+                            when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
+                                0
+                            else
+                                data.nominal
+                        end as debet,
+                        case
+                            when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
+                                data.nominal
+                            else
+                                0
+                        end as kredit
                     from
                     (
-                        select
-                            case
-                                when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
-                                    data.coa_asal
-                                else
-                                    data.coa_tujuan
-                            end as no_coa,
-                            case
-                                when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
-                                    data.unit
-                                else
-                                    isnull(data.unit_tujuan, data.unit)
-                            end as unit,
-                            case
-                                when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
-                                    data.asal
-                                else
-                                    data.tujuan
-                            end as nama_coa,
-                            data.noreg,
-                            data.nama_mitra,
-                            case
-                                when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
-                                    0
-                                else
-                                    data.nominal
-                            end as debet,
-                            case
-                                when SUBSTRING(data.coa_asal, 1, 1) in (5, 6) then
-                                    data.nominal
-                                else
-                                    0
-                            end as kredit
-                        from
-                        (
-                            select dj.*, m.nama as nama_mitra from det_jurnal dj
-                            left join
-                                rdim_submit rs
-                                on
-                                    dj.noreg = rs.noreg
-                            left join
-                                (
-                                    select mm1.* from mitra_mapping mm1
-                                    right join
-                                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                                        on
-                                            mm1.id = mm2.id
-                                ) mm
-                                on
-                                    rs.nim = mm.nim
-                            left join
-                                mitra m
-                                on
-                                    m.id = mm.mitra
-                            left join
-                                jenis j
-                                on
-                                    m.jenis = j.kode
-                            where
-                                dj.tanggal between '".$start_date."' and '".$end_date."' and
-                                (SUBSTRING(dj.coa_asal, 1, 1) in (5, 6) or SUBSTRING(dj.coa_tujuan, 1, 1) in (5, 6)) and
-                                ((dj.noreg is not null and j.kode = 'ME') or dj.noreg is null)
-                        ) data
-                    ) data ";
+                        select dj.*, m.nama as nama_mitra from det_jurnal dj
+                        left join
+                            rdim_submit rs
+                            on
+                                dj.noreg = rs.noreg
+                        left join
+                            (
+                                select mm1.* from mitra_mapping mm1
+                                right join
+                                    (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                    on
+                                        mm1.id = mm2.id
+                            ) mm
+                            on
+                                rs.nim = mm.nim
+                        left join
+                            mitra m
+                            on
+                                m.id = mm.mitra
+                        left join
+                            jenis j
+                            on
+                                m.jenis = j.kode
+                        where
+                            dj.tanggal between '".$start_date."' and '".$end_date."' and
+                            (SUBSTRING(dj.coa_asal, 1, 1) in (5, 6) or SUBSTRING(dj.coa_tujuan, 1, 1) in (5, 6)) and
+                            ((dj.noreg is not null and j.kode = 'ME') or dj.noreg is null)
+                    ) data
+                ) data ";
 
-                if ($unit != 'all' ){
-                    $sql .=" where data.unit = '".$unit."' ";
-                } 
+            if ($unit != 'all' ){
+                $sql .=" where data.unit = '".$unit."' ";
+            } 
 
-                $sql .= "
-                    group by
-                        data.no_coa,
-                        data.unit,
-                        data.nama_coa
-                    order by
-                        data.no_coa asc,
-                        data.unit asc ";
-                        
+            $sql .= "
+                group by
+                    data.no_coa,
+                    data.unit,
+                    data.nama_coa
+                order by
+                    data.no_coa asc,
+                    data.unit asc ";
+                    
 
-            $m_conf = new \Model\Storage\Conf();
-            $d_conf = $m_conf->hydrateRaw( $sql );
+        $m_conf = new \Model\Storage\Conf();
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-            $data = null;
-            if ( $d_conf->count() > 0 ) {
-                $data = $d_conf->toArray();
-            }
-            
-            return $data;
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
         }
-
+        
+        return $data;
+    }
 
     public function getDetail($periode, $unit, $no_coa) {
         $start_date = $periode;
@@ -289,6 +289,827 @@ class GeneralLedgerExternal extends Public_Controller {
                 // print_r($sql);
                 // die;
 
+        // cetak_r( $sql, 1 );
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+        
+        return $data;
+    }
+    */
+
+    public function getData($start_date, $end_date, $kode_gabung_perusahaan, $unit) {
+        $sql_kode_gabung_perusahaan = "and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '".$kode_gabung_perusahaan."')";
+        if ( $kode_gabung_perusahaan == 'all' ) {
+            $sql_kode_gabung_perusahaan = null;
+        }
+
+        $sql_unit = null;
+        if ( $unit != 'all' ) {
+            $sql_unit = "where data.unit = '".$unit."'";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql_sa = "
+            /* SALDO AWAL */
+            select
+                sb.no_coa as no_coa,
+                sb.unit,
+                c.nama_coa,
+                case
+                    when sb.debet2 <> 0 then
+                        -- sb.debet2
+                        0
+                    else
+                        sb.debet1
+                end as saldo_awal,
+                -- sb.saldo_awal,
+                0 as kredit,
+                0 as debet
+            from (
+                select
+                    sa.no_coa,
+                    sa.unit,
+                    sum(sa.debet1) as debet1,
+                    sum(sa.kredit1) as kredit1,
+                    sum(sa.debet2) as debet2,
+                    sum(sa.kredit2) as kredit2
+                from
+                (
+                    select
+                        sb.coa as no_coa,
+                        sb.unit,
+                        isnull(sb.saldo_awal, 0) as debet1,
+                        0 as kredit1,
+                        0 as debet2,
+                        0 as kredit2
+                    from saldo_bulanan sb
+                    left join
+                        rdim_submit rs
+                        on
+                            sb.noreg = rs.noreg
+                    left join
+                        (
+                            select mm1.* from mitra_mapping mm1
+                            right join
+                                (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                on
+                                    mm1.id = mm2.id
+                        ) mm
+                        on
+                            rs.nim = mm.nim
+                    left join
+                        mitra m
+                        on
+                            m.id = mm.mitra
+                    left join
+                        jenis j
+                        on
+                            m.jenis = j.kode
+                    where 
+                        sb.tanggal between '".$start_date."' and '".$end_date."' and
+                        -- isnull(sb.saldo_awal, 0) <> 0 and
+                        SUBSTRING(sb.coa, 1, 1) in (5, 6) and
+                        ((sb.noreg is not null and j.kode = 'ME') or sb.noreg is null)
+
+                    union all
+
+                    select
+                        sc.no_coa,
+                        sc.unit,
+                        0 as debet1,
+                        0 as kredit1,
+                        isnull(sc.debet, 0) as debet2,
+                        0 as kredit2
+                    from sacoa sc
+                    where
+                        sc.periode = '".substr($start_date, 0, 7)."' and
+                        sc.debet <> 0 and
+                        SUBSTRING(sc.no_coa, 1, 1) in (5, 6)
+                ) sa
+                group by
+                    sa.no_coa,
+                    sa.unit
+            ) sb 
+            left join
+                coa c
+                on
+                    sb.no_coa = c.coa
+            /* END - SALDO AWAL */
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql_sa );
+        if ( $d_conf->count() <= 0 ) {
+            $end_date_new = prev_date($start_date);
+            $start_date_new = substr($end_date_new, 0, 7).'-01';
+
+            $sql_sa = "
+                select
+                    data.no_coa,
+                    data.unit,
+                    data.nama_coa,
+                    sum(isnull(data.saldo_awal, 0)) + sum(isnull(data.debet, 0)) + sum(isnull(data.kredit, 0)) as saldo_awal,
+                    0 as kredit,
+                    0 as debet
+                from
+                (
+                    select
+                        sb.no_coa as no_coa,
+                        sb.unit,
+                        c.nama_coa,
+                        case
+                            when sb.debet2 <> 0 then
+                                -- sb.debet2
+                                0
+                            else
+                                sb.debet1
+                        end as saldo_awal,
+                        -- sb.saldo_awal,
+                        0 as kredit,
+                        0 as debet
+                    from (
+                        select
+                            sa.no_coa,
+                            sa.unit,
+                            sum(sa.debet1) as debet1,
+                            sum(sa.kredit1) as kredit1,
+                            sum(sa.debet2) as debet2,
+                            sum(sa.kredit2) as kredit2
+                        from
+                        (
+                            select
+                                sb.coa as no_coa,
+                                sb.unit,
+                                isnull(sb.saldo_awal, 0) as debet1,
+                                0 as kredit1,
+                                0 as debet2,
+                                0 as kredit2
+                            from saldo_bulanan sb
+                            left join
+                                rdim_submit rs
+                                on
+                                    sb.noreg = rs.noreg
+                            left join
+                                (
+                                    select mm1.* from mitra_mapping mm1
+                                    right join
+                                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                        on
+                                            mm1.id = mm2.id
+                                ) mm
+                                on
+                                    rs.nim = mm.nim
+                            left join
+                                mitra m
+                                on
+                                    m.id = mm.mitra
+                            left join
+                                jenis j
+                                on
+                                    m.jenis = j.kode
+                            where 
+                                sb.tanggal between '".$start_date_new."' and '".$end_date_new."' and
+                                isnull(sb.saldo_awal, 0) <> 0 and
+                                SUBSTRING(sb.coa, 1, 1) in (5, 6) and
+                                ((sb.noreg is not null and j.kode = 'ME') or sb.noreg is null)
+
+                            union all
+
+                            select
+                                sc.no_coa,
+                                sc.unit,
+                                0 as debet1,
+                                0 as kredit1,
+                                isnull(sc.debet, 0) as debet2,
+                                0 as kredit2
+                            from sacoa sc
+                            where
+                                sc.periode = '".substr($start_date_new, 0, 7)."' and
+                                sc.debet <> 0 and
+                                SUBSTRING(sc.no_coa, 1, 1) in (5, 6)
+                        ) sa
+                        group by
+                            sa.no_coa,
+                            sa.unit
+                    ) sb 
+                    left join
+                        coa c
+                        on
+                            sb.no_coa = c.coa
+
+                    union all
+
+                    select
+                        sc.no_coa,
+                        sc.unit,
+                        c.nama_coa,
+                        0 as saldo_awal,
+                        case
+                            when isnull(sc.debet, 0) < 0 then
+                                isnull(sc.debet, 0)
+                            else
+                                0
+                        end as kredit,
+                        case
+                            when isnull(sc.debet, 0) >= 0 then
+                                isnull(sc.debet, 0)
+                            else
+                                0
+                        end as debet
+                    from sacoa sc
+                    left join
+                        coa c
+                        on
+                            sc.no_coa = c.coa
+                    where
+                        sc.periode = '".substr($start_date_new, 0, 7)."' and
+                        sc.debet <> 0 and
+                        SUBSTRING(sc.no_coa, 1, 1) in (5, 6)
+
+                    union all
+
+                    select
+                        c.coa as no_coa,
+                        case
+                            when c.unit is not null and c.unit <> '' then
+                                c.unit
+                            else
+                                dj.unit
+                        end as unit,
+                        c.nama_coa,
+                        0 as saldo_awal,
+                        (0-isnull(dj.kredit, 0)) as kredit,
+                        isnull(dj.debet, 0) as debet
+                    from coa c
+                    left join
+                        (
+                            select no_coa, sum(kredit) as kredit, sum(debet) as debet, unit from (
+                                select 
+                                    dj.coa_asal as no_coa, 
+                                    sum(dj.nominal) as kredit, 
+                                    0 as debet, 
+                                    dj.unit
+                                from det_jurnal dj
+                                left join
+                                    rdim_submit rs
+                                    on
+                                        dj.noreg = rs.noreg
+                                left join
+                                    (
+                                        select mm1.* from mitra_mapping mm1
+                                        right join
+                                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                            on
+                                                mm1.id = mm2.id
+                                    ) mm
+                                    on
+                                        rs.nim = mm.nim
+                                left join
+                                    mitra m
+                                    on
+                                        m.id = mm.mitra
+                                left join
+                                    jenis j
+                                    on
+                                        m.jenis = j.kode
+                                where 
+                                    dj.tanggal between '".$start_date_new."' and '".$end_date_new."'
+                                    and SUBSTRING(dj.coa_asal, 1, 1) in (5, 6)
+                                    and ((dj.noreg is not null and j.kode = 'ME') or dj.noreg is null)
+                                group by dj.coa_asal, dj.unit
+                                
+                                union all
+                                
+                                select 
+                                    dj.coa_tujuan as no_coa, 
+                                    0 as kredit, 
+                                    sum(dj.nominal) as debet, 
+                                    case
+                                        when dj.unit_tujuan is not null then
+                                            dj.unit_tujuan
+                                        else
+                                            dj.unit
+                                    end as unit
+                                from det_jurnal dj
+                                left join
+                                    rdim_submit rs
+                                    on
+                                        dj.noreg = rs.noreg
+                                left join
+                                    (
+                                        select mm1.* from mitra_mapping mm1
+                                        right join
+                                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                            on
+                                                mm1.id = mm2.id
+                                    ) mm
+                                    on
+                                        rs.nim = mm.nim
+                                left join
+                                    mitra m
+                                    on
+                                        m.id = mm.mitra
+                                left join
+                                    jenis j
+                                    on
+                                        m.jenis = j.kode
+                                where 
+                                    dj.tanggal between '".$start_date_new."' and '".$end_date_new."'
+                                    and SUBSTRING(dj.coa_tujuan, 1, 1) in (5, 6)
+                                    and ((dj.noreg is not null and j.kode = 'ME') or dj.noreg is null)
+                                group by dj.coa_tujuan, dj.unit, dj.unit_tujuan
+                            ) data
+                            group by
+                                no_coa, unit
+                        ) dj
+                        on
+                            dj.no_coa = c.coa
+                    where
+                        (0-isnull(dj.kredit, 0)) <> 0 or
+                        isnull(dj.debet, 0) <> 0
+                ) data
+                ".$sql_unit."
+                group by
+                    data.no_coa,
+                    data.unit,
+                    data.nama_coa
+            ";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.no_coa,
+                data.unit,
+                data.nama_coa,
+                sum(isnull(data.saldo_awal, 0)) as saldo_awal,
+                sum(isnull(data.kredit, 0)) as kredit,
+                sum(isnull(data.debet, 0)) as debet,
+                sum(isnull(data.saldo_awal, 0)) + sum(isnull(data.debet, 0)) + sum(isnull(data.kredit, 0)) as saldo_akhir
+            from
+            (
+                ".$sql_sa."
+
+                union all
+
+                select
+                    sc.no_coa,
+                    sc.unit,
+                    c.nama_coa,
+                    0 as saldo_awal,
+                    case
+                        when isnull(sc.debet, 0) < 0 then
+                            isnull(sc.debet, 0)
+                        else
+                            0
+                    end as kredit,
+                    case
+                        when isnull(sc.debet, 0) >= 0 then
+                            isnull(sc.debet, 0)
+                        else
+                            0
+                    end as debet
+                from sacoa sc
+                left join
+                    coa c
+                    on
+                        sc.no_coa = c.coa
+                where
+                    sc.periode = '".substr($start_date, 0, 7)."' and
+                    sc.debet <> 0 and
+                    SUBSTRING(sc.no_coa, 1, 1) in (5, 6)
+
+                union all
+
+                select
+                    c.coa as no_coa,
+                    case
+                        when c.unit is not null and c.unit <> '' then
+                            c.unit
+                        else
+                            dj.unit
+                    end as unit,
+                    c.nama_coa,
+                    0 as saldo_awal,
+                    (0-isnull(dj.kredit, 0)) as kredit,
+                    isnull(dj.debet, 0) as debet
+                from coa c
+                left join
+                    (
+                        select no_coa, sum(kredit) as kredit, sum(debet) as debet, unit from (
+                            select 
+                                dj.coa_asal as no_coa, 
+                                sum(dj.nominal) as kredit, 
+                                0 as debet, 
+                                dj.unit
+                            from det_jurnal dj
+                            left join
+                                rdim_submit rs
+                                on
+                                    dj.noreg = rs.noreg
+                            left join
+                                (
+                                    select mm1.* from mitra_mapping mm1
+                                    right join
+                                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                        on
+                                            mm1.id = mm2.id
+                                ) mm
+                                on
+                                    rs.nim = mm.nim
+                            left join
+                                mitra m
+                                on
+                                    m.id = mm.mitra
+                            left join
+                                jenis j
+                                on
+                                    m.jenis = j.kode
+                            where 
+                                dj.tanggal between '".$start_date."' and '".$end_date."'
+                                and SUBSTRING(dj.coa_asal, 1, 1) in (5, 6)
+                                and ((dj.noreg is not null and j.kode = 'ME') or dj.noreg is null)
+                            group by dj.coa_asal, dj.unit
+                            
+                            union all
+                            
+                            select 
+                                dj.coa_tujuan as no_coa, 
+                                0 as kredit, 
+                                sum(dj.nominal) as debet, 
+                                case
+                                    when dj.unit_tujuan is not null then
+                                        dj.unit_tujuan
+                                    else
+                                        dj.unit
+                                end as unit
+                            from det_jurnal dj
+                            left join
+                                rdim_submit rs
+                                on
+                                    dj.noreg = rs.noreg
+                            left join
+                                (
+                                    select mm1.* from mitra_mapping mm1
+                                    right join
+                                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                        on
+                                            mm1.id = mm2.id
+                                ) mm
+                                on
+                                    rs.nim = mm.nim
+                            left join
+                                mitra m
+                                on
+                                    m.id = mm.mitra
+                            left join
+                                jenis j
+                                on
+                                    m.jenis = j.kode
+                            where 
+                                dj.tanggal between '".$start_date."' and '".$end_date."'
+                                and SUBSTRING(dj.coa_tujuan, 1, 1) in (5, 6)
+                                and ((dj.noreg is not null and j.kode = 'ME') or dj.noreg is null)
+                            group by dj.coa_tujuan, dj.unit, dj.unit_tujuan
+                        ) data
+                        group by
+                            no_coa, unit
+                    ) dj
+                    on
+                        dj.no_coa = c.coa
+                where
+                    (0-isnull(dj.kredit, 0)) <> 0 or
+                    isnull(dj.debet, 0) <> 0
+            ) data
+            ".$sql_unit."
+            group by
+                data.no_coa,
+                data.unit,
+                data.nama_coa
+            order by
+                data.no_coa asc,
+                data.unit asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+        
+        return $data;
+    }
+
+    public function getDetail($periode, $unit, $no_coa) {
+        $start_date = $periode;
+        $end_date = date("Y-m-t", strtotime($start_date));
+        
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.tanggal,
+                data.keterangan,
+                data.kode_trans,
+                data.no_coa,
+                data.unit,
+                data.nama_coa,
+                isnull(data.kredit, 0) as kredit,
+                isnull(data.debet, 0) as debet
+            from
+            (
+                select
+                    '' as tanggal,
+                    'Saldo Awal' as keterangan,
+                    '' as kode_trans,
+                    sb.no_coa as no_coa,
+                    sb.unit,
+                    c.nama_coa,
+                    case
+                        when sb.kredit2 <> 0 then
+                            -- sb.kredit2
+                            0
+                        else
+                            case
+                                when sb.debet1 + sb.kredit1 < 0 then
+                                    sb.debet1 + sb.kredit1
+                                else
+                                    0
+                            end
+                    end as kredit,
+                    case
+                        when sb.debet2 <> 0 then
+                            -- sb.debet2
+                            0
+                        else
+                            case
+                                when sb.debet1 + sb.kredit1 >= 0 then
+                                    sb.debet1 + sb.kredit1
+                                else
+                                    0
+                            end
+                    end as debet,
+                    0 as urut
+                from (
+                    select
+                        sa.no_coa,
+                        sa.unit,
+                        sum(sa.debet1) as debet1,
+                        sum(sa.kredit1) as kredit1,
+                        sum(sa.debet2) as debet2,
+                        sum(sa.kredit2) as kredit2
+                    from
+                    (
+                        select
+                            sb.coa as no_coa,
+                            sb.unit,
+                            case
+                                when isnull(sb.saldo_awal, 0) >= 0 then
+                                    isnull(sb.saldo_awal, 0)
+                                else
+                                    0
+                            end as debet1,
+                            case
+                                when isnull(sb.saldo_awal, 0) < 0 then
+                                    isnull(sb.saldo_awal, 0)
+                                else
+                                    0
+                            end as kredit1,
+                            0 as debet2,
+                            0 as kredit2
+                        from saldo_bulanan sb
+                        left join
+                            rdim_submit rs
+                            on
+                                sb.noreg = rs.noreg
+                        left join
+                            (
+                                select mm1.* from mitra_mapping mm1
+                                right join
+                                    (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                    on
+                                        mm1.id = mm2.id
+                            ) mm
+                            on
+                                rs.nim = mm.nim
+                        left join
+                            mitra m
+                            on
+                                m.id = mm.mitra
+                        left join
+                            jenis j
+                            on
+                                m.jenis = j.kode
+                        where 
+                            sb.tanggal between '".$start_date."' and '".$end_date."' and
+                            SUBSTRING(sb.coa, 1, 1) in (5, 6) and
+                            ((sb.noreg is not null and j.kode = 'ME') or sb.noreg is null)
+
+                        union all
+
+                        select
+                            sc.no_coa,
+                            sc.unit,
+                            0 as debet1,
+                            0 as kredit1,
+                            case
+                                when isnull(sc.debet, 0) >= 0 then
+                                    isnull(sc.debet, 0)
+                                else
+                                    0
+                            end as debet2,
+                            case
+                                when isnull(sc.debet, 0) < 0 then
+                                    isnull(sc.debet, 0)
+                                else
+                                    0
+                            end as kredit2
+                        from sacoa sc
+                        where
+                            sc.periode = '".substr($start_date, 0, 7)."' and
+                        	sc.debet <> 0 and
+                            SUBSTRING(sc.no_coa, 1, 1) in (5, 6)
+                    ) sa
+                    group by
+                        sa.no_coa,
+                        sa.unit
+                ) sb 
+                left join
+                    coa c
+                    on
+                        sb.no_coa = c.coa
+
+                union all
+
+                select
+                    sc.periode+'-01' as tanggal,
+                    'Initial Balance' as keterangan,
+                    'INIT'+REPLACE(sc.periode, '-', '') as kode_trans,
+                    sc.no_coa,
+                    sc.unit,
+                    c.nama_coa,
+                    case
+                        when isnull(sc.debet, 0) < 0 then
+                            isnull(sc.debet, 0)
+                        else
+                            0
+                    end as kredit,
+                    case
+                        when isnull(sc.debet, 0) >= 0 then
+                            isnull(sc.debet, 0)
+                        else
+                            0
+                    end as debet,
+                    1 as urut
+                from sacoa sc
+                left join
+                    coa c
+                    on
+                        sc.no_coa = c.coa
+                where
+                    sc.periode = '".substr($start_date, 0, 7)."' and
+                    sc.debet <> 0 and
+                    SUBSTRING(sc.no_coa, 1, 1) in (5, 6)
+
+                union all
+
+                select
+                    dj.tanggal, 
+                    dj.keterangan,
+                    dj.kode_trans,
+                    c.coa as no_coa,
+                    case
+                        when c.unit is not null and c.unit <> '' then
+                            c.unit
+                        else
+                            dj.unit
+                    end as unit,
+                    c.nama_coa,
+                    (0-isnull(dj.kredit, 0)) as kredit,
+                    isnull(dj.debet, 0) as debet,
+                    2 as urut
+                from coa c
+                left join
+                    (
+                        select 
+                            tanggal,
+                            cast(keterangan as varchar(max)) as keterangan,
+                            kode_trans,
+                            no_coa,
+                            kredit as kredit,
+                            debet as debet,
+                            unit
+                        from (
+                            select 
+                                dj.tanggal,
+                                cast(dj.keterangan as varchar(max)) as keterangan,
+                                dj.kode_trans,
+                                dj.coa_asal as no_coa, 
+                                sum(dj.nominal) as kredit, 
+                                0 as debet, 
+                                dj.unit
+                            from det_jurnal dj
+                            left join
+                                rdim_submit rs
+                                on
+                                    dj.noreg = rs.noreg
+                            left join
+                                (
+                                    select mm1.* from mitra_mapping mm1
+                                    right join
+                                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                        on
+                                            mm1.id = mm2.id
+                                ) mm
+                                on
+                                    rs.nim = mm.nim
+                            left join
+                                mitra m
+                                on
+                                    m.id = mm.mitra
+                            left join
+                                jenis j
+                                on
+                                    m.jenis = j.kode
+                            where 
+                                dj.tanggal between '".$start_date."' and '".$end_date."'
+                                and SUBSTRING(dj.coa_tujuan, 1, 1) in (5, 6)
+                                and ((dj.noreg is not null and j.kode = 'ME') or dj.noreg is null)
+                            group by
+                                dj.tanggal,
+                                cast(dj.keterangan as varchar(max)),
+                                dj.kode_trans,
+                                dj.coa_asal,
+                                dj.unit
+                            
+                            union all
+                            
+                            select 
+                                dj.tanggal,
+                                cast(dj.keterangan as varchar(max)) as keterangan,
+                                dj.kode_trans,
+                                dj.coa_tujuan as no_coa, 
+                                0 as kredit, 
+                                sum(dj.nominal) as debet, 
+                                case
+                                    when dj.unit_tujuan is not null then
+                                        dj.unit_tujuan
+                                    else
+                                        dj.unit
+                                end as unit
+                            from det_jurnal dj
+                            left join
+                                rdim_submit rs
+                                on
+                                    dj.noreg = rs.noreg
+                            left join
+                                (
+                                    select mm1.* from mitra_mapping mm1
+                                    right join
+                                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                        on
+                                            mm1.id = mm2.id
+                                ) mm
+                                on
+                                    rs.nim = mm.nim
+                            left join
+                                mitra m
+                                on
+                                    m.id = mm.mitra
+                            left join
+                                jenis j
+                                on
+                                    m.jenis = j.kode
+                            where 
+                                dj.tanggal between '".$start_date."' and '".$end_date."'
+                                and SUBSTRING(dj.coa_tujuan, 1, 1) in (5, 6)
+                                and ((dj.noreg is not null and j.kode = 'ME') or dj.noreg is null)
+                            group by
+                                dj.tanggal,
+                                cast(dj.keterangan as varchar(max)),
+                                dj.kode_trans,
+                                dj.coa_tujuan,
+                                dj.unit,
+                                dj.unit_tujuan
+                        ) data
+                        group by
+                            tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit, kredit, debet
+                    ) dj
+                    on
+                        dj.no_coa = c.coa
+                where
+                    (0-isnull(dj.kredit, 0)) <> 0 or
+                    isnull(dj.debet, 0) <> 0
+            ) data
+            where
+                data.no_coa = '".$no_coa."' and
+                data.unit = '".$unit."'
+            order by
+                data.tanggal asc,
+                data.urut asc,
+                data.kode_trans asc
+        ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 

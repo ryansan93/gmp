@@ -96,7 +96,7 @@
 							<th class="text-center col-xs-1">Unit</th>
 							<th class="text-center col-xs-2">Nama COA</th>
 
-							<th class="text-center col-xs-2">No. Reg</th>
+							<th class="text-center col-xs-1">No. Reg</th>
 							<th class="text-center col-xs-2">Plasma</th>
 
 							<th class="text-center col-xs-1">Saldo Awal</th>

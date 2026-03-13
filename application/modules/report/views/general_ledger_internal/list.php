@@ -24,12 +24,15 @@ $tot_saldo_akhir = 0;
             $tot_saldo_akhir += $saldo_akhir;
             ?>
             
-            <tr>
-                <td class="text-left"><?php echo $value['no_coa'] ?? ''; ?></td>
-                <td class="text-left"><?php echo $value['unit'] ?? ''; ?></td>
-                <td class="text-left"><?php echo $value['nama_coa'] ?? ''; ?></td>
-                <td class="text-right"><?php echo $value['noreg'] ?? ''; ?></td>
-                <td class="text-center"><?php echo $value['nama_mitra'] ?? ''; ?></td>
+            <tr onclick="gl.formDetail(this)"
+                data-periode="<?php echo $periode; ?>"
+                title="Klik untuk melihat detail">
+
+                <td class="text-left no_coa"><?php echo $value['no_coa'] ?? ''; ?></td>
+                <td class="text-left unit_tr"><?php echo $value['unit'] ?? ''; ?></td>
+                <td class="text-left nama_coa"><?php echo $value['nama_coa'] ?? ''; ?></td>
+                <td class="text-center noreg"><?php echo $value['noreg'] ?? ''; ?></td>
+                <td class="text-left"><?php echo $value['nama_mitra'] ?? ''; ?></td>
                 <td class="text-right"><?php echo angkaDecimal($saldo_awal); ?></td>
                 <td class="text-right"><?php echo angkaDecimal($debet); ?></td>
                 <td class="text-right"><?php echo angkaDecimal($kredit); ?></td>
