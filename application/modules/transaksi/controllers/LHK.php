@@ -931,7 +931,7 @@ class LHK extends Public_Controller
                     if ( $d_conf_prev->count() > 0 ) {
                         $d_conf_prev = $d_conf_prev->toArray()[0];
     
-                        if ( $d_conf_prev['pakai_pakan'] >= $pakai_pakan || $d_conf_prev['ekor_mati'] > $ekor_mati ) {
+                        if ( $d_conf_prev['pakai_pakan'] > $pakai_pakan || $d_conf_prev['ekor_mati'] > $ekor_mati ) {
                             $status = 0;
     
                             $message = '<span style="color: red;">Data LHK yang anda masukkan tidak sesuai !!!</span>';
