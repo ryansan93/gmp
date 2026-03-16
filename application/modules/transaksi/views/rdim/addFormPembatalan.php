@@ -1,5 +1,5 @@
 <div class="modal-header">
-	<span class="modal-title"><b>EDIT PEMBATALAN</b></span>
+	<span class="modal-title"><b>TAMBAH PEMBATALAN</b></span>
 	<button type="button" class="close" data-dismiss="modal">&times;</button>
 </div>
 <div class="modal-body">

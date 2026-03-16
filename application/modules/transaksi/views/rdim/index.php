@@ -245,6 +245,9 @@
 
 					<div id="batal" class="tab-pane fade">
 						<?php if ( !$akses['a_approve'] == 1 ): ?>
+							<?php echo $riwayat_pembatalan; ?>
+
+							<!--
 							<div class="col-sm-12 no-padding">
 								<form class="form-horizontal">
 									<div class="col-sm-1 no-padding" style="width: inherit;">
@@ -280,6 +283,7 @@
 							<div class="col-sm-12 no-padding">
 								<button type="button" class="btn btn-primary pull-right" onclick="rdim.savePembatalanRdim()"><i class="fa fa-save"></i> Save</button>
 							</div>
+							-->
 						<?php else: ?>
 							<h4 class="text-center">Pembatalan Rencana DOC in Mingguan</h4>
 						<?php endif ?>

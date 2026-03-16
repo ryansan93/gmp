@@ -128,6 +128,60 @@ class Mitra_model extends Conf{
 		return $data;
 	}
 
+  public function getDataMitraWithKabKota($with_bank = 1)
+	{
+		$sql_bank = null;
+		if ( $with_bank == 1 ) {
+			$sql_bank = "
+				union all
+
+				select
+					coa as nomor,
+					nama_coa as nama
+				from coa
+				where 
+					bank = 1
+			";
+		}
+
+		$sql = "
+			select * from
+			(
+				select
+					m.nomor,
+					m.nama
+					, REPLACE(REPLACE(kab_kota.nama, 'Kab ', ''), 'Kota ', '') as kab_kota
+				from mitra m
+				right join
+					( select max(id) as id, nomor from mitra group by nomor ) m1
+					on
+						m.id = m1.id
+				left join
+				    lokasi kec
+				    on
+				        kec.id = m.alamat_kecamatan
+				left join
+				    lokasi kab_kota
+				    on
+				        kab_kota.id = kec.induk
+				where
+					m.mstatus = 1
+
+				".$sql_bank."
+			) data
+			order by
+				data.nama asc
+		";
+		$d_mitra = $this->hydrateRaw( $sql );
+
+		$data = null;
+		if ( $d_mitra->count() > 0 ) {
+			$data = $d_mitra->toArray();
+		}
+
+		return $data;
+	}
+
   public function getDashboard($status)
   {
     $table_name = $this->table;

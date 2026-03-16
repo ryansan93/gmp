@@ -52,6 +52,7 @@ class Rdim extends Public_Controller
             // $content['periodes'] = $this->getPeriodeRdim($status);
 
             $content['add_form'] = $this->add_form();
+            $content['riwayat_pembatalan'] = $this->riwayatPembatalan();
 
             $data['title_menu'] = 'Rencana Chick In Mingguan';
             $data['view'] = $this->load->view($this->pathView . 'index', $content, true);
@@ -1836,6 +1837,375 @@ class Rdim extends Public_Controller
             $this->result['status'] = 1;
             $this->result['content'] = array('id_rdim' => $d_rs->id_rdim);
             $this->result['message'] = 'Data berhasil di ubah.';
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function getNoregByMitra() {
+        $params = $this->input->post('params');
+        
+        try {
+            $nomor = $params['nomor'];
+
+            $data = null;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+            select
+                    mm.nim
+                from mitra_mapping mm
+                where
+                    mm.nomor = '".$nomor."'
+                group by
+                    mm.nim
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $nim = $d_conf->toArray()[0]['nim'];
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        rs.noreg,
+                        CONVERT(VARCHAR(10), rs.tgl_docin, 103) as tgl_docin
+                    from rdim_submit rs
+                    where
+                        rs.nim like '".$nim."%' and
+                        rs.status = 1
+                    order by
+                        rs.tgl_docin asc,
+                        rs.noreg asc
+                ";
+                $d_noreg = $m_conf->hydrateRaw( $sql );
+                if ( $d_noreg->count() > 0 ) {
+                    $data = $d_noreg->toArray();
+                }
+            }
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $data;
+            $this->result['message'] = 'Data berhasil di ubah.';
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function getListsPembatalan()
+    {
+        $params = $this->input->get('params');
+
+        $nomor = $params['nomor'];
+
+        $data = null;
+        if ( stristr('all', $nomor) === FALSE ) {
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+            select
+                    mm.nim
+                from mitra_mapping mm
+                where
+                    mm.nomor = '".$nomor."'
+                group by
+                    mm.nim
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $nim = $d_conf->toArray()[0]['nim'];
+    
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        r.mulai,
+                        r.selesai,
+                        rs.noreg,
+                        REPLACE(rs.noreg, '-B', '') as noreg_view,
+                        CONVERT(VARCHAR(10), rs.tgl_docin, 103) as tgl_docin,
+                        rs.ket_alasan as alasan_batal,
+                        m.nama as nama_mitra
+                    from rdim_submit rs
+                    left join
+                        rdim r
+                        on
+                            rs.id_rdim = r.id
+                    left join
+                        (
+                            select mm1.* from mitra_mapping mm1
+                            right join
+                                (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                on
+                                    mm1.id = mm2.id
+                        ) mm
+                        on
+                            REPLACE(rs.nim, '-B', '') = mm.nim
+                    left join
+                        mitra m
+                        on
+                            m.id = mm.id
+                    where
+                        REPLACE(rs.nim, '-B', '') like '".$nim."' and
+                        rs.status = 0
+                    order by
+                        rs.tgl_docin asc,
+                        rs.noreg asc
+                ";
+                $d_noreg = $m_conf->hydrateRaw( $sql );
+                if ( $d_noreg->count() > 0 ) {
+                    $data = $d_noreg->toArray();
+                }
+            }
+        } else {
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    r.mulai,
+                    r.selesai,
+                    rs.noreg,
+                    REPLACE(rs.noreg, '-B', '') as noreg_view,
+                    CONVERT(VARCHAR(10), rs.tgl_docin, 103) as tgl_docin,
+                    rs.ket_alasan as alasan_batal,
+                    m.nama as nama_mitra
+                from rdim_submit rs
+                left join
+                    rdim r
+                    on
+                        rs.id_rdim = r.id
+                left join
+                    (
+                        select mm1.* from mitra_mapping mm1
+                        right join
+                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                            on
+                                mm1.id = mm2.id
+                    ) mm
+                    on
+                        REPLACE(rs.nim, '-B', '') = mm.nim
+                left join
+                    mitra m
+                    on
+                        m.id = mm.id
+                where
+                    rs.status = 0
+                order by
+                    rs.tgl_docin asc,
+                    rs.noreg asc
+            ";
+            $d_noreg = $m_conf->hydrateRaw( $sql );
+            if ( $d_noreg->count() > 0 ) {
+                $data = $d_noreg->toArray();
+            }
+        }
+
+        $content['data'] = $data;
+        $html = $this->load->view('transaksi/rdim/listPembatalan', $content, true);
+
+        echo $html;
+    }
+
+    public function getDataRdimBatalByNoreg($noreg)
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                r.mulai,
+                r.selesai,
+                rs.noreg,
+                rs.tgl_docin,
+                REPLACE(rs.noreg, '-B', '') as noreg_view,
+                CONVERT(VARCHAR(10), rs.tgl_docin, 103) as tgl_docin,
+                rs.ket_alasan as alasan_batal,
+                m.nama as nama_mitra
+            from rdim_submit rs
+            left join
+                rdim r
+                on
+                    rs.id_rdim = r.id
+            left join
+                (
+                    select mm1.* from mitra_mapping mm1
+                    right join
+                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        on
+                            mm1.id = mm2.id
+                ) mm
+                on
+                    REPLACE(rs.nim, '-B', '') = mm.nim
+            left join
+                mitra m
+                on
+                    m.id = mm.id
+            where
+                rs.status = 0 and
+                rs.noreg = '".$noreg."'
+            order by
+                rs.tgl_docin asc,
+                rs.noreg asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray()[0];
+        }
+
+        return $data;
+    }
+
+    public function riwayatPembatalan()
+    {
+        $m_mitra = new \Model\Storage\Mitra_model();
+        $d_mitra = $m_mitra->getDataMitraWithKabKota(0);
+
+        $content['mitra'] = $d_mitra;
+        $html = $this->load->view('transaksi/rdim/riwayatPembatalan', $content, true);
+        
+        return $html;
+    }
+
+    public function addFormPembatalan()
+    {
+        $m_mitra = new \Model\Storage\Mitra_model();
+        $d_mitra = $m_mitra->getDataMitraWithKabKota(0);
+
+        $content['mitra'] = $d_mitra;
+        $html = $this->load->view('transaksi/rdim/addFormPembatalan', $content, true);
+        
+        echo $html;
+    }
+
+    public function viewFormPembatalan()
+    {
+        $params = $this->input->get('params');
+
+        $noreg = $params['noreg'];
+
+        $data = $this->getDataRdimBatalByNoreg( $noreg );
+
+        $content['data'] = $data;
+        $html = $this->load->view('transaksi/rdim/viewFormPembatalan', $content, true);
+        
+        echo $html;
+    }
+
+    public function editFormPembatalan()
+    {
+        $params = $this->input->get('params');
+
+        $noreg = $params['noreg'];
+
+        $data = $this->getDataRdimBatalByNoreg( $noreg );
+
+        $content['data'] = $data;
+        $html = $this->load->view('transaksi/rdim/editFormPembatalan', $content, true);
+        
+        echo $html;
+    }
+
+    public function savePembatalan() {
+        $params = $this->input->post('params');
+        
+        try {
+            $noreg = $params['noreg'];
+            $alasan_batal = $params['alasan_batal'];
+
+            $m_rs = new \Model\Storage\RdimSubmit_model();
+            $d_rs = $m_rs->where('noreg', $noreg)->first();
+
+            $m_rs->where('noreg', $noreg)->update(
+                array(
+                    'nim' => (str_replace('-B', '', $d_rs->nim)).'-B',
+                    'noreg' => (str_replace('-B', '', $noreg)).'-B',
+                    'ket_alasan' => $alasan_batal,
+                    'status' => 0
+                )
+            );
+
+            $m_rs = new \Model\Storage\RdimSubmit_model();
+            $_d_rs = $m_rs->where('noreg', (str_replace('-B', '', $noreg)))->first();
+
+            $tbl_id = str_replace('-B', '', $noreg).'-'.str_replace('-', '', $_d_rs->tgl_docin);
+
+            $deskripsi_log = 'di-batalkan oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/save', $_d_rs, $deskripsi_log, 'rdim_submit', $tbl_id);
+
+            $this->result['status'] = 1;
+            $this->result['message'] = 'Data berhasil di batalkan.';
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function editPembatalan() {
+        $params = $this->input->post('params');
+        
+        try {
+            $noreg = $params['noreg'];
+            $alasan_batal = $params['alasan_batal'];
+
+            $m_rs = new \Model\Storage\RdimSubmit_model();
+            $m_rs->where('noreg', $noreg)->update(
+                array(
+                    'ket_alasan' => $alasan_batal,
+                    'status' => 0
+                )
+            );
+
+            $m_rs = new \Model\Storage\RdimSubmit_model();
+            $_d_rs = $m_rs->where('noreg', $noreg)->first();
+
+            $tbl_id = str_replace('-B', '', $noreg).'-'.str_replace('-', '', $_d_rs->tgl_docin);
+
+            $deskripsi_log = 'update pembatalan oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/update', $_d_rs, $deskripsi_log, 'rdim_submit', $tbl_id);
+
+            $this->result['status'] = 1;
+            $this->result['message'] = 'Data pembatalan berhasil di ubah.';
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    public function deletePembatalan() {
+        $params = $this->input->post('params');
+        
+        try {
+            $noreg = $params['noreg'];
+
+            $m_rs = new \Model\Storage\RdimSubmit_model();
+            $cek_rs = $m_rs->where('noreg', str_replace('-B', '', $noreg))->where('status', 1)->first();
+
+            if ( !$cek_rs ) {
+                $m_rs = new \Model\Storage\RdimSubmit_model();
+                $d_rs = $m_rs->where('noreg', $noreg)->first();
+
+                $m_rs->where('noreg', $noreg)->update(
+                    array(
+                        'nim' => str_replace('-B', '', $d_rs->nim),
+                        'noreg' => str_replace('-B', '', $noreg),
+                        'ket_alasan' => null,
+                        'status' => 1
+                    )
+                );
+
+                $m_rs = new \Model\Storage\RdimSubmit_model();
+                $_d_rs = $m_rs->where('noreg', (str_replace('-B', '', $noreg)))->first();
+
+                $tbl_id = str_replace('-B', '', $noreg).'-'.str_replace('-', '', $_d_rs->tgl_docin);
+
+                $deskripsi_log = 'hapus pembatalan oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/delete', $_d_rs, $deskripsi_log, 'rdim_submit', $tbl_id);
+            } else {
+                $ket = str_replace('-', '/', substr($cek_rs->tgl_docin, 0, 11));
+                $this->result['message'] = 'Pembatalan tidak bisa di hapus, karena noreg ini sudah di gunakan di tanggal lain <b>'.$ket.'</b> !!!';
+            }
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }

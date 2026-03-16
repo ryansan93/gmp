@@ -2,7 +2,10 @@ var rdim = {
     start_up : function(){
         rdim.set_table_page('#tb_rencana_doc_in_mingguan');
         rdim.getLists();
+        rdim.getListsPembatalan();
         rdim.settingDatepickerPeriode();
+
+        $('div#batal select.mitra').select2();
     }, // end - start_up
 
     set_table_page : function(tbl_id){
@@ -895,6 +898,315 @@ var rdim = {
             });
         }
     }, // end - editPenanggungJawab
+
+    getNoregByMitra: function(nomor) {
+        showLoading('Ambil noreg plasma . . .');
+
+        var params = {
+            'nomor': nomor
+        };
+
+        $.ajax({
+            url :'transaksi/Rdim/getNoregByMitra',
+            data : {
+                'params': params
+            },
+            type: 'POST',
+            dataType: 'JSON',
+            beforeSend : function(){
+            },
+            success : function(data){
+                hideLoading();
+                var option = '<option value="">-- Pilih Noreg --</option>';
+                if(data.status == 1){
+                    if ( data.content.length > 0 ) {
+                        for (let i = 0; i < data.content.length; i++) {
+                            option += '<option value="'+data.content[i].noreg+'">'+data.content[i].tgl_docin+' | '+data.content[i].noreg+'</option>';
+                        }
+                    }
+
+                    $('.modal-body select.noreg').removeAttr('disabled');
+                    $('.modal-body select.noreg').html(option);
+                    $('.modal-body select.noreg').select2();
+                }else{
+                    bootbox.alert(data.message);
+                }
+            }
+        });
+    }, // end - getNoregByMitra
+
+    getListsPembatalan: function() {
+        var dcontent = $('table#tbl_pembatalan tbody');
+
+        var params = {
+            'nomor': $('div#batal select.mitra').select2().val()
+        };
+
+        $.ajax({
+            url : 'transaksi/Rdim/getListsPembatalan',
+            data : {'params' : params},
+            dataType : 'HTML',
+            type : 'GET',
+            beforeSend : function(){App.showLoaderInContent( $(dcontent) );},
+            success : function(data){
+                App.hideLoaderInContent( $(dcontent), data );
+            }
+        });
+    }, // end - getListsPembatalan
+
+    addFormPembatalan: function() {
+        showLoading('Buka form pembatalan . . .');
+
+        $.get('transaksi/Rdim/addFormPembatalan',{
+            },function(data){
+            hideLoading();
+
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                $(this).removeAttr('tabindex');
+
+                var modal_dialog = $(this).find('.modal-dialog');
+                $(modal_dialog).css({'max-width' : '40%'});
+                $(modal_dialog).css({'width' : '40%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+
+                var modal_body = $(this).find('.modal-body');
+
+                $(modal_body).find('select.mitra').select2({
+                    dropdownParent: $('.modal')
+                }).on('select2:select', function (e) {
+                    var data = e.params.data;
+                    var nomor = data.id
+
+                    rdim.getNoregByMitra(nomor);
+                });
+            });
+        },'html');
+    }, // end - addFormPembatalan
+
+    viewFormPembatalan: function(elm) {
+        showLoading('Buka form pembatalan . . .');
+
+        var params = {
+            'noreg': $(elm).attr('data-noreg')
+        };
+
+        $.get('transaksi/Rdim/viewFormPembatalan',{
+                'params': params
+            },function(data){
+            hideLoading();
+
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                $(this).removeAttr('tabindex');
+
+                var modal_dialog = $(this).find('.modal-dialog');
+                $(modal_dialog).css({'max-width' : '40%'});
+                $(modal_dialog).css({'width' : '40%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+            });
+        },'html');
+    }, // end - viewFormPembatalan
+
+    editFormPembatalan: function(elm) {
+        $('.modal').modal('hide');
+
+        showLoading('Buka form pembatalan . . .');
+
+        var params = {
+            'noreg': $(elm).attr('data-noreg')
+        };
+
+        $.get('transaksi/Rdim/editFormPembatalan',{
+                'params': params
+            },function(data){
+            hideLoading();
+
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                $(this).removeAttr('tabindex');
+
+                var modal_dialog = $(this).find('.modal-dialog');
+                $(modal_dialog).css({'max-width' : '40%'});
+                $(modal_dialog).css({'width' : '40%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+            });
+        },'html');
+    }, // end - editFormPembatalan
+
+    savePembatalan: function() {
+        var modal = $('.modal');
+
+        var err = 0
+        $.map( $(modal).find('[data-required=1]'), function (ipt) {
+            if ( empty($(ipt).val()) ) {
+                $(ipt).parent().addClass('has-error');
+                err++;
+            } else {
+                $(ipt).parent().removeClass('has-error');
+            }
+        });
+
+        if ( err > 0 ) {
+            bootbox.alert('Harap lengkapi data terlebih dahulu.');
+        } else {
+            var noreg = $(modal).find('select.noreg').select2('val');
+
+            bootbox.confirm('Apakah anda yakin ingin membatalkan noreg ini <b>'+noreg+'</b> ?', function (result) {
+                if ( result ) {
+                    var params = {
+                        'mitra': $(modal).find('select.mitra').select2('val'),
+                        'noreg': $(modal).find('select.noreg').select2('val'),
+                        'alasan_batal': $(modal).find('textarea.alasan_batal').val()
+                    };
+
+                    $.ajax({
+                        url :'transaksi/Rdim/savePembatalan',
+                        data : {
+                            'params': params
+                        },
+                        type: 'POST',
+                        dataType: 'JSON',
+                        beforeSend : function(){
+                            showLoading('Proses pembatalan noreg <b>'+noreg+'</b>. . .');
+                        },
+                        success : function(data){
+                            hideLoading();
+                            if(data.status){
+                                bootbox.alert(data.message, function (){
+                                    $(modal).modal('hide');
+                                    rdim.getListsPembatalan();
+                                });
+                            }else{
+                                bootbox.alert(data.message);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }, // end - savePembatalan
+
+    editPembatalan: function(elm) {
+        var modal = $('.modal');
+
+        var err = 0
+        $.map( $(modal).find('[data-required=1]'), function (ipt) {
+            if ( empty($(ipt).val()) ) {
+                $(ipt).parent().addClass('has-error');
+                err++;
+            } else {
+                $(ipt).parent().removeClass('has-error');
+            }
+        });
+
+        if ( err > 0 ) {
+            bootbox.alert('Harap lengkapi data terlebih dahulu.');
+        } else {
+            bootbox.confirm('Apakah anda yakin ingin meng-ubah pembatalan noreg ini ?', function (result) {
+                if ( result ) {
+                    var noreg = $(elm).attr('data-noreg');
+
+                    var params = {
+                        'noreg': noreg,
+                        'alasan_batal': $(modal).find('textarea.alasan_batal').val()
+                    };
+
+                    $.ajax({
+                        url :'transaksi/Rdim/editPembatalan',
+                        data : {
+                            'params': params
+                        },
+                        type: 'POST',
+                        dataType: 'JSON',
+                        beforeSend : function(){
+                            showLoading('Proses pembatalan noreg <b>'+noreg+'</b>. . .');
+                        },
+                        success : function(data){
+                            hideLoading();
+                            if(data.status){
+                                bootbox.alert(data.message, function (){
+                                    $(modal).modal('hide');
+                                    rdim.getListsPembatalan();
+                                });
+                            }else{
+                                bootbox.alert(data.message);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }, // end - editPembatalan
+
+    deletePembatalan: function(elm) {
+        var modal = $('.modal');
+
+        var err = 0
+        $.map( $(modal).find('[data-required=1]'), function (ipt) {
+            if ( empty($(ipt).val()) ) {
+                $(ipt).parent().addClass('has-error');
+                err++;
+            } else {
+                $(ipt).parent().removeClass('has-error');
+            }
+        });
+
+        if ( err > 0 ) {
+            bootbox.alert('Harap lengkapi data terlebih dahulu.');
+        } else {
+            bootbox.confirm('Apakah anda yakin ingin meng-hapus pembatalan untuk noreg ini ?', function (result) {
+                if ( result ) {
+                    var noreg = $(elm).attr('data-noreg');
+
+                    var params = {
+                        'noreg': noreg
+                    };
+
+                    $.ajax({
+                        url :'transaksi/Rdim/deletePembatalan',
+                        data : {
+                            'params': params
+                        },
+                        type: 'POST',
+                        dataType: 'JSON',
+                        beforeSend : function(){
+                            showLoading('Proses pembatalan noreg <b>'+noreg+'</b>. . .');
+                        },
+                        success : function(data){
+                            hideLoading();
+                            if(data.status){
+                                bootbox.alert(data.message, function (){
+                                    $(modal).modal('hide');
+                                    rdim.getListsPembatalan();
+                                });
+                            }else{
+                                bootbox.alert(data.message);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }, // end - deletePembatalan
 };
 
 rdim.start_up();
