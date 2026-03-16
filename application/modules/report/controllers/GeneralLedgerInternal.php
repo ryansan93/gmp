@@ -812,6 +812,11 @@ class GeneralLedgerInternal extends Public_Controller {
                 data.unit,
                 data.nama_coa,
                 m.nama
+            having
+                sum(isnull(data.saldo_awal, 0)) <> 0 or
+                sum(isnull(data.kredit, 0)) <> 0 or
+                sum(isnull(data.debet, 0)) <> 0 or
+                sum(isnull(data.saldo_awal, 0)) + sum(isnull(data.debet, 0)) + sum(isnull(data.kredit, 0)) <> 0
             order by
                 data.no_coa asc,
                 data.unit asc,
