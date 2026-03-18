@@ -754,7 +754,7 @@ class PenerimaanVoadip extends Public_Controller {
             $d_conf = $conf->hydrateRaw($sql);
 
             $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.",'".$noreg1."', '".$noreg2."'";
+            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", null, null";
             $d_conf = $conf->hydrateRaw($sql);
 
             $id_old = null;
@@ -1102,9 +1102,21 @@ class PenerimaanVoadip extends Public_Controller {
         //     }
         // }
 
-        $id = '7150';
-        $id_old = '7150';
+        $arr = array(
+            1403,
+            1442,
+            1445,
+            1510,
+            1524,
+            1596,
+            1619,
+            1721,
+            1748,
+            1762
+        );
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+        foreach ($arr as $key => $value) {
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+        }
     }
 }

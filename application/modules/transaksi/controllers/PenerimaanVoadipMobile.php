@@ -708,7 +708,7 @@ class PenerimaanVoadipMobile extends Public_Controller {
             $d_conf = $conf->hydrateRaw($sql);
 
             $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
+            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", null, null";
             $d_conf = $conf->hydrateRaw($sql);
 
             $id_old = null;
