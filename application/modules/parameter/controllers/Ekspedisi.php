@@ -36,17 +36,19 @@ class Ekspedisi extends Public_Controller {
 
 			$content['title_panel'] = 'Master Data Ekspedisi';
 			$content['akses'] = $akses;
-			$content['list_provinsi'] = $this->getLokasi('PV');
-			$content['list_lampiran_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "KTP Ekspedisi")->first();
-			$content['list_lampiran_usaha_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "NPWP Ekspedisi")->first();
-			$content['list_lampiran_rekening_ekspedisi'] = $this->getNamaLampiran("BANK_EKSPEDISI", "Rekening Ekspedisi")->first();
-			$content['list_lampiran_dds_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "DDP Ekspedisi")->first();
-			$content['ekspedisi_pph23'] = $this->getEkspedisiPph23();
+			// $content['list_provinsi'] = $this->getLokasi('PV');
+			// $content['list_lampiran_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "KTP Ekspedisi")->first();
+			// $content['list_lampiran_usaha_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "NPWP Ekspedisi")->first();
+			// $content['list_lampiran_rekening_ekspedisi'] = $this->getNamaLampiran("BANK_EKSPEDISI", "Rekening Ekspedisi")->first();
+			// $content['list_lampiran_dds_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "DDP Ekspedisi")->first();
+			// $content['ekspedisi_pph23'] = $this->getEkspedisiPph23();
+
+			$content['add_form'] = $this->addForm();
 
 			// load list ekspedisi
 			// $detail_content['ekspedisis'] = $this->getListEkspedisi();
 			$data['title_menu'] = 'Master Ekspedisi';
-			$data['view'] = $this->load->view($this->pathView . 'index', $content, TRUE);
+			$data['view'] = $this->load->view($this->pathView . 'index', $content, true);
 
 			$this->load->view($this->template, $data);
 		} else {
@@ -114,8 +116,8 @@ class Ekspedisi extends Public_Controller {
 		$content['list_lampiran_rekening_ekspedisi'] = $this->getNamaLampiran("BANK_EKSPEDISI", "Rekening Ekspedisi")->first();
 		$content['list_lampiran_dds_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "DDP Ekspedisi")->first();
 		$content['ekspedisi_pph23'] = $this->getEkspedisiPph23();
-        $content['data'] = null;
-        $html = $this->load->view($this->pathView . 'addForm', $content);
+        // $content['data'] = null;
+        $html = $this->load->view($this->pathView . 'addForm', $content, true);
         
         return $html;
     }
@@ -180,7 +182,7 @@ class Ekspedisi extends Public_Controller {
 		$content['list_lampiran_dds_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "DDP Ekspedisi")->first();
 		$content['ekspedisi_pph23'] = $this->getEkspedisiPph23();
 
-        $html = $this->load->view($this->pathView . 'editForm', $content);
+        $html = $this->load->view($this->pathView . 'editForm', $content, true);
         
         return $html;
     }
@@ -237,7 +239,7 @@ class Ekspedisi extends Public_Controller {
 		$content['tbl_logs'] = $this->getLogs($d_ekspedisi->nomor);
         $content['akses'] = $akses;
 
-        $html = $this->load->view($this->pathView . 'viewForm', $content);
+        $html = $this->load->view($this->pathView . 'viewForm', $content, true);
         
         return $html;
     }
