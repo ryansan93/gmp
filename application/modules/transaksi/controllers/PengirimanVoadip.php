@@ -675,39 +675,99 @@ class PengirimanVoadip extends Public_Controller {
 
         $_data = array();
 
-        $m_rs = new \Model\Storage\RdimSubmit_model();
-        $d_rs = $m_rs->select('nim', 'kandang', 'noreg', 'tgl_docin')->distinct('nim', 'kandang', 'noreg', 'tgl_docin')->whereBetween('tgl_docin', [$first_date_of_month, $last_date_of_month])->with(['mitra', 'kandang'])->get();
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                rs.nim,
+                rs.kandang,
+                rs.noreg,
+                case
+                    when td.datang is null then
+                        rs.tgl_docin
+                    else
+                        cast(td.datang as date)
+                end as tgl_docin,
+                m.nomor as nomor_mitra,
+                m.nama as nama_mitra,
+                m.alamat_jalan,
+                m.alamat_rt,
+                m.alamat_rw,
+                m.alamat_kelurahan,
+                kec.nama as nama_kec,
+                w.kode as kode_unit
+            from rdim_submit rs
+            left join
+                (
+                    select mm1.* from mitra_mapping mm1
+                    right join
+                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        on
+                            mm1.id = mm2.id
+                ) mm
+                on
+                    rs.nim = mm.nim
+            left join
+                mitra m
+                on
+                    m.id = mm.mitra
+            left join
+                lokasi kec
+                on
+                    m.alamat_kecamatan = kec.id
+            left join
+                kandang k
+                on
+                    rs.kandang = k.id
+            left join
+                wilayah w
+                on
+                    w.id = k.unit
+            left join 
+                (
+                    select od1.* from order_doc od1
+                    right join
+                        (select max(id) as id, no_order from order_doc group by no_order) od2
+                        on
+                            od1.id = od2.id
+                ) od
+                on
+                    od.noreg = rs.noreg
+            left join
+                (
+                    select td1.* from terima_doc td1
+                    right join
+                        (select max(id) as id, no_order from terima_doc group by no_order) td2
+                        on
+                            td1.id = td2.id
+                ) td
+                on
+                    td.no_order = od.no_order
+            where
+                rs.tgl_docin between '".$first_date_of_month."' and '".$last_date_of_month."' and
+                rs.status = 1
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_rs->count() > 0 ) {
-            $d_rs = $d_rs->toArray();
-            foreach ($d_rs as $k_rs => $v_rs) {
-                $m_od = new \Model\Storage\OrderDoc_model();
-                $d_od = $m_od->where('noreg', $v_rs['noreg'])->orderBy('id', 'desc')->first();
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-                $tgl_terima = $v_rs['tgl_docin'];
-                if ( $d_od ) {
-                    $m_td = new \Model\Storage\TerimaDoc_model();
-                    $d_td = $m_td->where('no_order', $d_od->no_order)->orderBy('id', 'desc')->first();
+            foreach ($d_conf as $key => $value) {
+                $tgl_terima = $value['tgl_docin'];
 
-                    if ( $d_td ) {
-                        $tgl_terima = $d_td->datang;
-                    }
-                }
+                $rt = !empty($value['alamat_rt']) ? ' ,RT.'.$value['alamat_rt'] : null;
+                $rw = !empty($value['alamat_rw']) ? '/RW.'.$value['alamat_rw'] : null;
+                $kelurahan = !empty($value['alamat_kelurahan']) ? ' ,'.$value['alamat_kelurahan'] : null;
+                $kecamatan = !empty($value['nama_kec']) ? ' ,'.$value['nama_kec'] : null;
 
-                $rt = !empty($v_rs['mitra']['d_mitra']['alamat_rt']) ? ' ,RT.'.$v_rs['mitra']['d_mitra']['alamat_rt'] : null;
-                $rw = !empty($v_rs['mitra']['d_mitra']['alamat_rw']) ? '/RW.'.$v_rs['mitra']['d_mitra']['alamat_rw'] : null;
-                $kelurahan = !empty($v_rs['mitra']['d_mitra']['alamat_kelurahan']) ? ' ,'.$v_rs['mitra']['d_mitra']['alamat_kelurahan'] : null;
-                $kecamatan = !empty($v_rs['mitra']['d_mitra']['d_kecamatan']) ? ' ,'.$v_rs['mitra']['d_mitra']['d_kecamatan']['nama'] : null;
+                $alamat = $value['alamat_jalan'] . $rt . $rw . $kelurahan . $kecamatan;
 
-                $alamat = $v_rs['mitra']['d_mitra']['alamat_jalan'] . $rt . $rw . $kelurahan . $kecamatan;
-
-                $key = $v_rs['kandang']['d_unit']['kode'].'-'.$tgl_terima.' - '.$v_rs['mitra']['d_mitra']['nama'].' - '.$v_rs['noreg'];
+                $key = $value['kode_unit'].'-'.$tgl_terima.' - '.$value['nama_mitra'].' - '.$value['noreg'];
                 $_data[ $key ] = array(
                     'tgl_terima' => strtoupper(tglIndonesia($tgl_terima, '-', ' ')),
-                    'noreg' => $v_rs['noreg'],
-                    'kode_unit' => $v_rs['kandang']['d_unit']['kode'],
-                    'nomor' => $v_rs['mitra']['d_mitra']['nomor'],
-                    'nama' => $v_rs['mitra']['d_mitra']['nama'],
+                    'noreg' => $value['noreg'],
+                    'kode_unit' => $value['kode_unit'],
+                    'nomor' => $value['nomor_mitra'],
+                    'nama' => $value['nama_mitra'],
                     'alamat' => strtoupper($alamat)
                 );
             }
@@ -720,6 +780,56 @@ class PengirimanVoadip extends Public_Controller {
                 $data[] = $v_data;
             }
         }
+
+        // $m_rs = new \Model\Storage\RdimSubmit_model();
+        // $d_rs = $m_rs->select('nim', 'kandang', 'noreg', 'tgl_docin')->distinct('nim', 'kandang', 'noreg', 'tgl_docin')->whereBetween('tgl_docin', [$first_date_of_month, $last_date_of_month])->with(['mitra', 'kandang'])->get();
+
+        // cetak_r( $d_rs, 1 );
+
+        // if ( $d_rs->count() > 0 ) {
+        //     $d_rs = $d_rs->toArray();
+        //     foreach ($d_rs as $k_rs => $v_rs) {
+        //         $m_od = new \Model\Storage\OrderDoc_model();
+        //         $d_od = $m_od->where('noreg', $v_rs['noreg'])->orderBy('id', 'desc')->first();
+
+        //         $tgl_terima = $v_rs['tgl_docin'];
+        //         if ( $d_od ) {
+        //             $m_td = new \Model\Storage\TerimaDoc_model();
+        //             $d_td = $m_td->where('no_order', $d_od->no_order)->orderBy('id', 'desc')->first();
+
+        //             if ( $d_td ) {
+        //                 $tgl_terima = $d_td->datang;
+        //             }
+        //         }
+
+        //         $rt = !empty($v_rs['mitra']['d_mitra']['alamat_rt']) ? ' ,RT.'.$v_rs['mitra']['d_mitra']['alamat_rt'] : null;
+        //         $rw = !empty($v_rs['mitra']['d_mitra']['alamat_rw']) ? '/RW.'.$v_rs['mitra']['d_mitra']['alamat_rw'] : null;
+        //         $kelurahan = !empty($v_rs['mitra']['d_mitra']['alamat_kelurahan']) ? ' ,'.$v_rs['mitra']['d_mitra']['alamat_kelurahan'] : null;
+        //         $kecamatan = !empty($v_rs['mitra']['d_mitra']['d_kecamatan']) ? ' ,'.$v_rs['mitra']['d_mitra']['d_kecamatan']['nama'] : null;
+
+        //         $alamat = $v_rs['mitra']['d_mitra']['alamat_jalan'] . $rt . $rw . $kelurahan . $kecamatan;
+
+        //         $key = $v_rs['kandang']['d_unit']['kode'].'-'.$tgl_terima.' - '.$v_rs['mitra']['d_mitra']['nama'].' - '.$v_rs['noreg'];
+        //         $_data[ $key ] = array(
+        //             'tgl_terima' => strtoupper(tglIndonesia($tgl_terima, '-', ' ')),
+        //             'noreg' => $v_rs['noreg'],
+        //             'kode_unit' => $v_rs['kandang']['d_unit']['kode'],
+        //             'nomor' => $v_rs['mitra']['d_mitra']['nomor'],
+        //             'nama' => $v_rs['mitra']['d_mitra']['nama'],
+        //             'alamat' => strtoupper($alamat)
+        //         );
+        //     }
+        // }
+
+        // $data = array();
+        // if ( !empty($_data) ) {
+        //     ksort($_data);
+        //     foreach ($_data as $k_data => $v_data) {
+        //         $data[] = $v_data;
+        //     }
+        // }
+
+        // cetak_r( $data, 1 );
 
         $this->result['status'] = !empty($data) ? 1 : 0;
         $this->result['content'] = $data;
