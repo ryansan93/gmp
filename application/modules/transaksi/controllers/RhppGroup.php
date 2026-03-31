@@ -428,7 +428,7 @@ class RhppGroup extends Public_Controller {
                 );
 
                 if ( !empty($d_rhpp_plasma) ) {
-                    $key_doc = $d_rhpp_plasma['doc']['tanggal'].' | '.$d_rhpp_plasma['doc']['nota'];
+                    $key_doc = $d_rhpp_plasma['doc']['tanggal'].' | '.$d_rhpp_plasma['doc']['nota'].' | '.$d_rhpp_plasma['noreg'];
 
                     $populasi_plasma += $d_rhpp_plasma['doc']['jumlah'];
 
@@ -594,7 +594,7 @@ class RhppGroup extends Public_Controller {
                     }
                 }
                 
-                $key_doc = $d_rhpp_inti['doc']['tanggal'].' | '.$d_rhpp_inti['doc']['nota'];
+                $key_doc = $d_rhpp_inti['doc']['tanggal'].' | '.$d_rhpp_inti['doc']['nota'].' | '.$d_rhpp_inti['noreg'];
                 $populasi_inti += $d_rhpp_inti['doc']['jumlah'];
                 $data_doc_inti['doc'][ $key_doc ] = array(
                     'tgl_docin' => $d_rhpp_inti['doc']['tanggal'],
