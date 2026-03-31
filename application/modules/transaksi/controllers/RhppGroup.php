@@ -913,7 +913,7 @@ class RhppGroup extends Public_Controller {
 
             if ( !empty($d_rhpp_plasma) ) {
                 foreach ($d_rhpp_plasma['doc'] as $k_doc => $v_doc) {
-                    $key_doc = $v_doc['tanggal'].' | '.$v_doc['nota'];
+                    $key_doc = $v_doc['tanggal'].' | '.$v_doc['nota'].' | '.$v_doc['jumlah'];
                     $data_doc_plasma['doc'][ $key_doc ] = array(
                         'tgl_docin' => $v_doc['tanggal'],
                         'sj' => $v_doc['nota'],
