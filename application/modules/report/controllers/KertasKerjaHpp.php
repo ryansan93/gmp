@@ -134,7 +134,8 @@ class KertasKerjaHpp extends Public_Controller {
                 data.mutasi_klwr_oa,
                 data.koreksi_oa,
                 data.pemakaian_oa,
-                ((isnull(data.sa_oa, 0)+data.beli_oa+data.mutasi_msk_oa) - (data.mutasi_klwr_oa+data.pemakaian_oa)) + isnull(data.koreksi_oa, 0) as sisa_oa,
+                ((isnull(data.sa_oa, 0)+data.beli_oa+isnull(data.mutasi_msk_oa, 0)) - isnull(data.mutasi_klwr_oa, 0)) + isnull(data.koreksi_oa, 0) as sisa_oa,
+                -- ((isnull(data.sa_oa, 0)+data.beli_oa+data.mutasi_msk_oa) - (data.mutasi_klwr_oa+data.pemakaian_oa)) + isnull(data.koreksi_oa, 0) as sisa_oa,
                 data.pdpt_peternak,
                 data.pdpt_peternak + data.pemakaian_pkn + data.pemakaian_ovk + data.pemakaian_doc + data.pemakaian_oa as total
             from
@@ -178,8 +179,10 @@ class KertasKerjaHpp extends Public_Controller {
                     sum(data.mutasi_klwr_oa) as mutasi_klwr_oa,
                     sum(data.koreksi_oa) as koreksi_oa,
                     sum(data.pemakaian_oa) as pemakaian_oa,
-                    isnull(rhpp_p.pdpt_peternak_belum_pajak, 0) as pdpt_peternak,
-                    isnull(rhpp_p.pdpt_peternak_belum_pajak, 0) + sum(data.pemakaian_pkn) + sum(data.pemakaian_ovk) + sum(data.pemakaian_doc) + sum(data.pemakaian_oa) as total
+                    sum(data.rhpp) as pdpt_peternak,
+                    sum(data.rhpp) + sum(data.pemakaian_pkn) + sum(data.pemakaian_ovk) + sum(data.pemakaian_doc) + sum(data.pemakaian_oa) as total
+                    -- isnull(rhpp_p.pdpt_peternak_belum_pajak, 0) as pdpt_peternak,
+                    -- isnull(rhpp_p.pdpt_peternak_belum_pajak, 0) + sum(data.pemakaian_pkn) + sum(data.pemakaian_ovk) + sum(data.pemakaian_doc) + sum(data.pemakaian_oa) as total
                 from
                 (
                     select
@@ -207,7 +210,8 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as mutasi_msk_oa,
                         0 as mutasi_klwr_oa,
                         0 as koreksi_oa,
-                        0 as pemakaian_oa
+                        0 as pemakaian_oa,
+                        0 as rhpp
                     from
                     (
                         select
@@ -436,7 +440,8 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as mutasi_msk_oa,
                         0 as mutasi_klwr_oa,
                         0 as koreksi_oa,
-                        0 as pemakaian_oa
+                        0 as pemakaian_oa,
+                        0 as rhpp
                     from
                     (
                         select
@@ -619,7 +624,8 @@ class KertasKerjaHpp extends Public_Controller {
                         0 as mutasi_msk_oa,
                         0 as mutasi_klwr_oa,
                         0 as koreksi_oa,
-                        0 as pemakaian_oa
+                        0 as pemakaian_oa,
+                        0 as rhpp
                     from
                     (
                         select
@@ -771,7 +777,8 @@ class KertasKerjaHpp extends Public_Controller {
                         oa.mutasi_msk_oa,
                         oa.mutasi_klwr_oa,
                         oa.koreksi_oa,
-                        oa.pemakaian_oa
+                        oa.pemakaian_oa,
+                        0 as rhpp
                     from 
                     (
                         select
@@ -780,7 +787,8 @@ class KertasKerjaHpp extends Public_Controller {
                             isnull(sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk), 0) as mutasi_msk_oa,
                             isnull(sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr), 0) as mutasi_klwr_oa,
                             isnull(sum(oa.jml_koreksi * oa.hrg_koreksi), 0) as koreksi_oa,
-                            isnull(sum(oa.jml_beli * oa.hrg_beli), 0) + isnull(sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk), 0) - isnull(sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr), 0) + isnull(sum(oa.jml_koreksi * oa.hrg_koreksi), 0) as pemakaian_oa
+                            0 as pemakaian_oa
+                            -- isnull(sum(oa.jml_beli * oa.hrg_beli), 0) + isnull(sum(oa.jml_mutasi_msk * oa.hrg_mutasi_msk), 0) - isnull(sum(oa.jml_mutasi_klwr * oa.hrg_mutasi_klwr), 0) as pemakaian_oa
                         from (
                             select 
                                 dss.noreg,
@@ -970,6 +978,104 @@ class KertasKerjaHpp extends Public_Controller {
                         ) sa
                         on
                             oa.noreg = sa.noreg
+
+                    union all
+
+                    select
+                        rhpp.noreg,
+                        0 as sa_pkn,
+                        0 as beli_pkn,
+                        0 as mutasi_msk_pkn,
+                        0 as mutasi_klwr_pkn,
+                        0 as koreksi_pkn,
+                        0 as pemakaian_pkn,
+                        0 as sisa_pkn,
+                        0 as sa_ovk,
+                        0 as beli_ovk,
+                        0 as mutasi_msk_ovk,
+                        0 as mutasi_klwr_ovk,
+                        0 as pemakaian_ovk,
+                        0 as sa_doc,
+                        0 as beli_doc,
+                        0 as mutasi_msk_doc,
+                        0 as mutasi_klwr_doc,
+                        0 as koreksi_doc,
+                        0 as pemakaian_doc,
+                        0 as sa_oa,
+                        0 as beli_oa,
+                        0 as mutasi_msk_oa,
+                        0 as mutasi_klwr_oa,
+                        0 as koreksi_oa,
+                        0 as pemakaian_oa,
+                        rhpp.pdpt_peternak_belum_pajak as rhpp
+                    from
+                    (
+                        select r.noreg, r.pdpt_peternak_belum_pajak 
+                        from rhpp r 
+                        left join
+                            tutup_siklus ts
+                            on
+                                r.id_ts = ts.id
+                        where 
+                            ts.tgl_tutup between '".$start_date."' and '".$end_date."' and
+                            r.jenis = 'rhpp_plasma' and 
+                            not exists (select * from rhpp_group_noreg where noreg = r.noreg)
+
+                        union all
+                        
+                        select rgn.noreg, rg.pdpt_peternak_belum_pajak from rhpp_group rg
+                        left join
+                            rhpp_group_header rgh
+                            on
+                                rg.id_header = rgh.id
+                        left join
+                            (
+                                select 
+                                    rgn.id_header, min(rgn.noreg) as noreg
+                                from 
+                                (
+                                    select rgn.*, lhk.tanggal from rhpp_group_noreg rgn
+                                    left join
+                                        (
+                                            select l1.* from lhk l1
+                                            right join
+                                                (select noreg, max(umur) as umur from lhk l group by noreg) l2
+                                                on
+                                                    l1.noreg = l2.noreg and
+                                                    l1.umur = l2.umur
+                                        ) lhk
+                                        on
+                                            lhk.noreg = rgn.noreg
+                                ) rgn
+                                right join
+                                    (
+                                        select rgn.id_header, max(lhk.tanggal) as tgl_akhir_siklus from rhpp_group_noreg rgn
+                                        left join
+                                            (
+                                                select l1.* from lhk l1
+                                                right join
+                                                    (select noreg, max(umur) as umur from lhk l group by noreg) l2
+                                                    on
+                                                        l1.noreg = l2.noreg and
+                                                        l1.umur = l2.umur
+                                            ) lhk
+                                            on
+                                                lhk.noreg = rgn.noreg
+                                        group by
+                                            rgn.id_header
+                                    ) rgn_max
+                                    on
+                                        rgn.id_header = rgn_max.id_header and
+                                        rgn.tanggal = rgn_max.tgl_akhir_siklus
+                                group by
+                                    rgn.id_header
+                            ) rgn
+                            on
+                                rg.id = rgn.id_header
+                        where
+                            rg.jenis = 'rhpp_plasma' and
+                            rgh.tgl_submit between '".$start_date."' and '".$end_date."'
+                    ) rhpp
                 ) data
                 left join
                     rdim_submit rs
@@ -1018,6 +1124,7 @@ class KertasKerjaHpp extends Public_Controller {
                     ) td
                     on
                         td.no_order = od.no_order
+                /*
                 left join
                     (
                         select r.noreg, r.pdpt_peternak_belum_pajak 
@@ -1088,6 +1195,7 @@ class KertasKerjaHpp extends Public_Controller {
                     ) rhpp_p
                     on
                         data.noreg = rhpp_p.noreg
+                */
                 where
                     m.id is not null
                     and td.id is not null
@@ -1099,8 +1207,8 @@ class KertasKerjaHpp extends Public_Controller {
                     td.datang,
                     rs.tgl_docin,
                     td.jml_ekor,
-                    rs.populasi,
-                    rhpp_p.pdpt_peternak_belum_pajak
+                    rs.populasi
+                    -- , rhpp_p.pdpt_peternak_belum_pajak
             ) data
             order by
                 data.noreg asc,
