@@ -1093,7 +1093,7 @@ class RhppGroup extends Public_Controller {
             $data_header['rata_umur_panen'] = $rata_umur_panen;
 
             foreach ($d_rhpp_inti['doc'] as $k_doc => $v_doc) {
-                $key_doc = $v_doc['tanggal'].' | '.$v_doc['nota'];
+                $key_doc = $v_doc['tanggal'].' | '.$v_doc['nota'].' | '.$v_doc['jumlah'];
                 $data_doc_inti['doc'][ $key_doc ] = array(
                     'tgl_docin' => $v_doc['tanggal'],
                     'sj' => $v_doc['nota'],
