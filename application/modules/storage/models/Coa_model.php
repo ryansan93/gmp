@@ -147,7 +147,7 @@ class Coa_model extends Conf{
 			}
 
 			if ( $internal == 2 ) {
-				$sql_internal = "and c.nama_coa not like '%internal%'";
+				$sql_internal = "and (c.nama_coa not like '%internal%' or (c.nama_coa like '%internal%' and c.unit = 'BYL'))";
 			}
 		}
 
