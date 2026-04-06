@@ -227,13 +227,13 @@ class RealisasiSJ extends Public_Controller
                     sum(drs.tonase * drs.harga) as bruto,
                     case
                         when tp.pph > 0 then
-                            sum(drs.tonase * drs.harga) * (tp.pph/100)
+                            round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
                         else 
                             0
                     end as pph,
                     case
                         when tp.pph > 0 then
-                            sum(drs.tonase * drs.harga) - (sum(drs.tonase * drs.harga) * (tp.pph/100))
+                            sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
                         else 
                             sum(drs.tonase * drs.harga)
                     end as total
@@ -361,13 +361,13 @@ class RealisasiSJ extends Public_Controller
                     sum(drs.tonase * drs.harga) as bruto,
                     case
                         when tp.pph > 0 then
-                            sum(drs.tonase * drs.harga) * (tp.pph/100)
+                            round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
                         else 
                             0
                     end as pph,
                     case
                         when tp.pph > 0 then
-                            sum(drs.tonase * drs.harga) - (sum(drs.tonase * drs.harga) * (tp.pph/100))
+                            sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
                         else 
                             sum(drs.tonase * drs.harga)
                     end as total
@@ -465,12 +465,12 @@ class RealisasiSJ extends Public_Controller
 
     public function tes()
     {
-        // $arr = array(3985,4006,4005,3896,3939,3975,4045,4046,4043,4068,4076,4262,4312,4078,4095);
+        // $arr = array(4753,4805,4804);
 
         // foreach ($arr as $key => $value) {
         //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
         // }
         
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 4427, 4427, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 4927, 4927, 2);
     }
 }

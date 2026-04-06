@@ -781,13 +781,13 @@ class RealisasiSjMobile extends Public_Controller {
                             sum(drs.tonase * drs.harga) as bruto,
                             case
                                 when tp.pph > 0 then
-                                    sum(drs.tonase * drs.harga) * (tp.pph/100)
+                                    round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
                                 else 
                                     0
                             end as pph,
                             case
                                 when tp.pph > 0 then
-                                    sum(drs.tonase * drs.harga) - (sum(drs.tonase * drs.harga) * (tp.pph/100))
+                                    sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
                                 else 
                                     sum(drs.tonase * drs.harga)
                             end as total
@@ -978,13 +978,13 @@ class RealisasiSjMobile extends Public_Controller {
                         sum(drs.tonase * drs.harga) as bruto,
                         case
                             when tp.pph > 0 then
-                                sum(drs.tonase * drs.harga) * (tp.pph/100)
+                                round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
                             else 
                                 0
                         end as pph,
                         case
                             when tp.pph > 0 then
-                                sum(drs.tonase * drs.harga) - (sum(drs.tonase * drs.harga) * (tp.pph/100))
+                                sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
                             else 
                                 sum(drs.tonase * drs.harga)
                         end as total
@@ -1172,6 +1172,6 @@ class RealisasiSjMobile extends Public_Controller {
         //     }
         // }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 4934, 4934, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 5048, 5048, 2);
     }
 }

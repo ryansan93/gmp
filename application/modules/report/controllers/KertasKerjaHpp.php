@@ -777,7 +777,8 @@ class KertasKerjaHpp extends Public_Controller {
                         oa.mutasi_msk_oa,
                         oa.mutasi_klwr_oa,
                         oa.koreksi_oa,
-                        oa.pemakaian_oa,
+                        ((isnull(sa.saldo_awal, 0) + oa.beli_oa + oa.mutasi_msk_oa + oa.koreksi_oa) - oa.mutasi_klwr_oa) as pemakaian_oa,
+                        -- oa.pemakaian_oa,
                         0 as rhpp
                     from 
                     (
