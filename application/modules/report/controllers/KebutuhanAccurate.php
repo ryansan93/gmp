@@ -316,7 +316,8 @@ class KebutuhanAccurate extends Public_Controller {
                     '' as no_faktur,
                     rs.tgl_panen as tanggal_panen,
                     rhpp.tgl_tutup as tanggal_rhpp,
-                    drs.no_sj as no_nota,
+                    -- drs.no_sj as no_nota,
+                    drsi.no_inv as no_nota,
                     drs.no_nota as no_nota_timbang,
                     UPPER(drs.jenis_ayam) as kode_barang,
                     CASE 
@@ -351,6 +352,10 @@ class KebutuhanAccurate extends Public_Controller {
                     on
                         drs.id_header = drs_total.id_header and
                         drs.no_do = drs_total.no_do
+                left join
+                    det_real_sj_inv drsi
+                    on
+                        drsi.no_sj = drs.no_sj
                 left join
                     (
                         select rs1.* from real_sj rs1
@@ -3172,7 +3177,7 @@ class KebutuhanAccurate extends Public_Controller {
             $filename = "PENJUALAN_LB_";
             $filename = $filename.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xls';
 
-            $arr_header = array('DO', 'Unit', 'Unit - Nama Plasma - Periode', 'Periode', 'No. Invoice', 'Tgl Invoice', 'ID Pelanggan', 'Kode Pelanggan (NIK)', 'Nama Pelanggan', 'No. Nota Timbang', 'Kode Barang', 'Nama Barang', 'Kuantitas Barang (Kg)', 'Jumlah Ekor', 'Harga Satuan Barang', 'Total Invoice', 'Keterangan di Bagian kolom Deskripsi', 'Noreg');
+            $arr_header = array('DO', 'Unit', 'Unit - Nama Plasma - Periode', 'Periode', 'No. Invoice', 'Tgl Invoice', 'ID Pelanggan', 'Kode Pelanggan (NIK)', 'Nama Pelanggan', 'Alamat Pelanggan', 'No. Nota Timbang', 'Kode Barang', 'Nama Barang', 'Kuantitas Barang (Kg)', 'Jumlah Ekor', 'Harga Satuan Barang', 'Total Invoice', 'Keterangan di Bagian kolom Deskripsi', 'Noreg');
             $arr_column = null;
             if ( !empty($data) ) {
                 $idx = 0;
@@ -3187,6 +3192,7 @@ class KebutuhanAccurate extends Public_Controller {
                         'ID Pelanggan' => array('value' => $value['kode_bakul'], 'data_type' => 'string'),
                         'Kode Pelanggan (NIK)' => array('value' => $value['nik_bakul'], 'data_type' => 'nik'),
                         'Nama Pelanggan' => array('value' => $value['nama_bakul'], 'data_type' => 'string'),
+                        'Alamat Pelanggan' => array('value' => $value['alamat_bakul'], 'data_type' => 'string'),
                         'No. Nota Timbang' => array('value' => $value['no_nota_timbang'], 'data_type' => 'string'),
                         'Kode Barang' => array('value' => $value['kode_barang'], 'data_type' => 'string'),
                         'Nama Barang' => array('value' => $value['deskripsi_barang'], 'data_type' => 'string'),
