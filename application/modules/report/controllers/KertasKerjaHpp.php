@@ -905,6 +905,7 @@ class KertasKerjaHpp extends Public_Controller {
                             group by
                                 dss.noreg, dsts.kode_trans, dss.oa
     
+                            /*
                             union all
     
                             select 
@@ -931,6 +932,7 @@ class KertasKerjaHpp extends Public_Controller {
                                 dsts.tbl_name = 'lhk'
                             group by
                                 dss.noreg, dsts.kode_trans, dss.oa
+                            */
                         ) oa
                         group by
                             oa.noreg
@@ -970,6 +972,7 @@ class KertasKerjaHpp extends Public_Controller {
                                         dsts.id_header = dss.id
                                 where
                                     dss.jenis_barang = 'pakan' and
+                                    dsts.tbl_name <> 'lhk' and
                                     dsts.tgl_trans < '".$start_date."'
                                 group by
                                     dss.noreg, dss.oa
