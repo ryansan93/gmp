@@ -1289,9 +1289,9 @@ class KertasKerjaHpp extends Public_Controller {
             'L' => array('value' => 'PAKAN', 'data_type' => 'string', 'colspan' => array('F','L'), 'align' => 'center', 'text_style' => 'bold'),
             'R' => array('value' => 'OVK', 'data_type' => 'string', 'colspan' => array('M','R'), 'align' => 'center', 'text_style' => 'bold'),
             'X' => array('value' => 'DOC', 'data_type' => 'string', 'colspan' => array('S','X'), 'align' => 'center', 'text_style' => 'bold'),
-            'AD' => array('value' => 'OA', 'data_type' => 'string', 'colspan' => array('Y','AD'), 'align' => 'center', 'text_style' => 'bold'),
-            'AE' => array('value' => 'RHPP', 'data_type' => 'string','rowspan' => array('AE3','AE4'), 'align' => 'center', 'text_style' => 'bold'),
-            'AF' => array('value' => 'TOTAL', 'data_type' => 'string','rowspan' => array('AF3','AF4'), 'align' => 'center', 'text_style' => 'bold'),
+            'AD' => array('value' => 'OA', 'data_type' => 'string', 'colspan' => array('Y','AE'), 'align' => 'center', 'text_style' => 'bold'),
+            'AF' => array('value' => 'RHPP', 'data_type' => 'string','rowspan' => array('AF3','AF4'), 'align' => 'center', 'text_style' => 'bold'),
+            'AG' => array('value' => 'TOTAL', 'data_type' => 'string','rowspan' => array('AG3','AG4'), 'align' => 'center', 'text_style' => 'bold'),
         );
         $idx++;
         $arr_column[ $idx ] = array(
@@ -1322,12 +1322,13 @@ class KertasKerjaHpp extends Public_Controller {
             'AB' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
             'AC' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
             'AD' => array('value' => 'NET OA', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
+            'AE' => array('value' => 'SALDO AKHIR', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
         );
         $idx++;
 
         $start_row_header = $idx;
 
-        $arr_header = array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF');
+        $arr_header = array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF', 'AG');
         if ( !empty($data) ) {
             foreach ($data as $key => $value) {
                 $arr_column[ $idx ] = array(
@@ -1360,9 +1361,10 @@ class KertasKerjaHpp extends Public_Controller {
                     'AA' => array('value' => ($value['mutasi_msk_oa']), 'data_type' => 'decimal2'),
                     'AB' => array('value' => ($value['mutasi_klwr_oa']), 'data_type' => 'decimal2'),
                     'AC' => array('value' => ($value['koreksi_oa']), 'data_type' => 'decimal2'),
-                    'AD' => array('value' => ($value['pemakaian_oa']), 'data_type' => 'decimal2'),
-                    'AE' => array('value' => ($value['pdpt_peternak']), 'data_type' => 'decimal2'),
-                    'AF' => array('value' => ($value['total']), 'data_type' => 'decimal2'),
+                    'AD' => array('value' => ($value['net_oa']), 'data_type' => 'decimal2'),
+                    'AE' => array('value' => ($value['saldo_akhir_oa']), 'data_type' => 'decimal2'),
+                    'AF' => array('value' => ($value['pdpt_peternak']), 'data_type' => 'decimal2'),
+                    'AG' => array('value' => ($value['total']), 'data_type' => 'decimal2'),
                 );
 
                 $idx++;
