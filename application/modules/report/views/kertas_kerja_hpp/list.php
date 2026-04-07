@@ -30,7 +30,8 @@
             <td class="text-right page4" title="OA MUTASI (+)"><?php echo angkaDecimal($value['mutasi_msk_oa']); ?></td>
             <td class="text-right page4" title="OA MUTASI (-)"><?php echo angkaDecimal($value['mutasi_klwr_oa']); ?></td>
             <td class="text-right page4" title="OA KOREKSI (+/-)"><?php echo ($value['koreksi_oa'] >= 0) ? angkaDecimal($value['koreksi_oa']) : '('.angkaDecimal(abs($value['koreksi_oa'])).')'; ?></td>
-            <td class="text-right page4" title="OA NET"><?php echo ($value['pemakaian_oa'] >= 0) ? angkaDecimal($value['pemakaian_oa']) : '('.angkaDecimal(abs($value['pemakaian_oa'])).')'; ?></td>
+            <td class="text-right page4" title="OA NET"><?php echo ($value['net_oa'] >= 0) ? angkaDecimal($value['net_oa']) : '('.angkaDecimal(abs($value['net_oa'])).')'; ?></td>
+            <td class="text-right page4" title="OA SALDO AKHIR"><?php echo ($value['saldo_akhir_oa'] >= 0) ? angkaDecimal($value['saldo_akhir_oa']) : '('.angkaDecimal(abs($value['saldo_akhir_oa'])).')'; ?></td>
             <td class="text-right page0" title="RHPP"><?php echo ($value['pdpt_peternak'] >= 0) ? angkaDecimal($value['pdpt_peternak']) : '('.angkaDecimal(abs($value['pdpt_peternak'])).')'; ?></td>
             <td class="text-right page0" title="TOTAL"><?php echo ($value['total'] >= 0) ? angkaDecimal($value['total']) : '('.angkaDecimal(abs($value['total'])).')'; ?></td>
         </tr>

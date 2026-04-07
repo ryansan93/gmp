@@ -134,7 +134,8 @@ class KertasKerjaHpp extends Public_Controller {
                 data.mutasi_klwr_oa,
                 data.koreksi_oa,
                 data.pemakaian_oa,
-                ((isnull(data.sa_oa, 0)+data.beli_oa+isnull(data.mutasi_msk_oa, 0)) - isnull(data.mutasi_klwr_oa, 0)) + isnull(data.koreksi_oa, 0) as sisa_oa,
+                ((data.beli_oa+isnull(data.mutasi_msk_oa, 0)) - isnull(data.mutasi_klwr_oa, 0)) + isnull(data.koreksi_oa, 0) as net_oa,
+                ((isnull(data.sa_oa, 0)+data.beli_oa+isnull(data.mutasi_msk_oa, 0)) - isnull(data.mutasi_klwr_oa, 0)) + isnull(data.koreksi_oa, 0) as saldo_akhir_oa,
                 -- ((isnull(data.sa_oa, 0)+data.beli_oa+data.mutasi_msk_oa) - (data.mutasi_klwr_oa+data.pemakaian_oa)) + isnull(data.koreksi_oa, 0) as sisa_oa,
                 data.pdpt_peternak,
                 data.pdpt_peternak + data.pemakaian_pkn + data.pemakaian_ovk + data.pemakaian_doc + data.pemakaian_oa as total
@@ -777,7 +778,7 @@ class KertasKerjaHpp extends Public_Controller {
                         oa.mutasi_msk_oa,
                         oa.mutasi_klwr_oa,
                         oa.koreksi_oa,
-                        ((isnull(sa.saldo_awal, 0) + oa.beli_oa + oa.mutasi_msk_oa + oa.koreksi_oa) - oa.mutasi_klwr_oa) as pemakaian_oa,
+                        ((oa.beli_oa + oa.mutasi_msk_oa + oa.koreksi_oa) - oa.mutasi_klwr_oa) as pemakaian_oa,
                         -- oa.pemakaian_oa,
                         0 as rhpp
                     from 
