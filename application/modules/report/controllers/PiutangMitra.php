@@ -140,13 +140,13 @@ class PiutangMitra extends Public_Controller
         $mitra = $params['mitra'];
         $perusahaan = $params['perusahaan'];
 
-        $sql = "";
+        $sql_kondisi = "";
         if ( !in_array('all', $mitra) ) {
-            $sql .= "and p.mitra in ('".implode("', '", $mitra)."')";
+            $sql_kondisi .= "and p.mitra in ('".implode("', '", $mitra)."')";
         }
 
         if ( !in_array('all', $perusahaan) ) {
-            $sql .= "and p.perusahaan in ('".implode("', '", $perusahaan)."')";
+            $sql_kondisi .= "and p.perusahaan in ('".implode("', '", $perusahaan)."')";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -159,7 +159,7 @@ class PiutangMitra extends Public_Controller
                 mtr.kode_unit,
                 prs.perusahaan as nama_perusahaan
             from piutang p
-            right join
+            left join
                 (
                     select m1.*, w.kode as kode_unit from mitra m1
                     right join
@@ -189,7 +189,7 @@ class PiutangMitra extends Public_Controller
                 ) mtr
                 on
                     mtr.nomor = p.mitra
-            right join
+            left join
                 (
                     select 
                         p1.*
@@ -226,11 +226,12 @@ class PiutangMitra extends Public_Controller
                     p.kode = bp.piutang_kode
             where
                 p.jenis = '".$this->jenis."'
-                ".$sql."
+                ".$sql_kondisi."
             order by
                 p.tanggal desc,
                 mtr.nama asc
         ";
+        // cetak_r( $sql );
         $d_piutang = $m_conf->hydrateRaw( $sql );
 
         $data = null;
