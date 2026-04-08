@@ -733,7 +733,7 @@ class GeneralLedgerInternal extends Public_Controller {
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
                                 and SUBSTRING(dj.coa_asal, 1, 1) in (5, 6)
-                                and (dj.noreg is not null and j.kode = 'ME')
+                                and (dj.noreg is not null and j.kode = 'MI')
                             group by dj.noreg, dj.coa_asal, dj.unit
                             
                             union all

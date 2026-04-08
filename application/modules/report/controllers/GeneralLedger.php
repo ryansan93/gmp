@@ -516,7 +516,8 @@ class GeneralLedger extends Public_Controller {
                 data.unit,
                 data.nama_coa,
                 isnull(data.kredit, 0) as kredit,
-                isnull(data.debet, 0) as debet
+                isnull(data.debet, 0) as debet,
+                data.noreg
             from
             (
                 select
@@ -550,7 +551,8 @@ class GeneralLedger extends Public_Controller {
                                     0
                             end
                     end as debet,
-                    0 as urut
+                    0 as urut,
+                    '' as noreg
                 from (
                     select
                         sa.no_coa,
@@ -636,7 +638,8 @@ class GeneralLedger extends Public_Controller {
                         else
                             0
                     end as debet,
-                    1 as urut
+                    1 as urut,
+                    '' as noreg
                 from sacoa sc
                 left join
                     coa c
@@ -662,7 +665,8 @@ class GeneralLedger extends Public_Controller {
                     c.nama_coa,
                     (0-isnull(dj.kredit, 0)) as kredit,
                     isnull(dj.debet, 0) as debet,
-                    2 as urut
+                    2 as urut,
+                    dj.noreg
                 from coa c
                 left join
                     (
@@ -674,6 +678,7 @@ class GeneralLedger extends Public_Controller {
                             kredit as kredit,
                             debet as debet,
                             unit
+                            ".(($no_coa == '12020.000') ? ', noreg' : ", '' as noreg")."
                         from (
                             select 
                                 dj.tanggal,
@@ -682,7 +687,8 @@ class GeneralLedger extends Public_Controller {
                                 dj.coa_asal as no_coa, 
                                 sum(dj.nominal) as kredit, 
                                 0 as debet, 
-                                dj.unit
+                                dj.unit,
+                                dj.noreg
                             from det_jurnal dj 
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
@@ -691,7 +697,8 @@ class GeneralLedger extends Public_Controller {
                                 cast(dj.keterangan as varchar(max)),
                                 dj.kode_trans,
                                 dj.coa_asal,
-                                dj.unit
+                                dj.unit,
+                                dj.noreg
                             
                             union all
                             
@@ -707,7 +714,8 @@ class GeneralLedger extends Public_Controller {
                                         dj.unit_tujuan
                                     else
                                         dj.unit
-                                end as unit
+                                end as unit,
+                                dj.noreg
                             from det_jurnal dj 
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
@@ -717,10 +725,12 @@ class GeneralLedger extends Public_Controller {
                                 dj.kode_trans,
                                 dj.coa_tujuan,
                                 dj.unit,
-                                dj.unit_tujuan
+                                dj.unit_tujuan,
+                                dj.noreg
                         ) data
                         group by
                             tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit, kredit, debet
+                            ".(($no_coa == '12020.000') ? ', noreg' : '')."
                     ) dj
                     on
                         dj.no_coa = c.coa
@@ -743,6 +753,8 @@ class GeneralLedger extends Public_Controller {
         if ( $d_conf->count() > 0 ) {
             $data = $d_conf->toArray();
         }
+
+        // cetak_r( $data, 1 );
         
         return $data;
     }

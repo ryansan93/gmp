@@ -35,7 +35,12 @@
                                     <th class="col-xs-1">Tgl</th>
                                     <th class="col-xs-2">No. Dokumen</th>
                                     <th class="col-xs-1">Unit</th>
-                                    <th class="col-xs-4">Keterangan</th>
+                                    <?php if ( $data['no_coa'] == '12020.000' ) { ?>
+                                        <th class="col-xs-1">Noreg</th>
+                                        <th class="col-xs-3">Keterangan</th>
+                                    <?php } else { ?>
+                                        <th class="col-xs-4">Keterangan</th>
+                                    <?php } ?>
                                     <th class="col-xs-2">Debet</th>
                                     <th class="col-xs-2">Kredit</th>
                                 </tr>
@@ -62,6 +67,9 @@
                                             <td><?php echo ($value['tanggal'] < '2025-01-01') ? '' : tglIndonesia($value['tanggal'], '-', ' '); ?></td>
                                             <td><?php echo $value['kode_trans']; ?></td>
                                             <td><?php echo $value['unit']; ?></td>
+                                            <?php if ( $data['no_coa'] == '12020.000' ) { ?>
+                                                <td><?php echo $value['noreg']; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $value['keterangan']; ?></td>
                                             <td class="text-right"><?php echo ($value['debet'] >= 0) ? angkaDecimal($value['debet']) : '('.angkaDecimal(abs($value['debet'])).')'; ?></td>
                                             <td class="text-right"><?php echo ($value['kredit'] >= 0) ? angkaDecimal($value['kredit']) : '('.angkaDecimal(abs($value['kredit'])).')'; ?></td>

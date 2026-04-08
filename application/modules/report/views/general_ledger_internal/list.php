@@ -26,17 +26,17 @@ $tot_saldo_akhir = 0;
             
             <tr onclick="gl.formDetail(this)"
                 data-periode="<?php echo $periode; ?>"
-                title="Klik untuk melihat detail">
+                title="Klik untuk melihat detail" class="cursor-p">
 
                 <td class="text-left no_coa"><?php echo $value['no_coa'] ?? ''; ?></td>
                 <td class="text-left unit_tr"><?php echo $value['unit'] ?? ''; ?></td>
                 <td class="text-left nama_coa"><?php echo $value['nama_coa'] ?? ''; ?></td>
                 <td class="text-center noreg"><?php echo $value['noreg'] ?? ''; ?></td>
                 <td class="text-left"><?php echo $value['nama_mitra'] ?? ''; ?></td>
-                <td class="text-right"><?php echo angkaDecimal($saldo_awal); ?></td>
-                <td class="text-right"><?php echo angkaDecimal($debet); ?></td>
-                <td class="text-right"><?php echo angkaDecimal($kredit); ?></td>
-                <td class="text-right"><?php echo angkaDecimal($saldo_akhir); ?></td>
+                <td class="text-right"><?php echo ($saldo_awal >= 0) ? angkaDecimal($saldo_awal) : '('.angkaDecimal(abs($saldo_awal)).')'; ?></td>
+                <td class="text-right"><?php echo ($debet >= 0) ? angkaDecimal($debet) : '('.angkaDecimal(abs($debet)).')'; ?></td>
+                <td class="text-right"><?php echo ($kredit >= 0) ? angkaDecimal($kredit) : '('.angkaDecimal(abs($kredit)).')'; ?></td>
+                <td class="text-right"><?php echo ($saldo_akhir >= 0) ? angkaDecimal($saldo_akhir) : '('.angkaDecimal(abs($saldo_akhir)).')'; ?></td>
             </tr>
 
         <?php endforeach; ?>
