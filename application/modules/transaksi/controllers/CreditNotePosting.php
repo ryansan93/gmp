@@ -141,7 +141,7 @@ class CreditNotePosting extends Public_Controller {
         $sql = "
             select
                 sj.id as id,
-                REPLACE(sj.tgl_sj, '-', '/')+' | '+sj.no_sj as text,
+                REPLACE(sj.tgl_sj, '-', '/')+' | '+sj.unit+' | '+sj.no_sj as text,
                 sj.total as tagihan,
                 (sj.total - (sum(isnull(cpd.tot_pakai, 0)) + sum(isnull(rpd.tot_tf, 0)))) as sisa_tagihan
             from (
@@ -151,7 +151,8 @@ class CreditNotePosting extends Public_Controller {
                     td.no_sj, 
                     kpdd.total, 
                     'DOC' as jenis_cn,
-                    kpd.nomor as id
+                    kpd.nomor as id,
+                    kpdd.kode_unit as unit
                 from konfirmasi_pembayaran_doc_det kpdd
                 left join
                     konfirmasi_pembayaran_doc kpd 
@@ -179,7 +180,8 @@ class CreditNotePosting extends Public_Controller {
                     kppd.no_sj, 
                     kppd.total, 
                     'PKN' as jenis_cn,
-                    kpp.nomor as id
+                    kpp.nomor as id,
+                    kppd.kode_unit as unit
                 from konfirmasi_pembayaran_pakan_det kppd 
                 left join
                     konfirmasi_pembayaran_pakan kpp 
@@ -241,11 +243,14 @@ class CreditNotePosting extends Public_Controller {
                 sj.id,
                 sj.tgl_sj,
                 sj.no_sj,
-                sj.total
+                sj.total,
+                sj.unit
             having
 				(sj.total - (sum(isnull(cpd.tot_pakai, 0)) + sum(isnull(rpd.tot_tf, 0)))) > 0
             order by
-                sj.tgl_sj asc
+                sj.tgl_sj asc,
+                sj.unit asc,
+                sj.no_sj
         ";
         $d_cn = $m_conf->hydrateRaw($sql);
 
