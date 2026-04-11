@@ -909,18 +909,20 @@ class Pelanggan extends Public_Controller {
 							display_json(['status'=>0, 'message'=>'error, segera hubungi tim IT', 'cek' => 2]);
 						}
 					} else {
-						$m_lampiran = new \Model\Storage\Lampiran_model();
-						$d_lampiran_old = $m_lampiran->where('id', $id_lampiran_old)->first();
-
-						if ( $d_lampiran_old ) {
+						if ( !empty($id_lampiran_old) ) {
 							$m_lampiran = new \Model\Storage\Lampiran_model();
-							$m_lampiran->tabel = $d_lampiran_old['tabel'];
-							$m_lampiran->tabel_id = $table_id;
-							$m_lampiran->nama_lampiran = $d_lampiran_old['nama_lampiran'];
-							$m_lampiran->filename = $d_lampiran_old['filename'];
-							$m_lampiran->path = $d_lampiran_old['path'];
-							$m_lampiran->status = $d_lampiran_old['status'];
-							$m_lampiran->save();
+							$d_lampiran_old = $m_lampiran->where('id', $id_lampiran_old)->first();
+	
+							if ( $d_lampiran_old ) {
+								$m_lampiran = new \Model\Storage\Lampiran_model();
+								$m_lampiran->tabel = $d_lampiran_old['tabel'];
+								$m_lampiran->tabel_id = $table_id;
+								$m_lampiran->nama_lampiran = $d_lampiran_old['nama_lampiran'];
+								$m_lampiran->filename = $d_lampiran_old['filename'];
+								$m_lampiran->path = $d_lampiran_old['path'];
+								$m_lampiran->status = $d_lampiran_old['status'];
+								$m_lampiran->save();
+							}
 						}
 					}
 				} else {
