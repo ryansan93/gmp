@@ -578,7 +578,8 @@ class GeneralLedgerLengkap extends Public_Controller {
                             else
                                 0
                         end as debet,
-                        0 as urut
+                        0 as urut,
+                        null as noreg
                     from
                     (
                         select
@@ -673,6 +674,7 @@ class GeneralLedgerLengkap extends Public_Controller {
                 data.no_coa,
                 data.unit,
                 data.nama_coa,
+                data.noreg,
                 isnull(data.kredit, 0) as kredit,
                 isnull(data.debet, 0) as debet
             from
@@ -700,7 +702,8 @@ class GeneralLedgerLengkap extends Public_Controller {
                         else
                             0
                     end as debet,
-                    1 as urut
+                    1 as urut,
+                    null as noreg
                 from sacoa sc
                 left join
                     coa c
@@ -726,7 +729,8 @@ class GeneralLedgerLengkap extends Public_Controller {
                     c.nama_coa,
                     (0-isnull(dj.kredit, 0)) as kredit,
                     isnull(dj.debet, 0) as debet,
-                    2 as urut
+                    2 as urut,
+                    dj.noreg as noreg
                 from coa c
                 left join
                     (
@@ -737,54 +741,85 @@ class GeneralLedgerLengkap extends Public_Controller {
                             no_coa,
                             sum(kredit) as kredit,
                             sum(debet) as debet,
-                            unit
+                            unit,
+                            noreg
                         from (
-                            select 
-                                dj.tanggal,
-                                cast(dj.keterangan as varchar(max)) as keterangan,
-                                dj.kode_trans,
-                                dj.coa_asal as no_coa, 
-                                sum(dj.nominal) as kredit, 
+                            select
+                                dj_kredit.tanggal,
+                                dj_kredit.keterangan,
+                                dj_kredit.kode_trans,
+                                dj_kredit.no_coa, 
+                                sum(dj_kredit.kredit) as kredit, 
                                 0 as debet, 
-                                dj.unit
-                            from det_jurnal dj 
-                            where 
-                                dj.tanggal between '".$start_date."' and '".$end_date."'
+                                dj_kredit.unit,
+                                dj_kredit.noreg
+                            from
+                            (
+                                select 
+                                    dj.tanggal,
+                                    cast(dj.keterangan as varchar(max)) as keterangan,
+                                    dj.kode_trans,
+                                    dj.coa_asal as no_coa, 
+                                    dj.nominal as kredit,
+                                    dj.unit,
+                                    dj.noreg
+                                from det_jurnal dj 
+                                where 
+                                    dj.tanggal between '".$start_date."' and '".$end_date."'
+                            ) dj_kredit
                             group by
-                                dj.tanggal,
-                                cast(dj.keterangan as varchar(max)),
-                                dj.kode_trans,
-                                dj.coa_asal,
-                                dj.unit
+                                dj_kredit.tanggal,
+                                dj_kredit.keterangan,
+                                dj_kredit.kode_trans,
+                                dj_kredit.no_coa,
+                                dj_kredit.unit,
+                                dj_kredit.noreg
                             
                             union all
                             
-                            select 
-                                dj.tanggal,
-                                cast(dj.keterangan as varchar(max)) as keterangan,
-                                dj.kode_trans,
-                                dj.coa_tujuan as no_coa, 
+                            select
+                                dj_debet.tanggal,
+                                dj_debet.keterangan,
+                                dj_debet.kode_trans,
+                                dj_debet.no_coa, 
                                 0 as kredit, 
-                                sum(dj.nominal) as debet, 
-                                case
-                                    when dj.unit_tujuan is not null then
-                                        dj.unit_tujuan
-                                    else
-                                        dj.unit
-                                end as unit
-                            from det_jurnal dj 
-                            where 
-                                dj.tanggal between '".$start_date."' and '".$end_date."'
+                                sum(dj_debet.debet) as debet, 
+                                dj_debet.unit,
+                                dj_debet.noreg
+                            from
+                            (
+                                select 
+                                    dj.tanggal,
+                                    cast(dj.keterangan as varchar(max)) as keterangan,
+                                    dj.kode_trans,
+                                    dj.coa_tujuan as no_coa,
+                                    dj.nominal as debet, 
+                                    case
+                                        when dj.unit_tujuan is not null then
+                                            dj.unit_tujuan
+                                        else
+                                            dj.unit
+                                    end as unit,
+                                    case
+                                        when dj.coa_tujuan = '12020.000' then
+                                            dj.noreg
+                                        else
+                                            null
+                                    end as noreg
+                                from det_jurnal dj 
+                                where 
+                                    dj.tanggal between '".$start_date."' and '".$end_date."'
+                            ) dj_debet
                             group by
-                                dj.tanggal,
-                                cast(dj.keterangan as varchar(max)),
-                                dj.kode_trans,
-                                dj.coa_tujuan,
-                                dj.unit,
-                                dj.unit_tujuan
+                                dj_debet.tanggal,
+                                dj_debet.keterangan,
+                                dj_debet.kode_trans,
+                                dj_debet.no_coa,
+                                dj_debet.unit,
+                                dj_debet.noreg
                         ) data
                         group by
-                            tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit
+                            tanggal, cast(keterangan as varchar(max)), kode_trans, no_coa, unit, noreg
                     ) dj
                     on
                         dj.no_coa = c.coa
@@ -808,6 +843,8 @@ class GeneralLedgerLengkap extends Public_Controller {
         if ( $d_conf->count() > 0 ) {
             $data = $d_conf->toArray();
         }
+
+        // cetak_r( $data, 1 );
         
         return $data;
     }
@@ -1006,7 +1043,7 @@ class GeneralLedgerLengkap extends Public_Controller {
 
         $i = $bulan-1;
 
-        $angka_bulan = (strlen($i+1) == 1) ? '0'.$i+1 : $i+1;
+        $angka_bulan = (strlen($i+1) == 1) ? '0'.($i+1) : ($i+1);
 
         $date = $tahun.'-'.$angka_bulan.'-01';
         $start_date = date("Y-m-d", strtotime($date));

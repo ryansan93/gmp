@@ -47,34 +47,16 @@
             <td class="col-xs-1"><b>Tgl</b></td>
             <td class="col-xs-2"><b>No. Dokumen</b></td>
             <td class="col-xs-1"><b>Unit</b></td>
-            <td class="col-xs-4"><b>Keterangan</b></td>
+            <?php if ( $value['no_coa'] == '12020.000' ) { ?>
+                <td class="col-xs-1"><b>Noreg</b></td>
+                <td class="col-xs-3"><b>Keterangan</b></td>
+            <?php } else { ?>
+                <td class="col-xs-4"><b>Keterangan</b></td>
+            <?php } ?>
             <td class="col-xs-2"><b>Debet</b></td>
             <td class="col-xs-2"><b>Kredit</b></td>
         </tr>
         <tr class="detail" data-urut="<?php echo $urut; ?>"></tr>
-        
-        <!--
-        <?php if ( $idx_coa == 0 ) { ?>
-            <?php if ( stristr($value['keterangan'], 'Saldo Awal') === false ) { ?>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td><?php echo $value['unit']; ?></td>
-                    <td>Saldo Awal</td>
-                    <td class="text-right"><?php echo angkaDecimal(0); ?></td>
-                    <td class="text-right"><?php echo angkaDecimal(0); ?></td>
-                </tr>
-            <?php } ?>
-        <?php } ?>
-        <tr>
-            <td><?php echo ($value['tanggal'] < '2025-01-01') ? '' : tglIndonesia($value['tanggal'], '-', ' '); ?></td>
-            <td><?php echo $value['kode_trans']; ?></td>
-            <td><?php echo $value['unit']; ?></td>
-            <td><?php echo strtoupper($value['keterangan']); ?></td>
-            <td class="text-right"><?php echo ($value['debet'] >= 0) ? angkaDecimal($value['debet']) : '('.angkaDecimal(abs($value['debet'])).')'; ?></td>
-            <td class="text-right"><?php echo ($value['kredit'] >= 0) ? angkaDecimal($value['kredit']) : '('.angkaDecimal(abs($value['kredit'])).')'; ?></td>
-        </tr>
-        -->
        
         <?php 
             $idx_coa++;
@@ -91,7 +73,7 @@
         ?>
 
         <tr>
-            <td colspan="6" style="padding: 10px 5px 5px 5px;">
+            <td colspan="7" style="padding: 10px 5px 5px 5px;">
                 <table class="table table-bordered" style="margin-bottom: 0px;">
                     <thead>
                         <tr>
@@ -118,7 +100,7 @@
         <?php $urut++; ?>
     <?php } ?>
     <tr>
-        <td colspan="6" style="padding: 10px 5px 5px 5px;">
+        <td colspan="7" style="padding: 10px 5px 5px 5px;">
             <table class="table table-bordered" style="margin-bottom: 0px;">
                 <thead>
                     <tr>
