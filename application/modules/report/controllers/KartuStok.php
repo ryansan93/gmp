@@ -548,13 +548,15 @@ class KartuStok extends Public_Controller {
                         dst.kode_trans,
                         ds.jenis_trans,
                         ds.hrg_beli,
+                        /*
                         case
                             when sum(isnull(dst.jumlah, 0)) < isnull(dk.jumlah, 0) then
                                 isnull(dk.jumlah, 0)
                             else
                                 sum(isnull(dst.jumlah, 0))
                         end as jumlah
-                        -- sum(isnull(dst.jumlah, 0)) as jumlah
+                        */
+                        sum(isnull(dst.jumlah, 0)) as jumlah
                     from det_stok_trans dst
                     left join
                         det_stok ds
@@ -726,7 +728,8 @@ class KartuStok extends Public_Controller {
                 data.kode_gudang asc,
                 brg.nama asc,
                 data.tanggal asc,
-                data.urut asc
+                data.urut asc,
+                data.kode_trans asc
         ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
