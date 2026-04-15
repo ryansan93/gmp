@@ -108,6 +108,55 @@ var ssa = {
     exportExcel : function (params) {
 		goToURL('report/SisaStokAyamMinMax/exportExcel/'+params);
 	}, // end - exportExcel
+
+
+
+	showDetailStokAyam : (elm, e, config) =>{
+		e.preventDefault();
+
+		let params = {
+			'unit'		: $(elm).attr("kode_unit"),
+			'tanggal'	: dateSQL( $('#Tanggal').data('DateTimePicker').date() ),
+			'umur'		: $(elm).attr("umur"),
+			'value'		: $(elm).html(),
+			'all'		: config,
+		}
+
+		// console.log(params)
+
+		$.ajax({
+			url: 'report/SisaStokAyamMinMax/showDetailStokAyam',
+			data: {
+				'params': params
+			},
+			type: 'POST',
+			dataType: 'html',
+			beforeSend: function() { showLoading(); },
+			success: function(html) {
+				hideLoading();
+
+				bootbox.dialog({
+					title: "Detail Data",
+					message: html,
+					size: 'large',
+					buttons: {
+						// ok: {
+						// 	label: "OK",
+						// 	className: "btn-primary",
+						// 	callback: function() {
+						// 	}
+						// },
+						cancel: {
+							label: "Tutup",
+							className: "btn-secondary"
+						}
+					}
+				});
+			}
+		});
+
+
+	},
 };
 
 ssa.startUp();

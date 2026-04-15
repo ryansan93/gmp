@@ -51,9 +51,9 @@
             <?php foreach ($unit as $k_unit => $v_unit) { ?>
                 <?php if ( $v_unit['kode'] != 'JTM' && $v_unit['kode'] != 'PST' ) { ?>
                     <?php if ( isset($data[ $v_unit['kode'].'|'.$i ]) ) { ?>
-                        <td class="page<?php echo $page; ?> text-right"><?php echo angkaDecimal($data[ $v_unit['kode'].'|'.$i ]['min_bw']); ?></td>
-                        <td class="page<?php echo $page; ?> text-right"><?php echo angkaDecimal($data[ $v_unit['kode'].'|'.$i ]['max_bw']); ?></td>
-                        <td class="page<?php echo $page; ?> text-right"><?php echo angkaDecimal($data[ $v_unit['kode'].'|'.$i ]['rata_bw']); ?></td>
+                        <td class="page<?php echo $page; ?> text-right"> <a href="#" umur="<?php echo $i ?>" kode_unit="<?php echo $v_unit['kode'] ?>" onclick="ssa.showDetailStokAyam(this, event, 0)"><?php echo angkaDecimal($data[ $v_unit['kode'].'|'.$i ]['min_bw']); ?> </a> </td>
+                        <td class="page<?php echo $page; ?> text-right"> <a href="#" umur="<?php echo $i ?>" kode_unit="<?php echo $v_unit['kode'] ?>" onclick="ssa.showDetailStokAyam(this, event, 0)"><?php echo angkaDecimal($data[ $v_unit['kode'].'|'.$i ]['max_bw']); ?> </a> </td>
+                        <td class="page<?php echo $page; ?> text-right"> <a href="#" umur="<?php echo $i ?>" kode_unit="<?php echo $v_unit['kode'] ?>" onclick="ssa.showDetailStokAyam(this, event, 1)"><?php echo angkaDecimal($data[ $v_unit['kode'].'|'.$i ]['rata_bw']); ?></td>
                         <td class="page<?php echo $page; ?> text-right"><?php echo angkaRibuan($data[ $v_unit['kode'].'|'.$i ]['total_ekor']); ?></td>
                     <?php } else { ?>
                         <td class="page<?php echo $page; ?>"></td>

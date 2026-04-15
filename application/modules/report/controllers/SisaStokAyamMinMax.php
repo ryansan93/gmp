@@ -168,6 +168,7 @@ class SisaStokAyamMinMax extends Public_Controller {
                 data.umur asc,
                 data.kode asc
         ";
+
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
@@ -192,6 +193,9 @@ class SisaStokAyamMinMax extends Public_Controller {
         $data = $this->getData( $params );
         
         $content['data'] = $data;
+        // echo "<pre>";
+        // print_r($content);
+        // die;
         $content['unit'] = $m_wil->getDataUnit(1, $this->userid);
         $html = $this->load->view($this->pathView.'list', $content, TRUE);
 
@@ -352,5 +356,158 @@ class SisaStokAyamMinMax extends Public_Controller {
 
         $this->load->helper('download');
         force_download('export_excel/'.$filename.'.xlsx', NULL);
+    }
+
+    public function showDetailStokAyam()
+    {
+        $params = $this->input->post('params');
+        $m_wil  = new \Model\Storage\Wilayah_model();
+        $m_conf = new \Model\Storage\Conf();
+
+        $sql = " select
+                data.kode,
+                data.noreg,
+                data.tanggal,
+                data.umur,
+                data.jml_ekor,
+                data.ekor_mati,
+                data.sisa_ekor,
+                data.bb,
+                data.tonase
+            from
+            (
+                select
+                    l.tanggal,
+                    w.kode,
+                    l.noreg,
+                    (td.jml_ekor+isnull(ad.jumlah, 0)) as jml_ekor,
+                    l.umur,
+                    l.ekor_mati,
+                    l.bb,
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) as sisa_ekor,
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) * l.bb as tonase
+                from 
+                (
+                    select max(id) as id, kode 
+                    from wilayah
+                    where kode is not null
+                    group by kode
+                ) w
+                left join
+                (
+                    select
+                        w.kode, l.*
+                    from
+                    (
+                        select l1.* 
+                        from lhk l1
+                        right join
+                        (
+                            select max(tanggal) as tanggal, noreg 
+                            from lhk 
+                            where tanggal <= '". $params['tanggal'] ."' 
+                            group by noreg
+                        ) l2
+                        on
+                            l1.tanggal = l2.tanggal and
+                            l1.noreg = l2.noreg
+                    ) l
+                    left join rdim_submit rs on l.noreg = rs.noreg
+                    left join kandang k on rs.kandang = k.id
+                    left join wilayah w on k.unit = w.id
+                ) l on l.kode = w.kode
+                left join
+                    (select * from tutup_siklus where tgl_tutup <= '". $params['tanggal'] ."') ts
+                    on l.noreg = ts.noreg
+                left join
+                (
+                    select od.noreg, td.* 
+                    from (
+                        select td1.* 
+                        from terima_doc td1
+                        right join
+                            (select max(id) as id, no_order from terima_doc group by no_order) td2
+                            on td1.id = td2.id
+                    ) td
+                    left join
+                    (
+                        select od1.* 
+                        from order_doc od1
+                        right join
+                            (select max(id) as id, no_order from order_doc group by no_order) od2
+                            on od1.id = od2.id
+                    ) od
+                    on td.no_order = od.no_order
+                ) td on l.noreg = td.noreg
+                left join
+                (
+                    select noreg, sum(jumlah) as jumlah 
+                    from adjin_doc 
+                    group by noreg
+                ) ad on l.noreg = ad.noreg
+                where
+                    ts.id is null and
+                    l.id is not null
+            ) data
+            where
+                data.tanggal <= '". $params['tanggal'] ."' 
+                and data.umur = ". $params['umur'] ."
+                and data.kode = '". $params['unit'] ."'
+            order by
+                data.kode asc,
+                data.noreg asc
+        
+        ";
+
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ($d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        $noreg = array_column($data, 'noreg');
+        $result = "'" . implode("','", $noreg) . "'";
+        
+        $content['data_header'] = $params;
+        $content['data_detail'] = $data;
+        $content['plasma']      = $this->getDataMitra($result);
+        $content['unit']        = $m_wil->getDataUnit(1, $this->userid);
+
+        // echo "<pre>";
+        // print_r($content);
+        // die;
+        
+        echo $this->load->view($this->pathView.'list_detail', $content, TRUE);
+
+    }
+
+    public function getDataMitra($noreg)
+    {
+        
+        $m_conf = new \Model\Storage\Conf();
+
+        $sql = " select distinct(rs.noreg), m.nama from rdim_submit rs
+                inner join mitra_mapping mm on rs.nim = mm.nim
+                inner join mitra m on mm.mitra = m.id 
+                where rs.noreg in ($noreg) ";
+
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ($d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        // $data_temp = [];
+        // foreach($data as $d){
+        //     $data
+        // }
+
+        return $data;
+
+        // echo "<pre>";
+        // print_r($data);
+        // die;
     }
 }
