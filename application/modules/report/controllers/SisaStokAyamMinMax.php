@@ -84,8 +84,8 @@ class SisaStokAyamMinMax extends Public_Controller {
                     l.umur,
                     l.ekor_mati,
                     l.bb,
-                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) as sisa_ekor,
-                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) * l.bb as tonase
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati - isnull(panen.ekor, 0)) as sisa_ekor,
+                    ((((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) * l.bb) - isnull(panen.tonase, 0)) as tonase
                 from 
                 (
                     select max(id) as id, kode from wilayah
@@ -156,9 +156,20 @@ class SisaStokAyamMinMax extends Public_Controller {
                     ) ad
                     on
                         l.noreg = ad.noreg
+                left join
+                    (
+                        select noreg, sum(netto_ekor) as ekor, sum(netto_kg) as tonase, max(tgl_panen) as tgl_panen_terakhir from real_sj rs where tgl_panen <= '".$tanggal."' group by noreg
+                    ) panen
+                    on
+                        l.noreg = panen.noreg
                 where
                     ts.id is null and
-                    l.id is not null
+                    l.id is not null and
+                    (
+                        ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati - isnull(panen.ekor, 0)) > 0 and
+                        ((((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) * l.bb) - isnull(panen.tonase, 0)) > 0
+                    )
+
             ) data
             ".$sql_unit."
             group by
@@ -168,7 +179,7 @@ class SisaStokAyamMinMax extends Public_Controller {
                 data.umur asc,
                 data.kode asc
         ";
-
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
