@@ -729,7 +729,7 @@ var pp = {
 						showLoading();
 					},
 					success: function(data) {
-						hideLoading();
+						// hideLoading();
 						if ( data.status == 1 ) {
 							bootbox.alert(data.message, function() {
 								// pp.get_lists();
