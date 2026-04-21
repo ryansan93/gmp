@@ -1578,6 +1578,9 @@ class PengirimanPenerimaanPakan extends Public_Controller {
             $m_kp = new \Model\Storage\KirimPakan_model();
             $d_kp = $m_kp->where('id', $id_header)->first();
 
+            $m_terima_pakan                 = new \Model\Storage\TerimaPakan_model();
+            $d_terima_old = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->first();
+
             $no_bbm = null;
             if ( $d_kp->jenis_kirim == 'opks' ) {
                 $no_bbm = 'BBM/PKN/S'.str_replace('OPK', '', $d_kp->no_order);
@@ -1587,33 +1590,31 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 $no_bbm = 'BBM/PKN/P'.str_replace('OP', '', $d_kp->no_order);
             }
 
-            $m_terima_pakan                 = new \Model\Storage\TerimaPakan_model();
-            $now                            = $m_terima_pakan->getDate();
+            if ( !$d_terima_old ) {
+                
+                $m_terima_pakan                 = new \Model\Storage\TerimaPakan_model();
+                $now                            = $m_terima_pakan->getDate();
 
-            $d_terima_old = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->first();
+                cetak_r($params['id']);
+                cetak_r($now['waktu']);
+                cetak_r($params['tgl_terima']);
+                cetak_r($path_name);
+                cetak_r($no_bbm);
 
-            $m_terima_pakan->where('id_kirim_pakan', $params['id'])->update(
-                array(
-                    'tgl_trans'     => $now['waktu'],
-                    'tgl_terima'    => $params['tgl_terima'],
-                    'no_bbm'        => $no_bbm,
-                    'path'          => $params['jenis_kirim'],
-                )
-            );
-
-            
-            $d_terima = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->first();
-            $id_terima = !empty($d_terima) ? $d_terima->id : null;
-
-            if ( !empty($id_terima) ) {
-                $m_terima_pakan_detail = new \Model\Storage\TerimaPakanDetail_model();
-                $m_terima_pakan_detail->where('id_header', $id_terima)->delete();
-
+                $m_terima_pakan->id_kirim_pakan = $params['id'];
+                $m_terima_pakan->tgl_trans      = $now['waktu'];
+                $m_terima_pakan->tgl_terima     = $params['tgl_terima'];
+                $m_terima_pakan->path           = $path_name;
+                $m_terima_pakan->no_bbm         = $no_bbm;
+                $m_terima_pakan->save();
+    
+                $id_terima = $m_terima_pakan->id;
+    
                 $detail_merge = [];
-
+    
                 foreach ($params['detail'] as $v_detail) {
-                    $key = $v_detail['barang'].'|'.$v_detail['no_sj_asal'];
-
+                    $key = $v_detail['barang'];
+    
                     if ( isset($detail_merge[$key]) ) {
                         $detail_merge[$key]['jumlah'] += $v_detail['jumlah'];
                     } else {
@@ -1626,15 +1627,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     }
                 }
 
-                // foreach ($params['detail'] as $k_detail => $v_detail) {
-                //     $m_terima_pakan_detail              = new \Model\Storage\TerimaPakanDetail_model();
-                //     $m_terima_pakan_detail->id_header   = $id_terima;
-                //     $m_terima_pakan_detail->item        = $v_detail['barang'];
-                //     $m_terima_pakan_detail->jumlah      = $v_detail['jumlah'];
-                //     $m_terima_pakan_detail->kondisi     = $v_detail['kondisi'];
-                //     $m_terima_pakan_detail->save();
-                // }
-
                 foreach ($detail_merge as $v_detail) {
                     $m_terima_pakan_detail              = new \Model\Storage\TerimaPakanDetail_model();
                     $m_terima_pakan_detail->id_header   = $id_terima;
@@ -1643,8 +1635,65 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     $m_terima_pakan_detail->kondisi     = $v_detail['kondisi'];
                     $m_terima_pakan_detail->save();
                 }
+            } else {    
+                $m_terima_pakan                 = new \Model\Storage\TerimaPakan_model();
+                $now                            = $m_terima_pakan->getDate();
+    
+                $d_terima_old = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->first();
+    
+                $m_terima_pakan->where('id_kirim_pakan', $params['id'])->update(
+                    array(
+                        'tgl_trans'     => $now['waktu'],
+                        'tgl_terima'    => $params['tgl_terima'],
+                        'no_bbm'        => $no_bbm,
+                        'path'          => $params['jenis_kirim'],
+                    )
+                );
+    
+                
+                $d_terima = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->first();
+                $id_terima = !empty($d_terima) ? $d_terima->id : null;
+    
+                if ( !empty($id_terima) ) {
+                    $m_terima_pakan_detail = new \Model\Storage\TerimaPakanDetail_model();
+                    $m_terima_pakan_detail->where('id_header', $id_terima)->delete();
+    
+                    $detail_merge = [];
+    
+                    foreach ($params['detail'] as $v_detail) {
+                        $key = $v_detail['barang'].'|'.$v_detail['no_sj_asal'];
+    
+                        if ( isset($detail_merge[$key]) ) {
+                            $detail_merge[$key]['jumlah'] += $v_detail['jumlah'];
+                        } else {
+                            $detail_merge[$key] = [
+                                'barang' => $v_detail['barang'],
+                                'jumlah' => $v_detail['jumlah'],
+                                'kondisi' => $v_detail['kondisi'],
+                                'no_sj_asal' => $v_detail['no_sj_asal']
+                            ];
+                        }
+                    }
+    
+                    // foreach ($params['detail'] as $k_detail => $v_detail) {
+                    //     $m_terima_pakan_detail              = new \Model\Storage\TerimaPakanDetail_model();
+                    //     $m_terima_pakan_detail->id_header   = $id_terima;
+                    //     $m_terima_pakan_detail->item        = $v_detail['barang'];
+                    //     $m_terima_pakan_detail->jumlah      = $v_detail['jumlah'];
+                    //     $m_terima_pakan_detail->kondisi     = $v_detail['kondisi'];
+                    //     $m_terima_pakan_detail->save();
+                    // }
+    
+                    foreach ($detail_merge as $v_detail) {
+                        $m_terima_pakan_detail              = new \Model\Storage\TerimaPakanDetail_model();
+                        $m_terima_pakan_detail->id_header   = $id_terima;
+                        $m_terima_pakan_detail->item        = $v_detail['barang'];
+                        $m_terima_pakan_detail->jumlah      = $v_detail['jumlah'];
+                        $m_terima_pakan_detail->kondisi     = $v_detail['kondisi'];
+                        $m_terima_pakan_detail->save();
+                    }
+                }
             }
-
             // End Penerimaan Pakan
 
             // Log Update
@@ -1731,12 +1780,10 @@ class PengirimanPenerimaanPakan extends Public_Controller {
             $m_kirim_pakan->where('id', $params['id'])->delete();
             // End Pengiriman
 
-        
-            
             $m_terima_pakan = new \Model\Storage\TerimaPakan_model();
             $now = $m_terima_pakan->getDate();
 
-            $d_terima_pakan = $m_terima_pakan->where('id', $params['id'])->with(['detail'])->first();
+            $d_terima_pakan = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->with(['detail'])->first();
 
             $deskripsi_log_terima_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
@@ -1751,7 +1798,7 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     on
                         tp.id_kirim_pakan = kp.id
                 where
-                    tp.id = '".$params['id']."'
+                    tp.id_kirim_pakan = '".$params['id']."'
             ";
             $d_conf = $m_conf->hydrateRaw( $sql );
             if ( $d_conf->count() > 0 ) {
