@@ -66,7 +66,7 @@
 	<div class="col-lg-12 d-flex align-items-center no-padding">
 		<div class="col-lg-2">Tgl Terima</div>
 		<div class="col-lg-2">
-			: <label class="control-label"><?php echo strtoupper(tglIndonesia($data['terima']['tgl_terima'], '-', ' ')); ?></label>
+			: <label class="control-label"><?php echo (isset($data['terima']['tgl_terima']) && !empty($data['terima']['tgl_terima'])) ? strtoupper(tglIndonesia($data['terima']['tgl_terima'], '-', ' ')) : '-'; ?></label>
 		</div>
 		<div class="col-lg-2"></div>
 		<div class="col-lg-2">No. Polisi</div>

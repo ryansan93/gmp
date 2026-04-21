@@ -202,7 +202,13 @@
 					<input type="text" class="form-control text-center datetimepicker" placeholder="Bulan" name="bulan_docin" id="bulan_docin" onblur="pp.get_peternak(this)" data-tgl="<?php echo $tgl_docin_tujuan; ?>" />
 		        </div>
 		        <div class="col-lg-9">
-					<select class="form-control peternak" data-noreg="<?php echo ($data['jenis_tujuan'] == 'peternak') ? trim($data['tujuan']) : ''; ?>" >
+					<?php
+						$data_required_peternak_tujuan = null;
+						if ( $data['jenis_tujuan'] == 'peternak' ) {
+							$data_required_peternak_tujuan = 'data-required=1';
+						}
+					?>
+					<select class="form-control peternak" data-noreg="<?php echo ($data['jenis_tujuan'] == 'peternak') ? trim($data['tujuan']) : ''; ?>" <?php echo $data_required_peternak_tujuan; ?> >
 						<option value="">-- Pilih Peternak --</option>
 						<!-- <?php foreach ($peternak as $k_peternak => $v_peternak): ?>
 							<?php
@@ -219,7 +225,13 @@
 		        </div>
 			</div>
 			<div class="col-lg-6 gudang no-padding <?php echo ($data['jenis_tujuan'] == 'gudang') ? null : 'hide'; ?>">
-				<select class="form-control gudang">
+				<?php
+					$data_required_gdg_tujuan = null;
+					if ( $data['jenis_tujuan'] == 'gudang' ) {
+						$data_required_gdg_tujuan = 'data-required=1';
+					}
+				?>
+				<select class="form-control gudang" <?php echo $data_required_gdg_tujuan; ?> >
 					<option value="">-- Pilih Gudang --</option>
 					<?php foreach ($gudang_tujuan as $k_gudang => $v_gudang): ?>
 						<?php
@@ -272,7 +284,7 @@
 		<div class="col-lg-2">Tgl Terima</div>
 		<div class="col-lg-2">
 			<div class="input-group date datetimepicker lock_date_fiskal" name="tgl_terima" id="tgl_terima">
-		        <input type="text" class="form-control text-center" placeholder="Tanggal Terima" data-required="1" data-tgl="<?php echo $data['terima']['tgl_terima']; ?>" />
+		        <input type="text" class="form-control text-center" placeholder="Tanggal Terima" data-required="1" data-tgl="<?php echo (isset($data['terima']['tgl_terima']) && !empty($data['terima']['tgl_terima'])) ? $data['terima']['tgl_terima'] : null; ?>" />
 		        <span class="input-group-addon">
 		            <span class="glyphicon glyphicon-calendar"></span>
 		        </span>
