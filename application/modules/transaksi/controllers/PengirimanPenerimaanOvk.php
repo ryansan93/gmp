@@ -893,7 +893,8 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                                 on
                                     dkp.id_header = kp.id
                             where
-                                kp.id = '".$id."'
+                                kp.id = '".$id."' and
+                                dkp.item = '".$kode_brg."'
                             group by
                                 kp.asal,
                                 dkp.item
@@ -902,7 +903,6 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                             data.kode_gudang,
                             data.kode_barang
                     ";
-
                     $d_conf = $m_conf->hydrateRaw( $sql );
 
                     $jml_stok = 0;
@@ -949,9 +949,9 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                         }
 
                         $message .= '<b>'.$nama_brg.'</b><br>';
-                        $message .= 'STOK : '.angkaRibuan($jml_stok).' KG<br>';
-                        $message .= 'PENGIRIMAN : '.angkaRibuan($jml_kirim).' KG<br>';
-                        $message .= 'JUMLAH ANDA : '.angkaRibuan($v_det['jumlah']).' KG<br><br>';
+                        $message .= 'STOK : '.angkaRibuan($jml_stok).'<br>';
+                        $message .= 'PENGIRIMAN : '.angkaRibuan($jml_kirim).'<br>';
+                        $message .= 'JUMLAH ANDA : '.angkaRibuan($v_det['jumlah']).'<br><br>';
                     }
                 }
 
@@ -1025,8 +1025,8 @@ class PengirimanPenerimaanOvk extends Public_Controller {
 
                         $message .= '<b>'.$nama_brg.'</b><br>';
                         $message .= 'SJ ASAL : <b>'.$v_det['no_sj_asal'].'</b><br>';
-                        $message .= 'TERIMA DI KANDANG : '.angkaRibuan($jml_terima).' KG<br>';
-                        $message .= 'PINDAH : '.angkaRibuan($jml_pakai).' KG<br><br>';
+                        $message .= 'TERIMA DI KANDANG : '.angkaRibuan($jml_terima).'<br>';
+                        $message .= 'PINDAH : '.angkaRibuan($jml_pakai).'<br><br>';
                     }
                 }
 
@@ -1386,8 +1386,6 @@ class PengirimanPenerimaanOvk extends Public_Controller {
 
     public function delete(){
         $params = $this->input->post('params');
-
-  
 
         try {
 
