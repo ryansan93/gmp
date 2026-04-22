@@ -895,7 +895,8 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                                 on
                                     dkp.id_header = kp.id
                             where
-                                kp.id = '".$id."'
+                                kp.id = '".$id."' and
+                                dkp.item = '".$kode_brg."'
                             group by
                                 kp.asal,
                                 dkp.item
@@ -1829,7 +1830,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 'noreg1' => $noreg1,
                 'noreg2' => $noreg2
             );
-
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
