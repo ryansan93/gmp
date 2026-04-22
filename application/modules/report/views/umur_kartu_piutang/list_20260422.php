@@ -17,8 +17,7 @@
     <tr class="abu">
         <td style="width: 6%"><b>ID Customer</b></td>
         <td style="width: 10%;"><b>Nama Customer</b></td>
-        <!-- <td style="width: 6%"><b>Plafon (Juta)</b></td> -->
-        <td style="width: 6%"><b>Kab / Kota</b></td>
+        <td style="width: 6%"><b>Plafon (Juta)</b></td>
         <td style="width: 6%"><b>JaTem (Hari)</b></td>
         <td style="width: 6%"><b>Saldo Awal</b></td>
         <td style="width: 6%"><b>Debet</b></td>
@@ -37,8 +36,7 @@
         <tr>
             <td><?php echo strtoupper($value['pelanggan']); ?></td>
             <td><?php echo strtoupper($value['nama_pelanggan']); ?></td>
-            <!-- <td></td> -->
-            <td><?php echo strtoupper($value['kab_kota_nama']); ?></td>
+            <td></td>
             <td></td>
             <td class="text-right"><?php echo ($value['saldo_awal'] >= 0) ? angkaDecimal($value['saldo_awal']) : '('.angkaDecimal(abs($value['saldo_awal'])).')'; ?></td>
             <td class="text-right"><?php echo angkaDecimal($value['debet']); ?></td>

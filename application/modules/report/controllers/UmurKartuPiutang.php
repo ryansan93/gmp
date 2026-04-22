@@ -93,7 +93,8 @@ class UmurKartuPiutang extends Public_Controller {
         $sql = "
             select
                 data.*,
-                plg.nama as nama_pelanggan
+                plg.nama as nama_pelanggan,
+                plg.kab_kota_nama
             from (
                 select
                     d.pelanggan,
@@ -374,11 +375,35 @@ class UmurKartuPiutang extends Public_Controller {
             ) data
             left join
                 (
-                    select p1.nomor, p1.nama, p1.tipe_plg from pelanggan p1
-                    right join
-                        (select max(id) as id, nomor from pelanggan p where tipe = 'pelanggan' group by nomor) p2
+                    select 
+                        plg.*,
+                        l_kec.nama as kecamatan_nama,
+                        REPLACE(REPLACE(l_kab_kota.nama, 'Kab ', ''), 'Kota ', '') as kab_kota_nama
+                    from (
+                        select 
+                            p1.nomor,
+                            p1.nama,
+                            p1.tipe_plg,
+                            case
+                                when p1.usaha_kecamatan is not null and p1.usaha_kecamatan <> 1 and p1.usaha_kecamatan <> 0 then
+                                    p1.usaha_kecamatan
+                                else
+                                    p1.alamat_kecamatan
+                            end as usaha_kecamatan 
+                        from pelanggan p1
+                        right join
+                            (select max(id) as id, nomor from pelanggan p where tipe = 'pelanggan' group by nomor) p2
+                            on
+                                p1.id = p2.id
+                    ) plg
+                    left join
+                        lokasi l_kec
                         on
-                            p1.id = p2.id
+                            plg.usaha_kecamatan = l_kec.id
+                    left join
+                        lokasi l_kab_kota
+                        on
+                            l_kec.induk = l_kab_kota.id
                 ) plg
                 on
                     plg.nomor = data.pelanggan
