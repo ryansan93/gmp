@@ -3,8 +3,9 @@
     <?php foreach ($data as $key => $value) { ?>
         <tr>
             <td><?php echo $no; ?></td>
-            <td><?php echo $value['kandang']; ?></td>
             <td><?php echo strtoupper($value['mitra']); ?></td>
+            <td><?php echo $value['kandang']; ?></td>
+            <td><?php echo $value['unit']; ?></td>
             <td><?php echo strtoupper(tglIndonesia($value['tgl_docin'], '-', ' ')); ?></td>
             <td class="text-right"><?php echo angkaRibuan($value['populasi']); ?></td>
             <td class="text-right"><?php echo angkaDecimal($value['rata_umur']); ?></td>
@@ -22,6 +23,7 @@
             ?>
             <td class="text-right" style="color: <?php echo $color; ?>"><b><?php echo ($value['lr_inti'] >= 0 ) ? angkaDecimal($value['lr_inti']) : '('.angkaDecimal(abs($value['lr_inti'])).')'; ?></b></td>
             <td class="text-right" style="color: <?php echo $color; ?>"><b><?php echo ($value['lr_inti_per_ekor'] >= 0 ) ? angkaDecimal($value['lr_inti_per_ekor']) : '('.angkaDecimal(abs($value['lr_inti_per_ekor'])).')'; ?></b></td>
+            <td class="text-right" style="color: <?php echo $color; ?>"><b><?php echo ($value['modal_inti_per_kg'] >= 0 ) ? angkaDecimal($value['modal_inti_per_kg']) : '('.angkaDecimal(abs($value['modal_inti_per_kg'])).')'; ?></b></td>
         </tr>
         <?php $no++; ?>
     <?php } ?>

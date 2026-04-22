@@ -61,26 +61,42 @@
 					<small>
 						<table class="table table-bordered" style="margin-bottom: 0px;">
 							<thead>
+								<tr class="total">
+									<td colspan="5"><b>TOTAL</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+									<td class="text-right"><b>0</b></td>
+								</tr>
 								<tr>
 									<th style="width: 2%;">No.</th>
+									<th style="width: 15%;">Nama Plasma</th>
 									<th style="width: 5%;">Kandang</th>
-									<th style="width: 20%;">Nama Plasma</th>
-									<th style="width: 10%;">Tgl Chick In</th>
+									<th style="width: 5%;">Unit</th>
+									<th style="width: 5%;">Tgl Chick In</th>
 									<th style="width: 5%;">Populasi</th>
 									<th style="width: 5%;">Umur</th>
 									<th style="width: 5%;">Deplesi</th>
 									<th style="width: 5%;">FCR</th>
 									<th style="width: 5%;">BW</th>
 									<th style="width: 5%;">IP</th>
-									<th style="width: 10%;">L/R Plasma</th>
+									<th style="width: 7%;">L/R Plasma</th>
 									<th style="width: 7%;">L/R Plasma Per Ekor</th>
-									<th style="width: 10%;">L/R Inti</th>
-									<th style="width: 7%;">L/R Plasma Per Ekor</th>
+									<th style="width: 7%;">L/R Inti</th>
+									<th style="width: 7%;">L/R Inti Per Ekor</th>
+									<th style="width: 7%;">HPP Per KG</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr>
-									<td colspan="14">Data tidak di temukan.</td>
+									<td colspan="16">Data tidak di temukan.</td>
 								</tr>
 							</tbody>
 						</table>

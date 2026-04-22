@@ -61,7 +61,8 @@ var lr = {
                 	hideLoading();
 
                     if ( data.status == 1 ) {
-                        $('tbody').html( data.html );
+                        $('tbody').html( data.html.list );
+                        $('tr.total').html( data.html.list_total );
                     } else {
                         bootbox.alert( data.message );
                     }
