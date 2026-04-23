@@ -495,9 +495,6 @@ class PenerimaanDocMobile extends Public_Controller {
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $now = $m_terima_doc->getDate();
 
-            $id = $m_terima_doc->getNextIdentity();
-            $nomor = $m_terima_doc->getNextNomor();
-
             $path_name = null;
             $file = isset($mappingFiles[ $params['no_sj'] ]) ? $mappingFiles[ $params['no_sj'] ] : null;
             if ( !empty($file) ) {
@@ -513,8 +510,14 @@ class PenerimaanDocMobile extends Public_Controller {
             $m_terima_doc = new \Model\Storage\TerimaDoc_model();
             $d_terima_doc = $m_terima_doc->where('no_bbm', $no_bbm)->first();
 
+            $id = null;
+
             if ( !$d_terima_doc ) {
                 $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+
+                $id = $m_terima_doc->getNextIdentity();
+                $nomor = $m_terima_doc->getNextNomor();
+
                 $m_terima_doc->id = $id;
                 $m_terima_doc->no_terima = $nomor;
                 $m_terima_doc->no_order = $params['no_order'];
@@ -568,7 +571,7 @@ class PenerimaanDocMobile extends Public_Controller {
             // $this->result['content'] = array('id' => $id);
             $this->result['content'] = array(
                 'id' => $id,
-                'tanggal' => $params['tiba'],
+                'tanggal' => substr($params['tiba'], 0, 10),
                 'delete' => 0,
                 'message' => 'Data Terima DOC berhasil disimpan.',
                 'status_jurnal' => 2,
@@ -794,6 +797,8 @@ class PenerimaanDocMobile extends Public_Controller {
     }
 
     public function tes() {
+        cetak_r( substr('2026-04-19 01:01:00.000', 0, 10) );
+
         // $m_conf = new \Model\Storage\Conf();
         // $sql = "
         //     select td.* from terima_doc td 
@@ -829,20 +834,20 @@ class PenerimaanDocMobile extends Public_Controller {
         // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$value['id']."', '".$tanggal."', 2, null, null";
         // $conf->hydrateRaw($sql);
 
-        // 1833 -> 2026-02-17 11:23:37.203
-        // 1849 -> 2026-02-18 20:53:29.750
-        // 1908 -> 2026-02-21 17:39:07.057
+        // 1967
+        // 1983
+        // 1924
 
         // $conf = new \Model\Storage\Conf();
-        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '1908', '2026-02-21', 2, null, null";
+        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '1772', '2026-02-12', 2, null, null";
         // $conf->hydrateRaw($sql);
 
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 1490, 1490, 3);
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 1908, 1908, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 2389, 2389, 2);
 
-        $conf = new \Model\Storage\Conf();
-        $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '1441', '2026-01-18', 2, null, null";
-        // $sql = "EXEC hitung_stok_siklus_doc 'doc', 'terima_doc', '1441', '2026-01-18', 2, null, null";
-        $d_conf = $conf->hydrateRaw($sql);
+        // $conf = new \Model\Storage\Conf();
+        // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '2389', '2026-03-29', 2, null, null";
+        // // $sql = "EXEC hitung_stok_siklus_doc 'doc', 'terima_doc', '1441', '2026-01-18', 2, null, null";
+        // $d_conf = $conf->hydrateRaw($sql);
     }
 }
