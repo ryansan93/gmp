@@ -1723,7 +1723,7 @@ class PengirimanPenerimaanPakan extends Public_Controller {
             // End Log Update
 
             $tgl_trans = $d_terima_pakan->tgl_terima;
-            if ( $d_terima_old->tgl_terima < $tgl_trans ) {
+            if ( !empty($d_terima_old) && $d_terima_old->tgl_terima < $tgl_trans ) {
                 $tgl_trans = $d_terima_old->tgl_terima;
             }
 
