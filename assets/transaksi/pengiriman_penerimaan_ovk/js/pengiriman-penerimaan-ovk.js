@@ -754,7 +754,7 @@ var pv = {
 			var tr = $(elm).closest('tr');
 			var select_item = $(tr).find('select.barang');
 
-			var jml = numeral.unformat($(elm).val());
+			var jml = numeral.unformat($(tr).find('input.jumlah').val());
 			var item = $(select_item).val();
 			var gudang = $('select.gudang_asal').val();
 
@@ -855,23 +855,31 @@ var pv = {
 		var div_riwayat = $('div#riwayat');
 		var kode_unit 	= $(div_riwayat).find('select.unit').val();
 
-		let tgl	 		= new Date(params.data_params.tanggal);
-		let startdate 	= new Date(tgl.getFullYear(), tgl.getMonth(), 1);
-		let enddate 	= new Date(tgl.getFullYear(), tgl.getMonth() + 1, 0);
+		// let tgl	 		= new Date(params.data_params.tanggal);
+		// let startdate 	= new Date(tgl.getFullYear(), tgl.getMonth(), 1);
+		// let enddate 	= new Date(tgl.getFullYear(), tgl.getMonth() + 1, 0);
 
-		let format = (date) => {
-			let y = date.getFullYear();
-			let m = String(date.getMonth() + 1).padStart(2, '0');
-			let d = String(date.getDate()).padStart(2, '0');
-			return `${y}-${m}-${d}`;
-		};
+		// let format = (date) => {
+		// 	let y = date.getFullYear();
+		// 	let m = String(date.getMonth() + 1).padStart(2, '0');
+		// 	let d = String(date.getDate()).padStart(2, '0');
+		// 	return `${y}-${m}-${d}`;
+		// };
+
+		// var params = {
+		// 	'start_date': format(startdate),
+		// 	'end_date'	: format(enddate),
+		// 	'kode_unit'	: kode_unit
+		// };
+
+		var start_date = dateSQL( $(div_riwayat).find('[name=startDate]').data('DateTimePicker').date() );
+		var end_date = dateSQL( $(div_riwayat).find('[name=endDate]').data('DateTimePicker').date() );
 
 		var params = {
-			'start_date': format(startdate),
-			'end_date'	: format(enddate),
-			'kode_unit'	: kode_unit
+			'start_date': start_date,
+			'end_date': end_date,
+			'kode_unit': kode_unit
 		};
-
 
 		$.ajax({
 			url: 'transaksi/PengirimanPenerimaanOvk/get_lists',
