@@ -128,9 +128,13 @@ var pp = {
             },
             type : 'GET',
             dataType : 'HTML',
-            beforeSend : function(){ showLoading(); },
+            beforeSend : function(){ 
+				// showLoading(); 
+				App.showLoaderInContent( $(dcontent) );
+			},
             success : function(html){
-                $(dcontent).html(html);
+                // $(dcontent).html(html);
+				App.hideLoaderInContent( $(dcontent), html );
                 pp.setting_up();
 
                 if ( !empty(v_id) ) {
@@ -139,10 +143,11 @@ var pp = {
                 	});
 
                 	if ( empty(v_resubmit) ) {
-                		hideLoading();
+                		// hideLoading();
+						// App.showLoaderInContent( $(dcontent) );
                 	}
                 } else {
-                	hideLoading();
+                	// hideLoading();
                 }
             },
         });
@@ -989,30 +994,6 @@ var pp = {
         });
     }, // end - execHitStokSiklus
 
-	execHitStokSiklus: (content) => {
-        var params = content;
-
-        $.ajax({
-            url: 'transaksi/PengirimanPenerimaanPakan/execHitStokSiklus',
-            data: {
-                'params': params
-            },
-            type: 'POST',
-            dataType: 'JSON',
-            beforeSend: function() {
-                $('span.txt-msg-loading').text('Hitung stok di kandang . . .');
-            },
-            success: function(data) {
-                if ( data.status == 1 ) {
-                    pp.execInsertJurnal(data.content);
-                } else {
-                    hideLoading();
-                    bootbox.alert(data.message);
-                };
-            },
-        });
-    }, // end - execHitStokSiklus
-
 	execInsertJurnal: function(content) {
         var params = content;
 
@@ -1028,7 +1009,6 @@ var pp = {
             },
             success: function(data) {
                 hideLoading();
-				console.log("iki", data)
                 if ( data.status == 1 ) {
                     // bootbox.alert(data.content.message, function() {
                     //     ppm.load_form(data.content.no_sj, null, 'transaksi');
@@ -1041,22 +1021,14 @@ var pp = {
 							pp.get_lists();
 						}
 
-						if ( data.content.status == 3 ) {
-							// pp.load_form();
-							pp.load_riwayat(data.content.tanggal)
-						} else {
-							pp.load_form(data.content.id);
-							pp.load_riwayat(data.content.tanggal)
-						}
+						pp.load_form(data.content.id_kirim_pakan);
 					});
                 } else {
                     bootbox.alert(data.message);
-					pp.load_riwayat(data.content.tanggal)
                 };
             },
         });
     }, // end - execInsertJurnal
-
 
 	load_riwayat: (params) => {
 		var div_riwayat = $('div#riwayat');
@@ -1096,11 +1068,14 @@ var pp = {
 			type: 'POST',
 			dataType: 'JSON',
 			beforeSend: function() {
-				showLoading();
+				// showLoading();
+				App.showLoaderInContent( $(div_riwayat).find('table.tbl_pengiriman tbody') );
 			},
 			success: function(data) {
-				hideLoading();
+				// hideLoading();
 				if ( data.status == 1 ) {
+					App.hideLoaderInContent( $(div_riwayat).find('table.tbl_pengiriman tbody'), data.content );
+
 					$(div_riwayat).find('table.tbl_pengiriman tbody').html( data.content );
 
 					$(div_riwayat).find('[name=startDate]').data('DateTimePicker').date(startdate);

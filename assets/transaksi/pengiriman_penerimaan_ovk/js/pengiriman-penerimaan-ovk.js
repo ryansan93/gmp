@@ -130,10 +130,14 @@ var pv = {
             },
             type : 'GET',
             dataType : 'HTML',
-            beforeSend : function(){ showLoading(); },
+            beforeSend : function(){ 
+				// showLoading(); 
+				App.showLoaderInContent( $(dcontent) );
+			},
             success : function(html){
-                hideLoading();
-                $(dcontent).html(html);
+                // hideLoading();
+                // $(dcontent).html(html);
+				App.hideLoaderInContent( $(dcontent), html );
                 pv.setting_up();
 
                 if ( !empty(v_id) ) {
@@ -141,11 +145,11 @@ var pv = {
                 		pv.get_peternak(ipt);
                 	});
                 	
-                	if ( empty(v_resubmit) ) {
-                		hideLoading();
-                	}
+                	// if ( empty(v_resubmit) ) {
+                	// 	hideLoading();
+                	// }
                 } else {
-                	hideLoading();
+                	// hideLoading();
                 }
             },
         });
@@ -839,9 +843,18 @@ var pv = {
 
 				if ( data.status == 1 ) {
 					bootbox.alert(content.message, function() {
+						var start_date = $('[name=startDate]').data('DateTimePicker').date();
+						var end_date = $('[name=endDate]').data('DateTimePicker').date();
+
+						if ( !empty(start_date) || !empty(end_date) ) {
+							pv.get_lists();
+						}
+
+						pv.load_form(data.content.id_kirim_voadip);
+
 						// pv.get_lists();
 						// pv.load_form();
-						pv.load_riwayat(data);
+						// pv.load_riwayat(data);
 					});
 				} else {
 					bootbox.alert(data.message);
@@ -887,12 +900,14 @@ var pv = {
 			type: 'POST',
 			dataType: 'JSON',
 			beforeSend: function() {
-				showLoading();
+				// showLoading();
+				App.showLoaderInContent( $(div_riwayat).find('table.tbl_pengiriman tbody') );
 			},
 			success: function(data) {
 				hideLoading();
 				if ( data.status == 1 ) {
-					$(div_riwayat).find('table.tbl_pengiriman tbody').html( data.content );
+					App.showLoaderInContent( $(div_riwayat).find('table.tbl_pengiriman tbody'), data.content );
+					// $(div_riwayat).find('table.tbl_pengiriman tbody').html( data.content );
 
 					$(div_riwayat).find('[name=startDate]').data('DateTimePicker').date(startdate);
 					$(div_riwayat).find('[name=endDate]').data('DateTimePicker').date(enddate);

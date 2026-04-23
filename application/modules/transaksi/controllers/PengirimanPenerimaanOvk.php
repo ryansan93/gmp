@@ -1738,9 +1738,23 @@ class PengirimanPenerimaanOvk extends Public_Controller {
 
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
-            $this->result['status']         = 1;
-            $this->result['message']        = $message;
-            $this->result['data_params']   = $params;
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $id_kirim_voadip = null;
+            if ( $d_conf->count() > 0 ) {
+                $id_kirim_voadip = $d_conf->toArray()[0]['id_kirim_voadip'];
+            }
+
+            $_params = $params;
+            $_params['id_kirim_voadip'] = $id_kirim_voadip;
+
+            $this->result['status']    = 1;
+            $this->result['message']   = $message;
+            $this->result['content']   = $_params;
             
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
