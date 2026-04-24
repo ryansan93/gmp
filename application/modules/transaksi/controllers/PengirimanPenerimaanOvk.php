@@ -1238,28 +1238,28 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 )
             );
 
-            $id_header = $params['id'];
+            $id_kirim = $params['id'];
 
             $m_kirim_voadip_detail = new \Model\Storage\KirimVoadipDetail_model();
-            $m_kirim_voadip_detail->where('id_header', $id_header)->delete();
+            $m_kirim_voadip_detail->where('id_header', $id_kirim)->delete();
 
             foreach ($params['detail'] as $k_detail => $v_detail) {
                 $m_kirim_voadip_detail = new \Model\Storage\KirimVoadipDetail_model();
-                $m_kirim_voadip_detail->id_header = $id_header;
+                $m_kirim_voadip_detail->id_header = $id_kirim;
                 $m_kirim_voadip_detail->item = $v_detail['barang'];
                 $m_kirim_voadip_detail->jumlah = $v_detail['jumlah'];
                 $m_kirim_voadip_detail->kondisi = $v_detail['kondisi'];
                 $m_kirim_voadip_detail->save();
             }
 
-            $d_kirim_voadip = $m_kirim_voadip->where('id', $id_header)->with(['detail'])->first();
+            $d_kirim_voadip = $m_kirim_voadip->where('id', $id_kirim)->with(['detail'])->first();
             $deskripsi_log_kirim_voadip = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_kirim_voadip, $deskripsi_log_kirim_voadip);
             // End Pengiriman
 
             // Penerimaan
             $m_kv = new \Model\Storage\KirimVoadip_model();
-            $d_kv = $m_kv->where('id', $id_header)->first();
+            $d_kv = $m_kv->where('id', $id_kirim)->first();
 
             $path_name = null;
             $no_bbm = null;
@@ -1273,13 +1273,13 @@ class PengirimanPenerimaanOvk extends Public_Controller {
             }
 
             $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
-            $d_terima_voadip_old = $m_terima_voadip->where('id_kirim_voadip', $id_header)->first();
+            $d_terima_voadip_old = $m_terima_voadip->where('id_kirim_voadip', $id_kirim)->first();
 
             $id_terima = $d_terima_voadip_old->id;
             $now = $m_terima_voadip->getDate();
 
             $m_terima_voadip->where('id', $id_terima)->update([
-                    'id_kirim_voadip'   => $id_header,
+                    'id_kirim_voadip'   => $id_kirim,
                     'tgl_trans'         => $now['waktu'],
                     'tgl_terima'        => $params['tgl_terima'],
                     'path'              => $path_name,
@@ -1324,7 +1324,7 @@ class PengirimanPenerimaanOvk extends Public_Controller {
             }
 
             $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
-            $d_terima_voadip = $m_terima_voadip->where('id_kirim_voadip', $id_header)->first();
+            $d_terima_voadip = $m_terima_voadip->where('id', $id_terima)->first();
 
             $deskripsi_log_terima_voadip = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_terima_voadip, $deskripsi_log_terima_voadip);
