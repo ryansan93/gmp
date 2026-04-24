@@ -1275,14 +1275,10 @@ class PengirimanPenerimaanOvk extends Public_Controller {
             $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
             $d_terima_voadip_old = $m_terima_voadip->where('id_kirim_voadip', $id_header)->first();
 
-            if (!$d_terima_voadip_old) {
-                throw new \Exception("Data terima voadip tidak ditemukan.");
-            }
-
             $id_terima = $d_terima_voadip_old->id;
             $now = $m_terima_voadip->getDate();
 
-            $m_terima_voadip->where('id_kirim_voadip', $id_header)->update([
+            $m_terima_voadip->where('id', $id_terima)->update([
                     'id_kirim_voadip'   => $id_header,
                     'tgl_trans'         => $now['waktu'],
                     'tgl_terima'        => $params['tgl_terima'],
