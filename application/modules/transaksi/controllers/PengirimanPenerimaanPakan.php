@@ -1782,27 +1782,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
-            // Pengiriman
-            $m_kirim_pakan = new \Model\Storage\KirimPakan_model();
-            $now = $m_kirim_pakan->getDate();
-
-            $d_kirim_pakan = $m_kirim_pakan->where('id', $params['id'])->with(['detail'])->first();
-            $deskripsi_log_kirim_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_kirim_pakan, $deskripsi_log_kirim_pakan);
-
-            $m_kirim_pakan_detail = new \Model\Storage\KirimPakanDetail_model();
-            $m_kirim_pakan_detail->where('id_header', $params['id'])->delete();
-            $m_kirim_pakan->where('id', $params['id'])->delete();
-            // End Pengiriman
-
-            $m_terima_pakan = new \Model\Storage\TerimaPakan_model();
-            $now = $m_terima_pakan->getDate();
-
-            $d_terima_pakan = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->with(['detail'])->first();
-
-            $deskripsi_log_terima_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
-
             $noreg1 = null;
             $noreg2 = null;
             $m_conf = new \Model\Storage\Conf();
@@ -1831,6 +1810,26 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 }
             }
 
+            // Pengiriman
+            $m_kirim_pakan = new \Model\Storage\KirimPakan_model();
+            $now = $m_kirim_pakan->getDate();
+
+            $d_kirim_pakan = $m_kirim_pakan->where('id', $params['id'])->with(['detail'])->first();
+            $deskripsi_log_kirim_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/update', $d_kirim_pakan, $deskripsi_log_kirim_pakan);
+
+            $m_kirim_pakan_detail = new \Model\Storage\KirimPakanDetail_model();
+            $m_kirim_pakan_detail->where('id_header', $params['id'])->delete();
+            $m_kirim_pakan->where('id', $params['id'])->delete();
+            // End Pengiriman
+
+            $m_terima_pakan = new \Model\Storage\TerimaPakan_model();
+            $now = $m_terima_pakan->getDate();
+
+            $d_terima_pakan = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->with(['detail'])->first();
+
+            $deskripsi_log_terima_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
                 
             $this->result['message'] = 'Data Pengiriman Pakan berhasil di hapus.';
             $this->result['status'] = 1;
