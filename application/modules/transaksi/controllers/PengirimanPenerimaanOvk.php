@@ -1275,66 +1275,137 @@ class PengirimanPenerimaanOvk extends Public_Controller {
             $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
             $d_terima_voadip_old = $m_terima_voadip->where('id_kirim_voadip', $id_kirim)->first();
 
-            $id_terima = $d_terima_voadip_old->id;
-            $now = $m_terima_voadip->getDate();
-
-            $m_terima_voadip->where('id', $id_terima)->update([
-                    'id_kirim_voadip'   => $id_kirim,
-                    'tgl_trans'         => $now['waktu'],
-                    'tgl_terima'        => $params['tgl_terima'],
-                    'path'              => $path_name,
-                    'no_bbm'            => $no_bbm
-            ]);
-
-            $m_terima_voadip_detail = new \Model\Storage\TerimaVoadipDetail_model();
-            $m_terima_voadip_detail->where('id_header', $id_terima) ->delete();
-
-
-            // foreach ($params['detail'] as $k_detail => $v_detail) {
-            //     $m_terima_voadip_detail = new \Model\Storage\TerimaVoadipDetail_model();
-            //     $m_terima_voadip_detail->id_header  = $id_terima; 
-            //     $m_terima_voadip_detail->item       = $v_detail['barang'];
-            //     $m_terima_voadip_detail->jumlah     = $v_detail['jumlah'];
-            //     $m_terima_voadip_detail->kondisi    = $v_detail['kondisi'];
-            //     $m_terima_voadip_detail->save();
-            // }
-
-            $detail_merge = [];
-            foreach ($params['detail'] as $v_detail) {
-                $key = $v_detail['barang'];
-
-                if ( isset($detail_merge[$key]) ) {
-                    $detail_merge[$key]['jumlah'] += (float) $v_detail['jumlah'];
-                } else {
-                    $detail_merge[$key] = [
-                        'barang' => $v_detail['barang'],
-                        'jumlah' => (float) $v_detail['jumlah'],
-                        'kondisi' => $v_detail['kondisi']
-                    ];
+            if ( $d_terima_voadip_old ) {
+                $id_terima = $d_terima_voadip_old->id;
+                $now = $m_terima_voadip->getDate();
+    
+                $m_terima_voadip->where('id', $id_terima)->update([
+                        'id_kirim_voadip'   => $id_kirim,
+                        'tgl_trans'         => $now['waktu'],
+                        'tgl_terima'        => $params['tgl_terima'],
+                        'path'              => $path_name,
+                        'no_bbm'            => $no_bbm
+                ]);
+    
+                $m_terima_voadip_detail = new \Model\Storage\TerimaVoadipDetail_model();
+                $m_terima_voadip_detail->where('id_header', $id_terima) ->delete();
+    
+    
+                // foreach ($params['detail'] as $k_detail => $v_detail) {
+                //     $m_terima_voadip_detail = new \Model\Storage\TerimaVoadipDetail_model();
+                //     $m_terima_voadip_detail->id_header  = $id_terima; 
+                //     $m_terima_voadip_detail->item       = $v_detail['barang'];
+                //     $m_terima_voadip_detail->jumlah     = $v_detail['jumlah'];
+                //     $m_terima_voadip_detail->kondisi    = $v_detail['kondisi'];
+                //     $m_terima_voadip_detail->save();
+                // }
+    
+                $detail_merge = [];
+                foreach ($params['detail'] as $v_detail) {
+                    $key = $v_detail['barang'];
+    
+                    if ( isset($detail_merge[$key]) ) {
+                        $detail_merge[$key]['jumlah'] += (float) $v_detail['jumlah'];
+                    } else {
+                        $detail_merge[$key] = [
+                            'barang' => $v_detail['barang'],
+                            'jumlah' => (float) $v_detail['jumlah'],
+                            'kondisi' => $v_detail['kondisi']
+                        ];
+                    }
                 }
+    
+                foreach ($detail_merge as $v_detail) {
+                    $m_terima_voadip_detail             = new \Model\Storage\TerimaVoadipDetail_model();
+                    $m_terima_voadip_detail->id_header  = $id_terima;
+                    $m_terima_voadip_detail->item       = $v_detail['barang'];
+                    $m_terima_voadip_detail->jumlah     = $v_detail['jumlah'];
+                    $m_terima_voadip_detail->kondisi    = $v_detail['kondisi'];
+                    $m_terima_voadip_detail->save();
+                }
+    
+                $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
+                $d_terima_voadip = $m_terima_voadip->where('id', $id_terima)->first();
+    
+                $deskripsi_log_terima_voadip = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $d_terima_voadip, $deskripsi_log_terima_voadip);
+                // End Penerimaan
+
+                $tgl_trans = $d_terima_voadip->tgl_terima;
+                if ( $d_terima_voadip_old->tgl_terima < $tgl_trans ) {
+                    $tgl_trans = $d_terima_voadip_old->tgl_terima;
+                }
+            } else {
+                // Penerimaan
+
+                $path_name = null;
+
+                // $m_kv = new \Model\Storage\KirimVoadip_model();
+                $d_kv = $m_kirim_voadip->where('id', $id_kirim)->first();
+
+                $no_bbm = null;
+                if ( $d_kv->jenis_kirim == 'opks' ) {
+                    $no_bbm = 'BBM/OVK/S'.str_replace('OVO', '', $d_kv->no_order);
+                } else if ( $d_kv->jenis_kirim == 'opkg' ) {
+                    $no_bbm = 'BBM/OVK/G'.str_replace('OP', '', $d_kv->no_order);
+                } else if ( $d_kv->jenis_kirim == 'opkp' ) {
+                    $no_bbm = 'BBM/OVK/P'.str_replace('OP', '', $d_kv->no_order);
+                }
+
+                $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
+                $now = $m_terima_voadip->getDate();
+
+                $m_terima_voadip->id_kirim_voadip   = $id_kirim;
+                $m_terima_voadip->tgl_trans         = $now['waktu'];
+                $m_terima_voadip->tgl_terima        = $params['tgl_terima'];
+                $m_terima_voadip->path              = $path_name;
+                $m_terima_voadip->no_bbm            = $no_bbm;
+            
+                $m_terima_voadip->save();
+
+                $id_terima = $m_terima_voadip->id;
+
+                // foreach ($params['detail'] as $k_detail => $v_detail) {
+                //     $m_terima_voadip_detail             = new \Model\Storage\TerimaVoadipDetail_model();
+                //     $m_terima_voadip_detail->id_header  = $id_terima;
+                //     $m_terima_voadip_detail->item       = $v_detail['barang'];
+                //     $m_terima_voadip_detail->jumlah     = $v_detail['jumlah'];
+                //     $m_terima_voadip_detail->kondisi    = $v_detail['kondisi'];
+                //     $m_terima_voadip_detail->save();
+                // }
+
+                $detail_merge = [];
+                foreach ($params['detail'] as $v_detail) {
+                    $key = $v_detail['barang'];
+
+                    if ( isset($detail_merge[$key]) ) {
+                        $detail_merge[$key]['jumlah'] += (float) $v_detail['jumlah'];
+                    } else {
+                        $detail_merge[$key] = [
+                            'barang' => $v_detail['barang'],
+                            'jumlah' => (float) $v_detail['jumlah'],
+                            'kondisi' => $v_detail['kondisi']
+                        ];
+                    }
+                }
+
+                foreach ($detail_merge as $v_detail) {
+                    $m_terima_voadip_detail             = new \Model\Storage\TerimaVoadipDetail_model();
+                    $m_terima_voadip_detail->id_header  = $id_terima;
+                    $m_terima_voadip_detail->item       = $v_detail['barang'];
+                    $m_terima_voadip_detail->jumlah     = $v_detail['jumlah'];
+                    $m_terima_voadip_detail->kondisi    = $v_detail['kondisi'];
+                    $m_terima_voadip_detail->save();
+                }
+
+                $d_terima_voadip = $m_terima_voadip->where('id', $id_terima)->with(['detail'])->first();
+                $deskripsi_log_terima_voadip = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/save', $d_terima_voadip, $deskripsi_log_terima_voadip);
+
+                // End Penerimaan
+
+                $tgl_trans = $params['tgl_terima'];
             }
-
-            foreach ($detail_merge as $v_detail) {
-                $m_terima_voadip_detail             = new \Model\Storage\TerimaVoadipDetail_model();
-                $m_terima_voadip_detail->id_header  = $id_terima;
-                $m_terima_voadip_detail->item       = $v_detail['barang'];
-                $m_terima_voadip_detail->jumlah     = $v_detail['jumlah'];
-                $m_terima_voadip_detail->kondisi    = $v_detail['kondisi'];
-                $m_terima_voadip_detail->save();
-            }
-
-            $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
-            $d_terima_voadip = $m_terima_voadip->where('id', $id_terima)->first();
-
-            $deskripsi_log_terima_voadip = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_terima_voadip, $deskripsi_log_terima_voadip);
-            // End Penerimaan
-
-            $tgl_trans = $d_terima_voadip->tgl_terima;
-            if ( $d_terima_voadip_old->tgl_terima < $tgl_trans ) {
-                $tgl_trans = $d_terima_voadip_old->tgl_terima;
-            }
-
             // cetak_r($id_terima);
             // cetak_r($tgl_trans, 1);
 
