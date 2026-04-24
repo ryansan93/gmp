@@ -1398,8 +1398,8 @@ class PengirimanPenerimaanOvk extends Public_Controller {
 
                 Modules::run('base/event/update',$d_terima_voadip,'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser']);
 
-                $m_terima_voadip_detail->where('id_header', $d_terima_voadip->id)->delete();
-                $m_terima_voadip->where('id', $d_terima_voadip->id)->delete();
+                // $m_terima_voadip_detail->where('id_header', $d_terima_voadip->id)->delete();
+                // $m_terima_voadip->where('id', $d_terima_voadip->id)->delete();
             }
 
 
