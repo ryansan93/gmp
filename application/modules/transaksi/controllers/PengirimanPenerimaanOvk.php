@@ -1426,17 +1426,8 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 'message' => 'Data Voadip (terima + kirim) berhasil di hapus.',
                 'status_jurnal' => 3
             );
-
         } catch (\Exception $e) {
-
-
             $this->result = [
-                'status' => 1,
-                'message' => 'Data Voadip (terima + kirim) berhasil dihapus.'
-            ];
-
-            $this->result = [
-                'status' => 0,
                 'message' => 'Gagal : ' . $e->getMessage()
             ];
         }
