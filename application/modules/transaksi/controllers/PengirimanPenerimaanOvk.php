@@ -1777,6 +1777,17 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 $noreg1 = $d_conf['noreg1'];
                 $noreg2 = $d_conf['noreg2'];
             }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $id_kirim_voadip = null;
+            if ( $d_conf->count() > 0 ) {
+                $id_kirim_voadip = $d_conf->toArray()[0]['id_kirim_voadip'];
+            }
             
             $this->insertKonfirmasi( $id, $delete );
 
@@ -1794,17 +1805,6 @@ class PengirimanPenerimaanOvk extends Public_Controller {
             }
 
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-
-            $id_kirim_voadip = null;
-            if ( $d_conf->count() > 0 ) {
-                $id_kirim_voadip = $d_conf->toArray()[0]['id_kirim_voadip'];
-            }
 
             /* JIKA DELETE */
             if ( $delete == 1 ) {
