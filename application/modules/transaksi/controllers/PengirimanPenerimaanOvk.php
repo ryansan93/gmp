@@ -1816,8 +1816,8 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     // throw new \Exception("Data kirim tidak ditemukan.");
                     Modules::run('base/event/update', $d_kirim, 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser']);
         
-                    $m_kirim_detail->where('id_header', $params['id'])->delete();
-                    $m_kirim->where('id', $params['id'])->delete();
+                    $m_kirim_detail->where('id_header', $id_kirim_voadip)->delete();
+                    $m_kirim->where('id', $id_kirim_voadip)->delete();
                 }
 
                 $id_kirim_voadip = null;
