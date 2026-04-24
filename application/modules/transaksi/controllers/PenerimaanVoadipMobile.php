@@ -59,6 +59,9 @@ class PenerimaanVoadipMobile extends Public_Controller {
 
     public function riwayat($mitra)
     {
+        $akses = hakAkses($this->url);
+
+        $content['akses'] = $akses;
         $content['data_mitra'] = $mitra;
         $html = $this->load->view('transaksi/penerimaan_voadip_mobile/riwayat', $content, TRUE);
 
@@ -136,6 +139,9 @@ class PenerimaanVoadipMobile extends Public_Controller {
 
     public function add_form($mitra)
     {
+        $akses = hakAkses($this->url);
+
+        $content['akses'] = $akses;
         $content['data_mitra'] = $mitra;
         $html = $this->load->view('transaksi/penerimaan_voadip_mobile/add_form', $content, true);
 
@@ -201,6 +207,9 @@ class PenerimaanVoadipMobile extends Public_Controller {
             'data_brg' => $data_brg
         );
 
+        $akses = hakAkses($this->url);
+
+        $content['akses'] = $akses;
         $content['data'] = $data;
         $html = $this->load->view('transaksi/penerimaan_voadip_mobile/detail_form', $content, true);
 

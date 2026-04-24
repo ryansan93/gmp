@@ -26,9 +26,10 @@
 					</select>
 				</div>
 			</div>
-
 			<div class="col-xs-6 no-padding" style="margin-bottom: 5px;">
-				<button type="button" class="btn btn-primary pull-left tambah_penerimaan" onclick="ppm.change_tab(this)" data-id="" data-edit="" data-href="transaksi"><i class="fa fa-plus"></i> Tambah</button>
+				<?php if ($akses['a_submit'] == 1) { ?>
+					<button type="button" class="btn btn-primary pull-left tambah_penerimaan" onclick="ppm.change_tab(this)" data-id="" data-edit="" data-href="transaksi"><i class="fa fa-plus"></i> Tambah</button>
+				<?php } ?>
 			</div>
 			<div class="col-xs-6 no-padding" style="margin-bottom: 5px;">
 				<button type="button" class="btn btn-primary pull-right tampilkan_riwayat" onclick="ppm.list_riwayat(this)"><i class="fa fa-search"></i> Tampilkan</button>

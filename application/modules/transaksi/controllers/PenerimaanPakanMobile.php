@@ -59,6 +59,9 @@ class PenerimaanPakanMobile extends Public_Controller {
 
     public function riwayat($mitra)
     {
+        $akses = hakAkses($this->url);
+
+        $content['akses'] = $akses;
         $content['data_mitra'] = $mitra;
         $html = $this->load->view('transaksi/penerimaan_pakan_mobile/riwayat', $content, TRUE);
 
@@ -136,6 +139,9 @@ class PenerimaanPakanMobile extends Public_Controller {
 
     public function add_form($mitra)
     {
+        $akses = hakAkses($this->url);
+
+        $content['akses'] = $akses;
         $content['data_mitra'] = $mitra;
         $html = $this->load->view('transaksi/penerimaan_pakan_mobile/add_form', $content, true);
 
@@ -197,6 +203,9 @@ class PenerimaanPakanMobile extends Public_Controller {
             'data_brg' => $data_brg
         );
 
+        $akses = hakAkses($this->url);
+
+        $content['akses'] = $akses;
         $content['data'] = $data;
         $html = $this->load->view('transaksi/penerimaan_pakan_mobile/detail_form', $content, true);
 
@@ -630,11 +639,58 @@ class PenerimaanPakanMobile extends Public_Controller {
                 $id_terima = $d_terima_pakan->id;
             }
 
+            $tanggal = $params['tiba'];
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select tp.id, kp.jenis_kirim, kp.jenis_tujuan, kp.asal, kp.tujuan from terima_pakan tp
+                left join
+                    kirim_pakan kp
+                    on
+                        tp.id_kirim_pakan = kp.id
+                where
+                    tp.id = '".$id_terima."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                if ( $d_conf['jenis_kirim'] == 'opkp' ) {
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select
+                            min(tp_asal.tgl_terima) as tanggal
+                        from terima_pakan tp 
+                        left join
+                            kirim_pakan kp 
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        left join
+                            det_kirim_pakan dkp 
+                            on
+                                dkp.id_header = kp.id
+                        left join
+                            kirim_pakan kp_asal
+                            on	
+                                dkp.no_sj_asal = kp_asal.no_sj
+                        left join
+                            terima_pakan tp_asal
+                            on
+                                kp_asal.id = tp_asal.id_kirim_pakan 
+                        where tp.id = ".$id_terima."
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+                    if ( $d_conf->count() > 0 ) {
+                        $tanggal = $d_conf->toArray()[0]['tanggal'];
+                    }
+                }
+            }
+
             $this->result['status'] = 1;
             // $this->result['content'] = array('id_terima' => $id_terima);
             $this->result['content'] = array(
                 'id' => $id_terima,
-                'tanggal' => $params['tiba'],
+                'tanggal' => $tanggal,
                 'delete' => 0,
                 'message' => 'Data Penerimaan Pakan berhasil di simpan.',
                 'status_jurnal' => 2,
