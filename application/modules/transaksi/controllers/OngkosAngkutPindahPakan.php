@@ -616,6 +616,9 @@ class OngkosAngkutPindahPakan extends Public_Controller
         if ( $d_aopp->count() > 0 ) {
             $d_aopp = $d_aopp->toArray();
 
+            $m_lt = new \Model\Storage\LogTables_model();
+            $d_lt = $m_lt->getLog($m_oapp->getTable(), $id);
+
             $data = array(
                 'id' => $id,
                 'unit' => $d_aopp[0]['unit'],
@@ -630,7 +633,8 @@ class OngkosAngkutPindahPakan extends Public_Controller
                 'ekspedisi' => $d_aopp[0]['ekspedisi'],
                 'no_polisi' => $d_aopp[0]['no_polisi'],
                 'sopir' => $d_aopp[0]['sopir'],
-                'ongkos_angkut' => $d_aopp[0]['ongkos_angkut']
+                'ongkos_angkut' => $d_aopp[0]['ongkos_angkut'],
+                'log' => $d_lt
             );
         }
 

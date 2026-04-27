@@ -51,3 +51,25 @@
         </button>
     </div>
 </div>
+<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+<div class="col-lg-12 no-padding">
+    <div class="col-xs-6 no-padding">
+		<div class="col-xs-12 no-padding"><label class="control-label"><u>Keterangan</u></label></div>
+		<div class="col-xs-12 no-padding list_ket">
+			<ul>
+				<?php if ( !empty($data['log']) ) { ?>
+					<?php foreach ($data['log'] as $k_lt => $v_lt) { ?>
+						<li>
+							<?php
+								$ket = $v_lt['deskripsi'].' '.substr($v_lt['waktu'], 0, 10).' '.substr($v_lt['waktu'], 11, 5);
+								echo $ket;
+							?>
+						</li>
+					<?php } ?>
+				<?php } else { ?>
+					<li>-</li>
+				<?php } ?>
+			</ul>
+		</div>
+	</div>
+</div>
