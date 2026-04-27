@@ -286,9 +286,9 @@ class OngkosAngkutPindahPakan extends Public_Controller
 
         try {
             $m_pf = new \Model\Storage\PeriodeFiskal_model();
-            $d_pf = $m_pf->where('status', 1)->orderBy('start_date', 'asc')->first();
+            $d_pf = $m_pf->where('opr', 1)->orderBy('start_date', 'asc')->first();
 
-            $date = null;
+            $date = date('Y-m-01');
             if ( $d_pf ) {
                 $date = $d_pf->start_date;
             }
@@ -857,32 +857,34 @@ class OngkosAngkutPindahPakan extends Public_Controller
 
     public function tes()
     {
+        cetak_r( date('Y-m-01') );
+
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 26, 26, 2);
 
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select opp.* from oa_pindah_pakan opp
-            left join
-                kirim_pakan kp
-                on
-                    opp.no_sj = kp.no_sj 
-            left join
-                terima_pakan tp 
-                on
-                    tp.id_kirim_pakan = kp.id
-            where
-                tp.tgl_terima >= '2025-10-01'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select opp.* from oa_pindah_pakan opp
+        //     left join
+        //         kirim_pakan kp
+        //         on
+        //             opp.no_sj = kp.no_sj 
+        //     left join
+        //         terima_pakan tp 
+        //         on
+        //             tp.id_kirim_pakan = kp.id
+        //     where
+        //         tp.tgl_terima >= '2025-10-01'
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $key => $value) {
-                cetak_r($value['id']);
+        //     foreach ($d_conf as $key => $value) {
+        //         cetak_r($value['id']);
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
-            }
-        }
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+        //     }
+        // }
     }
 }
