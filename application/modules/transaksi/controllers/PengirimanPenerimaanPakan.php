@@ -1431,9 +1431,16 @@ class PengirimanPenerimaanPakan extends Public_Controller {
             $status = $params['status'];
             $noreg1 = $params['noreg1'];
             $noreg2 = $params['noreg2'];
+            $noreg1_old = $params['noreg1_old'];
+            $noreg2_old = $params['noreg2_old'];
 
             $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
             $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+            }
 
             $this->result['status'] = $return['status'];
             $this->result['message'] = json_encode($return);
@@ -1479,10 +1486,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
         display_json( $this->result );
     }
-
-
-
-
 
     // public function edit()
     // {
@@ -1610,12 +1613,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 $m_terima_pakan                 = new \Model\Storage\TerimaPakan_model();
                 $now                            = $m_terima_pakan->getDate();
 
-                cetak_r($params['id']);
-                cetak_r($now['waktu']);
-                cetak_r($params['tgl_terima']);
-                cetak_r($path_name);
-                cetak_r($no_bbm);
-
                 $m_terima_pakan->id_kirim_pakan = $params['id'];
                 $m_terima_pakan->tgl_trans      = $now['waktu'];
                 $m_terima_pakan->tgl_terima     = $params['tgl_terima'];
@@ -1676,7 +1673,7 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     $detail_merge = [];
     
                     foreach ($params['detail'] as $v_detail) {
-                        $key = $v_detail['barang'].'|'.$v_detail['no_sj_asal'];
+                        $key = $v_detail['barang'];
     
                         if ( isset($detail_merge[$key]) ) {
                             $detail_merge[$key]['jumlah'] += $v_detail['jumlah'];
@@ -1729,6 +1726,8 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
             $noreg1 = null;
             $noreg2 = null;
+            $noreg1_old = null;
+            $noreg2_old = null;
             $m_conf = new \Model\Storage\Conf();
             $sql = "
                 select tp.id, kp.jenis_kirim, kp.jenis_tujuan, kp.asal, kp.tujuan from terima_pakan tp
@@ -1755,6 +1754,17 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 }
             }
 
+            if ( $d_terima_old->jenis_kirim == 'opkg' ) {
+                if ( $d_terima_old->jenis_tujuan == 'peternak' ) {
+                    $noreg1_old = $d_terima_old->tujuan;
+                }
+            }
+
+            if ( $d_terima_old->jenis_kirim == 'opkp' ) {
+                $noreg1_old = $d_terima_old->asal;
+                $noreg2_old = $d_terima_old->tujuan;
+            }
+
             $this->result['status'] = 1;
             $this->result['message'] = 'Data Pengiriman Pakan berhasil di ubah.';
             $this->result['content'] = array(
@@ -1765,7 +1775,9 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     'status_jurnal' => 2,
                     'status' => 2,
                     'noreg1' => $noreg1,
-                    'noreg2' => $noreg2
+                    'noreg2' => $noreg2,
+                    'noreg1_old' => $noreg1_old,
+                    'noreg2_old' => $noreg2_old
                 );
 
                 
