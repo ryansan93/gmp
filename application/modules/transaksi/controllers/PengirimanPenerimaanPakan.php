@@ -1230,7 +1230,9 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     'status_jurnal' => 2,
                     'status' => 2,
                     'noreg1' => $noreg1,
-                    'noreg2' => $noreg2
+                    'noreg2' => $noreg2,
+                    'noreg1_old' => $noreg1,
+                    'noreg2_old' => $noreg2
                 );
             } else {
                 $this->result['message'] = 'Kode unit masih kosong, harap lengkapi kode unit terlebih dahulu.';
@@ -1431,15 +1433,17 @@ class PengirimanPenerimaanPakan extends Public_Controller {
             $status = $params['status'];
             $noreg1 = $params['noreg1'];
             $noreg2 = $params['noreg2'];
-            $noreg1_old = $params['noreg1_old'];
-            $noreg2_old = $params['noreg2_old'];
+            $noreg1_old = (!empty($params['noreg1_old']) && isset($params['noreg1_old'])) ? $params['noreg1_old'] : null;
+            $noreg2_old = (!empty($params['noreg2_old']) && isset($params['noreg2_old'])) ? $params['noreg2_old'] : null;
 
             $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
             $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
-            if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
-                $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
-                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                if ( $noreg1 <> $noreg2_old || $noreg2 <> $noreg2_old ) {
+                    $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
+                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                }
             }
 
             $this->result['status'] = $return['status'];
