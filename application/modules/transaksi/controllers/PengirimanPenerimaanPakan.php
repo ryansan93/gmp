@@ -712,6 +712,139 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
         $_data = array();
 
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.*,
+                data.alamat_jalan+data.rt+data.rw+data.kelurahan+data.kecamatan as alamat
+            from
+            (
+                select 
+                    rs.noreg,
+                    CONVERT(varchar(10), d_noreg.tgl_docin, 103) as tgl_terima,
+                    w.kode as kode_unit,
+                    case
+                        when m.alamat_rt is not null and m.alamat_rt <> '' then
+                            ' ,RT.'+cast(m.alamat_rt as varchar(5))
+                        else
+                            ''
+                    end as rt,
+                    case
+                        when m.alamat_rw is not null and m.alamat_rw <> '' then
+                            '/RW.'+cast(m.alamat_rw as varchar(5))
+                        else
+                            ''
+                    end as rw,
+                    case
+                        when m.alamat_kelurahan is not null and m.alamat_kelurahan <> '' then
+                            ' ,'+m.alamat_kelurahan
+                        else
+                            ''
+                    end as kelurahan,
+                    case
+                        when l_kec.nama is not null and l_kec.nama <> '' then
+                            ' ,'+l_kec.nama
+                        else
+                            ''
+                    end as kecamatan,
+                    m.alamat_jalan,
+                    m.nomor,
+                    m.nama
+                from
+                ( 
+                    select 
+                        rs.noreg, 
+                        cast(rs.tgl_docin as date) as tgl_docin
+                    from rdim_submit rs 
+                    left join
+                        (
+                            select od1.* from order_doc od1
+                            right join
+                                (select max(id) as id, noreg from order_doc group by noreg) od2
+                                on
+                                    od1.id = od2.id
+                        ) od
+                        on
+                            rs.noreg = od.noreg
+                    left join
+                        (
+                            select td1.* from terima_doc td1
+                            right join
+                                (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                on
+                                    td1.id = td2.id
+                        ) td
+                        on
+                            od.no_order = td.no_order
+                    where 
+                        rs.status = 1 and
+                        td.id is null and
+                        cast(rs.tgl_docin as date) between '".$first_date_of_month."' and '".$last_date_of_month."'
+                        
+                    union all
+                    
+                    select
+                        od.noreg,
+                        cast(td.datang as date) as tgl_docin
+                    from terima_doc td 
+                    left join
+                        order_doc od 
+                        on
+                            td.no_order = od.no_order 
+                    where
+                        cast(td.datang as date) between '".$first_date_of_month."' and '".$last_date_of_month."'
+                ) d_noreg
+                left join
+                    rdim_submit rs 
+                    on
+                        rs.noreg = d_noreg.noreg
+                left join
+                    kandang k
+                    on
+                        rs.kandang = k.id
+                left join
+                    wilayah w
+                    on
+                        w.id = k.unit 
+                left join
+                    (
+                        select mm1.* from mitra_mapping mm1
+                        right join
+                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                            on
+                                mm1.id = mm2.id
+                    ) mm
+                    on
+                        rs.nim = mm.nim
+                left join
+                    mitra m
+                    on
+                        m.id = mm.mitra
+                left join
+                    lokasi l_kec
+                    on
+                        m.alamat_kecamatan = l_kec.id
+                left join
+                    tutup_siklus ts 
+                    on
+                        rs.noreg = ts.noreg
+                where
+                    ts.id is null
+            ) data
+            order by
+                data.kode_unit asc,
+                data.tgl_terima,
+                data.nama asc,
+                data.noreg asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = array();
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        /*
         $m_rs = new \Model\Storage\RdimSubmit_model();
         // $d_rs = $m_rs->where('tgl_docin', '>=', $date)->get()->toArray();
         $d_rs = $m_rs->select('nim', 'kandang', 'noreg', 'tgl_docin')->distinct('nim', 'kandang', 'noreg', 'tgl_docin')->whereBetween('tgl_docin', [$first_date_of_month, $last_date_of_month])->with(['mitra', 'kandang'])->get();
@@ -758,6 +891,7 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 $data[] = $v_data;
             }
         }
+        */
 
         $this->result['status'] = !empty($data) ? 1 : 0;
         $this->result['content'] = $data;
@@ -1216,15 +1350,51 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                             $noreg2 = $d_conf['tujuan'];
                         }
                     }
-                    
-
                 // End Penerimaan Pakan
+
+                $tgl_trans = $params['tgl_terima'];
+
+                /* JIKA PINDAH PAKAN, CEK TANGGAL */
+                if ( $params['jenis_kirim'] == 'opkp' ) {
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select min(tp_asal.tgl_terima) as tgl_trans from terima_pakan tp
+                        left join
+                            kirim_pakan kp
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        left join
+                            det_kirim_pakan dkp
+                            on
+                                dkp.id_header = kp.id
+                        left join
+                            kirim_pakan kp_asal
+                            on
+                                dkp.no_sj_asal = kp_asal.no_sj
+                        left join
+                            terima_pakan tp_asal
+                            on
+                                kp_asal.id = tp_asal.id_kirim_pakan
+                        where
+                            tp.id = '".$id_terima."'
+                    ";
+                    $d_tgl_pp = $m_conf->hydrateRaw( $sql );
+        
+                    if ( $d_tgl_pp->count() > 0 ) {
+                        $d_tgl_pp = $d_tgl_pp->toArray()[0]['tgl_trans'];
+        
+                        if ( $d_tgl_pp < $tgl_trans ) {
+                            $tgl_trans = $d_tgl_pp;
+                        }
+                    }
+                }
+                /* END - JIKA PINDAH PAKAN, CEK TANGGAL */
 
                 $this->result['status'] = 1;
                 $this->result['message'] = 'Data Pengiriman Pakan berhasil di simpan.';
                 $this->result['content'] = array(
                     'id' => $id_terima,
-                    'tanggal' => $params['tgl_terima'],
+                    'tanggal' => $tgl_trans,
                     'delete' => 0,
                     'message' => 'Data Penerimaan Pakan berhasil di simpan.',
                     'status_jurnal' => 2,
@@ -1439,6 +1609,42 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 $tgl_trans = $d_terima_old->tgl_terima;
             }
 
+            /* JIKA PINDAH PAKAN, CEK TANGGAL */
+            if ( $params['jenis_kirim'] == 'opkp' ) {
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select min(tp_asal.tgl_terima) as tgl_trans from terima_pakan tp
+                    left join
+                        kirim_pakan kp
+                        on
+                            tp.id_kirim_pakan = kp.id
+                    left join
+                        det_kirim_pakan dkp
+                        on
+                            dkp.id_header = kp.id
+                    left join
+                        kirim_pakan kp_asal
+                        on
+                            dkp.no_sj_asal = kp_asal.no_sj
+                    left join
+                        terima_pakan tp_asal
+                        on
+                            kp_asal.id = tp_asal.id_kirim_pakan
+                    where
+                        tp.id = '".$id_terima."'
+                ";
+                $d_tgl_pp = $m_conf->hydrateRaw( $sql );
+    
+                if ( $d_tgl_pp->count() > 0 ) {
+                    $d_tgl_pp = $d_tgl_pp->toArray()[0]['tgl_trans'];
+    
+                    if ( $d_tgl_pp < $tgl_trans ) {
+                        $tgl_trans = $d_tgl_pp;
+                    }
+                }
+            }
+            /* END - JIKA PINDAH PAKAN, CEK TANGGAL */
+
             $noreg1 = null;
             $noreg2 = null;
             $m_conf = new \Model\Storage\Conf();
@@ -1553,12 +1759,50 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
             $deskripsi_log_terima_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
+
+            $tgl_trans = $d_terima_pakan->tgl_terima;
+
+            /* JIKA PINDAH PAKAN, CEK TANGGAL */
+            if ( $d_kirim_pakan->jenis_kirim == 'opkp' ) {
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select min(tp_asal.tgl_terima) as tgl_trans from terima_pakan tp
+                    left join
+                        kirim_pakan kp
+                        on
+                            tp.id_kirim_pakan = kp.id
+                    left join
+                        det_kirim_pakan dkp
+                        on
+                            dkp.id_header = kp.id
+                    left join
+                        kirim_pakan kp_asal
+                        on
+                            dkp.no_sj_asal = kp_asal.no_sj
+                    left join
+                        terima_pakan tp_asal
+                        on
+                            kp_asal.id = tp_asal.id_kirim_pakan
+                    where
+                        tp.id = '".$d_terima_pakan->id."'
+                ";
+                $d_tgl_pp = $m_conf->hydrateRaw( $sql );
+    
+                if ( $d_tgl_pp->count() > 0 ) {
+                    $d_tgl_pp = $d_tgl_pp->toArray()[0]['tgl_trans'];
+    
+                    if ( $d_tgl_pp < $tgl_trans ) {
+                        $tgl_trans = $d_tgl_pp;
+                    }
+                }
+            }
+            /* END - JIKA PINDAH PAKAN, CEK TANGGAL */
                 
             $this->result['message'] = 'Data Pengiriman Pakan berhasil di hapus.';
             $this->result['status'] = 1;
             $this->result['content'] = array(
                 'id' => $d_terima_pakan->id,
-                'tanggal' => $d_terima_pakan->tgl_terima,
+                'tanggal' => $tgl_trans,
                 'delete' => 1,
                 'message' => 'Data Penerimaan Pakan berhasil di hapus.',
                 'status_jurnal' => 3,
@@ -1768,7 +2012,7 @@ class PengirimanPenerimaanPakan extends Public_Controller {
             $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
             if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
-                if ( $noreg1 <> $noreg2_old || $noreg2 <> $noreg2_old ) {
+                if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
                     $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
                     $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
                 }

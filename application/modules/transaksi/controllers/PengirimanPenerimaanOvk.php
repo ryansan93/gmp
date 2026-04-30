@@ -686,6 +686,139 @@ class PengirimanPenerimaanOvk extends Public_Controller {
 
         $_data = array();
 
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.*,
+                data.alamat_jalan+data.rt+data.rw+data.kelurahan+data.kecamatan as alamat
+            from
+            (
+                select 
+                    rs.noreg,
+                    CONVERT(varchar(10), d_noreg.tgl_docin, 103) as tgl_terima,
+                    w.kode as kode_unit,
+                    case
+                        when m.alamat_rt is not null and m.alamat_rt <> '' then
+                            ' ,RT.'+cast(m.alamat_rt as varchar(5))
+                        else
+                            ''
+                    end as rt,
+                    case
+                        when m.alamat_rw is not null and m.alamat_rw <> '' then
+                            '/RW.'+cast(m.alamat_rw as varchar(5))
+                        else
+                            ''
+                    end as rw,
+                    case
+                        when m.alamat_kelurahan is not null and m.alamat_kelurahan <> '' then
+                            ' ,'+m.alamat_kelurahan
+                        else
+                            ''
+                    end as kelurahan,
+                    case
+                        when l_kec.nama is not null and l_kec.nama <> '' then
+                            ' ,'+l_kec.nama
+                        else
+                            ''
+                    end as kecamatan,
+                    m.alamat_jalan,
+                    m.nomor,
+                    m.nama
+                from
+                ( 
+                    select 
+                        rs.noreg, 
+                        cast(rs.tgl_docin as date) as tgl_docin
+                    from rdim_submit rs 
+                    left join
+                        (
+                            select od1.* from order_doc od1
+                            right join
+                                (select max(id) as id, noreg from order_doc group by noreg) od2
+                                on
+                                    od1.id = od2.id
+                        ) od
+                        on
+                            rs.noreg = od.noreg
+                    left join
+                        (
+                            select td1.* from terima_doc td1
+                            right join
+                                (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                on
+                                    td1.id = td2.id
+                        ) td
+                        on
+                            od.no_order = td.no_order
+                    where 
+                        rs.status = 1 and
+                        td.id is null and
+                        cast(rs.tgl_docin as date) between '".$first_date_of_month."' and '".$last_date_of_month."'
+                        
+                    union all
+                    
+                    select
+                        od.noreg,
+                        cast(td.datang as date) as tgl_docin
+                    from terima_doc td 
+                    left join
+                        order_doc od 
+                        on
+                            td.no_order = od.no_order 
+                    where
+                        cast(td.datang as date) between '".$first_date_of_month."' and '".$last_date_of_month."'
+                ) d_noreg
+                left join
+                    rdim_submit rs 
+                    on
+                        rs.noreg = d_noreg.noreg
+                left join
+                    kandang k
+                    on
+                        rs.kandang = k.id
+                left join
+                    wilayah w
+                    on
+                        w.id = k.unit 
+                left join
+                    (
+                        select mm1.* from mitra_mapping mm1
+                        right join
+                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                            on
+                                mm1.id = mm2.id
+                    ) mm
+                    on
+                        rs.nim = mm.nim
+                left join
+                    mitra m
+                    on
+                        m.id = mm.mitra
+                left join
+                    lokasi l_kec
+                    on
+                        m.alamat_kecamatan = l_kec.id
+                left join
+                    tutup_siklus ts 
+                    on
+                        rs.noreg = ts.noreg
+                where
+                    ts.id is null
+            ) data
+            order by
+                data.kode_unit asc,
+                data.tgl_terima,
+                data.nama asc,
+                data.noreg asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = array();
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        /*
         $m_rs = new \Model\Storage\RdimSubmit_model();
         $d_rs = $m_rs->select('nim', 'kandang', 'noreg', 'tgl_docin')->distinct('nim', 'kandang', 'noreg', 'tgl_docin')->whereBetween('tgl_docin', [$first_date_of_month, $last_date_of_month])->with(['mitra', 'kandang'])->get();
 
@@ -731,6 +864,7 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 $data[] = $v_data;
             }
         }
+        */
 
         $this->result['status'] = !empty($data) ? 1 : 0;
         $this->result['content'] = $data;
@@ -1188,6 +1322,28 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     $deskripsi_log_terima_voadip = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                     Modules::run( 'base/event/save', $d_terima_voadip, $deskripsi_log_terima_voadip);
 
+                    $noreg1 = null;
+                    $noreg2 = null;
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select tv.id, kv.jenis_kirim, kv.jenis_tujuan, kv.asal, kv.tujuan from terima_voadip tv
+                        left join
+                            kirim_voadip kv
+                            on
+                                tv.id_kirim_voadip = kv.id
+                        where
+                            tv.id = '".$id_terima."'
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+                    if ( $d_conf->count() > 0 ) {
+                        $d_conf = $d_conf->toArray()[0];
+
+                        if ( $d_conf['jenis_kirim'] == 'opkg' ) {
+                            if ( $d_conf['jenis_tujuan'] == 'peternak' ) {
+                                $noreg1 = $d_conf['tujuan'];
+                            }
+                        }
+                    }
                 // End Penerimaan
 
                 $this->result['status'] = 1;
@@ -1196,7 +1352,12 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     'tanggal' => $params['tgl_terima'],
                     'delete' => 0,
                     'message' => 'Data Penerimaan Voadip berhasil di simpan.',
-                    'status_jurnal' => 2
+                    'status_jurnal' => 2,
+                    'status' => 2,
+                    'noreg1' => $noreg1,
+                    'noreg2' => $noreg2,
+                    'noreg1_old' => $noreg1,
+                    'noreg2_old' => $noreg2
                 );
 
             } else {
@@ -1218,6 +1379,18 @@ class PengirimanPenerimaanOvk extends Public_Controller {
 
         try {
             // Pengiriman
+            $m_kirim_voadip = new \Model\Storage\KirimVoadip_model();
+            $now = $m_kirim_voadip->getDate();
+            $d_kv_old = $m_kirim_voadip->where('id', $params['id'])->first();
+
+            $noreg1_old = null;
+            $noreg2_old = null;
+            if ( $d_kv_old->jenis_kirim == 'opkg' ) {
+                if ( $d_kv_old->jenis_tujuan == 'peternak' ) {
+                    $noreg1_old = $d_kv_old->tujuan;
+                }
+            }
+
             $m_kirim_voadip = new \Model\Storage\KirimVoadip_model();
             $now = $m_kirim_voadip->getDate();
 
@@ -1406,8 +1579,29 @@ class PengirimanPenerimaanOvk extends Public_Controller {
 
                 $tgl_trans = $params['tgl_terima'];
             }
-            // cetak_r($id_terima);
-            // cetak_r($tgl_trans, 1);
+
+            $noreg1 = null;
+            $noreg2 = null;
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select tv.id, kv.jenis_kirim, kv.jenis_tujuan, kv.asal, kv.tujuan from terima_voadip tv
+                left join
+                    kirim_voadip kv
+                    on
+                        tv.id_kirim_voadip = kv.id
+                where
+                    tv.id = '".$id_terima."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                if ( $d_conf['jenis_kirim'] == 'opkg' ) {
+                    if ( $d_conf['jenis_tujuan'] == 'peternak' ) {
+                        $noreg1 = $d_conf['tujuan'];
+                    }
+                }
+            }
 
             $this->result['status'] = 1;
             $this->result['content'] = array(
@@ -1415,7 +1609,12 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 'tanggal'   => $tgl_trans,
                 'delete'    => 0,
                 'message'   => 'Data Penerimaan Voadip berhasil di ubah.',
-                'status_jurnal' => 2
+                'status_jurnal' => 2,
+                'status' => 2,
+                'noreg1' => $noreg1,
+                'noreg2' => $noreg2,
+                'noreg1_old' => $noreg1_old,
+                'noreg2_old' => $noreg2_old
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -1483,12 +1682,12 @@ class PengirimanPenerimaanOvk extends Public_Controller {
 
             $this->result['status'] = 1;
             $this->result['content'] = array(
-                'status' => 1,
                 'id' => $d_terima_voadip->id,
                 'tanggal' => $d_terima_voadip->tgl_terima,
                 'delete' => 1,
                 'message' => 'Data Voadip (terima + kirim) berhasil di hapus.',
-                'status_jurnal' => 3
+                'status_jurnal' => 3,
+                'status' => 3
             );
 
             // cetak_r( $this->result );
@@ -1740,44 +1939,13 @@ class PengirimanPenerimaanOvk extends Public_Controller {
         $delete = $params['delete'];
         $message = $params['message'];
         $status_jurnal = $params['status_jurnal'];
+        $status = $params['status'];
+        $noreg1 = $params['noreg1'];
+        $noreg2 = $params['noreg2'];
+        $noreg1_old = (!empty($params['noreg1_old']) && isset($params['noreg1_old'])) ? $params['noreg1_old'] : null;
+        $noreg2_old = (!empty($params['noreg2_old']) && isset($params['noreg2_old'])) ? $params['noreg2_old'] : null;
 
         try {
-            $noreg1 = null;
-            $noreg2 = null;
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select
-					case
-						when kv.jenis_kirim = 'opkp' then
-							kv.asal
-						else
-							kv.tujuan
-					end as noreg1,
-					case
-						when kv.jenis_kirim = 'opkp' then
-							kv.tujuan
-						else
-							null
-					end as noreg2,
-                    kv.jenis_kirim
-				from terima_voadip tv
-				left join
-					kirim_voadip kv
-					on
-						tv.id_kirim_voadip = kv.id
-				where
-					tv.id = '".$id."'
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-
-            if ( $d_conf->count() > 0 ) {
-                $d_conf = $d_conf->toArray()[0];
-
-                $noreg1 = $d_conf['noreg1'];
-                $noreg2 = $d_conf['noreg2'];
-            }
-
             $m_conf = new \Model\Storage\Conf();
             $sql = "
                 select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
@@ -1791,13 +1959,18 @@ class PengirimanPenerimaanOvk extends Public_Controller {
             
             $this->insertKonfirmasi( $id, $delete );
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_voadip_by_transaksi 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-            $d_conf = $conf->hydrateRaw($sql);
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.",'".$noreg1."', '".$noreg2."'";
-            $d_conf = $conf->hydrateRaw($sql);
+            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1."', '".$noreg2."'";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                    $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1_old."', '".$noreg2_old."'";
+                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                }
+            }
 
             $id_old = null;
             if ( $status_jurnal <> 1 ) {
