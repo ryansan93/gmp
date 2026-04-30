@@ -978,6 +978,7 @@ class LHK extends Public_Controller
                     $_pakai_pakan_sekarang = 0;
                     $_pakai_pakan = 0;
                     $_sisa_pakan = 0;
+
                     if ( $d_conf_pp->count() > 0 ) {
                         $d_conf_pp = $d_conf_pp->toArray()[0];
     
@@ -985,10 +986,14 @@ class LHK extends Public_Controller
                         $_pakai_pakan_sekarang = $pakai_pakan * 50;
                         $_pakai_pakan = $_pakai_pakan_sekarang - $_pakai_pakan_sebelumnya;
                         $_sisa_pakan = $sisa_pakan * 50;
+                    } else {
+                        $_pakai_pakan = $pakai_pakan * 50;
+                        $_sisa_pakan = $sisa_pakan * 50;
                     }
     
                     $m_conf = new \Model\Storage\Conf();
                     $sql = "
+                        /*
                         select
                             data.*,
                             isnull(pp.jumlah, 0) as jml_prev,
@@ -1097,13 +1102,167 @@ class LHK extends Public_Controller
                         ) pp
                         on
                             pp.noreg = data.noreg
+                        */
+
+                        select
+                            data.noreg,
+                            sum(data.stok) as stok,
+                            sum(data.pindah_pakan) as pindah_pakan
+                        from
+                        (
+                            select
+                                dss.noreg,
+                                sum(dss.jml_stok) as stok,
+                                0 as pindah_pakan
+                            from det_stok_siklus dss
+                            where
+                                dss.jenis_barang = 'pakan' and
+                                dss.noreg = '".$noreg."' and
+                                dss.tgl_trans <= '".$tanggal."'
+                            group by
+                                dss.noreg
+
+                            union all
+    
+                            select
+                                dss.noreg,
+                                sum(dsts.jumlah) as stok,
+                                0 as pindah_pakan
+                            from det_stok_trans_siklus dsts
+                            left join
+                                det_stok_siklus dss
+                                on
+                                    dsts.id_header = dss.id
+                            where 
+                                dsts.kode_trans = '".$id."' and 
+                                dss.jenis_barang = 'pakan'
+                            group by
+                                dss.noreg
+
+                            union all
+
+                            select
+                                pp.noreg,
+                                0 as stok,
+                                sum(pp.jumlah) as pindah_pakan
+                            from
+                            (
+                                select kp.asal as noreg, tp.tgl_terima as tanggal, sum(dtp.jumlah) as jumlah from det_terima_pakan dtp
+                                left join
+                                    terima_pakan tp
+                                    on
+                                        dtp.id_header = tp.id
+                                left join
+                                    kirim_pakan kp
+                                    on
+                                        tp.id_kirim_pakan = kp.id
+                                where
+                                    kp.jenis_kirim = 'opkp' and
+                                    kp.asal = '".$noreg."'
+                                group by
+                                    kp.asal,
+                                    tp.tgl_terima
+                            
+                                union all
+                            
+                                select rp.id_asal as noreg, rp.tgl_retur as tanggal, sum(drp.jumlah) as jumlah from det_retur_pakan drp
+                                left join
+                                    retur_pakan rp
+                                    on
+                                        drp.id_header = rp.id
+                                where
+                                    rp.jenis_retur = 'opkp' and
+                                    rp.id_asal = '".$noreg."'
+                                group by
+                                    rp.id_asal,
+                                    rp.tgl_retur
+                            ) pp
+                            left join
+                                (
+                                    select 
+                                        noreg,
+                                        min(tanggal) as tanggal
+                                    from
+                                    (
+                                        select noreg, max(tgl_panen) as tanggal from real_sj where noreg = '".$noreg."' group by noreg
+                            
+                                        union all
+                            
+                                        select
+                                            kp.asal as noreg,
+                                            max(tgl_terima) as tanggal
+                                        from terima_pakan tp
+                                        left join
+                                            kirim_pakan kp
+                                            on
+                                                tp.id_kirim_pakan = kp.id
+                                        where
+                                            kp.jenis_kirim = 'opkp' and
+                                            kp.asal = '".$noreg."'
+                                        group by
+                                            kp.asal
+                            
+                                        union all
+                            
+                                        select
+                                            rp.id_asal as noreg,
+                                            max(tgl_retur) as tanggal
+                                        from retur_pakan rp
+                                        where
+                                            rp.jenis_retur = 'opkp' and
+                                            rp.id_asal = '".$noreg."'
+                                        group by
+                                            rp.id_asal
+                                    ) data
+                                    group by
+                                        noreg
+                                ) rs
+                                on
+                                    rs.noreg = pp.noreg
+                            where
+                                pp.tanggal >= rs.tanggal
+                            group by
+                                pp.noreg
+                        ) data
+                        group by
+                            data.noreg
                     ";
                     $d_conf_sisa_stok = $m_conf->hydrateRaw( $sql );
                     $_sisa_stok = 0;
+                    $_stok = 0;
+                    $_pindah_pakan = 0;
                     if ( $d_conf_sisa_stok->count() > 0 ) {
                         $d_conf_sisa_stok = $d_conf_sisa_stok->toArray()[0];
     
-                        $_sisa_stok = $d_conf_sisa_stok['stok'];
+                        $_sisa_stok = $d_conf_sisa_stok['stok']+$d_conf_sisa_stok['pindah_pakan'];
+                        $_stok = $d_conf_sisa_stok['stok'];
+                        $_pindah_pakan = $d_conf_sisa_stok['pindah_pakan'];
+                    }
+
+                    // cetak_r($_pakai_pakan);
+                    // cetak_r($_stok);
+                    // cetak_r($_sisa_pakan);
+                    // cetak_r($_pindah_pakan, 1);
+
+                    if ( $_pakai_pakan > $_stok || $_sisa_pakan > $_pindah_pakan) {
+                        $status = 0;
+
+                        $message = '<span style="color: red;">Data pakai pakan dan sisa pakan yang anda masukkan tidak sinkron !!!</span>';
+                        if ( $_pakai_pakan > $_stok ) {
+                            $message .= '<br>';
+                            $message .= '<b><u>PEMAKAIAN DAN SISA STOK</u></b><br>';
+                            $message .= '<br>PEMAKAIAN PAKAN ANDA : '.($_pakai_pakan/50);
+                            $message .= '<br>SISA STOK DI KANDANG : '.($_stok/50);
+                        }
+
+                        if ( $_sisa_pakan > $_pindah_pakan) {
+                            $message .= '<br>';
+                            $message .= '<b><u>SISA PAKAN DAN PINDAH PAKAN</u></b><br>';
+                            $message .= '<br>SISA PAKAN ANDA : '.($_sisa_pakan/50);
+                            $message .= '<br>PINDAH PAKAN : '.($_pindah_pakan/50);
+                        }
+
+                        $message .= 'Harap cek kembali data LHK yang anda masukkan / bisa komunikasi dengan Admin untuk melihat laporan kartu stok siklus .';
                     }
     
                     if ( ($_pakai_pakan+$_sisa_pakan) > $_sisa_stok ) {
@@ -2301,16 +2460,16 @@ class LHK extends Public_Controller
     public function tes() {
         //  cetak_r( $this->url );
 
-        $arr = array(
-            28123,
-            28433,
-            28518,
-            28876
-        );
+        // $arr = array(
+        //     28123,
+        //     28433,
+        //     28518,
+        //     28876
+        // );
 
-        foreach ($arr as $key => $value) {
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
-        }
+        // foreach ($arr as $key => $value) {
+        //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+        // }
 
         // $conf = new \Model\Storage\Conf();
         // $sql = "
@@ -2361,9 +2520,9 @@ class LHK extends Public_Controller
         //     }
         // }
 
-        // $conf = new \Model\Storage\Conf();
-        // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '23543', '2026-01-30', 2, null, null";
-        // $d_conf = $conf->hydrateRaw($sql);
+        $conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '51310', '2026-04-27', 2, null, null";
+        $d_conf = $conf->hydrateRaw($sql);
 
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 23543, 23543, 2);
     }
