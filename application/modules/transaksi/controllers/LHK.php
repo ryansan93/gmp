@@ -1244,7 +1244,7 @@ class LHK extends Public_Controller
                     // cetak_r($_sisa_pakan);
                     // cetak_r($_pindah_pakan, 1);
 
-                    if ( $_pakai_pakan > $_stok || $_sisa_pakan > $_pindah_pakan) {
+                    if ( $_pakai_pakan > $_stok) {
                         $status = 0;
 
                         $message = '<span style="color: red;">Data pakai pakan dan sisa pakan yang anda masukkan tidak sinkron !!!</span>';
@@ -1255,14 +1255,14 @@ class LHK extends Public_Controller
                             $message .= '<br>SISA STOK DI KANDANG : '.($_stok/50);
                         }
 
-                        if ( $_sisa_pakan > $_pindah_pakan) {
-                            $message .= '<br>';
-                            $message .= '<b><u>SISA PAKAN DAN PINDAH PAKAN</u></b><br>';
-                            $message .= '<br>SISA PAKAN ANDA : '.($_sisa_pakan/50);
-                            $message .= '<br>PINDAH PAKAN : '.($_pindah_pakan/50);
-                        }
+                        // if ( $_sisa_pakan > $_pindah_pakan) {
+                        //     $message .= '<br>';
+                        //     $message .= '<b><u>SISA PAKAN DAN PINDAH PAKAN</u></b><br>';
+                        //     $message .= '<br>SISA PAKAN ANDA : '.($_sisa_pakan/50);
+                        //     $message .= '<br>PINDAH PAKAN : '.($_pindah_pakan/50);
+                        // }
 
-                        $message .= 'Harap cek kembali data LHK yang anda masukkan / bisa komunikasi dengan Admin untuk melihat laporan kartu stok siklus .';
+                        $message .= '<br><br>Harap cek kembali data LHK yang anda masukkan / bisa komunikasi dengan Admin untuk melihat laporan kartu stok siklus .';
                     }
     
                     if ( ($_pakai_pakan+$_sisa_pakan) > $_sisa_stok ) {
