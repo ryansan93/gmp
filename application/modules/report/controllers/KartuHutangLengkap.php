@@ -353,7 +353,8 @@ class KartuHutangLengkap extends Public_Controller {
                                 where
                                     pp.tgl_bayar < '".$start_date."'
                                 group by 
-                                    ppd.id_dn
+                                    ppd.id_dn                                
+
                             ) rpd
                             group by
                                 rpd.id_dn
@@ -364,6 +365,25 @@ class KartuHutangLengkap extends Public_Controller {
                         d.tanggal < '".$start_date."' and
                         d.tot_dn > isnull(rpd.pakai, 0) and
                         ((d.supplier is not null and d.supplier <> '') or (d.mitra is not null and d.mitra <> ''))
+
+                    union all
+
+                    /* INVOICE LEWAT MEMO */
+                    select * from (
+                        select
+                            mi.no_mm as nomor,
+                            m.no_supplier as supplier,
+                            mi.nilai as total
+                        from mmitem mi
+                        left join
+                            mm m
+                            on
+                                mi.no_mm = m.no_mm
+                        where 
+                            mi.coa_tujuan in ('21180.300') and
+                            cast(mi.tgl_mm as date) < '".$start_date."'
+                    ) inv_mm
+                    /* END - INVOICE LEWAT MEMO */
                 ) inv
                 left join
                     (
@@ -532,26 +552,27 @@ class KartuHutangLengkap extends Public_Controller {
                                 bp.tgl_bayar < '".$start_date."'
                             group by
                                 bp.no_order
-    
-                            /*
-                            select rpd.no_bayar as nomor, sum(rpd.cn) as cn, sum(rpd.dn) as dn, sum(rpd.potongan) as potongan, sum(rpd.uang_muka) as uang_muka, sum(rpd.transfer) as transfer, 0 as saldo from realisasi_pembayaran_det rpd
-                            left join
-                                realisasi_pembayaran rp
-                                on
-                                    rpd.id_header = rp.id
-                            where
-                                rp.tgl_bayar < '".$start_date."'
-                            group by
-                                rpd.no_bayar
-        
+
                             union all
-        
-                            select bp.no_order as nomor, sum(bp.tot_cn) as cn, sum(bp.tot_dn) as dn, 0 as potongan, 0 as uang_muka, sum(bp.jml_bayar) as transfer, sum(bp.saldo) as saldo from bayar_peralatan bp
-                            where
-                                bp.tgl_bayar < '".$start_date."'
-                            group by
-                                bp.no_order
-                            */
+
+                            /* BAYAR LEWAT MEMO */
+                            select * from (
+                                select
+                                    no_invoice as nomor,
+                                    0 as cn, 
+                                    0 as dn, 
+                                    0 as potongan, 
+                                    0 as uang_muka, 
+                                    sum(nilai) as transfer, 
+                                    0 as saldo
+                                from mmitem 
+                                where 
+                                    coa_tujuan in ('21180.300') and
+                                    tgl_mm < '".$start_date."'
+                                group by
+                                    no_invoice
+                            ) byr_mm
+                            /* END - BAYAR LEWAT MEMO */
                         ) byr
                         group by
                             byr.nomor
@@ -611,24 +632,6 @@ class KartuHutangLengkap extends Public_Controller {
                         kpp.tgl_bayar between '".$start_date."' and '".$end_date."'
     
                     union all
-
-                    /*
-                    select kpop.tgl_bayar as tanggal, kpop.nomor, kpop.ekspedisi_id as supplier, kpopd.total, tp.no_bbm as kode_trans from konfirmasi_pembayaran_oa_pakan_det kpopd
-                    left join
-                        konfirmasi_pembayaran_oa_pakan kpop
-                        on
-                            kpopd.id_header = kpop.id
-                    left join
-                        kirim_pakan kp
-                        on
-                            kpopd.no_sj = kp.no_sj
-                    left join
-                        terima_pakan tp
-                        on
-                            kp.id = tp.id_kirim_pakan
-                    where
-                        kpop.tgl_bayar between '".$start_date."' and '".$end_date."'
-                    */
 
                     /* OA PAKAN */
                     select * from (
@@ -754,69 +757,26 @@ class KartuHutangLengkap extends Public_Controller {
                         d.tanggal between '".$start_date."' and '".$end_date."' and
                         ((d.supplier is not null and d.supplier <> '') or (d.mitra is not null and d.mitra <> ''))
 
-                    /*
-                    select
-                        d.tanggal,
-                        d.nomor,
-                        case
-                            when (d.supplier is not null and d.supplier <> '') then
-                                d.supplier
-                            when (d.mitra is not null and d.mitra <> '') then
-                                d.mitra
-                        end as supplier,
-                        (d.tot_dn - isnull(rpd.pakai, 0)) as total,
-                        d.nomor as kode_trans
-                    from dn d
-                    left join
-                        (
-                            select
-                                sum(isnull(pakai, 0)) as pakai, id_dn
-                            from
-                            (
-                                select sum(rpd.pakai) as pakai, rpd.id_dn from realisasi_pembayaran_dn rpd
-                                left join
-                                    realisasi_pembayaran rp
-                                    on
-                                        rpd.id_header = rp.id
-                                where
-                                    rp.tgl_bayar <= '".$end_date."'
-                                group by 
-                                    rpd.id_dn
+                    union all
 
-                                union all
-
-                                select sum(bpd.pakai) as pakai, bpd.id_dn from bayar_peralatan_dn bpd
-                                left join
-                                    bayar_peralatan bp
-                                    on
-                                        bpd.id_header = bp.id
-                                where
-                                    bp.tgl_bayar <= '".$end_date."'
-                                group by 
-                                    bpd.id_dn
-
-                                union all
-
-                                select sum(ppd.pakai) as pakai, ppd.id_dn from pembayaran_pelanggan_dn ppd
-                                left join
-                                    pembayaran_pelanggan pp
-                                    on
-                                        ppd.id_header = pp.id
-                                where
-                                    pp.tgl_bayar <= '".$end_date."'
-                                group by 
-                                    ppd.id_dn
-                            ) rpd
-                            group by
-                                rpd.id_dn
-                        ) rpd
-                        on
-                            d.id = rpd.id_dn
-                    where 
-                        d.tanggal between '".$start_date."' and '".$end_date."' and
-                        d.tot_dn > isnull(rpd.pakai, 0) and
-                        ((d.supplier is not null and d.supplier <> '') or (d.mitra is not null and d.mitra <> ''))
-                    */
+                    /* INVOICE LEWAT MEMO */
+                    select * from (
+                        select
+                            cast(mi.tgl_mm as date) as tanggal,
+                            mi.no_mm as nomor,
+                            m.no_supplier as supplier,
+                            mi.nilai as total,
+                            mi.no_mm as kode_trans
+                        from mmitem mi
+                        left join
+                            mm m
+                            on
+                                mi.no_mm = m.no_mm
+                        where 
+                            mi.coa_tujuan in ('21180.300') and
+                            cast(mi.tgl_mm as date) between '".$start_date."' and '".$end_date."'
+                    ) inv_mm
+                    /* END - INVOICE LEWAT MEMO */
                 ) inv
                 /* END - TRANSAKSI DI BULAN ITU */
 
@@ -832,48 +792,6 @@ class KartuHutangLengkap extends Public_Controller {
                     2 as urut
                 from
                 (
-                    /*
-                    select 
-                        c.tanggal as tanggal,
-                        case
-                            when rp.supplier is not null and rp.supplier <> '' then
-                                rp.supplier
-                            when rp.peternak is not null and rp.peternak <> '' then
-                                rp.peternak
-                            when rp.ekspedisi is not null and rp.ekspedisi <> '' then
-                                rp.ekspedisi
-                        end as supplier,
-                        rpdcd.nomor_cn_dn as nomor,
-                        0 as debet,
-                        sum(rpd.cn) as kredit,
-                        rpdcd.nomor_cn_dn as kode_trans
-                    from realisasi_pembayaran_det_cn_dn rpdcd
-                    left join
-                        realisasi_pembayaran_det rpd
-                        on
-                            rpdcd.id_header = rpd.id
-                    left join
-                        realisasi_pembayaran rp
-                        on
-                            rpd.id_header = rp.id
-                    left join
-                        cn c
-                        on
-                            rpdcd.nomor_cn_dn = c.nomor
-                    where
-                        rpdcd.nomor_cn_dn like 'CN%' and
-                        c.tanggal between '".$start_date."' and '".$end_date."' and
-                        (c.nomor is not null and c.nomor <> '')
-                    group by
-                        c.tanggal,
-                        rp.supplier,
-                        rp.peternak,
-                        rp.ekspedisi,
-                        rpdcd.nomor_cn_dn
-
-                    union all
-                    */
-
                     select 
                         rp.tgl_bayar as tanggal,
                         case
@@ -905,31 +823,6 @@ class KartuHutangLengkap extends Public_Controller {
                         rp.peternak,
                         rp.ekspedisi,
                         rpd.no_bayar
-
-                    /*
-                    union all
-
-                    select bp.tgl_bayar as tanggal, op.supplier, bp.no_order as nomor, 0 as debet, sum(bpc.pakai) as kredit, c.nomor as kode_trans from bayar_peralatan_cn bpc
-                    left join
-                        bayar_peralatan bp
-                        on
-                            bpc.id_header = bp.id
-                    left join
-                        order_peralatan op
-                        on
-                            op.no_order = bp.no_order
-                    left join
-                        cn c
-                        on
-                            bpc.id_cn = c.id
-                    where
-                        bp.tgl_bayar between '".$start_date."' and '".$end_date."'
-                    group by
-                        bp.tgl_bayar,
-                        op.supplier,
-                        bp.no_order,
-                        c.nomor
-                    */
 
                     union all
 
@@ -965,70 +858,45 @@ class KartuHutangLengkap extends Public_Controller {
                         c.tanggal between '".$start_date."' and '".$end_date."' and
                         ((c.supplier is not null and c.supplier <> '') or (c.mitra is not null and c.mitra <> ''))
 
-                    /*
-                    select
-                        c.tanggal,
-                        case
-                            when (c.supplier is not null and c.supplier <> '') then
-                                c.supplier
-                            when (c.mitra is not null and c.mitra <> '') then
-                                c.mitra
-                        end as supplier,
-                        c.nomor,
-                        0 as debet,
-                        (c.tot_cn - isnull(rpc.pakai, 0)) as kredit,
-                        c.nomor as kode_trans
-                    from cn c
-                    left join
-                        (
-                            select
-                                sum(isnull(pakai, 0)) as pakai, id_cn
-                            from
+                    union all
+
+                    /* BAYAR LEWAT MEMO */
+                    select * from (
+                        select
+                            cast(mi.tgl_mm as date) as tanggal,
+                            konfir.supplier,
+                            mi.no_invoice as nomor,
+                            0 as debet,
+                            mi.nilai as kredit,
+                            mi.no_mm as kode_trans
+                        from mmitem mi
+                        left join
                             (
-                                select sum(rpc.pakai) as pakai, rpc.id_cn from realisasi_pembayaran_cn rpc
-                                left join
-                                    realisasi_pembayaran rp
-                                    on
-                                        rpc.id_header = rp.id
-                                where
-                                    rp.tgl_bayar <= '".$end_date."'
-                                group by 
-                                    rpc.id_cn
+                                select nomor, supplier from konfirmasi_pembayaran_voadip group by nomor, supplier
 
                                 union all
 
-                                select sum(bpc.pakai) as pakai, bpc.id_cn from bayar_peralatan_cn bpc
-                                left join
-                                    bayar_peralatan bp
-                                    on
-                                        bpc.id_header = bp.id
-                                where
-                                    bp.tgl_bayar <= '".$end_date."'
-                                group by 
-                                    bpc.id_cn
+                                select nomor, supplier from konfirmasi_pembayaran_pakan group by nomor, supplier
 
                                 union all
 
-                                select sum(ppc.pakai) as pakai, ppc.id_cn from pembayaran_pelanggan_cn ppc
-                                left join
-                                    pembayaran_pelanggan pp
-                                    on
-                                        ppc.id_header = pp.id
-                                where
-                                    pp.tgl_bayar <= '".$end_date."'
-                                group by 
-                                    ppc.id_cn
-                            ) rpc
-                            group by
-                                rpc.id_cn
-                        ) rpc
-                        on
-                            c.id = rpc.id_cn
-                    where 
-                        c.tanggal between '".$start_date."' and '".$end_date."' and
-                        c.tot_cn > isnull(rpc.pakai, 0) and
-                        ((c.supplier is not null and c.supplier <> '') and (c.mitra is not null and c.mitra <> ''))
-                    */
+                                select nomor, supplier from konfirmasi_pembayaran_doc group by nomor, supplier
+
+                                union all
+
+                                select nomor, ekspedisi_id as supplier from konfirmasi_pembayaran_oa_pakan group by nomor, ekspedisi_id
+
+                                union all
+
+                                select nomor, mitra as supplier from konfirmasi_pembayaran_peternak group by nomor, mitra
+                            ) konfir
+                            on
+                                mi.no_invoice = konfir.nomor
+                        where 
+                            mi.coa_tujuan in ('21180.300') and
+                            cast(mi.tgl_mm as date) between '".$start_date."' and '".$end_date."'
+                    ) byr_mm
+                    /* END - BAYAR LEWAT MEMO */
                 ) byr
             ) data
             left join

@@ -176,12 +176,6 @@ class KartuHutangPerInvoice extends Public_Controller {
     
                     union all
 
-                    /*
-                    select kpop.nomor, kpop.ekspedisi_id as supplier, kpop.total from konfirmasi_pembayaran_oa_pakan kpop
-                    where
-                        kpop.tgl_bayar < '".$start_date."'
-                    */
-
                     /* OA PAKAN */
                     select * from (
                         select kpop.nomor, kpop.ekspedisi_id as supplier, (kpop.total+kpop.potongan_pph_23) as total from konfirmasi_pembayaran_oa_pakan kpop
@@ -372,6 +366,25 @@ class KartuHutangPerInvoice extends Public_Controller {
                         d.tanggal < '".$start_date."' and
                         d.tot_dn > isnull(rpd.pakai, 0) and
                         ((d.supplier is not null and d.supplier <> '') or (d.mitra is not null and d.mitra <> ''))
+
+                    union all
+
+                    /* INVOICE LEWAT MEMO */
+                    select * from (
+                        select
+                            mi.no_mm as nomor,
+                            m.no_supplier as supplier,
+                            mi.nilai as total
+                        from mmitem mi
+                        left join
+                            mm m
+                            on
+                                mi.no_mm = m.no_mm
+                        where 
+                            mi.coa_asal in ('21180.300', '21174.000') and
+                            cast(mi.tgl_mm as date) < '".$start_date."'
+                    ) inv_mm
+                    /* END - INVOICE LEWAT MEMO */
                 ) inv
                 left join
                     (
@@ -540,26 +553,27 @@ class KartuHutangPerInvoice extends Public_Controller {
                                 bp.tgl_bayar < '".$start_date."'
                             group by
                                 bp.no_order
-    
-                            /*
-                            select rpd.no_bayar as nomor, sum(rpd.cn) as cn, sum(rpd.dn) as dn, sum(rpd.potongan) as potongan, sum(rpd.uang_muka) as uang_muka, sum(rpd.transfer) as transfer, 0 as saldo from realisasi_pembayaran_det rpd
-                            left join
-                                realisasi_pembayaran rp
-                                on
-                                    rpd.id_header = rp.id
-                            where
-                                rp.tgl_bayar < '".$start_date."'
-                            group by
-                                rpd.no_bayar
-        
+
                             union all
-        
-                            select bp.no_order as nomor, sum(bp.tot_cn) as cn, sum(bp.tot_dn) as dn, 0 as potongan, 0 as uang_muka, sum(bp.jml_bayar) as transfer, sum(bp.saldo) as saldo from bayar_peralatan bp
-                            where
-                                bp.tgl_bayar < '".$start_date."'
-                            group by
-                                bp.no_order
-                            */
+
+                            /* BAYAR LEWAT MEMO */
+                            select * from (
+                                select
+                                    no_invoice as nomor,
+                                    0 as cn, 
+                                    0 as dn, 
+                                    0 as potongan, 
+                                    0 as uang_muka, 
+                                    sum(nilai) as transfer, 
+                                    0 as saldo
+                                from mmitem 
+                                where 
+                                    coa_tujuan in ('21180.300', '21174.000') and
+                                    tgl_mm < '".$start_date."'
+                                group by
+                                    no_invoice
+                            ) byr_mm
+                            /* END - BAYAR LEWAT MEMO */
                         ) byr
                         group by
                             byr.nomor
@@ -622,24 +636,6 @@ class KartuHutangPerInvoice extends Public_Controller {
                         kpp.tgl_bayar between '".$start_date."' and '".$end_date."'
     
                     union all
-
-                    /*
-                    select kpop.tgl_bayar as tanggal, kpop.nomor, kpop.ekspedisi_id as supplier, kpopd.total, tp.no_bbm as kode_trans from konfirmasi_pembayaran_oa_pakan_det kpopd
-                    left join
-                        konfirmasi_pembayaran_oa_pakan kpop
-                        on
-                            kpopd.id_header = kpop.id
-                    left join
-                        kirim_pakan kp
-                        on
-                            kpopd.no_sj = kp.no_sj
-                    left join
-                        terima_pakan tp
-                        on
-                            kp.id = tp.id_kirim_pakan
-                    where
-                        kpop.tgl_bayar between '".$start_date."' and '".$end_date."'
-                    */
 
                     /* OA PAKAN */
                     select * from (
@@ -807,24 +803,6 @@ class KartuHutangPerInvoice extends Public_Controller {
 
                     union all
 
-                    /*
-                    select
-                        d.tanggal,
-                        d.nomor,
-                        case
-                            when (d.supplier is not null and d.supplier <> '') then
-                                d.supplier
-                            when (d.mitra is not null and d.mitra <> '') then
-                                d.mitra
-                        end as supplier,
-                        d.tot_dn as total,
-                        d.nomor as kode_trans
-                    from dn d
-                    where 
-                        d.tanggal between '".$start_date."' and '".$end_date."' and
-                        ((d.supplier is not null and d.supplier <> '') or (d.mitra is not null and d.mitra <> ''))
-                    */
-
                     select
                         d.tanggal,
                         d.nomor,
@@ -874,6 +852,27 @@ class KartuHutangPerInvoice extends Public_Controller {
                         d.tanggal between '".$start_date."' and '".$end_date."' and
                         d.tot_dn > isnull(rpd.pakai, 0) and
                         ((d.supplier is not null and d.supplier <> '') or (d.mitra is not null and d.mitra <> ''))
+
+                    union all
+
+                    /* INVOICE LEWAT MEMO */
+                    select * from (
+                        select
+                            cast(mi.tgl_mm as date) as tanggal,
+                            mi.no_mm as nomor,
+                            m.no_supplier as supplier,
+                            mi.nilai as total,
+                            mi.no_mm as kode_trans
+                        from mmitem mi
+                        left join
+                            mm m
+                            on
+                                mi.no_mm = m.no_mm
+                        where 
+                            mi.coa_asal in ('21180.300', '21174.000') and
+                            cast(mi.tgl_mm as date) between '".$start_date."' and '".$end_date."'
+                    ) inv_mm
+                    /* END - INVOICE LEWAT MEMO */
                 ) inv
                 /* END - TRANSAKSI DI BULAN ITU */
 
@@ -1000,25 +999,6 @@ class KartuHutangPerInvoice extends Public_Controller {
 
                     union all
 
-                    /*
-                    select
-                        c.tanggal,
-                        case
-                            when (c.supplier is not null and c.supplier <> '') then
-                                c.supplier
-                            when (c.mitra is not null and c.mitra <> '') then
-                                c.mitra
-                        end as supplier,
-                        c.nomor,
-                        0 as debet,
-                        c.tot_cn as kredit,
-                        c.nomor as kode_trans
-                    from cn c
-                    where 
-                        c.tanggal between '".$start_date."' and '".$end_date."' and
-                        ((c.supplier is not null and c.supplier <> '') or (c.mitra is not null and c.mitra <> ''))
-                    */
-
                     select
                         c.tanggal,
                         case
@@ -1069,6 +1049,46 @@ class KartuHutangPerInvoice extends Public_Controller {
                         c.tanggal <= '".$end_date."' and
                         c.tot_cn > isnull(rpc.pakai, 0) and
                         ((c.supplier is not null and c.supplier <> '') or (c.mitra is not null and c.mitra <> ''))
+
+                    union all
+
+                    /* BAYAR LEWAT MEMO */
+                    select * from (
+                        select
+                            cast(mi.tgl_mm as date) as tanggal,
+                            konfir.supplier,
+                            mi.no_invoice as nomor,
+                            0 as debet,
+                            mi.nilai as kredit,
+                            mi.no_mm as kode_trans
+                        from mmitem mi
+                        left join
+                            (
+                                select nomor, supplier from konfirmasi_pembayaran_voadip group by nomor, supplier
+
+                                union all
+
+                                select nomor, supplier from konfirmasi_pembayaran_pakan group by nomor, supplier
+
+                                union all
+
+                                select nomor, supplier from konfirmasi_pembayaran_doc group by nomor, supplier
+
+                                union all
+
+                                select nomor, ekspedisi_id as supplier from konfirmasi_pembayaran_oa_pakan group by nomor, ekspedisi_id
+
+                                union all
+
+                                select nomor, mitra as supplier from konfirmasi_pembayaran_peternak group by nomor, mitra
+                            ) konfir
+                            on
+                                mi.no_invoice = konfir.nomor
+                        where 
+                            mi.coa_tujuan in ('21180.300', '21174.000') and
+                            cast(mi.tgl_mm as date) between '".$start_date."' and '".$end_date."'
+                    ) byr_mm
+                    /* END - BAYAR LEWAT MEMO */
                 ) byr
                 /* END - BAYAR */
             ) data
