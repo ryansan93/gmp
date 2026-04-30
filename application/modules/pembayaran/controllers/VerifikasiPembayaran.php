@@ -582,33 +582,54 @@ class VerifikasiPembayaran extends Public_Controller
         
                             union all
         
-                            select
-                                kpv.tgl_bayar as tanggal,
-                                kpv.nomor as kode_trans,
-                                null as no_inv,
-                                kpvd.no_sj as no_sj,
-                                case
-                                    when kpv.tgl_bayar >= '2026-01-01' then
-                                        ((kpv.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0))
-                                    else
-                                        kpv.total
-                                end as bruto,
-                                0 as pph,
-                                '' as lampiran,
-                                'OVK' as jenis
-                            from konfirmasi_pembayaran_voadip_det kpvd
-                            left join
-                                konfirmasi_pembayaran_voadip kpv
-                                on
-                                    kpvd.id_header = kpv.id
-                            left join
-                                (select nomor, sum(pakai) as nilai from cn_post_det group by nomor) _cn
-                                on
-                                    _cn.nomor = kpv.nomor
-                            left join
-                                (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
-                                on
-                                    _dn.nomor = kpv.nomor
+                            select * from (
+                                select
+                                    kpv.tgl_bayar as tanggal,
+                                    kpv.nomor as kode_trans,
+                                    null as no_inv,
+                                    kpvd.no_sj as no_sj,
+                                    case
+                                        when kpv.tgl_bayar >= '2026-01-01' then
+                                            ((kpv.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0))
+                                        else
+                                            kpv.total
+                                    end as bruto,
+                                    0 as pph,
+                                    '' as lampiran,
+                                    'OVK' as jenis
+                                from konfirmasi_pembayaran_voadip_det kpvd
+                                left join
+                                    konfirmasi_pembayaran_voadip kpv
+                                    on
+                                        kpvd.id_header = kpv.id
+                                left join
+                                    (select nomor, sum(pakai) as nilai from cn_post_det group by nomor) _cn
+                                    on
+                                        _cn.nomor = kpv.nomor
+                                left join
+                                    (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
+                                    on
+                                        _dn.nomor = kpv.nomor
+
+                                union all
+
+                                select
+                                    m.tgl_mm as tanggal,
+                                    m.no_mm as kode_trans,
+                                    null as no_inv,
+                                    m.no_mm as no_sj,
+                                    m.nilai as bruto,
+                                    0 as pph,
+                                    '' as lampiran,
+                                    'OVK' as jenis
+                                from mmitem mi
+                                left join
+                                    mm m
+                                    on
+                                        mi.no_mm = m.no_mm
+                                where
+                                    mi.coa_tujuan in ('21174.000', '21180.300')
+                            ) ovk
         
                             union all
         
@@ -1448,6 +1469,44 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function tes() {
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 1142, 1142, 2, 'realisasi_pembayaran', '2026-01-05');
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select rp.id, rp.tgl_realisasi from realisasi_pembayaran_det rpd
+        //     left join
+        //         realisasi_pembayaran rp 
+        //         on
+        //             rpd.id_header = rp.id
+        //     where
+        //         rpd.transaksi = 'OA PAKAN' and
+        //         rp.tgl_bayar >= '2026-03-01'
+        //     group by
+        //         rp.id, rp.tgl_realisasi
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
+
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
+
+        //     foreach ($d_conf as $key => $value) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, 'realisasi_pembayaran', $value['tgl_realisasi']);
+        //     }
+        // }
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 3977, 3977, 2, 'realisasi_pembayaran', '2026-04-22');
+
+        // $start_date = '2026-03-01';
+        // $end_date = '2026-03-31';
+        // $jenis_transaksi = array('all');
+        // $bank = 'all';
+
+        // $data = $this->getData(null, 2, $start_date, $end_date, $jenis_transaksi, $bank);
+
+        // foreach ($data as $key => $value) {
+        //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2, $value['tbl_name'], $value['tgl_bayar']);
+
+        //     cetak_r( $key );
+        // }
+
+        // cetak_r( $data );
     }
 }

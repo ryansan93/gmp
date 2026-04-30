@@ -1062,59 +1062,100 @@ class RealisasiPembayaran extends Public_Controller
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select kpv.*, kpvd.kode_unit, supl.nama as nama_supplier, cpd.tot_cn as cn, dpd.tot_dn as dn from konfirmasi_pembayaran_voadip_det kpvd
-            left join
-                konfirmasi_pembayaran_voadip kpv
-                on
-                    kpvd.id_header = kpv.id
-            left join
-                (
-                    select 
-                        plg1.* 
-                    from pelanggan plg1
-                    right join
-                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) plg2
-                        on
-                            plg1.id = plg2.id
-                ) supl
-                on
-                    kpv.supplier = supl.nomor
-            left join
-                (
-                    select nomor, sum(pakai) as tot_cn from cn_post_det
-                    group by
-                        nomor
-                ) cpd
-                on
-                    cpd.nomor = kpv.nomor
-            left join
-                (
-                    select nomor, sum(pakai) as tot_dn from dn_post_det
-                    group by
-                        nomor
-                ) dpd
-                on
-                    dpd.nomor = kpv.nomor
-            where
-                kpv.tgl_bayar between '".$params['start_date']."' and '".$params['end_date']."' and
-                kpv.supplier = '".$params['supplier']."' and
-                kpv.perusahaan = '".$params['perusahaan']."'
-                ".$sql_unit."
-            group by
-                kpv.id,
-                kpv.nomor,
-                kpv.tgl_bayar,
-                kpv.periode,
-                kpv.perusahaan,
-                kpv.supplier,
-                kpv.rekening,
-                kpv.total,
-                kpv.lunas,
-                kpvd.kode_unit,
-                supl.nama,
-                cpd.tot_cn,
-                dpd.tot_dn
+            select * from (
+                select kpv.*, kpvd.kode_unit, supl.nama as nama_supplier, cpd.tot_cn as cn, dpd.tot_dn as dn from konfirmasi_pembayaran_voadip_det kpvd
+                left join
+                    konfirmasi_pembayaran_voadip kpv
+                    on
+                        kpvd.id_header = kpv.id
+                left join
+                    (
+                        select 
+                            plg1.* 
+                        from pelanggan plg1
+                        right join
+                            (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) plg2
+                            on
+                                plg1.id = plg2.id
+                    ) supl
+                    on
+                        kpv.supplier = supl.nomor
+                left join
+                    (
+                        select nomor, sum(pakai) as tot_cn from cn_post_det
+                        group by
+                            nomor
+                    ) cpd
+                    on
+                        cpd.nomor = kpv.nomor
+                left join
+                    (
+                        select nomor, sum(pakai) as tot_dn from dn_post_det
+                        group by
+                            nomor
+                    ) dpd
+                    on
+                        dpd.nomor = kpv.nomor
+                where
+                    kpv.tgl_bayar between '".$params['start_date']."' and '".$params['end_date']."' and
+                    kpv.supplier = '".$params['supplier']."' and
+                    kpv.perusahaan = '".$params['perusahaan']."'
+                    ".$sql_unit."
+                group by
+                    kpv.id,
+                    kpv.nomor,
+                    kpv.tgl_bayar,
+                    kpv.periode,
+                    kpv.perusahaan,
+                    kpv.supplier,
+                    kpv.rekening,
+                    kpv.total,
+                    kpv.lunas,
+                    kpvd.kode_unit,
+                    supl.nama,
+                    cpd.tot_cn,
+                    dpd.tot_dn
+
+                union all
+
+                select
+                    null as id,
+                    m.no_mm as nomor,
+                    m.tgl_mm as tgl_bayar,
+                    cast(m.tgl_mm as date) as periode,
+                    'P001' as perusahaan,
+                    m.no_supplier as supplier,
+                    null as rekening,
+                    m.nilai as total,
+                    0 as lunas,
+                    m.unit as kode_unit,
+                    supl.nama,
+                    0 as tot_cn,
+                    0 as tot_dn
+                from mmitem mi
+                left join
+                    mm m
+                    on
+                        mi.no_mm = m.no_mm
+                left join
+                    (
+                        select 
+                            plg1.* 
+                        from pelanggan plg1
+                        right join
+                            (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) plg2
+                            on
+                                plg1.id = plg2.id
+                    ) supl
+                    on
+                        m.no_supplier = supl.nomor
+                where
+                    m.tgl_mm between '".$params['start_date']."' and '".$params['end_date']."' and
+                    m.no_supplier = '".$params['supplier']."' and
+                    mi.coa_tujuan in ('21174.000', '21180.300')
+            ) data
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         if ( $d_conf->count() > 0 ) {
@@ -1553,9 +1594,9 @@ class RealisasiPembayaran extends Public_Controller
                 'jumlah_bayar' => $jumlah,
                 'jenis_pembayaran' => $jenis_pembayaran,
                 'jenis_transaksi' => implode(', ', $jenis_transaksi),
-                'supplier' => $d_rp['d_supplier']['nama'],
-                'peternak' => $d_rp['d_mitra']['nama'],
-                'ekspedisi' => $d_rp['d_ekspedisi']['nama'],
+                'supplier' => !empty($d_rp['d_supplier']['nama']) ? $d_rp['d_supplier']['nama'] : null,
+                'peternak' => !empty($d_rp['d_mitra']['nama']) ? $d_rp['d_mitra']['nama'] : null,
+                'ekspedisi' => !empty($d_rp['d_ekspedisi']['nama']) ? $d_rp['d_ekspedisi']['nama'] : null,
                 'perusahaan' => $d_rp['d_perusahaan']['perusahaan'],
                 'detail' => $detail,
                 'dn_realisasi_pembayaran' => $d_rp['dn_realisasi_pembayaran'],
