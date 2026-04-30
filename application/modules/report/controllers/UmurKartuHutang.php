@@ -366,6 +366,26 @@ class UmurKartuHutang extends Public_Controller {
                             d.tanggal < '".$start_date."' and
                             d.tot_dn > isnull(rpd.pakai, 0) and
                             ((d.supplier is not null and d.supplier <> '') or (d.mitra is not null and d.mitra <> ''))
+
+                        union all
+
+                        /* INVOICE LEWAT MEMO */
+                        select * from (
+                            select
+                                cast(mi.tgl_mm as date) as tanggal,
+                                mi.no_mm as nomor,
+                                m.no_supplier as supplier,
+                                mi.nilai as total
+                            from mmitem mi
+                            left join
+                                mm m
+                                on
+                                    mi.no_mm = m.no_mm
+                            where 
+                                mi.coa_asal in ('21180.300', '21174.000') and
+                                cast(mi.tgl_mm as date) < '".$start_date."'
+                        ) inv_mm
+                        /* END - INVOICE LEWAT MEMO */
                     ) inv
                     left join
                         (
@@ -530,6 +550,27 @@ class UmurKartuHutang extends Public_Controller {
                                     bp.tgl_bayar < '".$start_date."'
                                 group by
                                     bp.no_order
+
+                                union all
+
+                                /* BAYAR LEWAT MEMO */
+                                select * from (
+                                    select
+                                        no_invoice as nomor,
+                                        0 as cn, 
+                                        0 as dn, 
+                                        0 as potongan, 
+                                        0 as uang_muka, 
+                                        sum(nilai) as transfer, 
+                                        0 as saldo
+                                    from mmitem 
+                                    where 
+                                        coa_tujuan in ('21180.300', '21174.000') and
+                                        tgl_mm < '".$start_date."'
+                                    group by
+                                        no_invoice
+                                ) byr_mm
+                                /* END - BAYAR LEWAT MEMO */
                             ) byr
                             group by
                                 byr.nomor
@@ -696,6 +737,27 @@ class UmurKartuHutang extends Public_Controller {
                         where 
                             d.tanggal between '".$start_date."' and '".$end_date."' and
                             ((d.supplier is not null and d.supplier <> '') or (d.mitra is not null and d.mitra <> ''))
+
+                        union all
+
+                        /* INVOICE LEWAT MEMO */
+                        select * from (
+                            select
+                                cast(mi.tgl_mm as date) as tanggal,
+                                mi.no_mm as nomor,
+                                m.no_supplier as supplier,
+                                mi.nilai as total,
+                                mi.no_mm as kode_trans
+                            from mmitem mi
+                            left join
+                                mm m
+                                on
+                                    mi.no_mm = m.no_mm
+                            where 
+                                mi.coa_asal in ('21180.300', '21174.000') and
+                                cast(mi.tgl_mm as date) between '".$start_date."' and '".$end_date."'
+                        ) inv_mm
+                        /* END - INVOICE LEWAT MEMO */
                     ) inv
                     group by
                         inv.supplier,
@@ -777,6 +839,46 @@ class UmurKartuHutang extends Public_Controller {
                         where 
                             c.tanggal between '".$start_date."' and '".$end_date."' and
                             ((c.supplier is not null and c.supplier <> '') or (c.mitra is not null and c.mitra <> ''))
+
+                        union all
+
+                        /* BAYAR LEWAT MEMO */
+                        select * from (
+                            select
+                                cast(mi.tgl_mm as date) as tanggal,
+                                konfir.supplier,
+                                mi.no_invoice as nomor,
+                                0 as debet,
+                                mi.nilai as kredit,
+                                mi.no_mm as kode_trans
+                            from mmitem mi
+                            left join
+                                (
+                                    select nomor, supplier from konfirmasi_pembayaran_voadip group by nomor, supplier
+
+                                    union all
+
+                                    select nomor, supplier from konfirmasi_pembayaran_pakan group by nomor, supplier
+
+                                    union all
+
+                                    select nomor, supplier from konfirmasi_pembayaran_doc group by nomor, supplier
+
+                                    union all
+
+                                    select nomor, ekspedisi_id as supplier from konfirmasi_pembayaran_oa_pakan group by nomor, ekspedisi_id
+
+                                    union all
+
+                                    select nomor, mitra as supplier from konfirmasi_pembayaran_peternak group by nomor, mitra
+                                ) konfir
+                                on
+                                    mi.no_invoice = konfir.nomor
+                            where 
+                                mi.coa_tujuan in ('21180.300', '21174.000') and
+                                cast(mi.tgl_mm as date) between '".$start_date."' and '".$end_date."'
+                        ) byr_mm
+                        /* END - BAYAR LEWAT MEMO */
                     ) byr
                     group by
                         byr.supplier
@@ -786,7 +888,7 @@ class UmurKartuHutang extends Public_Controller {
             ) data
             left join
                 (
-                    select p1.nomor, p1.nama from pelanggan p1
+                    select p1.nomor, p1.nama, 'supplier' as tipe from pelanggan p1
                     right join
                         (select max(id) as id, nomor from pelanggan p where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p2
                         on
@@ -794,7 +896,7 @@ class UmurKartuHutang extends Public_Controller {
 
                     union all
                             
-                    select e1.nomor, e1.nama from ekspedisi e1
+                    select e1.nomor, e1.nama, 'ekspedisi' as tipe from ekspedisi e1
                     right join
                         (select max(id) as id, nomor from ekspedisi e group by nomor) e2
                         on
@@ -802,7 +904,7 @@ class UmurKartuHutang extends Public_Controller {
 
                     union all
 
-                    select m1.nomor, m1.nama from mitra m1
+                    select m1.nomor, m1.nama, 'plasma' as tipe from mitra m1
                     right join
                         (select max(id) as id, nomor from mitra group by nomor) m2
                         on
