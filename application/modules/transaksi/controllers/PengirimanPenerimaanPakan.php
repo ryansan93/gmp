@@ -1244,308 +1244,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
         display_json($this->result);
     }
 
-    public function execInsertKonfirmasi()
-    {
-        $params = $this->input->post('params');
-
-        try {
-            $id = $params['id'];
-            $status = $params['status'];
-            $delete = ($status == 3) ? 1 : 0;
-
-            $this->insertKonfirmasi( $id, $delete );
-
-            $this->result['status'] = 1;
-            $this->result['content'] = $params;
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
-    }
-
-
-    function insertKonfirmasi($id_terima, $delete = 0) {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select kp.* from terima_pakan tp
-            left join
-                kirim_pakan kp
-                on
-                    tp.id_kirim_pakan = kp.id
-            where
-                tp.id = '".$id_terima."'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
-        
-        $no_order = null;
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray()[0];
-
-            $no_order = $d_conf['no_order'];
-        }
-
-        $m_kppd = new \Model\Storage\KonfirmasiPembayaranPakanDet_model();
-        $d_kppd = $m_kppd->where('no_order', $no_order)->first();
-
-        if ( $d_kppd ) {
-            $m_kppd2 = new \Model\Storage\KonfirmasiPembayaranPakanDet2_model();
-            $m_kppd2->where('id_header', $d_kppd->id)->delete();
-
-            $m_kppd = new \Model\Storage\KonfirmasiPembayaranPakanDet_model();
-            $m_kppd->where('id', $d_kppd->id)->delete();
-
-            $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
-            $m_kpp->where('id', $d_kppd->id_header)->delete();
-        }
-
-        if ( $delete == 0 ) {
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select
-                    tp.tgl_terima as tgl_bayar,
-                    tp.tgl_terima as periode_docin,
-                    op.perusahaan,
-                    op.supplier,
-                    sum(dtp.jumlah * op.harga) as total,
-                    kp.no_sj,
-                    kp.tgl_kirim as tgl_sj,
-                    SUBSTRING(op.no_order, 5, 3) as id_kab_kota,
-                    op.no_order,
-                    sum(dtp.jumlah) as jumlah
-                from det_terima_pakan dtp
-                left join
-                    (
-                        select tp1.* from terima_pakan tp1
-                        right join
-                            (select max(id) as id, id_kirim_pakan from terima_pakan group by id_kirim_pakan) tp2
-                            on
-                                tp1.id = tp2.id
-                    ) tp
-                    on
-                        dtp.id_header = tp.id
-                left join
-                    kirim_pakan kp
-                    on
-                        tp.id_kirim_pakan = kp.id
-                left join
-                    (
-                        select 
-                            opd.*, 
-                            op.no_order, 
-                            op.tgl_trans, 
-                            op.rcn_kirim, 
-                            op.supplier 
-                        from order_pakan_detail opd
-                        left join
-                            (
-                                select op1.* from order_pakan op1
-                                right join
-                                    (select max(id) as id, no_order from order_pakan group by no_order) op2
-                                    on
-                                        op1.id = op2.id
-                            ) op
-                            on
-                                opd.id_header = op.id
-                    ) op
-                    on
-                        kp.no_order = op.no_order and
-                        dtp.item = op.barang
-                where
-                    kp.jenis_kirim = 'opks' and
-                    op.no_order = '".$no_order."'
-                group by
-                    tp.tgl_terima,
-                    op.perusahaan,
-                    op.supplier,
-                    kp.no_sj,
-                    kp.tgl_kirim,
-                    op.no_order
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-
-            if ( $d_conf->count() > 0 ) {
-                $d_conf = $d_conf->toArray()[0];
-
-                $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
-                $nomor = $m_kpp->getNextNomor();
-
-                $m_kpp->nomor = $nomor;
-                $m_kpp->tgl_bayar = $d_conf['tgl_bayar'];
-                $m_kpp->periode = trim($d_conf['periode_docin']);
-                $m_kpp->perusahaan = $d_conf['perusahaan'];
-                $m_kpp->supplier = $d_conf['supplier'];
-                $m_kpp->total = $d_conf['total'];
-                $m_kpp->invoice = $d_conf['no_sj'];
-                // $m_kpp->rekening = $d_conf['rekening'];
-                $m_kpp->save();
-
-                $id = $m_kpp->id;
-
-                $m_kppd = new \Model\Storage\KonfirmasiPembayaranPakanDet_model();
-                $m_kppd->id_header = $id;
-                $m_kppd->tgl_sj = $d_conf['tgl_sj'];
-                $m_kppd->kode_unit = $d_conf['id_kab_kota'];
-                $m_kppd->no_order = $d_conf['no_order'];
-                $m_kppd->no_sj = $d_conf['no_sj'];
-                $m_kppd->jumlah = $d_conf['jumlah'];
-                $m_kppd->total = $d_conf['total'];
-                $m_kppd->save();
-                
-                $d_kpd = $m_kpp->where('id', $id)->first();
-
-                $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                Modules::run( 'base/event/save', $d_kpd, $deskripsi_log);
-            }
-        }
-    }
-
-
-    public function hitungStokByTransaksi()
-    {
-        $params = $this->input->post('params');
-
-        $id = $params['id'];
-        $tanggal = $params['tanggal'];
-        $delete = $params['delete'];
-        $status_jurnal = $params['status_jurnal'];
-
-        try {
-            $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
-
-            $this->result['status'] = $return['status'];
-            $this->result['message'] = json_encode($return);
-            $this->result['content'] = $params;
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
-    }
-
-    public function execHitStokSiklus() {
-        $params = $this->input->post('params');
-
-        try {
-            $id = $params['id'];
-            $tanggal = $params['tanggal'];
-            $status = $params['status'];
-            $noreg1 = $params['noreg1'];
-            $noreg2 = $params['noreg2'];
-            $noreg1_old = (!empty($params['noreg1_old']) && isset($params['noreg1_old'])) ? $params['noreg1_old'] : null;
-            $noreg2_old = (!empty($params['noreg2_old']) && isset($params['noreg2_old'])) ? $params['noreg2_old'] : null;
-
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
-            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
-
-            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
-                if ( $noreg1 <> $noreg2_old || $noreg2 <> $noreg2_old ) {
-                    $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
-                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
-                }
-            }
-
-            $this->result['status'] = $return['status'];
-            $this->result['message'] = json_encode($return);
-            $this->result['content'] = $params;
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
-    }
-
-
-    public function execInsertJurnal() {
-        $params = $this->input->post('params');
-
-        try {
-            $id = $params['id'];
-            $id_old = $params['id'];
-            $status = $params['status'];
-
-            $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
-
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select id_kirim_pakan from terima_pakan tp where tp.id = '".$id."'
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-
-            $id_kirim_pakan = null;
-            if ( $d_conf->count() > 0 ) {
-                $id_kirim_pakan = $d_conf->toArray()[0]['id_kirim_pakan'];
-            }
-
-            $_params = $params;
-            $_params['id_kirim_pakan'] = $id_kirim_pakan;
-
-            $this->result['status'] = $return['status'];
-            $this->result['message'] = json_encode($return);
-            $this->result['content'] = $_params;
-        } catch (Exception $e) {
-            $this->result['message'] = $e->getMessage();
-        }
-
-        display_json( $this->result );
-    }
-
-    // public function edit()
-    // {
-    //     $params = $this->input->post('params');
-
-    //     try {
-    //         $m_kirim_pakan = new \Model\Storage\KirimPakan_model();
-    //         $now = $m_kirim_pakan->getDate();
-
-    //         $m_kirim_pakan->where('id', $params['id'])->update(
-    //             array(
-    //                 'tgl_trans' => $now['waktu'],
-    //                 'tgl_kirim' => $params['tgl_kirim'],
-    //                 'no_order' => $params['no_order'],
-    //                 'jenis_kirim' => $params['jenis_kirim'],
-    //                 'asal' => $params['asal'],
-    //                 'jenis_tujuan' => $params['jenis_tujuan'],
-    //                 'tujuan' => $params['tujuan'],
-    //                 'ekspedisi' => $params['ekspedisi'],
-    //                 'no_polisi' => $params['nopol'],
-    //                 'sopir' => $params['sopir'],
-    //                 'no_sj' => $params['no_sj'],
-    //                 'ongkos_angkut' => $params['ongkos_angkut'],
-    //                 'ekspedisi_id' => $params['ekspedisi_id']
-    //             )
-    //         );
-
-    //         $id_header = $params['id'];
-
-    //         $m_kirim_pakan_detail = new \Model\Storage\KirimPakanDetail_model();
-    //         $m_kirim_pakan_detail->where('id_header', $id_header)->delete();
-
-    //         foreach ($params['detail'] as $k_detail => $v_detail) {
-    //             $m_kirim_pakan_detail = new \Model\Storage\KirimPakanDetail_model();
-    //             $m_kirim_pakan_detail->id_header = $id_header;
-    //             $m_kirim_pakan_detail->item = $v_detail['barang'];
-    //             $m_kirim_pakan_detail->jumlah = $v_detail['jumlah'];
-    //             $m_kirim_pakan_detail->kondisi = $v_detail['kondisi'];
-    //             $m_kirim_pakan_detail->no_sj_asal = $v_detail['no_sj_asal'];
-    //             $m_kirim_pakan_detail->save();
-    //         }
-
-    //         $d_kirim_pakan = $m_kirim_pakan->where('id', $id_header)->with(['detail'])->first();
-
-    //         $deskripsi_log_kirim_pakan = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
-    //         Modules::run( 'base/event/update', $d_kirim_pakan, $deskripsi_log_kirim_pakan);
-
-    //         $this->result['status'] = 1;
-    //         $this->result['message'] = 'Data Pengiriman Pakan berhasil di ubah.';
-    //     } catch (\Illuminate\Database\QueryException $e) {
-    //         $this->result['message'] = "Gagal : " . $e->getMessage();
-    //     }
-
-    //     display_json($this->result);
-    // }
-
     public function edit(){
         $params = $this->input->post('params');
 
@@ -1555,10 +1253,23 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
 
         try {
-
             // Pengiriman 
             $m_kirim_pakan = new \Model\Storage\KirimPakan_model();
             $now = $m_kirim_pakan->getDate();
+            $d_kp_old = $m_kirim_pakan->where('id', $params['id'])->first();
+
+            $noreg1_old = null;
+            $noreg2_old = null;
+            if ( $d_kp_old->jenis_kirim == 'opkg' ) {
+                if ( $d_kp_old->jenis_tujuan == 'peternak' ) {
+                    $noreg1_old = $d_kp_old->tujuan;
+                }
+            }
+
+            if ( $d_kp_old->jenis_kirim == 'opkp' ) {
+                $noreg1_old = $d_kp_old->asal;
+                $noreg2_old = $d_kp_old->tujuan;
+            }
 
             $m_kirim_pakan->where('id', $params['id'])->update(
                 array(
@@ -1730,8 +1441,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
             $noreg1 = null;
             $noreg2 = null;
-            $noreg1_old = null;
-            $noreg2_old = null;
             $m_conf = new \Model\Storage\Conf();
             $sql = "
                 select tp.id, kp.jenis_kirim, kp.jenis_tujuan, kp.asal, kp.tujuan from terima_pakan tp
@@ -1758,16 +1467,16 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 }
             }
 
-            if ( $d_terima_old->jenis_kirim == 'opkg' ) {
-                if ( $d_terima_old->jenis_tujuan == 'peternak' ) {
-                    $noreg1_old = $d_terima_old->tujuan;
-                }
-            }
+            // if ( $d_terima_old->jenis_kirim == 'opkg' ) {
+            //     if ( $d_terima_old->jenis_tujuan == 'peternak' ) {
+            //         $noreg1_old = $d_terima_old->tujuan;
+            //     }
+            // }
 
-            if ( $d_terima_old->jenis_kirim == 'opkp' ) {
-                $noreg1_old = $d_terima_old->asal;
-                $noreg2_old = $d_terima_old->tujuan;
-            }
+            // if ( $d_terima_old->jenis_kirim == 'opkp' ) {
+            //     $noreg1_old = $d_terima_old->asal;
+            //     $noreg2_old = $d_terima_old->tujuan;
+            // }
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data Pengiriman Pakan berhasil di ubah.';
@@ -1783,8 +1492,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     'noreg1_old' => $noreg1_old,
                     'noreg2_old' => $noreg2_old
                 );
-
-                
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
@@ -1834,9 +1541,9 @@ class PengirimanPenerimaanPakan extends Public_Controller {
             $deskripsi_log_kirim_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_kirim_pakan, $deskripsi_log_kirim_pakan);
 
-            $m_kirim_pakan_detail = new \Model\Storage\KirimPakanDetail_model();
-            $m_kirim_pakan_detail->where('id_header', $params['id'])->delete();
-            $m_kirim_pakan->where('id', $params['id'])->delete();
+            // $m_kirim_pakan_detail = new \Model\Storage\KirimPakanDetail_model();
+            // $m_kirim_pakan_detail->where('id_header', $params['id'])->delete();
+            // $m_kirim_pakan->where('id', $params['id'])->delete();
             // End Pengiriman
 
             $m_terima_pakan = new \Model\Storage\TerimaPakan_model();
@@ -1866,99 +1573,252 @@ class PengirimanPenerimaanPakan extends Public_Controller {
         display_json($this->result);
     }
 
-    // public function delete()
-    // {
-    //     $params = $this->input->post('params');
+    public function execInsertKonfirmasi()
+    {
+        $params = $this->input->post('params');
 
-    //     try {
+        try {
+            $id = $params['id'];
+            $status = $params['status'];
+            $delete = ($status == 3) ? 1 : 0;
 
-    //         $m_terima = new \Model\Storage\TerimaPakan_model();
-    //         $m_terima_detail = new \Model\Storage\TerimaPakanDetail_model();
-    //         $m_kirim = new \Model\Storage\KirimPakan_model();
-    //         $m_kirim_detail = new \Model\Storage\KirimPakanDetail_model();
-    //         $m_conf = new \Model\Storage\Conf();
+            $this->insertKonfirmasi( $id, $delete );
+
+            $this->result['status'] = 1;
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
 
 
-    //         $list_terima = $m_terima->where('id_kirim_pakan', $params['id'])->get();
+    function insertKonfirmasi($id_terima, $delete = 0) {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select kp.* from terima_pakan tp
+            left join
+                kirim_pakan kp
+                on
+                    tp.id_kirim_pakan = kp.id
+            where
+                tp.id = '".$id_terima."'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+        
+        $no_order = null;
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray()[0];
 
-    //         if ($list_terima->count() == 0) {
-    //             throw new \Exception("Data terima pakan tidak ditemukan.");
-    //         }
+            $no_order = $d_conf['no_order'];
+        }
 
-    //         $tgl_terima = null;
+        $m_kppd = new \Model\Storage\KonfirmasiPembayaranPakanDet_model();
+        $d_kppd = $m_kppd->where('no_order', $no_order)->first();
 
-    //         foreach ($list_terima as $d_terima) {
+        if ( $d_kppd ) {
+            $m_kppd2 = new \Model\Storage\KonfirmasiPembayaranPakanDet2_model();
+            $m_kppd2->where('id_header', $d_kppd->id)->delete();
 
-    //             $tgl_terima = $d_terima->tgl_terima;
+            $m_kppd = new \Model\Storage\KonfirmasiPembayaranPakanDet_model();
+            $m_kppd->where('id', $d_kppd->id)->delete();
 
-    //             Modules::run('base/event/update', $d_terima,'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser']);
+            $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
+            $m_kpp->where('id', $d_kppd->id_header)->delete();
+        }
 
-    //             $m_terima_detail->where('id_header', $d_terima->id)->delete();
+        if ( $delete == 0 ) {
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    tp.tgl_terima as tgl_bayar,
+                    tp.tgl_terima as periode_docin,
+                    op.perusahaan,
+                    op.supplier,
+                    sum(dtp.jumlah * op.harga) as total,
+                    kp.no_sj,
+                    kp.tgl_kirim as tgl_sj,
+                    SUBSTRING(op.no_order, 5, 3) as id_kab_kota,
+                    op.no_order,
+                    sum(dtp.jumlah) as jumlah
+                from det_terima_pakan dtp
+                left join
+                    (
+                        select tp1.* from terima_pakan tp1
+                        right join
+                            (select max(id) as id, id_kirim_pakan from terima_pakan group by id_kirim_pakan) tp2
+                            on
+                                tp1.id = tp2.id
+                    ) tp
+                    on
+                        dtp.id_header = tp.id
+                left join
+                    kirim_pakan kp
+                    on
+                        tp.id_kirim_pakan = kp.id
+                left join
+                    (
+                        select 
+                            opd.*, 
+                            op.no_order, 
+                            op.tgl_trans, 
+                            op.rcn_kirim, 
+                            op.supplier 
+                        from order_pakan_detail opd
+                        left join
+                            (
+                                select op1.* from order_pakan op1
+                                right join
+                                    (select max(id) as id, no_order from order_pakan group by no_order) op2
+                                    on
+                                        op1.id = op2.id
+                            ) op
+                            on
+                                opd.id_header = op.id
+                    ) op
+                    on
+                        kp.no_order = op.no_order and
+                        dtp.item = op.barang
+                where
+                    kp.jenis_kirim = 'opks' and
+                    op.no_order = '".$no_order."'
+                group by
+                    tp.tgl_terima,
+                    op.perusahaan,
+                    op.supplier,
+                    kp.no_sj,
+                    kp.tgl_kirim,
+                    op.no_order
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
 
-    //             $m_terima->where('id', $d_terima->id)->delete();
-    //         }
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
 
-    //         Modules::run('base/event/update',$m_kirim->where('id', $params['id'])->first(),
-    //             'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser']
-    //         );
+                $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
+                $nomor = $m_kpp->getNextNomor();
 
-    //         $m_kirim_detail->where('id_header', $params['id'])->delete();
+                $m_kpp->nomor = $nomor;
+                $m_kpp->tgl_bayar = $d_conf['tgl_bayar'];
+                $m_kpp->periode = trim($d_conf['periode_docin']);
+                $m_kpp->perusahaan = $d_conf['perusahaan'];
+                $m_kpp->supplier = $d_conf['supplier'];
+                $m_kpp->total = $d_conf['total'];
+                $m_kpp->invoice = $d_conf['no_sj'];
+                // $m_kpp->rekening = $d_conf['rekening'];
+                $m_kpp->save();
 
-    //         $m_kirim->where('id', $params['id'])->delete();
+                $id = $m_kpp->id;
 
-    //         $noreg1 = null;
-    //         $noreg2 = null;
+                $m_kppd = new \Model\Storage\KonfirmasiPembayaranPakanDet_model();
+                $m_kppd->id_header = $id;
+                $m_kppd->tgl_sj = $d_conf['tgl_sj'];
+                $m_kppd->kode_unit = $d_conf['id_kab_kota'];
+                $m_kppd->no_order = $d_conf['no_order'];
+                $m_kppd->no_sj = $d_conf['no_sj'];
+                $m_kppd->jumlah = $d_conf['jumlah'];
+                $m_kppd->total = $d_conf['total'];
+                $m_kppd->save();
+                
+                $d_kpd = $m_kpp->where('id', $id)->first();
 
-    //         $sql = "
-    //             SELECT kp.jenis_kirim, kp.jenis_tujuan, kp.asal, kp.tujuan 
-    //             FROM kirim_pakan kp
-    //             WHERE kp.id = '".$params['id']."'
-    //         ";
+                $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/save', $d_kpd, $deskripsi_log);
+            }
+        }
+    }
 
-    //         $d_conf = $m_conf->hydrateRaw($sql);
+    public function hitungStokByTransaksi()
+    {
+        $params = $this->input->post('params');
 
-    //         if ($d_conf->count() > 0) {
-    //             $d_conf = $d_conf->toArray()[0];
+        $id = $params['id'];
+        $tanggal = $params['tanggal'];
+        $delete = $params['delete'];
+        $status_jurnal = $params['status_jurnal'];
 
-    //             if ($d_conf['jenis_kirim'] == 'opkg' && $d_conf['jenis_tujuan'] == 'peternak') {
-    //                 $noreg1 = $d_conf['tujuan'];
-    //             }
+        try {
+            $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
-    //             if ($d_conf['jenis_kirim'] == 'opkp') {
-    //                 $noreg1 = $d_conf['asal'];
-    //                 $noreg2 = $d_conf['tujuan'];
-    //             }
-    //         }
+            $this->result['status'] = $return['status'];
+            $this->result['message'] = json_encode($return);
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
 
-    //         $this->result = [
-    //             'status' => 1,
-    //             'content' => [
-    //                 'id' => $params['id'],
-    //                 'tanggal' => $tgl_terima,
-    //                 'delete' => 1,
-    //                 'message' => 'Data Pakan (terima + kirim) berhasil dihapus.',
-    //                 'status_jurnal' => 3,
-    //                 'status' => 3,
-    //                 'noreg1' => $noreg1,
-    //                 'noreg2' => $noreg2
-    //             ]
-    //         ];
+        display_json( $this->result );
+    }
 
-    //         $this->result = [
-    //             'status' => 1,
-    //             'message' => 'Data Voadip (terima + kirim) berhasil dihapus.'
-    //         ];
+    public function execHitStokSiklus() {
+        $params = $this->input->post('params');
 
-    //     } catch (\Exception $e) {
+        try {
+            $id = $params['id'];
+            $tanggal = $params['tanggal'];
+            $status = $params['status'];
+            $noreg1 = $params['noreg1'];
+            $noreg2 = $params['noreg2'];
+            $noreg1_old = (!empty($params['noreg1_old']) && isset($params['noreg1_old'])) ? $params['noreg1_old'] : null;
+            $noreg2_old = (!empty($params['noreg2_old']) && isset($params['noreg2_old'])) ? $params['noreg2_old'] : null;
 
-    //         $this->result = [
-    //             'status' => 0,
-    //             'message' => 'Gagal : ' . $e->getMessage()
-    //         ];
-    //     }
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
-    //     display_json($this->result);
-    // }
+            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                if ( $noreg1 <> $noreg2_old || $noreg2 <> $noreg2_old ) {
+                    $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
+                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                }
+            }
+
+            $this->result['status'] = $return['status'];
+            $this->result['message'] = json_encode($return);
+            $this->result['content'] = $params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+
+    public function execInsertJurnal() {
+        $params = $this->input->post('params');
+
+        try {
+            $id = $params['id'];
+            $id_old = $params['id'];
+            $status = $params['status'];
+
+            $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select id_kirim_pakan from terima_pakan tp where tp.id = '".$id."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $id_kirim_pakan = null;
+            if ( $d_conf->count() > 0 ) {
+                $id_kirim_pakan = $d_conf->toArray()[0]['id_kirim_pakan'];
+            }
+
+            $_params = $params;
+            $_params['id_kirim_pakan'] = $id_kirim_pakan;
+
+            $this->result['status'] = $return['status'];
+            $this->result['message'] = json_encode($return);
+            $this->result['content'] = $_params;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
 
     public function cek_stok_gudang()
     {
