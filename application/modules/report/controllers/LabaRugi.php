@@ -132,7 +132,7 @@ class LabaRugi extends Public_Controller {
 
         $data = null;
         for (; $i < $_bulan; $i++) { 
-            $angka_bulan = (strlen($i+1) == 1) ? '0'.$i+1 : $i+1;
+            $angka_bulan = (strlen($i+1) == 1) ? '0'.($i+1) : ($i+1);
 
             $date = $tahun.'-'.$angka_bulan.'-01';
             $start_date = date("Y-m-d", strtotime($date)).' 00:00:00';
@@ -918,14 +918,16 @@ class LabaRugi extends Public_Controller {
         $nama_bulan = $list_nama_bulan[ $bulan ];
 
         $sql = "
+            -- mtr1.nomor, mtr1.nama, mtr1.ktp as nik, mtr1.npwp, mtr1.perusahaan, mm.nim, k.unit as id_unit, k.tipe as tipe_kdg, k.kandang
+
             select
                 '".$nama_bulan."' as nama_bulan,
                 w.kode,
                 prs.perusahaan as nama_perusahaan,
-                mtr.nama as nama_mitra,
-                mtr.tipe_kdg,
-                mtr.nik,
-                mtr.npwp,
+                m.nama as nama_mitra,
+                k.tipe as tipe_kdg,
+                m.ktp as nik,
+                m.npwp,
                 rhpp.*
             from
             (
@@ -1504,6 +1506,29 @@ class LabaRugi extends Public_Controller {
                         kry.nik = rs.sampling
             ) rhpp
             left join
+                rdim_submit rs
+                on
+                    rhpp.noreg = rs.noreg
+            left join 
+                kandang k
+                on
+                    k.id = rs.kandang
+            left join
+                (
+                    select mm1.* from mitra_mapping mm1
+                    right join
+                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        on
+                            mm1.id = mm2.id
+                ) mm
+                on
+                    rs.nim = mm.nim
+            left join
+                mitra m
+                on
+                    mm.mitra = m.id
+            /*
+            left join
                 (
                     select mtr1.nomor, mtr1.nama, mtr1.ktp as nik, mtr1.npwp, mtr1.perusahaan, mm.nim, k.unit as id_unit, k.tipe as tipe_kdg, k.kandang from mitra mtr1
                     right join
@@ -1523,7 +1548,8 @@ class LabaRugi extends Public_Controller {
                 ) mtr
                 on
                     rhpp.no_mitra = mtr.nomor and
-                    cast(SUBSTRING(rhpp.noreg, 10, 2) as int) = mtr.kandang 
+                    cast(SUBSTRING(rhpp.noreg, 10, 2) as int) = mtr.kandang
+            */
             left join
                 (
                     select prs1.* from perusahaan prs1
@@ -1533,11 +1559,11 @@ class LabaRugi extends Public_Controller {
                             prs1.id = prs2.id
                 ) prs
                 on
-                    prs.kode = mtr.perusahaan
+                    prs.kode = m.perusahaan
             left join
                 wilayah w
                 on
-                    w.id = mtr.id_unit
+                    w.id = k.unit
             where
                 rhpp.tgl_tutup between '".$start_date."' and '".$end_date."'
                 ".$sql_unit."
@@ -1545,10 +1571,10 @@ class LabaRugi extends Public_Controller {
             order by
                 rhpp.tgl_tutup asc,
                 w.kode asc,
-                mtr.nama asc,
+                m.nama asc,
                 rhpp.kandang asc
         ";
-
+        // cetak_r( $sql, 1 );
         $m_conf = new \Model\Storage\Conf();
         $d_rhpp = $m_conf->hydrateRaw($sql);
 

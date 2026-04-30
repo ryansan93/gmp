@@ -97,15 +97,9 @@ class RealisasiChickIn2 extends Public_Controller {
                 on
                     rs.kandang = kdg.id
             left join
-                (
-                    select mm1.* from mitra_mapping mm1
-                    right join
-                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                        on
-                            mm1.id = mm2.id
-                ) mm
+                mitra_mapping mm
                 on
-                    rs.nim = mm.nim
+                    kdg.mitra_mapping = mm.id
             left join
                 (
                     select k.*, l_kec.nama as kecamatan, l_kab_kota.nama as kab_kota, l_prov.nama as provinsi from kandang k 
