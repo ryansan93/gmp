@@ -752,47 +752,56 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     m.nama
                 from
                 ( 
-                    select 
-                        rs.noreg, 
-                        cast(rs.tgl_docin as date) as tgl_docin
-                    from rdim_submit rs 
-                    left join
-                        (
-                            select od1.* from order_doc od1
-                            right join
-                                (select max(id) as id, noreg from order_doc group by noreg) od2
-                                on
-                                    od1.id = od2.id
-                        ) od
-                        on
-                            rs.noreg = od.noreg
-                    left join
-                        (
-                            select td1.* from terima_doc td1
-                            right join
-                                (select max(id) as id, no_order from terima_doc group by no_order) td2
-                                on
-                                    td1.id = td2.id
-                        ) td
-                        on
-                            od.no_order = td.no_order
-                    where 
-                        rs.status = 1 and
-                        td.id is null and
-                        cast(rs.tgl_docin as date) between '".$first_date_of_month."' and '".$last_date_of_month."'
-                        
-                    union all
-                    
                     select
-                        od.noreg,
-                        cast(td.datang as date) as tgl_docin
-                    from terima_doc td 
-                    left join
-                        order_doc od 
-                        on
-                            td.no_order = od.no_order 
-                    where
-                        cast(td.datang as date) between '".$first_date_of_month."' and '".$last_date_of_month."'
+                        dt.noreg,
+                        dt.tgl_docin
+                    from
+                    (
+                        select 
+                            rs.noreg, 
+                            cast(rs.tgl_docin as date) as tgl_docin
+                        from rdim_submit rs 
+                        left join
+                            (
+                                select od1.* from order_doc od1
+                                right join
+                                    (select max(id) as id, noreg from order_doc group by noreg) od2
+                                    on
+                                        od1.id = od2.id
+                            ) od
+                            on
+                                rs.noreg = od.noreg
+                        left join
+                            (
+                                select td1.* from terima_doc td1
+                                right join
+                                    (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                    on
+                                        td1.id = td2.id
+                            ) td
+                            on
+                                od.no_order = td.no_order
+                        where 
+                            rs.status = 1 and
+                            td.id is null and
+                            cast(rs.tgl_docin as date) between '".$first_date_of_month."' and '".$last_date_of_month."'
+                            
+                        union all
+                        
+                        select
+                            od.noreg,
+                            cast(td.datang as date) as tgl_docin
+                        from terima_doc td 
+                        left join
+                            order_doc od 
+                            on
+                                td.no_order = od.no_order 
+                        where
+                            cast(td.datang as date) between '".$first_date_of_month."' and '".$last_date_of_month."'
+                    ) dt
+                    group by
+                        dt.noreg,
+                        dt.tgl_docin
                 ) d_noreg
                 left join
                     rdim_submit rs 
