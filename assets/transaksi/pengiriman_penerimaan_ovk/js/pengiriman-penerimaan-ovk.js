@@ -415,6 +415,27 @@ var pv = {
 	    });
 	}, // end - get_list_table
 
+	cekPembayaran: function(callback, params) {
+		$.ajax({
+			url: 'transaksi/PengirimanPenerimaanOvk/cekPembayaran',
+			data: {
+				'params': params
+			},
+			type: 'POST',
+			dataType: 'JSON',
+			beforeSend: function() {
+				showLoading('Cek pembayaran . . .');
+			},
+			success: function(data) {
+				hideLoading();
+
+				console.log( data );
+				
+				callback({'status': data.status, 'message': data.message});
+			},
+	    });
+	}, // end - cekPembayaran
+
 	cekStok: function(callback, params) {
 		$.ajax({
 			url: 'transaksi/PengirimanPenerimaanOvk/cekStok',
@@ -642,15 +663,21 @@ var pv = {
 				'detail': detail
 			};
 
-			pv.cekStok(function(_data) {
+			pv.cekPembayaran(function(_data) {
 				if ( _data.status != 1 ) {
 					bootbox.alert(_data.message);
 				} else {
-					bootbox.confirm('Apakah anda yakin ingin menyimpan data ?', function(result) {
-						if (result) {
-							pv.exec_edit_kirim_voadip(data);
+					pv.cekStok(function(_data) {
+						if ( _data.status != 1 ) {
+							bootbox.alert(_data.message);
+						} else {
+							bootbox.confirm('Apakah anda yakin ingin menyimpan data ?', function(result) {
+								if (result) {
+									pv.exec_edit_kirim_voadip(data);
+								}
+							});
 						}
-					});
+					}, data);
 				}
 			}, data);
 		}
@@ -699,42 +726,48 @@ var pv = {
 
 		var params = {'id': id};
 
-		bootbox.confirm('Apakah anda yakin ingin menghapus data ?', function(result) {
-			if ( result ) {
-				$.ajax({
-					url: 'transaksi/PengirimanPenerimaanOvk/delete',
-					data: {
-						'params': params
-					},
-					type: 'POST',
-					dataType: 'JSON',
-					beforeSend: function() {
-						showLoading();
-					},
-					success: function(data) {
-						hideLoading();
-						// if ( data.status == 1 ) {
-						// 	bootbox.alert(data.message, function() {
-						// 		pv.get_lists();
-						// 		pv.load_form();
-						// 	});
-						// } else {
-						// 	bootbox.alert(data.message);
-						// };
+		pv.cekPembayaran(function(_data) {
+			if ( _data.status != 1 ) {
+				bootbox.alert(_data.message);
+			} else {
+				bootbox.confirm('Apakah anda yakin ingin menghapus data ?', function(result) {
+					if ( result ) {
+						$.ajax({
+							url: 'transaksi/PengirimanPenerimaanOvk/delete',
+							data: {
+								'params': params
+							},
+							type: 'POST',
+							dataType: 'JSON',
+							beforeSend: function() {
+								showLoading();
+							},
+							success: function(data) {
+								hideLoading();
+								// if ( data.status == 1 ) {
+								// 	bootbox.alert(data.message, function() {
+								// 		pv.get_lists();
+								// 		pv.load_form();
+								// 	});
+								// } else {
+								// 	bootbox.alert(data.message);
+								// };
 
-						if ( data.status == 1 ) {
-							pv.hitungStokByTransaksi(data.content);
-							// bootbox.alert(data.message, function() {
-							// 	pv.get_lists();
-							// 	pv.load_form();
-							// });
-						} else {
-							bootbox.alert(data.message);
-						};
-					},
-			    });
+								if ( data.status == 1 ) {
+									pv.hitungStokByTransaksi(data.content);
+									// bootbox.alert(data.message, function() {
+									// 	pv.get_lists();
+									// 	pv.load_form();
+									// });
+								} else {
+									bootbox.alert(data.message);
+								};
+							},
+						});
+					}
+				});
 			}
-		});
+		}, data);
 	}, // end - delete
 
 	cek_gudang: function(elm) {

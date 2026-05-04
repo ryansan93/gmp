@@ -940,6 +940,81 @@ class PengirimanPenerimaanOvk extends Public_Controller {
         display_json($this->result);
     }
 
+    public function cekPembayaran()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $id = (isset($params['id']) && !empty($params['id'])) ? $params['id']: null;
+
+            $status = 1;
+            $message = '';
+
+            /* CEK PEMBAYARAN */
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select 
+                    kpvd.*, 
+                    rp.id as id_pembayaran, 
+                    rp.tgl_bayar,
+                    rp.tgl_realisasi,
+                    case
+                        when rp.tgl_realisasi is not null then
+                            1
+                        when rp.tgl_realisasi is null and rp.id is not null then
+                            2
+                        else
+                            3
+                    end as status
+                from konfirmasi_pembayaran_voadip_det kpvd
+                left join
+                    konfirmasi_pembayaran_voadip kpv
+                    on
+                        kpvd.id_header = kpv.id
+                left join
+                    (select * from realisasi_pembayaran_det where transaksi = 'VOADIP') rpd
+                    on
+                        kpv.nomor = rpd.no_bayar
+                left join
+                    realisasi_pembayaran rp
+                    on
+                        rpd.id_header = rp.id
+                left join
+                    kirim_voadip kp
+                    on
+                        kpvd.no_order = kp.no_order
+                where
+                    kp.id = '".$id."'
+            ";
+            $d_pembayaran = $m_conf->hydrateRaw( $sql );
+            /* END - CEK PEMBAYARAN */
+
+            if ( $d_pembayaran->count() > 0 ) {
+                $d_pembayaran = $d_pembayaran->toArray()[0];
+
+                if ( $d_pembayaran['status'] == 1 || $d_pembayaran['status'] == 2 ) {
+                    $status = 0;
+                    if ( empty($message)  ) {
+                        if ( $d_pembayaran['status'] == 1 ) {
+                            $message = 'Data sudah di lakukan pembayaran pada tanggal <b>'.tglIndonesia($d_pembayaran['tgl_realisasi'], '-', ' ').'</b>.';
+                        }
+
+                        if ( $d_pembayaran['status'] == 2 ) {
+                            $message = 'Data sudah di lakukan pengajuan pembayaran pada tanggal <b>'.tglIndonesia($d_pembayaran['tgl_bayar'], '-', ' ').'</b><br>Jika ingin mengubah data hubungi finance untuk menghapus data pengajuan.';
+                        }
+                    }
+                }
+            }
+
+            $this->result['status'] = $status;
+            $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function cekStok()
     {
         $params = $this->input->post('params');
