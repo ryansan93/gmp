@@ -418,6 +418,25 @@ var pp = {
 	    });
 	}, // end - get_list_table
 
+	cekPembayaran: function(callback, params) {
+		$.ajax({
+			url: 'transaksi/PengirimanPenerimaanPakan/cekPembayaran',
+			data: {
+				'params': params
+			},
+			type: 'POST',
+			dataType: 'JSON',
+			beforeSend: function() {
+				showLoading('Cek pembayaran . . .');
+			},
+			success: function(data) {
+				hideLoading();
+				
+				callback({'status': data.status, 'message': data.message});
+			},
+	    });
+	}, // end - cekPembayaran
+
 	cekStok: function(callback, params) {
 		$.ajax({
 			url: 'transaksi/PengirimanPenerimaanPakan/cekStok',
@@ -431,8 +450,6 @@ var pp = {
 			},
 			success: function(data) {
 				hideLoading();
-
-				console.log( data );
 				
 				callback({'status': data.status, 'message': data.message});
 			},
@@ -566,9 +583,6 @@ var pp = {
 	    });
 	}, // end - exec_save_kirim_pakan
 
-	
-	
-
 	edit_kirim_pakan: function(elm) {
 		var div_pengiriman = $('div#pengiriman');
 
@@ -658,15 +672,21 @@ var pp = {
 				'detail': detail
 			};
 
-			pp.cekStok(function(_data) {
+			pp.cekPembayaran(function(_data) {
 				if ( _data.status != 1 ) {
 					bootbox.alert(_data.message);
 				} else {
-					bootbox.confirm('Apakah anda yakin ingin mengubah data ?', function(result) {
-						if (result) {
-							pp.exec_edit_kirim_pakan(data);
+					pp.cekStok(function(_data) {
+						if ( _data.status != 1 ) {
+							bootbox.alert(_data.message);
+						} else {
+							bootbox.confirm('Apakah anda yakin ingin mengubah data ?', function(result) {
+								if (result) {
+									pp.exec_edit_kirim_pakan(data);
+								}
+							});
 						}
-					});
+					}, data);
 				}
 			}, data);
 
@@ -721,33 +741,39 @@ var pp = {
 
 		var params = {'id': id};
 
-		bootbox.confirm('Apakah anda yakin ingin menghapus data ?', function(result) {
-			if ( result ) {
-				$.ajax({
-					url: 'transaksi/PengirimanPenerimaanPakan/delete',
-					data: {
-						'params': params
-					},
-					type: 'POST',
-					dataType: 'JSON',
-					beforeSend: function() {
-						showLoading();
-					},
-					success: function(data) {
-						// hideLoading();
-						if ( data.status == 1 ) {
-							bootbox.alert(data.message, function() {
-								// pp.get_lists();
-								// pp.load_form();
-								pp.execInsertKonfirmasi(data.content);
-							});
-						} else {
-							bootbox.alert(data.message);
-						};
-					},
-			    });
+		pp.cekPembayaran(function(_data) {
+			if ( _data.status != 1 ) {
+				bootbox.alert(_data.message);
+			} else {
+				bootbox.confirm('Apakah anda yakin ingin menghapus data ?', function(result) {
+					if ( result ) {
+						$.ajax({
+							url: 'transaksi/PengirimanPenerimaanPakan/delete',
+							data: {
+								'params': params
+							},
+							type: 'POST',
+							dataType: 'JSON',
+							beforeSend: function() {
+								showLoading();
+							},
+							success: function(data) {
+								// hideLoading();
+								if ( data.status == 1 ) {
+									pp.execInsertKonfirmasi(data.content);
+									// bootbox.alert(data.message, function() {
+									// 	// pp.get_lists();
+									// 	// pp.load_form();
+									// });
+								} else {
+									bootbox.alert(data.message);
+								};
+							},
+						});
+					}
+				});
 			}
-		});
+		}, params);
 	}, // end - delete
 
 	cek_gudang: function(elm) {
