@@ -18,8 +18,11 @@ class TutupBulan extends Public_Controller {
             '/accounting/BankMasuk',
             '/accounting/KasKeluar',
             '/accounting/KasMasuk',
-            '/accounting/Memorial',
-            '/pembayaran/VerifikasiPembayaran',
+            '/pembayaran/VerifikasiPembayaran'
+
+        );
+        $url_memo = array(
+            '/accounting/Memorial'
 
         );
 
@@ -27,6 +30,10 @@ class TutupBulan extends Public_Controller {
         if ( in_array($url, $url_kas_bank) ) {
             $sql = "
                 select start_date, end_date from periode_fiskal where status = 1 and kas_bank = 1 order by start_date asc
+            ";
+        } else if ( in_array($url, $url_memo) ) {
+            $sql = "
+                select start_date, end_date from periode_fiskal where status = 1 and memo = 1 order by start_date asc
             ";
         } else {
             $sql = "
