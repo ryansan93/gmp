@@ -19,6 +19,7 @@ class TutupBulan extends Public_Controller {
             '/accounting/KasKeluar',
             '/accounting/KasMasuk',
             '/accounting/Memorial',
+            '/pembayaran/VerifikasiPembayaran',
 
         );
 
