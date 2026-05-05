@@ -220,9 +220,9 @@ class KertasKerjaHpp extends Public_Controller {
                             isnull(sum(pkn.jml_beli * pkn.hrg_beli), 0) as beli_pkn,
                             isnull(sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk), 0) as mutasi_msk_pkn,
                             isnull(sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr), 0) as mutasi_klwr_pkn,
-                            isnull(sum(pkn.jml_koreksi * pkn.hrg_koreksi), 0) as koreksi_pkn,
+                            isnull(sum(pkn.nominal_koreksi), 0) as koreksi_pkn,
                             isnull(sum(pkn.jml_pemakaian * pkn.hrg_pemakaian), 0) as pemakaian_pkn,
-                            isnull(sum(pkn.jml_beli * pkn.hrg_beli), 0) + isnull(sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk), 0) - (isnull(sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr), 0) + isnull(sum(pkn.jml_pemakaian * pkn.hrg_pemakaian), 0)) + isnull(sum(pkn.jml_koreksi * pkn.hrg_koreksi), 0) as sisa_pkn
+                            isnull(sum(pkn.jml_beli * pkn.hrg_beli), 0) + isnull(sum(pkn.jml_mutasi_msk * pkn.hrg_mutasi_msk), 0) - (isnull(sum(pkn.jml_mutasi_klwr * pkn.hrg_mutasi_klwr), 0) + isnull(sum(pkn.jml_pemakaian * pkn.hrg_pemakaian), 0)) + isnull(sum(pkn.nominal_koreksi), 0) as sisa_pkn
                         from (
                             select 
                                 dss.noreg,
@@ -235,6 +235,7 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_klwr,
                                 0 as jml_koreksi,
                                 0 as hrg_koreksi,
+                                0 as nominal_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_siklus dss
@@ -262,6 +263,7 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_klwr,
                                 0 as jml_koreksi,
                                 0 as hrg_koreksi,
+                                0 as nominal_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_siklus dss
@@ -289,6 +291,7 @@ class KertasKerjaHpp extends Public_Controller {
                                 dss.hrg_beli as hrg_mutasi_klwr,
                                 0 as jml_koreksi,
                                 0 as hrg_koreksi,
+                                0 as nominal_koreksi,
                                 0 as jml_pemakaian,
                                 0 as hrg_pemakaian
                             from det_stok_trans_siklus dsts
@@ -309,34 +312,68 @@ class KertasKerjaHpp extends Public_Controller {
     
                             union all
 
-                            select 
-                                dss.noreg,
-                                dsts.kode_trans,
-                                0 as jml_beli,
-                                0 as hrg_beli,
-                                0 as jml_mutasi_msk,
-                                0 as hrg_mutasi_msk,
-                                0 as jml_mutasi_klwr,
-                                0 as hrg_mutasi_klwr,
-                                0-isnull(sum(dsts.jumlah), 0) as jml_koreksi,
-                                dss.hrg_beli as hrg_koreksi,
-                                0 as jml_pemakaian,
-                                0 as hrg_pemakaian
-                            from det_stok_trans_siklus dsts
-                            left join 
-                                det_stok_siklus dss
-                                on
-                                    dsts.id_header = dss.id
-                            left join
-                                retur_pakan rp
-                                on
-                                    dsts.kode_trans = rp.no_retur
-                            where
-                                dss.jenis_barang = 'pakan' and
-                                dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
-                                rp.jenis_retur = 'opkp'
-                            group by
-                                dss.noreg, dsts.kode_trans, dss.hrg_beli
+                            select * from
+                            (
+                                select 
+                                    dss.noreg,
+                                    dsts.kode_trans,
+                                    0 as jml_beli,
+                                    0 as hrg_beli,
+                                    0 as jml_mutasi_msk,
+                                    0 as hrg_mutasi_msk,
+                                    0 as jml_mutasi_klwr,
+                                    0 as hrg_mutasi_klwr,
+                                    0-isnull(sum(dsts.jumlah), 0) as jml_koreksi,
+                                    dss.hrg_beli as hrg_koreksi,
+                                    0 as nominal_koreksi,
+                                    0 as jml_pemakaian,
+                                    0 as hrg_pemakaian
+                                from det_stok_trans_siklus dsts
+                                left join 
+                                    det_stok_siklus dss
+                                    on
+                                        dsts.id_header = dss.id
+                                left join
+                                    retur_pakan rp
+                                    on
+                                        dsts.kode_trans = rp.no_retur
+                                where
+                                    dss.jenis_barang = 'pakan' and
+                                    dsts.tgl_trans between '".$start_date."' and '".$end_date."' and
+                                    rp.jenis_retur = 'opkp'
+                                group by
+                                    dss.noreg, dsts.kode_trans, dss.hrg_beli
+
+                                union all
+
+                                select
+                                    mi.noreg,
+                                    m.no_mm as kode_trans,
+                                    0 as jml_beli,
+                                    0 as hrg_beli,
+                                    0 as jml_mutasi_msk,
+                                    0 as hrg_mutasi_msk,
+                                    0 as jml_mutasi_klwr,
+                                    0 as hrg_mutasi_klwr,
+                                    0 as jml_koreksi,
+                                    0 as hrg_koreksi,
+                                    case
+                                        when mi.coa_asal = '12041.000' then
+                                            0-mi.nilai
+                                        else
+                                            mi.nilai
+                                    end as nominal_koreksi,
+                                    0 as jml_pemakaian,
+                                    0 as hrg_pemakaian
+                                from mmitem mi
+                                left join
+                                    mm m
+                                    on
+                                        mi.no_mm = m.no_mm
+                                where
+                                    (mi.coa_asal = '12041.000' or mi.coa_tujuan = '12041.000')
+                                    and m.tgl_mm between '".$start_date."' and '".$end_date."'
+                            ) koreksi
     
                             union all
     
@@ -351,6 +388,7 @@ class KertasKerjaHpp extends Public_Controller {
                                 0 as hrg_mutasi_klwr,
                                 0 as jml_koreksi,
                                 0 as hrg_koreksi,
+                                0 as nominal_koreksi,
                                 sum(dsts.jumlah) as jml_pemakaian,
                                 dss.hrg_beli as hrg_pemakaian
                             from det_stok_trans_siklus dsts
@@ -1100,11 +1138,17 @@ class KertasKerjaHpp extends Public_Controller {
                     mitra m
                     on
                         m.id = mm.id
+                /*
                 left join
                     kandang k
                     on
                         k.mitra_mapping = mm.id and
                         k.kandang = cast(SUBSTRING(data.noreg, 10, 2) as int)
+                */
+                left join
+                    kandang k
+                    on
+                        k.id = rs.kandang
                 left join
                     wilayah w
                     on
