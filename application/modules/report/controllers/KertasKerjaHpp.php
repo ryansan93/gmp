@@ -1248,7 +1248,7 @@ class KertasKerjaHpp extends Public_Controller {
                 */
                 where
                     m.id is not null
-                    and td.id is not null
+                    -- and td.id is not null
                     ".$sql_unit."
                 group by
                     w.kode,
