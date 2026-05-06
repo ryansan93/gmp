@@ -590,7 +590,7 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 on
                     ovd.perusahaan = prs.kode
             where
-                -- ov.tanggal between '".$tgl_kirim."' and '".$tgl_kirim."' and
+                ov.tanggal between '".$tgl_kirim."' and '".$tgl_kirim."' and
                 not exists (select * from kirim_voadip where no_order = ov.no_order) 
                 and SUBSTRING(ov.no_order, 5, 3) = '".$unit."'
             group by
@@ -980,11 +980,11 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     on
                         rpd.id_header = rp.id
                 left join
-                    kirim_voadip kp
+                    kirim_voadip kv
                     on
-                        kpvd.no_order = kp.no_order
+                        kpvd.no_order = kv.no_order
                 where
-                    kp.id = '".$id."'
+                    kv.id = '".$id."'
             ";
             $d_pembayaran = $m_conf->hydrateRaw( $sql );
             /* END - CEK PEMBAYARAN */
@@ -1002,6 +1002,52 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                         if ( $d_pembayaran['status'] == 2 ) {
                             $message = 'Data sudah di lakukan pengajuan pembayaran pada tanggal <b>'.tglIndonesia($d_pembayaran['tgl_bayar'], '-', ' ').'</b><br>Jika ingin mengubah data hubungi finance untuk menghapus data pengajuan.';
                         }
+                    }
+                }
+            }
+
+            /* CEK CN */
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select 
+                    kpvd.*, 
+                    cp.tanggal,
+                    case
+                        when cpd.nomor is not null then
+                            1
+                        else
+                            0
+                    end as status
+                from konfirmasi_pembayaran_voadip_det kpvd
+                left join
+                    konfirmasi_pembayaran_voadip kpv
+                    on
+                        kpvd.id_header = kpv.id
+                left join
+                    cn_post_det cpd
+                    on
+                        kpv.nomor = cpd.nomor
+                left join
+                    cn_post cp
+                    on
+                        cpd.id_header = cp.id
+                left join
+                    kirim_voadip kv
+                    on
+                        kpvd.no_order = kv.no_order
+                where
+                    kv.id = '".$id."'
+            ";
+            $d_cn = $m_conf->hydrateRaw( $sql );
+            /* END - CEK CN */
+
+            if ( $d_cn->count() > 0 ) {
+                $d_cn = $d_cn->toArray()[0];
+
+                if ( $d_cn['status'] == 1 ) {
+                    $status = 0;
+                    if ( empty($message)  ) {
+                        $message = 'Data sudah di lakukan post Credit Note (CN) pada tanggal <b>'.tglIndonesia($d_cn['tanggal'], '-', ' ').'</b><br><br>Jika ingin mengubah data hubungi finance untuk menghapus data post Credit Note (CN).';
                     }
                 }
             }
