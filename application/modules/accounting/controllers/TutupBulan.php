@@ -715,7 +715,8 @@ class TutupBulan extends Public_Controller
                 array(
                     'status' => 0,
                     'opr' => 0,
-                    'kas_bank' => 0
+                    'kas_bank' => 0,
+                    'memo' => 0
                 )
             );
 
@@ -736,7 +737,8 @@ class TutupBulan extends Public_Controller
                     array(
                         'status' => 1,
                         'opr' => 1,
-                        'kas_bank' => 1
+                        'kas_bank' => 1,
+                        'memo' => 1
                     )
                 );
                 $d_bo = $m_bo->where('id', $d_pf_next['id'])->first();
@@ -751,6 +753,7 @@ class TutupBulan extends Public_Controller
                 $m_bo->status = 1;
                 $m_bo->opr = 1;
                 $m_bo->kas_bank = 1;
+                $m_bo->memo = 1;
                 $m_bo->save();
 
                 $deskripsi_log = 'di-aktifkan oleh ' . $this->userdata['detail_user']['nama_detuser'];
