@@ -1809,6 +1809,33 @@ class PengirimanPenerimaanOvk extends Public_Controller {
             //     $m_kirim->where('id', $params['id'])->delete();
             // }
 
+            $noreg1 = null;
+            $noreg2 = null;
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select tv.id, kv.jenis_kirim, kv.jenis_tujuan, kv.asal, kv.tujuan from terima_voadip tv
+                left join
+                    kirim_voadip kv
+                    on
+                        tv.id_kirim_voadip = kv.id
+                where
+                    tv.id_kirim_voadip = '".$params['id']."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+            if ( $d_conf->count() > 0 ) {
+                $d_conf = $d_conf->toArray()[0];
+
+                if ( $d_conf['jenis_kirim'] == 'opkg' ) {
+                    if ( $d_conf['jenis_tujuan'] == 'peternak' ) {
+                        $noreg1 = $d_conf['tujuan'];
+                    }
+                }
+
+                if ( $d_conf['jenis_kirim'] == 'opkp' ) {
+                    $noreg1 = $d_conf['asal'];
+                    $noreg2 = $d_conf['tujuan'];
+                }
+            }
 
             $this->result['status'] = 1;
             $this->result['content'] = array(
@@ -1817,7 +1844,9 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 'delete' => 1,
                 'message' => 'Data Voadip (terima + kirim) berhasil di hapus.',
                 'status_jurnal' => 3,
-                'status' => 3
+                'status' => 3,
+                'noreg1' => $noreg1,
+                'noreg2' => $noreg2
             );
 
             // cetak_r( $this->result );
