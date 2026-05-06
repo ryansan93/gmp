@@ -1183,19 +1183,38 @@ class RealisasiPembayaran extends Public_Controller
                 $m_conf = new \Model\Storage\Conf();
                 $sql = "
                     select
-                        sum(rpd.bayar) as bayar,
-                        sum(rpd.bayar) as dn,
-                        sum(rpd.bayar) as cn,
-                        sum(rpd.bayar) as transfer
-                    from realisasi_pembayaran_det rpd
-                    left join
-                        realisasi_pembayaran rp
-                        on
-                            rpd.id_header = rp.id
-                    where
-                        (rp.status = 2 or rp.status is null)
-                        ".$sql_id."
-                        and rpd.no_bayar = '".$v_kpv['nomor']."'
+                        sum(rp.bayar) as bayar,
+                        sum(rp.bayar) as dn,
+                        sum(rp.bayar) as cn,
+                        sum(rp.bayar) as transfer
+                    from (
+                        select
+                            sum(rpd.bayar) as bayar,
+                            sum(rpd.bayar) as dn,
+                            sum(rpd.bayar) as cn,
+                            sum(rpd.bayar) as transfer
+                        from realisasi_pembayaran_det rpd
+                        left join
+                            realisasi_pembayaran rp
+                            on
+                                rpd.id_header = rp.id
+                        where
+                            (rp.status = 2 or rp.status is null)
+                            ".$sql_id."
+                            and rpd.no_bayar = '".$v_kpv['nomor']."'
+
+                        union all
+
+                        select
+                            nilai as bayar,
+                            0 as dn,
+                            0 as cn,
+                            nilai as transfer
+                        from mmitem 
+                        where 
+                            coa_tujuan in ('21174.000', '21180.300') and
+                            no_invoice = '".$v_kpv['nomor']."'
+                    ) rp
                 ";
                 $d_conf = $m_conf->hydrateRaw( $sql );
 
