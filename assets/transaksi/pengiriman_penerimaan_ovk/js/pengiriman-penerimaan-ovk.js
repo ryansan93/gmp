@@ -767,7 +767,7 @@ var pv = {
 					}
 				});
 			}
-		}, data);
+		}, params);
 	}, // end - delete
 
 	cek_gudang: function(elm) {
