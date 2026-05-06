@@ -2061,6 +2061,65 @@ class RealisasiPembayaran extends Public_Controller
         display_json( $this->result );
     }
 
+    public function cekDataKonfirmasi()
+    {
+        $params = $this->input->post('params');
+
+        try {
+            $status = 1;
+            $message = '';
+
+            foreach ($params['detail'] as $k_det => $v_det) {
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select * from (
+                        select nomor from konfirmasi_pembayaran_doc
+    
+                        union all
+    
+                        select nomor from konfirmasi_pembayaran_pakan
+    
+                        union all
+    
+                        select nomor from konfirmasi_pembayaran_voadip
+    
+                        union all
+    
+                        select nomor from konfirmasi_pembayaran_oa_pakan
+    
+                        union all
+    
+                        select nomor from konfirmasi_pembayaran_peternak
+                    ) konfir
+                    where
+                        konfir.nomor = '".$v_det['no_bayar']."'
+                ";
+                $d_konfir = $m_conf->hydrateRaw( $sql );
+
+                if ( $d_konfir->count() == 0 ) {
+                    $status = 0;
+
+                    if ( empty($message) ) {
+                        $message = 'Ada data konfirmasi yang tidak di temukan, harap konfirmasi ke admin yang bersangkutan !!!<br>';
+                    }
+
+                    $message .= '<br>'.$v_det['no_bayar'];
+                }
+            }
+                    
+            if ( $status == 0 ) {    
+                $message .= '<br><br>Lakukan klik pada tombol tampilkan rencana bayar ulang.';
+            }
+
+            $this->result['status'] = $status;
+            $this->result['message'] = $message;
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function save()
     {
         $data = json_decode($this->input->post('data'),TRUE);

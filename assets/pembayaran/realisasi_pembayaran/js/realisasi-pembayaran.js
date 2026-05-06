@@ -498,7 +498,7 @@ var rp = {
                 'perusahaan': perusahaan,
                 'detail': detail
             };
-            
+
             $.get('pembayaran/RealisasiPembayaran/formRealisasiPembayaran',{
             },function(data){
                 var _options = {
@@ -1056,6 +1056,41 @@ var rp = {
         $('.kurang_bayar h4 b').text(numeral.formatDec(kurang_bayar));
     }, // end - hit_jml_bayar
 
+    cekKonfirmasi: function(callback) {
+        var modal_body = $('.modal-body');
+
+        showLoading('Cek pembayaran . . .');
+
+        var detail = $.map( $(modal_body).find('tbody tr'), function(tr) {
+            var _detail = {
+                'transaksi': $(tr).find('.transaksi').attr('data-val'),
+                'no_bayar': $(tr).find('.no_bayar').attr('data-val')
+            };
+
+            return _detail;
+        });
+
+        var params = {
+            'detail': detail
+        };
+
+		$.ajax({
+			url: 'pembayaran/RealisasiPembayaran/cekDataKonfirmasi',
+			data: {
+				'params': params
+			},
+			type: 'POST',
+			dataType: 'JSON',
+			beforeSend: function() {
+			},
+			success: function(data) {
+				hideLoading();
+				
+				callback({'status': data.status, 'message': data.message});
+			},
+	    });
+	}, // end - cekKonfirmasi
+
     save: function() {
         var modal_body = $('.modal-body');
         var div = $('div#transaksi');
@@ -1083,45 +1118,51 @@ var rp = {
         if ( err > 0 ) {
             bootbox.alert('Harap lengkapi data terlebih dahulu.');
         } else {
-            var tagihan = parseFloat($(modal_body).find('.total').attr('data-val')) + parseFloat($(modal_body).find('.total_dn').attr('data-val'));
-            var total_bayar = $(modal_body).find('.total_bayar').attr('data-val');
+            rp.cekKonfirmasi(function(_data) {
+				if ( _data.status != 1 ) {
+					bootbox.alert(_data.message);
+				} else {
+					var tagihan = parseFloat($(modal_body).find('.total').attr('data-val')) + parseFloat($(modal_body).find('.total_dn').attr('data-val'));
+                    var total_bayar = $(modal_body).find('.total_bayar').attr('data-val');
 
-            var ket = null;
-            if ( tagihan != total_bayar ) {
-                bootbox.prompt({
-                    title: 'Jumlah transfer dan tagihan tidak sama, harap isi keterangan terlebih dahulu sebelum simpan data',
-                    inputType: 'textarea',
-                    placeholder: 'Alasan',
-                    buttons: {
-                        confirm: {
-                            label: 'Ya',
-                            className: 'btn-primary'
-                        },
-                        cancel: {
-                            label: 'Tidak',
-                            className: 'btn-danger'
-                        }
-                    },
-                    callback: function (result) {
-                        if(result != null){
-                            if( empty(result) ){
-                                bootbox.alert('Mohon isi kolom keterangan terlebih dahulu.');
-                            }else{
-                                ket = result;
+                    var ket = null;
+                    if ( tagihan != total_bayar ) {
+                        bootbox.prompt({
+                            title: 'Jumlah transfer dan tagihan tidak sama, harap isi keterangan terlebih dahulu sebelum simpan data',
+                            inputType: 'textarea',
+                            placeholder: 'Alasan',
+                            buttons: {
+                                confirm: {
+                                    label: 'Ya',
+                                    className: 'btn-primary'
+                                },
+                                cancel: {
+                                    label: 'Tidak',
+                                    className: 'btn-danger'
+                                }
+                            },
+                            callback: function (result) {
+                                if(result != null){
+                                    if( empty(result) ){
+                                        bootbox.alert('Mohon isi kolom keterangan terlebih dahulu.');
+                                    }else{
+                                        ket = result;
 
-                                rp.exec_save( ket );
+                                        rp.exec_save( ket );
+                                    }
+                                }
                             }
-                        }
-                    }
-                });
-            } else {
-                bootbox.confirm('Apakah anda yakin ingin menyimpan data realisasi pembayaran ?', function(result) {
-                    if ( result ) {
-                        rp.exec_save();
-                    }
-                });
+                        });
+                    } else {
+                        bootbox.confirm('Apakah anda yakin ingin menyimpan data realisasi pembayaran ?', function(result) {
+                            if ( result ) {
+                                rp.exec_save();
+                            }
+                        });
 
-            }
+                    }
+				}
+			});
         }
     }, // end - save
 
