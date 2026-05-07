@@ -63,7 +63,12 @@
 				<label class="control-label">Pakai Pakan (Zak)</label>
 			</div>
 			<div class="col-xs-12 no-padding">
-				<input class="form-control text-right" data-tipe="integer" type="text" name="pakai_pakan" data-required="1" placeholder="PAKAI PAKAN" />
+				<div class="col-xs-3 no-padding">
+					<button type="button" class="col-xs-12 btn btn-default" style="border-top-right-radius: 0; border-bottom-right-radius: 0;" data-toggle="modal" data-target="#myPakaiPakan"><i class="fa fa-list"></i></button>
+				</div>
+				<div class="col-xs-9 no-padding">
+					<input class="form-control text-right" data-tipe="integer" type="text" name="pakai_pakan" data-required="1" placeholder="PAKAI PAKAN" disabled style="border-top-left-radius: 0; border-bottom-left-radius: 0;"/>
+				</div>
 			</div>
 		</div>
 
@@ -163,6 +168,61 @@
 	<div class="col-xs-12">
 		<div class="col-xs-12 no-padding">
 			<button type="button" class="btn btn-primary pull-right" onclick="lhk.getLocation(this)" style="width: 100%;" data-lat="" data-long="" data-jenis="save"><i class="fa fa-save"></i> Simpan</button>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Pakai Pakan -->
+ <div id="myPakaiPakan" class="modal fade my-style" role="dialog">
+	<div class="modal-dialog">
+	    <!-- Modal content-->
+	    <div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">Pakai Pakan</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<div class="modal-body">
+		        <div class="panel-body no-padding">
+		        	<div class="col-xs-12 no-padding">
+			        	<small>
+				        	<table class="table table-bordered tbl_pakan" style="margin-bottom: 0px;">
+				        		<thead>
+				        			<tr>
+				        				<th class="col-xs-8">Jenis</th>
+				        				<th class="col-xs-4">Jumlah (Zak)</th>
+				        			</tr>
+				        		</thead>
+				        		<tbody>
+									<tr>
+										<td>TOTAL PAKAN SEBELUMNYA</td>
+										<td class="tot_pakan_sebelumnya text-right">
+											0
+											<!-- <input type="text" class="form-control text-right jumlah" data-tipe="integer" placeholder="Jumlah" value="<?php  ?>" disabled> -->
+										</td>
+									</tr>
+									<tr>
+										<td colspan="2">&nbsp;</td>
+									</tr>
+									<?php foreach ($data_pakan as $key => $v_pkn) { ?>
+										<tr class="pakan" data-id="<?php echo $v_pkn['kode']; ?>">
+											<td class="nama"><?php echo strtoupper($v_pkn['nama']); ?></td>
+											<td>
+												<input type="text" class="form-control text-right jumlah" data-tipe="integer" placeholder="Jumlah" onblur="lhk.hitJmlPakan(this)">
+											</td>
+										</tr>
+									<?php } ?>
+				        		</tbody>
+								<tfoot>
+									<tr>
+										<td><b>TOTAL</b></td>
+										<td class="total text-right"><b>0</b></td>
+									</tr>
+								</tfoot>
+				        	</table>
+				        </small>
+		        	</div>
+		        </div>
+		    </div>
 		</div>
 	</div>
 </div>
@@ -313,69 +373,69 @@
 									<tr>
 										<td>Flok / Lantai</td>
 										<td colspan="2">
-											<input type="text" class="form-control flok_lantai" data-required="1" placeholder="Flok 1 Lantai 1 (MAX:25)" maxlength="25">
+											<input type="text" class="form-control flok_lantai" data-required="1" placeholder="Flok 1 Lantai 1 (MAX:25)" maxlength="25" value="-">
 										</td>
 									</tr>
 									<tr>
 										<td>Tipe Controller</td>
 										<td colspan="2">
-											<input type="text" class="form-control tipe_controller" data-required="1" placeholder="Temptron 304D (MAX:50)" maxlength="50">
+											<input type="text" class="form-control tipe_controller" data-required="1" placeholder="Temptron 304D (MAX:50)" maxlength="50" value="-">
 										</td>
 									</tr>
 									<tr>
 										<td>Kelembapan (%)</td>
-										<td><input type="text" class="form-control text-right kelembapan1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
-										<td><input type="text" class="form-control text-right kelembapan2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right kelembapan1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
+										<td><input type="text" class="form-control text-right kelembapan2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
 									</tr>
 									<tr>
 										<td>Suhu Current &#8451;</td>
-										<td><input type="text" class="form-control text-right suhu_current1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
-										<td><input type="text" class="form-control text-right suhu_current2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right suhu_current1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
+										<td><input type="text" class="form-control text-right suhu_current2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
 									</tr>
 									<tr>
 										<td>Suhu Experience &#8451;</td>
-										<td><input type="text" class="form-control text-right suhu_experience1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
-										<td><input type="text" class="form-control text-right suhu_experience2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right suhu_experience1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
+										<td><input type="text" class="form-control text-right suhu_experience2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
 									</tr>
 									<tr>
 										<td>Air Speed Depan Inlet</td>
-										<td><input type="text" class="form-control text-right air_speed_depan_inlet1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
-										<td><input type="text" class="form-control text-right air_speed_depan_inlet2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right air_speed_depan_inlet1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
+										<td><input type="text" class="form-control text-right air_speed_depan_inlet2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
 									</tr>
 									<tr>
 										<td>Kerataan Air Speed</td>
-										<td><input type="text" class="form-control text-right kerataan_air_speed1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
-										<td><input type="text" class="form-control text-right kerataan_air_speed2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right kerataan_air_speed1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
+										<td><input type="text" class="form-control text-right kerataan_air_speed2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
 									</tr>
 									<tr>
 										<td>Ukuran Kipas</td>
-										<td><input type="text" class="form-control text-right ukuran_kipas1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
-										<td><input type="text" class="form-control text-right ukuran_kipas2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6"></td>
+										<td><input type="text" class="form-control text-right ukuran_kipas1" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
+										<td><input type="text" class="form-control text-right ukuran_kipas2" data-tipe="decimal" data-required="1" placeholder="0.00" maxlength="6" value="0"></td>
 									</tr>
 									<tr>
 										<td>Jumlah Kipas Total</td>
-										<td><input type="text" class="form-control text-right jumlah_kipas1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
-										<td><input type="text" class="form-control text-right jumlah_kipas2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
 									</tr>
 									<tr>
 										<td>Jumlah Kipas On</td>
-										<td><input type="text" class="form-control text-right jumlah_kipas_on1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
-										<td><input type="text" class="form-control text-right jumlah_kipas_on2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas_on1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas_on2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
 									</tr>
 									<tr>
 										<td>Jumlah Kipas Off</td>
-										<td><input type="text" class="form-control text-right jumlah_kipas_off1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
-										<td><input type="text" class="form-control text-right jumlah_kipas_off2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas_off1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
+										<td><input type="text" class="form-control text-right jumlah_kipas_off2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
 									</tr>
 									<tr>
 										<td>Waktu Kipas On (menit)</td>
-										<td><input type="text" class="form-control text-right waktu_kipas_on1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
-										<td><input type="text" class="form-control text-right waktu_kipas_on2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right waktu_kipas_on1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
+										<td><input type="text" class="form-control text-right waktu_kipas_on2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
 									</tr>
 									<tr>
 										<td>Waktu Kipas Off (menit)</td>
-										<td><input type="text" class="form-control text-right waktu_kipas_off1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
-										<td><input type="text" class="form-control text-right waktu_kipas_off2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2"></td>
+										<td><input type="text" class="form-control text-right waktu_kipas_off1" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
+										<td><input type="text" class="form-control text-right waktu_kipas_off2" data-tipe="integer" data-required="1" placeholder="0" maxlength="2" value="0"></td>
 									</tr>
 									<tr class="cooling_pad_status">
 										<td>Cooling Pad Status</td>
@@ -389,7 +449,7 @@
 												</div>
 												<div class="radio" style="padding-top: 0px; margin-top: 0px; margin-bottom: 0px;">
 													<label>
-														<input type="radio" id="cooling_pad_status_off1" name="cooling_pad_status1" value="0" style="margin-left: 0px; margin-right: 0px; margin-top: 2px;"> 
+														<input type="radio" id="cooling_pad_status_off1" name="cooling_pad_status1" value="0" style="margin-left: 0px; margin-right: 0px; margin-top: 2px;" checked> 
 														<label class="label-control">OFF</label>
 													</label>
 												</div>
@@ -405,7 +465,7 @@
 												</div>
 												<div class="radio" style="padding-top: 0px; margin-top: 0px; margin-bottom: 0px;">
 													<label>
-														<input type="radio" id="cooling_pad_status_off2" name="cooling_pad_status2" value="0" style="margin-left: 0px; margin-right: 0px; margin-top: 2px;"> 
+														<input type="radio" id="cooling_pad_status_off2" name="cooling_pad_status2" value="0" style="margin-left: 0px; margin-right: 0px; margin-top: 2px;" checked> 
 														<label class="label-control">OFF</label>
 													</label>
 												</div>

@@ -89,6 +89,7 @@ var lhk = {
 		$(div).find('#select_noreg').on('changed.bs.select', function (e, clickedIndex, newValue, oldValue) {
 			if ( jenis_div == 'transaksi' ) {
 		    	lhk.set_umur(this);
+				lhk.getDataPakanTerakhir(this);
 			}
 		});
 
@@ -195,6 +196,7 @@ var lhk = {
 
 	                if ( !empty( noreg ) ) {
 	                	lhk.set_umur( $(div).find('select#select_noreg') );
+						lhk.getDataPakanTerakhir( $(div).find('select#select_noreg') );
 	                }
 
 	                hideLoading();
@@ -271,6 +273,38 @@ var lhk = {
 			$(div).find('table.tbl_peralatan input[type="radio"]').prop('checked', false);
     	}
     }, // end - set_umur
+
+	getDataPakanTerakhir: function(elm) {
+		var div_transaksi = $(elm).closest('div#transaksi');
+		var id = $(div_transaksi).find('input#id').val();
+
+		var noreg = $(elm).val();
+
+		var params = {
+			'noreg': noreg,
+			'id': id
+		};
+
+		$.ajax({
+			url: 'transaksi/LHK/getDataLhkTerakhir',
+			dataType: 'json',
+			type: 'post',
+			data: {
+				'params': params
+			},
+			beforeSend: function() {
+				showLoading('Ambil data pakai pakan LHK terakhir . . .');
+			},
+			success: function(data) {
+				hideLoading();
+				if ( data.status == 1 ) {
+					$('td.tot_pakan_sebelumnya').text( numeral.formatInt(data.content.pakan_terakhir) );
+				} else {
+					bootbox.alert(data.message);
+				}
+			}
+		});
+	}, // end - getDataPakanTerakhir
 
     cek_type_file: function(elm) {
     	var div_attachment = $(elm).closest('div.attachment');
@@ -559,6 +593,8 @@ var lhk = {
 	*/
 
 	cekDataPrev: function(callback, id) {
+		showLoading('Cek data LHK sebelumnya dan cek stok . . .');
+
         var div_transaksi = $('#transaksi');
 		var umur = $(div_transaksi).find('input[name=umur]').val();
 		var noreg = $(div_transaksi).find('select#select_noreg').val();
@@ -567,14 +603,30 @@ var lhk = {
 		var ekor_mati = numeral.unformat($(div_transaksi).find('input[name=ekor_mati]').val());
 		var tanggal = dateSQL($(div_transaksi).find('#tanggal').data('DateTimePicker').date());
 
+		var detail_pakan = $.map( $(div_transaksi).find('table.tbl_pakan tbody tr.pakan'), function(tr) {
+			var kode = $(tr).attr('data-id');
+			var nama = $(tr).find('td.nama').text();
+			var jumlah = numeral.unformat($(tr).find('input.jumlah').val());
+
+			var _data = {
+				'kode': kode,
+				'nama': nama,
+				'jumlah': jumlah
+			};
+
+			return _data;
+		});
+
 		var params = {
 			'id': id,
+			// 'data': data
 			'umur': umur,
 			'noreg': noreg,
 			'pakai_pakan': pakai_pakan,
 			'sisa_pakan': sisa_pakan,
 			'ekor_mati': ekor_mati,
 			'tanggal': tanggal,
+			'detail_pakan': detail_pakan
 		};
 
 		$.ajax({
@@ -585,7 +637,6 @@ var lhk = {
 				'params': params
 			},
 			beforeSend: function() {
-				showLoading('Cek data LHK sebelumnya . . .');
 			},
 			success: function(data) {
 				hideLoading();
@@ -594,6 +645,27 @@ var lhk = {
 			}
 		});
     }, // end - cekDataPrev
+
+	hitJmlPakan: function(elm) {
+		var table = $(elm).closest('table');
+		var tbody = $(table).find('tbody');
+		var tfoot = $(table).find('tfoot');
+
+		var pakai_pakan_sebelumnya = numeral.unformat($(tbody).find('td.tot_pakan_sebelumnya').text());
+
+		var tot = 0;
+		var jumlah = 0;
+		$.map( $(tbody).find('tr.pakan'), function(tr) {
+			jumlah = numeral.unformat($(tr).find('input').val());
+
+			tot += jumlah;
+		});
+
+		tot += pakai_pakan_sebelumnya;
+
+		$(tfoot).find('td.total b').text( numeral.formatInt(tot) );
+		$('input[name=pakai_pakan]').val( numeral.formatInt(tot) );
+	}, // end - hitJmlPakan
 
 	save: function(elm) {
 		var div_transaksi = $('#transaksi');
@@ -720,6 +792,7 @@ var lhk = {
 
 				lhk.cekDataPrev(function(data) {
 					if ( data.status != 1 ) {
+						$(elm).attr('disabled', false);
 						bootbox.alert(data.message, function() {
 							$(elm).attr('disabled', false);
 						});
@@ -766,6 +839,20 @@ var lhk = {
 									'cooling_pad_status1': $(tbl_peralatan).find('input[name="cooling_pad_status1"]:checked').val(),
 									'cooling_pad_status2': $(tbl_peralatan).find('input[name="cooling_pad_status2"]:checked').val()
 								};
+
+								var detail_pakan = $.map( $(div_transaksi).find('table.tbl_pakan tbody tr.pakan'), function(tr) {
+									var kode = $(tr).attr('data-id');
+									var nama = $(tr).find('td.nama').text();
+									var jumlah = numeral.unformat($(tr).find('input.jumlah').val());
+
+									var _data = {
+										'kode': kode,
+										'nama': nama,
+										'jumlah': jumlah
+									};
+
+									return _data;
+								});
 		
 								var data = {
 									'umur': $(div_transaksi).find('input[name=umur]').val(),
@@ -781,7 +868,8 @@ var lhk = {
 									'data_sekat': data_sekat,
 									'data_nekropsi': data_nekropsi,
 									'data_solusi': data_solusi,
-									'data_peralatan': data_peralatan
+									'data_peralatan': data_peralatan,
+									'detail_pakan': detail_pakan
 								};
 		
 								$.ajax({
@@ -980,6 +1068,20 @@ var lhk = {
 									'cooling_pad_status1': $(tbl_peralatan).find('input[name="cooling_pad_status1"]:checked').val(),
 									'cooling_pad_status2': $(tbl_peralatan).find('input[name="cooling_pad_status2"]:checked').val()
 								};
+								
+								var detail_pakan = $.map( $(div_transaksi).find('table.tbl_pakan tbody tr.pakan'), function(tr) {
+									var kode = $(tr).attr('data-id');
+									var nama = $(tr).find('td.nama').text();
+									var jumlah = numeral.unformat($(tr).find('input.jumlah').val());
+
+									var _data = {
+										'kode': kode,
+										'nama': nama,
+										'jumlah': jumlah
+									};
+
+									return _data;
+								});
 		
 								var data = {
 									'id': $(elm).data('id'),
@@ -996,7 +1098,8 @@ var lhk = {
 									'data_sekat': data_sekat,
 									'data_nekropsi': data_nekropsi,
 									'data_solusi': data_solusi,
-									'data_peralatan': data_peralatan
+									'data_peralatan': data_peralatan,
+									'detail_pakan': detail_pakan
 								};
 		
 								$.ajax({
@@ -1197,6 +1300,8 @@ var lhk = {
 	}, // end - viewImage
 
 	getLocation: function (elm) {
+		$(elm).attr('disabled', true);
+
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
 				function(position) {
@@ -1225,7 +1330,9 @@ var lhk = {
 				options
 			);
 		} else { 
-			bootbox.alert("Geolocation is not supported by this browser.");
+			bootbox.alert("Geolocation is not supported by this browser.", function() {
+				$(elm).attr('disabled', false);
+			});
 		}
 	}, // end - getLocation
 

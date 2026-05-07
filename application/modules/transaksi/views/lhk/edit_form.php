@@ -6,6 +6,8 @@
 
 	<div class="col-xs-12"><br></div> -->
 
+	<input type="hidden" id="id" value="<?php echo $data['id']; ?>">
+
 	<div class="col-xs-12">
 		<div class="col-xs-12 no-padding">
 			<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
@@ -95,7 +97,12 @@
 				<label class="control-label">Pakai Pakan (Zak)</label>
 			</div>
 			<div class="col-xs-12 no-padding">
-				<input class="form-control text-right" data-tipe="integer" type="text" name="pakai_pakan" data-required="1" placeholder="PAKAI PAKAN" value="<?php echo angkaRibuan($data['pakai_pakan']); ?>" />
+				<div class="col-xs-3 no-padding">
+					<button type="button" class="col-xs-12 btn btn-default" style="border-top-right-radius: 0; border-bottom-right-radius: 0;" data-toggle="modal" data-target="#myPakaiPakan"><i class="fa fa-list"></i></button>
+				</div>
+				<div class="col-xs-9 no-padding">
+					<input class="form-control text-right" data-tipe="integer" type="text" name="pakai_pakan" data-required="1" placeholder="PAKAI PAKAN" value="<?php echo angkaRibuan($data['pakai_pakan']); ?>" disabled style="border-top-left-radius: 0; border-bottom-left-radius: 0;"/>
+				</div>
 			</div>
 		</div>
 
@@ -202,6 +209,70 @@
 		</div>
 		<div class="col-xs-12" style="padding: 5px 0px 0px 0px;">
 			<button type="button" class="btn btn-danger" onclick="lhk.batal_edit(this)" style="width: 100%;" data-id="<?php echo $data['id']; ?>"><i class="fa fa-times"></i> Batal</button>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Pakai Pakan -->
+ <div id="myPakaiPakan" class="modal fade my-style" role="dialog">
+	<div class="modal-dialog">
+	    <!-- Modal content-->
+	    <div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">Pakai Pakan</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<div class="modal-body">
+		        <div class="panel-body no-padding">
+		        	<div class="col-xs-12 no-padding">
+			        	<small>
+				        	<table class="table table-bordered tbl_pakan" style="margin-bottom: 0px;">
+				        		<thead>
+				        			<tr>
+				        				<th class="col-xs-8">Jenis</th>
+				        				<th class="col-xs-4">Jumlah (Zak)</th>
+				        			</tr>
+				        		</thead>
+				        		<tbody>
+									<?php $tot_pakan = 0; ?>
+									<?php if ( isset($data['lhk_pakan']) && !empty($data['lhk_pakan']) ) { ?>
+										<?php foreach ($data['lhk_pakan'] as $k_pkn => $v_pkn) { ?>
+											<?php $tot_pakan += $v_pkn['jumlah']; ?>
+										<?php } ?>
+									<?php } ?>
+									<tr>
+										<td>
+											TOTAL PAKAN SEBELUMNYA
+											<?php echo angkaRibuan($data['pakai_pakan']); ?>
+											<?php echo angkaRibuan($tot_pakan); ?>
+										</td>
+										<td class="tot_pakan_sebelumnya text-right">
+											<?php echo angkaRibuan($data['pakai_pakan']-$tot_pakan); ?>
+										</td>
+									</tr>
+									<tr>
+										<td colspan="2">&nbsp;</td>
+									</tr>
+									<?php foreach ($data['lhk_pakan'] as $k_pkn => $v_pkn) { ?>
+										<tr class="pakan" data-id="<?php echo $v_pkn['kode_barang']; ?>">
+											<td class="nama"><?php echo strtoupper($v_pkn['pakan']['nama']); ?></td>
+											<td>
+												<input type="text" class="form-control text-right jumlah" data-tipe="integer" placeholder="Jumlah" onblur="lhk.hitJmlPakan(this)" value="<?php echo angkaRibuan($v_pkn['jumlah']); ?>">
+											</td>
+										</tr>
+									<?php } ?>
+				        		</tbody>
+								<tfoot>
+									<tr>
+										<td><b>TOTAL</b></td>
+										<td class="total text-right"><b><?php echo angkaRibuan($data['pakai_pakan']); ?></b></td>
+									</tr>
+								</tfoot>
+				        	</table>
+				        </small>
+		        	</div>
+		        </div>
+		    </div>
 		</div>
 	</div>
 </div>
