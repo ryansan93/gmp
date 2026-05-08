@@ -25,6 +25,11 @@ class Lhk_model extends Conf {
 		return $this->hasOne('\Model\Storage\LhkPeralatan_model', 'id_header', 'id');
 	}
 
+	public function lhk_pakan()
+	{
+		return $this->hasMany('\Model\Storage\LhkPakan_model', 'id_header', 'id')->with(['pakan']);
+	}
+
 	public function foto_sisa_pakan()
 	{
 		return $this->hasMany('\Model\Storage\LhkFotoSisaPakan_model', 'id_header', 'id');
