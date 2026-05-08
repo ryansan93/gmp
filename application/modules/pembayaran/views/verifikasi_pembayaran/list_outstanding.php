@@ -15,6 +15,11 @@
             <td><?php echo strtoupper($value['deskripsi'].' '.$value['waktu']); ?></td>
             <td><?php echo strtoupper($value['nama_bank']); ?></td>
             <td>
+                <?php echo strtoupper($value['bank']); ?>
+                <br>
+                <?php echo strtoupper($value['no_rek']); ?>
+            </td>
+            <td>
                 <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" data-table="<?php echo $value['tbl_name']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>
             </td>
             <td>
@@ -26,6 +31,6 @@
     <?php } ?>
 <?php } else { ?>
     <tr>
-        <td colspan="8">Tidak ada pengajuan.</td>
+        <td colspan="10">Tidak ada pengajuan.</td>
     </tr>
 <?php } ?>

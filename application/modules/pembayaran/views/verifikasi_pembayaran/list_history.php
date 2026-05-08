@@ -20,6 +20,11 @@
                 <?php } ?>
             </td>
             <td>
+                <?php echo strtoupper($value['bank']); ?>
+                <br>
+                <?php echo strtoupper($value['no_rek']); ?>
+            </td>
+            <td>
                 <button type="button" class="col-xs-12 btn btn-default" data-id="<?php echo $value['id']; ?>" data-table="<?php echo $value['tbl_name']; ?>" onclick="vp.formDetail(this)"><i class="fa fa-list"></i> DETAIL</button>
             </td>
             <td>

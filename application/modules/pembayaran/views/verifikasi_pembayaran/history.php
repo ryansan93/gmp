@@ -62,19 +62,20 @@
 		<thead>
 			<tr>
 				<th class="col-xs-1">TRANSAKSI</th>
-				<th class="col-xs-2">SUPPLIER</th>
+				<th class="col-xs-1">SUPPLIER</th>
 				<th class="col-xs-1">TGL BAYAR</th>
 				<th class="col-xs-1">NO. BUKTI</th>
 				<th class="col-xs-2">KET BAYAR</th>
 				<th class="col-xs-1">TRANSFER</th>
 				<th class="col-xs-2">LAMPIRAN</th>
+				<th class="col-xs-1">BANK TUJUAN</th>
 				<th class="col-xs-1">DETAIL</th>
 				<th class="col-xs-1">ACTION</th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr>
-				<td colspan="9">Data tidak ditemukan.</td>
+				<td colspan="10">Data tidak ditemukan.</td>
 			</tr>
 		</tbody>
 	</table>
