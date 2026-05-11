@@ -1316,10 +1316,6 @@ class PengirimanPenerimaanOvk extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        // echo "<pre>";
-        // print_r($params);
-        // die;
-
         try {
             $m_kirim_voadip = new \Model\Storage\KirimVoadip_model();
             $now = $m_kirim_voadip->getDate();
@@ -1476,6 +1472,43 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     }
                 // End Penerimaan
 
+                $id = $id_terima;
+                $id_old = $id_terima;
+                $tanggal = $params['tgl_terima'];
+                $delete = 0;
+                $status_jurnal = 2;
+                $status = 2;
+                $noreg1_old = $noreg1;
+                $noreg2_old = $noreg2;
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+
+                $id_kirim_voadip = null;
+                if ( $d_conf->count() > 0 ) {
+                    $id_kirim_voadip = $d_conf->toArray()[0]['id_kirim_voadip'];
+                }
+                
+                $this->insertKonfirmasi( $id, $delete );
+
+                $sql = "EXEC hitung_stok_voadip_by_transaksi 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+                $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1."', '".$noreg2."'";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+                if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                    if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                        $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1_old."', '".$noreg2_old."'";
+                        $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                    }
+                }
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
+
                 $this->result['status'] = 1;
                 $this->result['content'] = array(
                     'id' => $id_terima,
@@ -1487,7 +1520,8 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     'noreg1' => $noreg1,
                     'noreg2' => $noreg2,
                     'noreg1_old' => $noreg1,
-                    'noreg2_old' => $noreg2
+                    'noreg2_old' => $noreg2,
+                    'id_kirim_voadip' => $id_kirim_voadip
                 );
 
             } else {
@@ -1733,6 +1767,41 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 }
             }
 
+            $id = $id_terima;
+            $id_old = $id_terima;
+            $tanggal = $tgl_trans;
+            $delete = 0;
+            $status_jurnal = 2;
+            $status = 2;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $id_kirim_voadip = null;
+            if ( $d_conf->count() > 0 ) {
+                $id_kirim_voadip = $d_conf->toArray()[0]['id_kirim_voadip'];
+            }
+            
+            $this->insertKonfirmasi( $id, $delete );
+
+            $sql = "EXEC hitung_stok_voadip_by_transaksi 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1."', '".$noreg2."'";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                    $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1_old."', '".$noreg2_old."'";
+                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                }
+            }
+            
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
+
             $this->result['status'] = 1;
             $this->result['content'] = array(
                 'id'        => $id_terima,
@@ -1744,7 +1813,8 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 'noreg1' => $noreg1,
                 'noreg2' => $noreg2,
                 'noreg1_old' => $noreg1_old,
-                'noreg2_old' => $noreg2_old
+                'noreg2_old' => $noreg2_old,
+                'id_kirim_voadip' => $id_kirim_voadip
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -1836,6 +1906,43 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     $noreg2 = $d_conf['tujuan'];
                 }
             }
+
+            $id = $d_terima_voadip->id;
+            $id_old = $d_terima_voadip->id;
+            $tanggal = $d_terima_voadip->tgl_terima;
+            $delete = 1;
+            $status_jurnal = 3;
+            $status = 3;
+            $noreg1_old = $noreg1;
+            $noreg2_old = $noreg2;
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $id_kirim_voadip = null;
+            if ( $d_conf->count() > 0 ) {
+                $id_kirim_voadip = $d_conf->toArray()[0]['id_kirim_voadip'];
+            }
+            
+            $this->insertKonfirmasi( $id, $delete );
+
+            $sql = "EXEC hitung_stok_voadip_by_transaksi 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1."', '".$noreg2."'";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                    $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1_old."', '".$noreg2_old."'";
+                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                }
+            }
+            
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
             $this->result['status'] = 1;
             $this->result['content'] = array(

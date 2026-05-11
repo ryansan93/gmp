@@ -883,13 +883,13 @@ var lhk = {
 										showLoading();
 									},
 									success: function(data) {
+										hideLoading();
 										if ( data.status == 1 ) {
-											// bootbox.alert(data.message, function(){
-											// 	lhk.load_form(data.content.id, null, 'transaksi');
-											// });
-											lhk.execHitStokDoc(data.content);
+											bootbox.alert(data.content.message, function(){
+												lhk.load_form(data.content.id, null, 'transaksi');
+											});
+											// lhk.execHitStokDoc(data.content);
 										} else {
-											hideLoading();
 											bootbox.alert(data.message);
 										}
 									}
@@ -1113,13 +1113,13 @@ var lhk = {
 										showLoading();
 									},
 									success: function(data) {
+										hideLoading();
 										if ( data.status == 1 ) {
-											// bootbox.alert(data.message, function(){
-											// 	lhk.load_form(data.content.id, null, 'transaksi');
-											// });
-											lhk.execHitStokDoc(data.content);
+											bootbox.alert(data.content.message, function(){
+												lhk.load_form(data.content.id, null, 'transaksi');
+											});
+											// lhk.execHitStokDoc(data.content);
 										} else {
-											hideLoading();
 											bootbox.alert(data.message);
 										}
 									}
@@ -1152,14 +1152,14 @@ var lhk = {
 		                showLoading('Proses hapus data . . .');
 		            },
 		            success: function(data) {
+						hideLoading();
 						if ( data.status == 1 ) {
-							// bootbox.alert(data.message, function(){
-							// 	lhk.load_form(null, null, 'transaksi');
-							// 	$('button.tampilkan_riwayat').click();
-							// });
-							lhk.execHitStokDoc(data.content);
+							bootbox.alert(data.content.message, function(){
+								lhk.load_form(null, null, 'transaksi');
+								$('button.tampilkan_riwayat').click();
+							});
+							// lhk.execHitStokDoc(data.content);
 						} else {
-							hideLoading();
 		                    bootbox.alert(data.message);
 		                }
 		            }

@@ -298,6 +298,7 @@ class LHK extends Public_Controller
         $content['data_mitra'] = $this->get_mitra();
         $content['data_nekropsi'] = $this->get_nekropsi();
         $content['data_solusi'] = $this->get_solusi();
+        $content['data_pakan'] = $this->getPakan();
         $content['data'] = $data;
 
         $html = $this->load->view($this->pathView . 'edit_form', $content, TRUE);
@@ -1813,18 +1814,18 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 1, null, null";
-            // $d_conf = $conf->hydrateRaw($sql);
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
+            $d_conf = $conf->hydrateRaw($sql);
 
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 1, null, null";
-            // $d_conf = $conf->hydrateRaw($sql);
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
+            $d_conf = $conf->hydrateRaw($sql);
 
-            // $id = $d_lhk->id;
-            // $id_old = null;
+            $id = $d_lhk->id;
+            $id_old = $d_lhk->id;
 
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 1);
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
 
             $deskripsi_log = 'di-simpan oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_lhk, $deskripsi_log);
@@ -2155,18 +2156,18 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
-            // $d_conf = $conf->hydrateRaw($sql);
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
+            $d_conf = $conf->hydrateRaw($sql);
 
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
-            // $d_conf = $conf->hydrateRaw($sql);
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
+            $d_conf = $conf->hydrateRaw($sql);
 
-            // $id = $d_lhk->id;
-            // $id_old = $d_lhk->id;
+            $id = $d_lhk->id;
+            $id_old = $d_lhk->id;
 
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 2);
 
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_lhk, $deskripsi_log);
@@ -2196,18 +2197,9 @@ class LHK extends Public_Controller
             $d_lhk = $m_lhk->where('id', $id)->first();
 
             $id_lhk = $id;
-
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
-            // $d_conf = $conf->hydrateRaw($sql);
-
-            // $conf = new \Model\Storage\Conf();
-            // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 3, '".$d_lhk->noreg."', null";
-            // $d_conf = $conf->hydrateRaw($sql);
-
-            // $id_old = $d_lhk->id;
-
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, 3);
+            $id_old = $d_lhk->id;
+            $tgl_lhk = $d_lhk->tanggal;
+            $noreg_lhk = $d_lhk->noreg;
 
             /* SISA PAKAN */
             $folder_name = $id_lhk;
@@ -2260,6 +2252,16 @@ class LHK extends Public_Controller
             $m_lpkn->where('id_header', $id_lhk)->delete();
 
             $m_lhk->where('id', $id)->delete();
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$tgl_lhk."', 3, '".$noreg_lhk."', null";
+            $d_conf = $conf->hydrateRaw($sql);
+
+            $conf = new \Model\Storage\Conf();
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tgl_lhk."', 3, '".$noreg_lhk."', null";
+            $d_conf = $conf->hydrateRaw($sql);
+            
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id_lhk, $id_old, 3);
 
             $deskripsi_log = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_lhk, $deskripsi_log);

@@ -582,7 +582,22 @@ var pv = {
 
 				if ( data.status == 1 ) {
 					// pv.hitungStokAwal( data.content.id_terima );
-					pv.hitungStokByTransaksi(data.content);
+					// pv.hitungStokByTransaksi(data.content);
+
+					bootbox.alert(data.content.message, function() {
+						var start_date = $('[name=startDate]').data('DateTimePicker').date();
+						var end_date = $('[name=endDate]').data('DateTimePicker').date();
+
+						if ( !empty(start_date) || !empty(end_date) ) {
+							pv.get_lists();
+						}
+
+						pv.load_form(data.content.id_kirim_voadip);
+
+						// pv.get_lists();
+						// pv.load_form();
+						// pv.load_riwayat(data);
+					});
 				} else {
 					bootbox.alert(data.message);
 				};
@@ -713,7 +728,21 @@ var pv = {
 
 
 				if ( data.status == 1 ) {
-					pv.hitungStokByTransaksi(data.content);
+					// pv.hitungStokByTransaksi(data.content);
+					bootbox.alert(data.content.message, function() {
+						var start_date = $('[name=startDate]').data('DateTimePicker').date();
+						var end_date = $('[name=endDate]').data('DateTimePicker').date();
+
+						if ( !empty(start_date) || !empty(end_date) ) {
+							pv.get_lists();
+						}
+
+						pv.load_form(data.content.id_kirim_voadip);
+
+						// pv.get_lists();
+						// pv.load_form();
+						// pv.load_riwayat(data);
+					});
 				} else {
 					bootbox.alert(data.message);
 				};
@@ -754,11 +783,11 @@ var pv = {
 								// };
 
 								if ( data.status == 1 ) {
-									pv.hitungStokByTransaksi(data.content);
-									// bootbox.alert(data.message, function() {
-									// 	pv.get_lists();
-									// 	pv.load_form();
-									// });
+									// pv.hitungStokByTransaksi(data.content);
+									bootbox.alert(data.content.message, function() {
+										pv.get_lists();
+										pv.load_form();
+									});
 								} else {
 									bootbox.alert(data.message);
 								};

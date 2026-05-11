@@ -572,10 +572,20 @@ var pp = {
 				showLoading();
 			},
 			success: function(data) {
-				// hideLoading();
+				hideLoading();
 				if ( data.status == 1 ) {					
 					// pp.hitungStokByTransaksi(data.content);
-					pp.execInsertKonfirmasi(data.content);
+					// pp.execInsertKonfirmasi(data.content);
+					bootbox.alert(data.content.message, function() {
+						var start_date = $('[name=startDate]').data('DateTimePicker').date();
+						var end_date = $('[name=endDate]').data('DateTimePicker').date();
+	
+						if ( !empty(start_date) && !empty(end_date) ) {
+							pp.get_lists();
+						}
+	
+						pp.load_form(data.content.id_kirim_pakan);
+					});
 				} else {
 					bootbox.alert(data.message);
 				};
@@ -714,7 +724,7 @@ var pp = {
 				showLoading();
 			},
 			success: function(data) {
-				// hideLoading();
+				hideLoading();
 				// if ( data.status == 1 ) {
 				// 	bootbox.alert(data.message, function() {
 				// 		var btn = '<button data-href="riwayat">';
@@ -727,9 +737,19 @@ var pp = {
 
 				if ( data.status == 1 ) {
 					// pp.hitungStokByTransaksi(data.content);
-					pp.execInsertKonfirmasi(data.content);
+					// pp.execInsertKonfirmasi(data.content);
+					bootbox.alert(data.content.message, function() {
+						var start_date = $('[name=startDate]').data('DateTimePicker').date();
+						var end_date = $('[name=endDate]').data('DateTimePicker').date();
+	
+						if ( !empty(start_date) && !empty(end_date) ) {
+							pp.get_lists();
+						}
+	
+						pp.load_form(data.content.id_kirim_pakan);
+					});
 				} else {
-					hideLoading();
+					// hideLoading();
 					bootbox.alert(data.message);
 				};
 			},
@@ -758,13 +778,13 @@ var pp = {
 								showLoading();
 							},
 							success: function(data) {
-								// hideLoading();
+								hideLoading();
 								if ( data.status == 1 ) {
-									pp.execInsertKonfirmasi(data.content);
-									// bootbox.alert(data.message, function() {
-									// 	// pp.get_lists();
-									// 	// pp.load_form();
-									// });
+									// pp.execInsertKonfirmasi(data.content);
+									bootbox.alert(data.content.message, function() {										
+										pp.get_lists();
+										pp.load_form();
+									});
 								} else {
 									bootbox.alert(data.message);
 								};

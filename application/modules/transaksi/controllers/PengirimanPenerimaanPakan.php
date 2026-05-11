@@ -985,7 +985,7 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                         when rp.tgl_realisasi is null and rp.id is not null then
                             2
                         else
-                            3
+                            0
                     end as status
                 from konfirmasi_pembayaran_pakan_det kppd
                 left join
@@ -993,7 +993,9 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     on
                         kppd.id_header = kpp.id
                 left join
-                    (select * from realisasi_pembayaran_det where transaksi = 'PAKAN') rpd
+                    (
+                        select * from realisasi_pembayaran_det where transaksi = 'PAKAN'
+                    ) rpd
                     on
                         kpp.nomor = rpd.no_bayar
                 left join
@@ -1021,8 +1023,54 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                         }
 
                         if ( $d_pembayaran['status'] == 2 ) {
-                            $message = 'Data sudah di lakukan pengajuan pembayaran pada tanggal <b>'.tglIndonesia($d_pembayaran['tgl_bayar'], '-', ' ').'</b><br>Jika ingin mengubah data hubungi finance untuk menghapus data pengajuan.';
+                            $message = 'Data sudah di lakukan pengajuan pembayaran pada tanggal <b>'.tglIndonesia($d_pembayaran['tgl_bayar'], '-', ' ').'</b><br><br>Jika ingin mengubah data hubungi finance untuk menghapus data pengajuan.';
                         }
+                    }
+                }
+            }
+
+            /* CEK CN */
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select 
+                    kppd.*, 
+                    cp.tanggal,
+                    case
+                        when cpd.nomor is not null then
+                            1
+                        else
+                            0
+                    end as status
+                from konfirmasi_pembayaran_pakan_det kppd
+                left join
+                    konfirmasi_pembayaran_pakan kpp
+                    on
+                        kppd.id_header = kpp.id
+                left join
+                    cn_post_det cpd
+                    on
+                        kpp.nomor = cpd.nomor
+                left join
+                    cn_post cp
+                    on
+                        cpd.id_header = cp.id
+                left join
+                    kirim_pakan kp
+                    on
+                        kppd.no_order = kp.no_order
+                where
+                    kp.id = '".$id."'
+            ";
+            $d_cn = $m_conf->hydrateRaw( $sql );
+            /* END - CEK CN */
+
+            if ( $d_cn->count() > 0 ) {
+                $d_cn = $d_cn->toArray()[0];
+
+                if ( $d_cn['status'] == 1 ) {
+                    $status = 0;
+                    if ( empty($message)  ) {
+                        $message = 'Data sudah di lakukan post Credit Note (CN) pada tanggal <b>'.tglIndonesia($d_cn['tanggal'], '-', ' ').'</b><br><br>Jika ingin mengubah data hubungi finance untuk menghapus data post Credit Note (CN).';
                     }
                 }
             }
@@ -1266,9 +1314,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
     public function save()
     {
         $params = $this->input->post('params');
-        // echo "<pre>";
-        // print_r($params);
-        // die;
 
         try {
 
@@ -1473,6 +1518,44 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 }
                 /* END - JIKA PINDAH PAKAN, CEK TANGGAL */
 
+                $id = $id_terima;
+                $id_old = $id_terima;
+                $tanggal = $params['tgl_terima'];
+                $status = 2;
+                $status_jurnal = 2;
+                $delete = 0;
+
+                $noreg1_old = $noreg1;
+                $noreg2_old = $noreg2;
+
+                $this->insertKonfirmasi( $id, $delete );
+
+                $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+                $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+                if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                    if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
+                        $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                    }
+                }
+
+                $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select id_kirim_pakan from terima_pakan tp where tp.id = '".$id_terima."'
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+
+                $id_kirim_pakan = null;
+                if ( $d_conf->count() > 0 ) {
+                    $id_kirim_pakan = $d_conf->toArray()[0]['id_kirim_pakan'];
+                }
+
                 $this->result['status'] = 1;
                 $this->result['message'] = 'Data Pengiriman Pakan berhasil di simpan.';
                 $this->result['content'] = array(
@@ -1485,7 +1568,8 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     'noreg1' => $noreg1,
                     'noreg2' => $noreg2,
                     'noreg1_old' => $noreg1,
-                    'noreg2_old' => $noreg2
+                    'noreg2_old' => $noreg2,
+                    'id_kirim_paakn' => $id_kirim_pakan
                 );
             } else {
                 $this->result['message'] = 'Kode unit masih kosong, harap lengkapi kode unit terlebih dahulu.';
@@ -1499,11 +1583,6 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
     public function edit(){
         $params = $this->input->post('params');
-
-        // echo "<pre>";
-        // print_r($params);
-        // die;
-
 
         try {
             // Pengiriman 
@@ -1756,16 +1835,40 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 }
             }
 
-            // if ( $d_terima_old->jenis_kirim == 'opkg' ) {
-            //     if ( $d_terima_old->jenis_tujuan == 'peternak' ) {
-            //         $noreg1_old = $d_terima_old->tujuan;
-            //     }
-            // }
+            $id = $d_terima_pakan->id;
+            $id_old = $d_terima_pakan->id;
+            $tanggal = $tgl_trans;
+            $status = 2;
+            $status_jurnal = 2;
+            $delete = 0;
 
-            // if ( $d_terima_old->jenis_kirim == 'opkp' ) {
-            //     $noreg1_old = $d_terima_old->asal;
-            //     $noreg2_old = $d_terima_old->tujuan;
-            // }
+            $this->insertKonfirmasi( $id, $delete );
+
+            $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                    $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
+                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                }
+            }
+
+            $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select id_kirim_pakan from terima_pakan tp where tp.id = '".$d_terima_pakan->id."'
+            ";
+            $d_conf = $m_conf->hydrateRaw( $sql );
+
+            $id_kirim_pakan = null;
+            if ( $d_conf->count() > 0 ) {
+                $id_kirim_pakan = $d_conf->toArray()[0]['id_kirim_pakan'];
+            }
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data Pengiriman Pakan berhasil di ubah.';
@@ -1779,7 +1882,8 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     'noreg1' => $noreg1,
                     'noreg2' => $noreg2,
                     'noreg1_old' => $noreg1_old,
-                    'noreg2_old' => $noreg2_old
+                    'noreg2_old' => $noreg2_old,
+                    'id_kirim_pakan' => $id_kirim_pakan
                 );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -1880,6 +1984,33 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 }
             }
             /* END - JIKA PINDAH PAKAN, CEK TANGGAL */
+
+            $id = $d_terima_pakan->id;
+            $id_old = $d_terima_pakan->id;
+            $tanggal = $tgl_trans;
+            $status = 3;
+            $status_jurnal = 3;
+            $delete = 1;
+
+            $noreg1_old = $noreg1;
+            $noreg2_old = $noreg2;
+
+            $this->insertKonfirmasi( $id, $delete );
+
+            $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
+            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                    $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
+                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                }
+            }
+
+            $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
                 
             $this->result['message'] = 'Data Pengiriman Pakan berhasil di hapus.';
             $this->result['status'] = 1;
@@ -1891,7 +2022,8 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 'status_jurnal' => 3,
                 'status' => 3,
                 'noreg1' => $noreg1,
-                'noreg2' => $noreg2
+                'noreg2' => $noreg2,
+                'id_kirim_pakan' => null
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -2550,15 +2682,20 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
     public function tes($no_spm='')
     {
-        $m_gdg = new \Model\Storage\Gudang_model();
-        $d_gdg = $m_gdg->where('id', 8)->with(['dUnit'])->first();
+        // $m_gdg = new \Model\Storage\Gudang_model();
+        // $d_gdg = $m_gdg->where('id', 8)->with(['dUnit'])->first();
 
-        $kode_unit = null;
-        if ( $d_gdg ) {
-            $d_gdg = $d_gdg->toArray();
-            $kode_unit = $d_gdg['d_unit']['kode'];
-        }
+        // $kode_unit = null;
+        // if ( $d_gdg ) {
+        //     $d_gdg = $d_gdg->toArray();
+        //     $kode_unit = $d_gdg['d_unit']['kode'];
+        // }
 
-        cetak_r( $kode_unit );
+        // cetak_r( $kode_unit );
+
+        $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '41803', '2026-04-24', 0, 2";
+        $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+        // $return = Modules::run( 'base/InsertJurnal/exec', $this->url, 43521, 43521, 2);
     }
 }
