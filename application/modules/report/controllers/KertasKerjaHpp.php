@@ -1264,6 +1264,359 @@ class KertasKerjaHpp extends Public_Controller {
                 data.noreg asc,
                 data.tgl_chick_in asc
         ";
+
+        /* QUERY BARU */
+        $sql = "
+            with
+            -- ============================================================
+            -- 1. REFERENCE CTEs (small lookup tables)
+            -- ============================================================
+            lhk_last as (
+                select l1.*
+                from lhk l1
+                inner join (select noreg, max(umur) as umur from lhk group by noreg) l2
+                    on l1.noreg = l2.noreg and l1.umur = l2.umur
+            ),
+            kp_opkg as (
+                select no_order from kirim_pakan
+                where jenis_kirim = 'opkg' and tgl_kirim between '".prev_date($start_date)."' and '".next_date($end_date)."'
+            ),
+            kp_opkp as (
+                select no_order from kirim_pakan
+                where jenis_kirim = 'opkp' and tgl_kirim between '".prev_date($start_date)."' and '".next_date($end_date)."'
+            ),
+            kv_opkg as (
+                select no_order from kirim_voadip
+                where jenis_kirim = 'opkg' and tgl_kirim between '".prev_date($start_date)."' and '".next_date($end_date)."'
+            ),
+            kv_opkp as (
+                select no_order from kirim_voadip
+                where jenis_kirim = 'opkp' and tgl_kirim between '".prev_date($start_date)."' and '".next_date($end_date)."'
+            ),
+
+            -- ============================================================
+            -- 2. PERIOD DATA: 1 scan det_stok_siklus (pakan + voadip)
+            -- ============================================================
+            dss_period as (
+                select dss.noreg,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkg.no_order is not null
+                        then dss.jumlah * dss.hrg_beli else 0 end) as beli_pkn,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkp.no_order is not null
+                        then dss.jumlah * dss.hrg_beli else 0 end) as mutasi_msk_pkn,
+                    sum(case when dss.jenis_barang = 'voadip' and kv_opkg.no_order is not null
+                        then dss.jumlah * dss.hrg_beli else 0 end) as beli_ovk,
+                    sum(case when dss.jenis_barang = 'voadip' and kv_opkp.no_order is not null
+                        then dss.jumlah * dss.hrg_beli else 0 end) as mutasi_msk_ovk,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkg.no_order is not null
+                        then dss.jumlah * dss.oa else 0 end) as beli_oa,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkp.no_order is not null
+                        then dss.jumlah * dss.oa else 0 end) as mutasi_msk_oa
+                from det_stok_siklus dss
+                left join kp_opkg on dss.kode_trans = kp_opkg.no_order and dss.jenis_barang = 'pakan'
+                left join kp_opkp on dss.kode_trans = kp_opkp.no_order and dss.jenis_barang = 'pakan'
+                left join kv_opkg on dss.kode_trans = kv_opkg.no_order and dss.jenis_barang = 'voadip'
+                left join kv_opkp on dss.kode_trans = kv_opkp.no_order and dss.jenis_barang = 'voadip'
+                where dss.tgl_trans between '".$start_date."' and '".$end_date."'
+                    and dss.jenis_barang in ('pakan', 'voadip')
+                group by dss.noreg
+            ),
+
+            -- ============================================================
+            -- 3. PERIOD DATA: 1 scan det_stok_trans_siklus (pakan + voadip)
+            -- ============================================================
+            dsts_period as (
+                select dss.noreg,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkp.no_order is not null
+                        then dsts.jumlah * dss.hrg_beli else 0 end) as mutasi_klwr_pkn,
+                    sum(case when dss.jenis_barang = 'pakan' and rp.no_retur is not null
+                        then -dsts.jumlah * dss.hrg_beli else 0 end) as koreksi_pkn,
+                    sum(case when dss.jenis_barang = 'pakan' and dsts.tbl_name = 'lhk'
+                        then dsts.jumlah * dss.hrg_beli else 0 end) as pemakaian_pkn,
+                    sum(case when dss.jenis_barang = 'voadip' and dsts.tbl_name <> 'lhk'
+                        then dsts.jumlah * dss.hrg_beli else 0 end) as mutasi_klwr_ovk,
+                    sum(case when dss.jenis_barang = 'voadip' and dsts.tbl_name = 'lhk'
+                        then dsts.jumlah * dss.hrg_beli else 0 end) as pemakaian_ovk,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkp.no_order is not null
+                        then dsts.jumlah * dss.oa else 0 end) as mutasi_klwr_oa,
+                    sum(case when dss.jenis_barang = 'pakan' and rp.no_retur is not null
+                        then -dsts.jumlah * dss.oa else 0 end) as koreksi_oa
+                from det_stok_trans_siklus dsts
+                inner join det_stok_siklus dss on dsts.id_header = dss.id
+                left join kp_opkp on dsts.kode_trans = kp_opkp.no_order
+                left join retur_pakan rp on dsts.kode_trans = rp.no_retur and rp.jenis_retur = 'opkp'
+                where dsts.tgl_trans between '".$start_date."' and '".$end_date."'
+                    and dss.jenis_barang in ('pakan', 'voadip')
+                group by dss.noreg
+            ),
+
+            -- ============================================================
+            -- 4. MM pemakaian (1 scan mmitem)
+            -- ============================================================
+            mm_agg as (
+                select mi.noreg,
+                    sum(case when mi.coa_asal = '71101.000' then -mi.nilai else mi.nilai end) as mm_pemakaian_pkn
+                from mmitem mi
+                inner join mm m on mi.no_mm = m.no_mm
+                where (mi.coa_asal = '71101.000' or mi.coa_tujuan = '71101.000')
+                    and m.tgl_mm between '".$start_date."' and '".$end_date."'
+                group by mi.noreg
+            ),
+
+            -- ============================================================
+            -- 5. DOC: window function (1 scan det_stok_siklus)
+            -- ============================================================
+            doc_ranked as (
+                select *, row_number() over (partition by noreg, jenis_trans order by id desc) as rn
+                from det_stok_siklus
+                where jenis_barang = 'doc' and tgl_trans between '".$start_date."' and '".$end_date."'
+            ),
+            doc_period as (
+                select noreg,
+                    sum(case when jenis_trans like 'ORDER' then jumlah * hrg_beli else 0 end) as beli_doc,
+                    sum(case when jenis_trans not like 'ORDER' then jumlah * hrg_beli else 0 end) as koreksi_doc
+                from doc_ranked
+                where rn = 1
+                group by noreg
+            ),
+            doc_saldo as (
+                select noreg,
+                    sum(case when jenis_trans like 'ORDER' then jumlah * hrg_beli else 0 end) as doc_debet,
+                    sum(case when jenis_trans not like 'ORDER' then jumlah * hrg_beli else 0 end) as doc_kredit
+                from doc_ranked
+                where rn = 1 and tgl_trans < '".$start_date."'
+                group by noreg
+            ),
+
+            -- ============================================================
+            -- 6. PRE-PERIOD SALDO: 1 scan per table
+            -- ============================================================
+            sa_dss as (
+                select noreg,
+                    sum(case when jenis_barang = 'pakan' then jumlah * hrg_beli else 0 end) as pkn_debet,
+                    sum(case when jenis_barang = 'voadip' then jumlah * hrg_beli else 0 end) as ovk_debet,
+                    sum(case when jenis_barang = 'pakan' then jumlah * oa else 0 end) as oa_debet
+                from det_stok_siklus
+                where tgl_trans < '".$start_date."' and jenis_barang in ('pakan', 'voadip')
+                group by noreg
+            ),
+            sa_dsts as (
+                select dss.noreg,
+                    sum(case when dss.jenis_barang = 'pakan' then dsts.jumlah * dss.hrg_beli else 0 end) as pkn_kredit,
+                    sum(case when dss.jenis_barang = 'voadip' then dsts.jumlah * dss.hrg_beli else 0 end) as ovk_kredit,
+                    sum(case when dss.jenis_barang = 'pakan' and dsts.tbl_name <> 'lhk' then dsts.jumlah * dss.oa else 0 end) as oa_kredit
+                from det_stok_trans_siklus dsts
+                inner join det_stok_siklus dss on dsts.id_header = dss.id
+                where dsts.tgl_trans < '".$start_date."' and dss.jenis_barang in ('pakan', 'voadip')
+                group by dss.noreg
+            ),
+            sa_pkn as (
+                select coalesce(d.noreg, k.noreg) as noreg,
+                    coalesce(d.pkn_debet, 0) - coalesce(k.pkn_kredit, 0) as saldo_awal
+                from sa_dss d full outer join sa_dsts k on d.noreg = k.noreg
+                where coalesce(d.pkn_debet, 0) - coalesce(k.pkn_kredit, 0) <> 0
+            ),
+            sa_ovk as (
+                select coalesce(d.noreg, k.noreg) as noreg,
+                    coalesce(d.ovk_debet, 0) - coalesce(k.ovk_kredit, 0) as saldo_awal
+                from sa_dss d full outer join sa_dsts k on d.noreg = k.noreg
+                where coalesce(d.ovk_debet, 0) - coalesce(k.ovk_kredit, 0) <> 0
+            ),
+            sa_oa as (
+                select coalesce(d.noreg, k.noreg) as noreg,
+                    coalesce(d.oa_debet, 0) - coalesce(k.oa_kredit, 0) as saldo_awal
+                from sa_dss d full outer join sa_dsts k on d.noreg = k.noreg
+                where coalesce(d.oa_debet, 0) - coalesce(k.oa_kredit, 0) <> 0
+            ),
+
+            -- ============================================================
+            -- 7. RHPP
+            -- ============================================================
+            rhpp_data as (
+                select r.noreg, r.pdpt_peternak_belum_pajak
+                from rhpp r
+                inner join tutup_siklus ts on r.id_ts = ts.id
+                where ts.tgl_tutup between '".$start_date."' and '".$end_date."'
+                    and r.jenis = 'rhpp_plasma'
+                    and not exists (select * from rhpp_group_noreg where noreg = r.noreg)
+
+                union all
+
+                select rgn.noreg, rg.pdpt_peternak_belum_pajak
+                from rhpp_group rg
+                inner join rhpp_group_header rgh on rg.id_header = rgh.id
+                inner join (
+                    select rgn.id_header, min(rgn.noreg) as noreg
+                    from (
+                        select rgn.*, lhk.tanggal
+                        from rhpp_group_noreg rgn
+                        left join lhk_last lhk on lhk.noreg = rgn.noreg
+                    ) rgn
+                    inner join (
+                        select rgn.id_header, max(lhk.tanggal) as tgl_akhir_siklus
+                        from rhpp_group_noreg rgn
+                        left join lhk_last lhk on lhk.noreg = rgn.noreg
+                        group by rgn.id_header
+                    ) rgn_max on rgn.id_header = rgn_max.id_header and rgn.tanggal = rgn_max.tgl_akhir_siklus
+                    group by rgn.id_header
+                ) rgn on rg.id = rgn.id_header
+                where rg.jenis = 'rhpp_plasma' and rgh.tgl_submit between '".$start_date."' and '".$end_date."'
+            ),
+
+            -- ============================================================
+            -- 8. HELPERS for outer joins
+            -- ============================================================
+            mitra_mapping_max as (
+                select mm1.*
+                from mitra_mapping mm1
+                inner join (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                    on mm1.id = mm2.id
+            ),
+            order_doc_max as (
+                select od1.*
+                from order_doc od1
+                inner join (select max(id) as id, no_order from order_doc group by no_order) od2
+                    on od1.id = od2.id
+            ),
+            terima_doc_max as (
+                select td1.*
+                from terima_doc td1
+                inner join (select max(id) as id, no_order from terima_doc group by no_order) td2
+                    on td1.id = td2.id
+            ),
+
+            -- ============================================================
+            -- 9. ALL UNIQUE NOREG (hanya yang punya data transaksi periode)
+            all_noreg as (
+                select noreg from dss_period
+                union select noreg from dsts_period
+                union select noreg from doc_period
+                union select noreg from rhpp_data
+            ),
+
+            -- ============================================================
+            -- 10. COMBINED DATA (all metrics per noreg, one LEFT JOIN per source)
+            -- ============================================================
+            combined as (
+                select
+                    n.noreg,
+                    -- PKN
+                    coalesce(sa_pkn.saldo_awal, 0) as sa_pkn,
+                    coalesce(dss.beli_pkn, 0) as beli_pkn,
+                    coalesce(dss.mutasi_msk_pkn, 0) as mutasi_msk_pkn,
+                    coalesce(dsts.mutasi_klwr_pkn, 0) as mutasi_klwr_pkn,
+                    coalesce(dsts.koreksi_pkn, 0) as koreksi_pkn,
+                    coalesce(dsts.pemakaian_pkn, 0) + coalesce(mm.mm_pemakaian_pkn, 0) as pemakaian_pkn,
+                    coalesce(dss.beli_pkn, 0) + coalesce(dss.mutasi_msk_pkn, 0)
+                        - coalesce(dsts.mutasi_klwr_pkn, 0) - coalesce(dsts.pemakaian_pkn, 0)
+                        - coalesce(mm.mm_pemakaian_pkn, 0) + coalesce(dsts.koreksi_pkn, 0) as sisa_pkn,
+                    -- OVK
+                    coalesce(sa_ovk.saldo_awal, 0) as sa_ovk,
+                    coalesce(dss.beli_ovk, 0) as beli_ovk,
+                    coalesce(dss.mutasi_msk_ovk, 0) as mutasi_msk_ovk,
+                    coalesce(dsts.mutasi_klwr_ovk, 0) as mutasi_klwr_ovk,
+                    coalesce(dss.beli_ovk, 0) 
+                        + coalesce(dss.mutasi_msk_ovk, 0) - coalesce(dsts.mutasi_klwr_ovk, 0) as pemakaian_ovk,
+                    -- coalesce(dsts.pemakaian_ovk, 0) as pemakaian_ovk,
+                    -- DOC
+                    coalesce(sa_doc.doc_debet, 0) - coalesce(sa_doc.doc_kredit, 0) as sa_doc,
+                    coalesce(doc.beli_doc, 0) as beli_doc,
+                    0 as mutasi_msk_doc,
+                    0 as mutasi_klwr_doc,
+                    coalesce(doc.koreksi_doc, 0) as koreksi_doc,
+                    coalesce(doc.beli_doc, 0) + coalesce(doc.koreksi_doc, 0) as pemakaian_doc,
+                    -- OA
+                    coalesce(sa_oa.saldo_awal, 0) as sa_oa,
+                    coalesce(dss.beli_oa, 0) as beli_oa,
+                    coalesce(dss.mutasi_msk_oa, 0) as mutasi_msk_oa,
+                    coalesce(dsts.mutasi_klwr_oa, 0) as mutasi_klwr_oa,
+                    coalesce(dsts.koreksi_oa, 0) as koreksi_oa,
+                    coalesce(dss.beli_oa, 0) + coalesce(dss.mutasi_msk_oa, 0)
+                        + coalesce(dsts.koreksi_oa, 0) - coalesce(dsts.mutasi_klwr_oa, 0) as pemakaian_oa,
+                    -- RHPP
+                    coalesce(rhpp.pdpt_peternak_belum_pajak, 0) as pdpt_peternak
+                from all_noreg n
+                left join dss_period dss on n.noreg = dss.noreg
+                left join dsts_period dsts on n.noreg = dsts.noreg
+                left join mm_agg mm on n.noreg = mm.noreg
+                left join doc_period doc on n.noreg = doc.noreg
+                left join sa_pkn on n.noreg = sa_pkn.noreg
+                left join sa_ovk on n.noreg = sa_ovk.noreg
+                left join sa_oa on n.noreg = sa_oa.noreg
+                left join doc_saldo sa_doc on n.noreg = sa_doc.noreg
+                left join rhpp_data rhpp on n.noreg = rhpp.noreg
+            )
+            -- ============================================================
+            -- 11. FINAL SELECT
+            -- ============================================================
+            select
+                data.unit,
+                data.noreg,
+                data.nama,
+                data.tgl_chick_in,
+                data.populasi,
+                data.sa_pkn,
+                data.beli_pkn,
+                data.mutasi_msk_pkn,
+                data.mutasi_klwr_pkn,
+                data.koreksi_pkn,
+                data.pemakaian_pkn,
+                (data.sa_pkn + data.beli_pkn + data.mutasi_msk_pkn)
+                    - (data.mutasi_klwr_pkn + data.pemakaian_pkn) + data.koreksi_pkn as sisa_pkn,
+                data.sa_ovk,
+                data.beli_ovk,
+                data.mutasi_msk_ovk,
+                data.mutasi_klwr_ovk,
+                data.pemakaian_ovk,
+                (data.sa_ovk + data.beli_ovk + data.mutasi_msk_ovk)
+                    - (data.mutasi_klwr_ovk + data.pemakaian_ovk) as sisa_ovk,
+                data.sa_doc,
+                data.beli_doc,
+                data.mutasi_msk_doc,
+                data.mutasi_klwr_doc,
+                data.koreksi_doc,
+                data.pemakaian_doc,
+                (data.sa_doc + data.beli_doc + data.mutasi_msk_doc + data.koreksi_doc)
+                    - (data.mutasi_klwr_doc + data.pemakaian_doc) as sisa_doc,
+                data.sa_oa,
+                data.beli_oa,
+                data.mutasi_msk_oa,
+                data.mutasi_klwr_oa,
+                data.koreksi_oa,
+                (data.beli_oa + data.mutasi_msk_oa + data.koreksi_oa) - data.mutasi_klwr_oa as pemakaian_oa,
+                (data.beli_oa + data.mutasi_msk_oa) - data.mutasi_klwr_oa + data.koreksi_oa as net_oa,
+                (data.sa_oa + data.beli_oa + data.mutasi_msk_oa)
+                    - data.mutasi_klwr_oa + data.koreksi_oa as saldo_akhir_oa,
+                data.pdpt_peternak,
+                data.pdpt_peternak + data.pemakaian_pkn + data.pemakaian_ovk
+                    + data.pemakaian_doc + data.pemakaian_oa as total
+            from
+            (
+                select
+                    w.kode as unit,
+                    c.noreg,
+                    m.nama,
+                    case when td.datang is not null then td.datang else rs.tgl_docin end as tgl_chick_in,
+                    case when td.jml_ekor is not null then td.jml_ekor else rs.populasi end as populasi,
+                    c.sa_pkn, c.beli_pkn, c.mutasi_msk_pkn, c.mutasi_klwr_pkn,
+                    c.koreksi_pkn, c.pemakaian_pkn, c.sisa_pkn,
+                    c.sa_ovk, c.beli_ovk, c.mutasi_msk_ovk, c.mutasi_klwr_ovk, c.pemakaian_ovk,
+                    c.sa_doc, c.beli_doc, c.mutasi_msk_doc, c.mutasi_klwr_doc, c.koreksi_doc, c.pemakaian_doc,
+                    c.sa_oa, c.beli_oa, c.mutasi_msk_oa, c.mutasi_klwr_oa, c.koreksi_oa, c.pemakaian_oa,
+                    c.pdpt_peternak
+                from combined c
+                left join rdim_submit rs on c.noreg = rs.noreg
+                left join mitra_mapping_max mm on mm.nim = rs.nim
+                left join mitra m on m.id = mm.id
+                left join kandang k on k.id = rs.kandang
+                left join wilayah w on k.unit = w.id
+                left join order_doc_max od on c.noreg = od.noreg
+                left join terima_doc_max td on td.no_order = od.no_order
+                where m.id is not null
+            ) data
+            order by
+                data.noreg asc,
+                data.tgl_chick_in asc;
+        ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
