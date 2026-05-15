@@ -1638,6 +1638,8 @@ class LHK extends Public_Controller
             // cetak_r($params['lat'].','.$params['long']);
             // cetak_r(1, 1);
 
+            $kode = 'LHK/'.$params['noreg'].'/'.$umur;
+
             $m_kry = new \Model\Storage\Karyawan_model();
             $m_lhk = new \Model\Storage\Lhk_model();
             $m_lhk->noreg = $params['noreg'];
@@ -1655,6 +1657,7 @@ class LHK extends Public_Controller
             $m_lhk->nik = $m_kry->getNik( $this->userdata['detail_user']['nama_detuser'] );
             $m_lhk->lat_long = $params['lat'].','.$params['long'];
             $m_lhk->status = 1;
+            $m_lhk->kode = $kode;
             $m_lhk->save();
 
             $id_lhk = $m_lhk->id;
