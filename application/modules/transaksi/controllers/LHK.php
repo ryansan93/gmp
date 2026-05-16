@@ -1960,6 +1960,8 @@ class LHK extends Public_Controller
             }
             // END - HIUTNG IP
 
+            $kode = 'LHK/'.$params['noreg'].'/'.$umur;
+
             $m_kry = new \Model\Storage\Karyawan_model();
             $m_lhk = new \Model\Storage\Lhk_model();
             $m_lhk->where('id', $params['id'])->update(
@@ -1978,7 +1980,8 @@ class LHK extends Public_Controller
                     'tanggal' => $params['tanggal'],
                     'nik' => $m_kry->getNik( $this->userdata['detail_user']['nama_detuser'] ),
                     'lat_long' => $params['lat'].','.$params['long'],
-                    'status' => 1
+                    'status' => 1,
+                    'kode' => $kode
                 )
             );
 
