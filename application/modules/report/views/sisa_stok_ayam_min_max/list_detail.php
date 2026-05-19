@@ -28,6 +28,8 @@
             <th class="text-center">Plasma</th>
             <th class="text-center">Jumlah Ekor</th>
             <th class="text-center">Ekor Mati</th>
+            <th class="text-center">Koreksi (+/-)</th>
+            <th class="text-center">Panen</th>
             <th class="text-center">Sisa Ekor</th>
             <th class="text-center">BB</th>
             <th class="text-center">Tonase</th>
@@ -45,6 +47,8 @@
                     <td><?php echo $map_plasma[$d['noreg']] ?? '-'; ?></td>
                     <td class="text-right"><?php echo angkaRibuan($d['jml_ekor']) ?></td>
                     <td class="text-right"><?php echo angkaRibuan($d['ekor_mati']) ?></td>
+                    <td class="text-right"><?php echo angkaRibuan($d['adjin_ekor']) ?></td>
+                    <td class="text-right"><?php echo angkaRibuan($d['panen_ekor']) ?></td>
                     <td class="text-right"><?php echo angkaRibuan($d['sisa_ekor']) ?></td>
                     <td class="text-right"><?php echo angkaDecimal($d['bb']) ?></td>
                     <td class="text-right"><?php echo angkaRibuan($d['tonase']) ?></td>
@@ -57,6 +61,8 @@
                         <td><?php echo $map_plasma[$d['noreg']] ?? '-'; ?></td>
                         <td class="text-right"><?php echo angkaRibuan($d['jml_ekor']) ?></td>
                         <td class="text-right"><?php echo angkaRibuan($d['ekor_mati']) ?></td>
+                        <td class="text-right"><?php echo angkaRibuan($d['adjin_ekor']) ?></td>
+                        <td class="text-right"><?php echo angkaRibuan($d['panen_ekor']) ?></td>
                         <td class="text-right"><?php echo angkaRibuan($d['sisa_ekor']) ?></td>
                         <td class="text-right"><?php echo angkaDecimal($d['bb']) ?></td>
                         <td class="text-right"><?php echo angkaRibuan($d['tonase']) ?></td>

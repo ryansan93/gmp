@@ -103,7 +103,7 @@ class SisaStokAyamMinMax extends Public_Controller {
                             select l1.* from lhk l1
                             right join
                             (
-                                select max(tanggal) as tanggal, noreg from lhk where tanggal <= '2026-05-19' group by noreg
+                                select max(tanggal) as tanggal, noreg from lhk where tanggal <= '".$tanggal."' group by noreg
                             ) l2
                             on
                                 l1.tanggal = l2.tanggal and
@@ -375,13 +375,16 @@ class SisaStokAyamMinMax extends Public_Controller {
         $m_wil  = new \Model\Storage\Wilayah_model();
         $m_conf = new \Model\Storage\Conf();
 
-        $sql = " select
+        $sql = "
+            select
                 data.kode,
                 data.noreg,
                 data.tanggal,
                 data.umur,
                 data.jml_ekor,
                 data.ekor_mati,
+                data.adjin_ekor,
+                data.panen_ekor,
                 data.sisa_ekor,
                 data.bb,
                 data.tonase
@@ -394,9 +397,11 @@ class SisaStokAyamMinMax extends Public_Controller {
                     (td.jml_ekor+isnull(ad.jumlah, 0)) as jml_ekor,
                     l.umur,
                     l.ekor_mati,
+                    isnull(ad.jumlah, 0) as adjin_ekor,
+                    isnull(panen.ekor, 0) as panen_ekor,
                     l.bb,
-                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) as sisa_ekor,
-                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) * l.bb as tonase
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati - isnull(panen.ekor, 0)) as sisa_ekor,
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati - isnull(panen.ekor, 0)) * l.bb as tonase
                 from 
                 (
                     select max(id) as id, kode 
@@ -407,7 +412,7 @@ class SisaStokAyamMinMax extends Public_Controller {
                 left join
                 (
                     select
-                        w.kode, l.*
+                        w.kode as kode_unit, l.*
                     from
                     (
                         select l1.* 
@@ -426,10 +431,13 @@ class SisaStokAyamMinMax extends Public_Controller {
                     left join rdim_submit rs on l.noreg = rs.noreg
                     left join kandang k on rs.kandang = k.id
                     left join wilayah w on k.unit = w.id
-                ) l on l.kode = w.kode
+                ) l 
+                on 
+                    l.kode_unit = w.kode
                 left join
                     (select * from tutup_siklus where tgl_tutup <= '". $params['tanggal'] ."') ts
-                    on l.noreg = ts.noreg
+                    on 
+                        l.noreg = ts.noreg
                 left join
                 (
                     select od.noreg, td.* 
@@ -448,14 +456,23 @@ class SisaStokAyamMinMax extends Public_Controller {
                             (select max(id) as id, no_order from order_doc group by no_order) od2
                             on od1.id = od2.id
                     ) od
-                    on td.no_order = od.no_order
-                ) td on l.noreg = td.noreg
+                    on 
+                        td.no_order = od.no_order
+                ) td 
+                    on 
+                        l.noreg = td.noreg
                 left join
                 (
-                    select noreg, sum(jumlah) as jumlah 
-                    from adjin_doc 
-                    group by noreg
-                ) ad on l.noreg = ad.noreg
+                    select noreg, sum(jumlah) as jumlah from adjin_doc group by noreg
+                ) ad 
+                    on 
+                        l.noreg = ad.noreg
+                left join
+                (
+                    select noreg, sum(netto_ekor) as ekor, sum(netto_kg) as tonase, max(tgl_panen) as tgl_panen_terakhir from real_sj rs where tgl_panen <= '". $params['tanggal'] ."' group by noreg
+                ) panen
+                on
+                    l.noreg = panen.noreg
                 where
                     ts.id is null and
                     l.id is not null
@@ -467,9 +484,8 @@ class SisaStokAyamMinMax extends Public_Controller {
             order by
                 data.kode asc,
                 data.noreg asc
-        
         ";
-
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
