@@ -97,13 +97,13 @@ class SisaStokAyamMinMax extends Public_Controller {
                 left join
                     (
                         select
-                            w.kode, l.*
+                            w.kode as kode_unit, l.*
                         from
                         (
                             select l1.* from lhk l1
                             right join
                             (
-                                select max(tanggal) as tanggal, noreg from lhk where tanggal <= '".$tanggal."' group by noreg
+                                select max(tanggal) as tanggal, noreg from lhk where tanggal <= '2026-05-19' group by noreg
                             ) l2
                             on
                                 l1.tanggal = l2.tanggal and
@@ -123,7 +123,7 @@ class SisaStokAyamMinMax extends Public_Controller {
                                 k.unit = w.id
                     ) l
                     on
-                        l.kode = w.kode
+                        l.kode_unit = w.kode
                 left join
                     (select * from tutup_siklus where tgl_tutup <= '".$tanggal."') ts
                     on
