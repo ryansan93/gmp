@@ -138,10 +138,11 @@ class InsertJurnal extends Public_Controller {
                 /* END - DEFAULT */
             ";
             // cetak_r( $sql, 1 );
-            $d_conf = $m_conf->hydrateRaw( $sql );
-    
+            $DB = $this->load->database('default', TRUE);
+            $DB->query($sql);
+
             $result['status'] = 1;
-            $result['content'] = $d_conf;
+            $result['content'] = [];
         } else {
             $result['message'] = 'Setting automatic jurnal belum tersedia, harap hubungi tim IT.';
         }
