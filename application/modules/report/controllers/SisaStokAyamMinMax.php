@@ -85,7 +85,7 @@ class SisaStokAyamMinMax extends Public_Controller {
                     l.ekor_mati,
                     l.bb,
                     ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati - isnull(panen.ekor, 0)) as sisa_ekor,
-                    ((((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) * l.bb) - isnull(panen.tonase, 0)) as tonase
+                    (((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati - isnull(panen.ekor, 0))) * l.bb as tonase
                 from 
                 (
                     select max(id) as id, kode from wilayah
