@@ -1817,13 +1817,11 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
 
             $id = $d_lhk->id;
             $id_old = $d_lhk->id;
@@ -2162,13 +2160,11 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
 
             $id = $d_lhk->id;
             $id_old = $d_lhk->id;
@@ -2259,13 +2255,11 @@ class LHK extends Public_Controller
 
             $m_lhk->where('id', $id)->delete();
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$tgl_lhk."', 3, '".$noreg_lhk."', null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tgl_lhk."', 3, '".$noreg_lhk."', null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
             
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id_lhk, $id_old, 3);
 
@@ -2297,9 +2291,8 @@ class LHK extends Public_Controller
             $noreg = $params['noreg'];
             $status = $params['status'];
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$id."', '".$tanggal."', ".$status.", '".$noreg."', null";
-            $d_conf = $conf->hydrateRaw($sql);
+            $return = Modules::run('base/ExecStoredProcedure/exec', $sql);
 
             $this->result['status'] = 1;
             $this->result['content'] = $params;
@@ -2319,9 +2312,8 @@ class LHK extends Public_Controller
             $noreg = $params['noreg'];
             $status = $params['status'];
 
-            $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$id."', '".$tanggal."', ".$status.", '".$noreg."', null";
-            $d_conf = $conf->hydrateRaw($sql);
+            $return = Modules::run('base/ExecStoredProcedure/exec', $sql);
 
             $this->result['status'] = 1;
             $this->result['content'] = $params;
