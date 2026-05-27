@@ -2160,10 +2160,10 @@ class LHK extends Public_Controller
 
             $d_lhk = $m_lhk->where('id', $id_lhk)->orderBy('umur', 'desc')->first();
 
-            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
+            $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '".$d_lhk->id."', '".$tgl_hitung."', 2, null, null";
             Modules::run('base/ExecStoredProcedure/exec', $sql);
 
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$d_lhk->tanggal."', 2, null, null";
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '".$d_lhk->id."', '".$tgl_hitung."', 2, null, null";
             Modules::run('base/ExecStoredProcedure/exec', $sql);
 
             $id = $d_lhk->id;
