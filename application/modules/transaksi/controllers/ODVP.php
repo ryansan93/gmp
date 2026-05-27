@@ -142,6 +142,7 @@ class ODVP extends Public_Controller {
                 ov.tanggal desc,
                 ov.no_order desc
         ";
+        // cetak_r( $sql, 1 );
         $d_ov = $m_conf->hydrateRaw( $sql );
         if ( $d_ov->count() > 0 ) {
             $d_ov = $d_ov->toArray();
@@ -1033,13 +1034,15 @@ class ODVP extends Public_Controller {
                     $m_terima_doc->uniformity = $params['uniformity'];
                     $m_terima_doc->save();
 
-                    $conf = new \Model\Storage\Conf();
-                    $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id_terima."', '".$params['datang']."', 1, null, null";
-                    $d_conf = $conf->hydrateRaw($sql);
+                    // $conf = new \Model\Storage\Conf();
+                    // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id_terima."', '".substr($params['datang'], 0, 10)."', 1, null, null";
+                    // $d_conf = $conf->hydrateRaw($sql);
+                    $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id_terima."', '".substr($params['datang'], 0, 10)."', 2, null, null";
+                    Modules::run('base/ExecStoredProcedure/exec', $sql);
                     // $m_conf = new \Model\Storage\Conf();
                     // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id_terima.", NULL, 1";
                     // $d_conf = $m_conf->hydrateRaw( $sql );
-                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id_terima, null, 1);
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $id_terima, $id_terima, 2);
 
                     $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                     Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log);
@@ -1170,9 +1173,12 @@ class ODVP extends Public_Controller {
                     // $m_terima_doc->uniformity = $params['uniformity'];
                     // $m_terima_doc->save();
     
-                    $conf = new \Model\Storage\Conf();
-                    $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tgl_stok."', 2, null, null";
-                    $d_conf = $conf->hydrateRaw($sql);
+                    // $conf = new \Model\Storage\Conf();
+                    // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".substr($tgl_stok, 0, 10)."', 2, null, null";
+                    // $d_conf = $conf->hydrateRaw($sql);
+
+                    $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".substr($tgl_stok, 0, 10)."', 2, null, null";
+                    Modules::run('base/ExecStoredProcedure/exec', $sql);
                     
                     // $m_conf = new \Model\Storage\Conf();
                     // $sql = "exec insert_jurnal 'DOC', '".$params['no_order']."', NULL, ".$params['total'].", 'terima_doc', ".$id.", ".$id_old.", 2";
@@ -1204,9 +1210,13 @@ class ODVP extends Public_Controller {
             $m_order_doc = new \Model\Storage\OrderDoc_model();
             $d_order_doc = $m_order_doc->where('no_order', $d_terima_doc->no_order)->orderBy('id', 'desc')->first();
 
-            $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".$d_terima_doc->datang."', 3, '".$d_order_doc->noreg."', null";
-            $d_conf = $conf->hydrateRaw($sql);
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".substr($d_terima_doc->datang, 0, 10)."', 3, '".$d_order_doc->noreg."', null";
+            // $d_conf = $conf->hydrateRaw($sql);
+
+            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".substr($d_terima_doc->datang, 0, 10)."', 3, '".$d_order_doc->noreg."', null";
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
+
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'terima_doc', ".$params.", ".$params.", 3";
             // $d_conf = $m_conf->hydrateRaw( $sql );

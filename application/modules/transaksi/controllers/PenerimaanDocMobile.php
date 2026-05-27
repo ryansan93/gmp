@@ -746,9 +746,12 @@ class PenerimaanDocMobile extends Public_Controller {
             $status = $params['status'];
             $noreg = $params['noreg'];
 
-            $conf = new \Model\Storage\Conf();
+            // $conf = new \Model\Storage\Conf();
+            // $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tanggal."', ".$status.", ".$noreg.", null";
+            // $d_conf = $conf->hydrateRaw($sql);
+
             $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".$tanggal."', ".$status.", ".$noreg.", null";
-            $d_conf = $conf->hydrateRaw($sql);
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
 
             $this->result['status'] = 1;
             $this->result['content'] = $params;
