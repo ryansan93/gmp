@@ -124,7 +124,7 @@
 								<a href="uploads/<?php echo $l_ktp['path']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a>
 							<?php } ?>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_pelanggan['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo !empty($l_ktp['path']) ? $l_ktp['path'] : null; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo !empty($l_ktp['id']) ? $l_ktp['id'] : null; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDP"></i>
 							</label>
 						</div>
@@ -254,7 +254,7 @@
 								<a href="uploads/<?php echo $l_npwp['path']; ?>" target="_blank"><?php echo $l_npwp['filename']; ?></a>
 							<?php } ?>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_usaha_pelanggan['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo (!empty($l_npwp['path'])) ? $l_npwp['path'] : null; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo (!empty($l_npwp['id'])) ? $l_npwp['id'] : null; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran NPWP"></i>
 							</label>
 						</div>
