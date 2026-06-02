@@ -862,7 +862,7 @@ class Pelanggan extends Public_Controller {
 				$id_lampiran_old = isset($lampiran['old']) ? $lampiran['old'] : null;
 				// $id_lampiran_old = null;
 
-				cetak_r($params['lampirans'], 1);
+				// cetak_r($params['lampirans'], 1);
 
 				$table = 'pelanggan';
 				$table_id = $id;
@@ -912,6 +912,8 @@ class Pelanggan extends Public_Controller {
 							display_json(['status'=>0, 'message'=>'error, segera hubungi tim IT', 'cek' => 2]);
 						}
 					} else {
+						cetak_r( $id_lampiran_old, 1 );
+
 						if ( !empty($id_lampiran_old) ) {
 							$m_lampiran = new \Model\Storage\Lampiran_model();
 							$d_lampiran_old = $m_lampiran->where('id', $id_lampiran_old)->first();
