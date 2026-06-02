@@ -407,6 +407,7 @@
 									<?php 
 										$path = (!empty($bank['lampiran']['path'])) ? $bank['lampiran']['path'] : null;
 										$filename = !empty($bank['lampiran']['filename']) ? $bank['lampiran']['filename'] : null;
+										$id_l_bank = !empty($bank['lampiran']['id']) ? $bank['lampiran']['id'] : null;
 									?>
 									<tr class="detail_rekening v-center">
 										<td><input class="form-control" type="text" name="rekening_plg" data-id="<?php echo $bank['id']; ?>" placeholder="No Rekeneing" value="<?php echo $bank['rekening_nomor']; ?>" ></td>
@@ -417,7 +418,7 @@
 											<!-- <span class="file"><?php echo $filename; ?></span> -->
 											<a href="uploads/<?php echo $path; ?>" target="_blank"><?php echo $filename; ?></a>
 											<label class="text-right" data-idnama="<?php echo $list_lampiran_rekening_pelanggan['id'] ?>">
-												<input type="file" onchange="showNameFile(this)" class="file_lampiran bank_pelanggan" name="lampiran_ddp[]" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran Rekening" data-old="<?php echo $path; ?>">
+												<input type="file" onchange="showNameFile(this)" class="file_lampiran bank_pelanggan" name="lampiran_ddp[]" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran Rekening" data-old="<?php echo $id_l_bank; ?>">
 												<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran Rekening"></i>
 											</label>
 										</td>
@@ -456,7 +457,7 @@
 					<a href="uploads/<?php echo $l_ddp['path']; ?>" target="_blank"><?php echo $l_ddp['filename']; ?></a>
 				<?php } ?>
 				<label class="col-sm-2 text-right" data-idnama="<?php echo $list_lampiran_ddp_pelanggan['id'] ?>">
-					<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ddp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDP" data-old="<?php echo !empty($l_ddp['path']) ? $l_ddp['path'] : null; ?>">
+					<input type="file" onchange="showNameFile(this)" class="file_lampiran pelanggan" name="lampiran_ddp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDP" data-old="<?php echo !empty($l_ddp['id']) ? $l_ddp['id'] : null; ?>">
 					<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDP"></i>
 				</label>
 			</div>
