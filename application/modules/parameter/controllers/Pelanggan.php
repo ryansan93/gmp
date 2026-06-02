@@ -861,6 +861,8 @@ class Pelanggan extends Public_Controller {
 				$lampiran = $params['lampirans'][ $idx_upload ];
 				$id_lampiran_old = isset($lampiran['old']) ? $lampiran['old'] : null;
 
+				cetak_r($params['lampirans'], 1);
+
 				$table = 'pelanggan';
 				$table_id = $id;
 				if ( stristr($lampiran['key'], 'bank') !== FALSE ) {
