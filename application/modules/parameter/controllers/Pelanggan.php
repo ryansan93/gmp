@@ -860,9 +860,6 @@ class Pelanggan extends Public_Controller {
 			if ( isset($params['lampirans'][ $idx_upload ]) ) {
 				$lampiran = $params['lampirans'][ $idx_upload ];
 				$id_lampiran_old = isset($lampiran['old']) ? $lampiran['old'] : null;
-				// $id_lampiran_old = null;
-
-				// cetak_r($params['lampirans'], 1);
 
 				$table = 'pelanggan';
 				$table_id = $id;
@@ -888,6 +885,8 @@ class Pelanggan extends Public_Controller {
 					if ( isset($lampiran['sha1']) && !empty($lampiran['sha1']) ) {
 						$file = $mappingFiles[ $lampiran['sha1'] . '_' . $lampiran['name'] ] ?: '';
 					}
+
+					cetak_r($file);
 
 					if ( !empty($file) ) {
 						$moved = uploadFile($file);
