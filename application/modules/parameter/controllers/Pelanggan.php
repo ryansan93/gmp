@@ -862,7 +862,7 @@ class Pelanggan extends Public_Controller {
 				$id_lampiran_old = isset($lampiran['old']) ? $lampiran['old'] : null;
 				// $id_lampiran_old = null;
 
-				// cetak_r($params['lampirans'], 1);
+				cetak_r($params['lampirans'], 1);
 
 				$table = 'pelanggan';
 				$table_id = $id;
