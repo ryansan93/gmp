@@ -886,8 +886,6 @@ class Pelanggan extends Public_Controller {
 						$file = $mappingFiles[ $lampiran['sha1'] . '_' . $lampiran['name'] ] ?: '';
 					}
 
-					cetak_r($file);
-
 					if ( !empty($file) ) {
 						$moved = uploadFile($file);
 						$isMoved = $moved['status'];
