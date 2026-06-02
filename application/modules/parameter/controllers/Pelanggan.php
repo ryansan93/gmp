@@ -859,9 +859,10 @@ class Pelanggan extends Public_Controller {
 			$idx_upload = $params['idx_upload'];
 			if ( isset($params['lampirans'][ $idx_upload ]) ) {
 				$lampiran = $params['lampirans'][ $idx_upload ];
-				$id_lampiran_old = isset($lampiran['old']) ? $lampiran['old'] : null;
+				// $id_lampiran_old = isset($lampiran['old']) ? $lampiran['old'] : null;
+				$id_lampiran_old = null;
 
-				cetak_r($params['lampirans'], 1);
+				// cetak_r($params['lampirans'], 1);
 
 				$table = 'pelanggan';
 				$table_id = $id;
