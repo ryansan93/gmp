@@ -1212,31 +1212,31 @@ var odvp = {
 			return;
 		}
 
+		var data = {
+			'id'          : $(div).find('input[type=hidden]').data('id'),
+			'no_terima'   : $(div).find('input[type=hidden]').data('terima'),
+			'no_order'    : $(div).find('input.no_order').val(),
+			'no_sj'       : $(div).find('input.no_sj').val(),
+			'nopol'       : $(div).find('input.nopol').val(),
+			'datang'      : dateTimeSQL( $(div).find('[name=tgl_tiba_kdg]').data('DateTimePicker').date() ),
+			'kirim'       : dateTimeSQL( $(div).find('[name=tgl_kirim_doc]').data('DateTimePicker').date() ),
+			'supplier'    : $(div).find('select.supplier').select2('val'),
+			'jml_ekor'    : numeral.unformat( $(div).find('input.ekor').val() ),
+			'jml_box'     : numeral.unformat( $(div).find('input.box').val() ),
+			'harga'       : numeral.unformat( $(div).find('input.harga').val() ),
+			'total'       : numeral.unformat( $(div).find('input.total').val() ),
+			'bb'          : numeral.unformat( $(div).find('input.bb').val() ),
+			'kondisi'     : $(div).find('input.kondisi').val(),
+			'keterangan'  : $(div).find('textarea.ket').val(),
+			'uniformity'  : numeral.unformat( $(div).find('input.uniformity').val() ),
+			'version'     : $(div).find('input[type=hidden]').data('version'),
+			'alasan_edit' : alasan.trim()
+		};
+
+		var file_sj = $(div).find('.file_lampiran_sj').get(0).files[0];
+
 		bootbox.confirm('Apakah anda yakin ingin menyimpan perubahan data dari Pusat?', function(result) {
 			if ( result ) {
-				var data = {
-					'id'          : $(div).find('input[type=hidden]').data('id'),
-					'no_terima'   : $(div).find('input[type=hidden]').data('terima'),
-					'no_order'    : $(div).find('input.no_order').val(),
-					'no_sj'       : $(div).find('input.no_sj').val(),
-					'nopol'       : $(div).find('input.nopol').val(),
-					'datang'      : dateTimeSQL( $('[name=tgl_tiba_kdg]').data('DateTimePicker').date() ),
-					'kirim'       : dateTimeSQL( $('[name=tgl_kirim_doc]').data('DateTimePicker').date() ),
-					'supplier'    : $(div).find('select.supplier').select2('val'),
-					'jml_ekor'    : numeral.unformat( $(div).find('input.ekor').val() ),
-					'jml_box'     : numeral.unformat( $(div).find('input.box').val() ),
-					'harga'       : numeral.unformat( $(div).find('input.harga').val() ),
-					'total'       : numeral.unformat( $(div).find('input.total').val() ),
-					'bb'          : numeral.unformat( $(div).find('input.bb').val() ),
-					'kondisi'     : $(div).find('input.kondisi').val(),
-					'keterangan'  : $(div).find('textarea.ket').val(),
-					'uniformity'  : numeral.unformat( $(div).find('input.uniformity').val() ),
-					'version'     : $(div).find('input[type=hidden]').data('version'),
-					'alasan_edit' : alasan.trim()
-				};
-
-				var file_sj = $(div).find('.file_lampiran_sj').get(0).files[0];
-
 				modal.modal('hide');
 				odvp.exec_edit_terima_doc_pusat(data, file_sj, file_ba);
 			}
