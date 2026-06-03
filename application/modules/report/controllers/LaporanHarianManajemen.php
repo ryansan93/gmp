@@ -117,13 +117,13 @@ class LaporanHarianManajemen extends Public_Controller {
                 isnull(sum(data.hutang_doc), 0) + isnull(sum(data.hutang_pakan_jatim), 0) + isnull(sum(data.hutang_pakan_jateng), 0) as tot_hutang,
                 isnull(sum(data.lr_inti_prev), 0) + isnull(sum(data.lr_inti), 0) as lr_total,
                 case
-	                when sum(data.lr_inti) > 0 and sum(data.jml_doc) > 0 then
+	                when sum(data.lr_inti) <> 0 and sum(data.jml_doc) <> 0 then
 	                	sum(data.lr_inti) / sum(data.jml_doc)
 	                else
 	                	0
                 end as lr_per_ekor,
                 case
-	                when sum(data.lr_inti) > 0 and sum(data.tonase) > 0 then
+	                when sum(data.lr_inti) <> 0 and sum(data.tonase) <> 0 then
 	                	sum(data.lr_inti) / sum(data.tonase)
 	                else
 	                	0
