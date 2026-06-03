@@ -142,6 +142,34 @@
 						<span><?php echo empty($data_terima_doc['keterangan']) ? '-' : $data_terima_doc['keterangan']; ?></span>
 					</div>
 				</div>
+				<?php if ( !empty($data_terima_doc['keterangan_salah']) ): ?>
+				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-12">
+						<hr style="margin-top: 5px; margin-bottom: 5px;">
+					</div>
+				</div>
+				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-12">
+						<label class="control-label" style="padding-top: 0px; color: #c0392b;"><i class="fa fa-exclamation-circle"></i> <u>Edit dari Pusat</u></label>
+					</div>
+				</div>
+				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-3">Alasan Edit</div>
+					<div class="col-lg-8">
+						<span>:</span>
+						<span><?php echo $data_terima_doc['keterangan_salah']; ?></span>
+					</div>
+				</div>
+				<?php if ( !empty($data_terima_doc['path_ba']) ): ?>
+				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-3">Berita Acara</div>
+					<div class="col-lg-8">
+						<span>:</span>
+						<span><a href="<?php echo base_url('uploads/'.$data_terima_doc['path_ba']); ?>" target="_blank"><i class="fa fa-file"></i> Lihat Dokumen</a></span>
+					</div>
+				</div>
+				<?php endif; ?>
+				<?php endif; ?>
 				<div class="form-group d-flex align-items-center">
 					<div class="col-lg-12">
 						<hr style="margin-top: 5px; margin-bottom: 5px;">
