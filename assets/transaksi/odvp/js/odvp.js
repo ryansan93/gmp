@@ -1238,6 +1238,7 @@ var odvp = {
 		bootbox.confirm('Apakah anda yakin ingin menyimpan perubahan data dari Pusat?', function(result) {
 			if ( result ) {
 				modal.modal('hide');
+				showLoading();
 				odvp.exec_edit_terima_doc_pusat(data, file_sj, file_ba);
 			}
 		});
@@ -1267,6 +1268,9 @@ var odvp = {
 						odvp.setting_up();
 						odvp.get_lists_doc();
 						bootbox.hideAll();
+						$('.modal').modal('hide');
+						$('body').removeClass('modal-open');
+						$('.modal-backdrop').remove();
 					});
 				} else {
 					bootbox.alert(data.message);

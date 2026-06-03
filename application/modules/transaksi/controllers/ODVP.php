@@ -1319,6 +1319,12 @@ class ODVP extends Public_Controller {
 
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
 
+            // Hitung ulang semua LHK noreg ini dari umur terkecil
+            $d_lhk_all = $m_lhk->where('noreg', $noreg)->orderBy('umur', 'asc')->get();
+            foreach ( $d_lhk_all as $lhk_item ) {
+                Modules::run( 'transaksi/LHK/hitUlang', $lhk_item->id );
+            }
+
             $deskripsi_log = 'Edit dari Pusat oleh ' . $this->userdata['detail_user']['nama_detuser'] . '. Alasan: ' . $params['alasan_edit'];
             Modules::run( 'base/event/update', $d_terima_doc, $deskripsi_log);
 
