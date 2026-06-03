@@ -265,8 +265,9 @@ class ODVP extends Public_Controller {
         $d_terima_doc = $m_terima_doc->where('id', $id)->where('no_order', $no_order)->with(['order_doc'])->orderBy('id', 'DESC')->first();
 
         $content['data_terima_doc'] = $d_terima_doc;
-        $content['data_doc'] = $this->get_data_doc();
-        $content['supplier'] = $this->get_data_supplier();
+        $content['data_doc']        = $this->get_data_doc();
+        $content['supplier']        = $this->get_data_supplier();
+        $content['akses_edit_pusat'] = hakAksesKhusus('edit_doc_dari_pusat');
         $this->load->view('transaksi/odvp/terima_doc_edit_form', $content);
     }
 
@@ -1078,7 +1079,12 @@ class ODVP extends Public_Controller {
             $sql = "select * from lhk where noreg = '".$noreg."'";
             $d_lhk = $m_lhk->hydrateRaw($sql);
 
+            $_dLhk = 0;
             if ( $d_lhk->count() > 0 ) {
+                $_dLhk = $d_lhk->count();
+            }
+
+            if ( $_dLhk > 0 ) {
                 $this->result['message'] = "Data LHK / Recording sudah ada, jadi anda tidak bisa merubah data penerimaan DOC.";
             } else {
                 $execute = null;
@@ -1192,6 +1198,133 @@ class ODVP extends Public_Controller {
                     $this->result['message'] = 'Data Terima DOC berhasil diupdate.';
                 }
             }
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = "Gagal : " . $e->getMessage();
+        }
+
+        display_json($this->result);
+    }
+
+    public function edit_terima_doc_pusat()
+    {
+        $params  = json_decode($this->input->post('data'), TRUE);
+        $file_sj = isset($_FILES['file']) ? $_FILES['file'] : null;
+        $file_ba = isset($_FILES['file_ba']) ? $_FILES['file_ba'] : null;
+
+        try {
+            // Validasi alasan edit wajib ada
+            if ( empty($params['alasan_edit']) ) {
+                $this->result['message'] = 'Alasan edit wajib diisi.';
+                display_json($this->result);
+                return;
+            }
+
+            // Validasi file berita acara wajib ada
+            if ( empty($file_ba) || !isset($file_ba['name']) || empty($file_ba['name']) ) {
+                $this->result['message'] = 'Dokumen Berita Acara wajib dilampirkan.';
+                display_json($this->result);
+                return;
+            }
+
+            // Cek LHK (sama seperti edit biasa)
+            $m_order_doc = new \Model\Storage\OrderDoc_model();
+            $d_order_doc = $m_order_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
+            $noreg = $d_order_doc->noreg;
+
+            $m_lhk = new \Model\Storage\Lhk_model();
+            $d_lhk = $m_lhk->hydrateRaw("select * from lhk where noreg = '".$noreg."'");
+
+            // Upload file berita acara
+            $path_ba = null;
+            $moved_ba = uploadFile($file_ba);
+            if ( $moved_ba && $moved_ba['status'] ) {
+                $path_ba = $moved_ba['path'];
+            } else {
+                $this->result['message'] = 'Upload Berita Acara gagal, hubungi tim IT.';
+                display_json($this->result);
+                return;
+            }
+
+            // Upload file SJ (opsional)
+            $m_terima_doc = new \Model\Storage\TerimaDoc_model();
+            $d_terima_doc = $m_terima_doc->where('no_order', $params['no_order'])->orderBy('id', 'desc')->first();
+            $path_sj = $d_terima_doc->path;
+
+            if ( !empty($file_sj) && !empty($file_sj['name']) ) {
+                $moved_sj = uploadFile($file_sj);
+                if ( $moved_sj && $moved_sj['status'] ) {
+                    $path_sj = $moved_sj['path'];
+                }
+            }
+
+            $now = $m_terima_doc->getDate();
+            $id  = $params['id'];
+            $id_old = $d_terima_doc->id;
+
+            $no_bbm = 'BBM/DOC'.str_replace('ODC', '', $params['no_order']);
+
+            // Hitung tgl stok
+            $tgl_stok = $params['datang'];
+            if ( $d_terima_doc->datang < $tgl_stok ) {
+                $tgl_stok = $d_terima_doc->datang;
+            }
+
+            // Update terima_doc termasuk alasan edit dan path berita acara
+            $m_terima_doc->where('id', $id)->update(
+                array(
+                    'no_order'         => $params['no_order'],
+                    'no_sj'            => $params['no_sj'],
+                    'no_bbm'           => $no_bbm,
+                    'nopol'            => $params['nopol'],
+                    'datang'           => $params['datang'],
+                    'supplier'         => $params['supplier'],
+                    'jml_ekor'         => $params['jml_ekor'],
+                    'jml_box'          => $params['jml_box'],
+                    'user_submit'      => $this->userid,
+                    'tgl_submit'       => $now['waktu'],
+                    'kondisi'          => $params['kondisi'],
+                    'keterangan'       => $params['keterangan'],
+                    'kirim'            => $params['kirim'],
+                    'bb'               => $params['bb'],
+                    'harga'            => $params['harga'],
+                    'total'            => $params['total'],
+                    'path'             => $path_sj,
+                    'uniformity'       => $params['uniformity'],
+                    'keterangan_salah' => $params['alasan_edit'],
+                    'path_ba'          => $path_ba,
+                )
+            );
+
+            $d_terima_doc = $m_terima_doc->where('id', $id)->first();
+
+            // Simpan juga ke terima_doc_ket
+            $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
+            $existing_ket = $m_terima_doc_ket->where('id_header', $id)->first();
+            if ( $existing_ket ) {
+                $m_terima_doc_ket->where('id_header', $id)->update(
+                    array(
+                        'keterangan' => $params['alasan_edit'],
+                        'lampiran'   => $path_ba,
+                    )
+                );
+            } else {
+                $m_terima_doc_ket->insert(
+                    array(
+                        'id_header'  => $id,
+                        'keterangan' => $params['alasan_edit'],
+                        'lampiran'   => $path_ba,
+                    )
+                );
+            }
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
+
+            $deskripsi_log = 'Edit dari Pusat oleh ' . $this->userdata['detail_user']['nama_detuser'] . '. Alasan: ' . $params['alasan_edit'];
+            Modules::run( 'base/event/update', $d_terima_doc, $deskripsi_log);
+
+            $this->result['status']  = 1;
+            $this->result['message'] = 'Data Terima DOC berhasil diupdate oleh Pusat.';
+
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }

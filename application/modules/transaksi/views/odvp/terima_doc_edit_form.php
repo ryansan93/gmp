@@ -141,12 +141,64 @@
 				<div class="form-group">
 					<div class="col-lg-12 no-padding">
 						<hr style="margin-top: 5px; margin-bottom: 5px;">
-						<button id="btn-add" type="button" data-href="action" class="btn btn-primary cursor-p pull-left" title="ADD" onclick="odvp.edit_terima_doc(this)" style="margin-left: 10px;"> 
+						<button id="btn-add" type="button" data-href="action" class="btn btn-primary cursor-p pull-left" title="ADD" onclick="odvp.edit_terima_doc(this)" style="margin-left: 10px;">
 							<i class="fa fa-edit" aria-hidden="true"></i> Edit
 						</button>
+						<?php if ( isset($akses_edit_pusat) && $akses_edit_pusat === true ): ?>
+						<button type="button" class="btn btn-warning cursor-p pull-left" title="Edit dari Pusat" onclick="odvp.show_modal_edit_pusat(this)" style="margin-left: 6px;">
+							<i class="fa fa-building" aria-hidden="true"></i> Edit dari Pusat
+						</button>
+						<?php endif ?>
 					</div>
 				</div>
 			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Edit dari Pusat -->
+<div class="modal fade" id="modal-edit-pusat" tabindex="-1" role="dialog" aria-labelledby="modal-edit-pusat-label" data-backdrop="static">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header" style="background:#f0ad4e; color:#fff;">
+				<button type="button" class="close" data-dismiss="modal" style="color:#fff;">&times;</button>
+				<h4 class="modal-title" id="modal-edit-pusat-label">
+					<i class="fa fa-building"></i> Edit Data dari Pusat
+				</h4>
+			</div>
+			<div class="modal-body">
+				<div class="alert alert-warning" style="margin-bottom: 10px;">
+					<i class="fa fa-exclamation-triangle"></i>
+					Fitur ini hanya digunakan oleh <strong>Pusat</strong>. Wajib mengisi alasan edit dan melampirkan Berita Acara.
+				</div>
+				<div class="form-group">
+					<label class="control-label">Alasan Edit <span class="text-danger">*</span></label>
+					<textarea class="form-control alasan_edit_pusat" rows="4" placeholder="Tuliskan alasan perubahan data..." style="resize:vertical;"></textarea>
+				</div>
+				<div class="form-group">
+					<label class="control-label">Dokumen Berita Acara <span class="text-danger">*</span></label>
+					<div class="input-group">
+						<input type="text" class="form-control nama_file_ba" placeholder="Pilih dokumen berita acara..." readonly style="background:#fff;">
+						<span class="input-group-btn">
+							<label class="btn btn-default" style="margin-bottom:0;">
+								<i class="fa fa-paperclip"></i> Pilih File
+								<input type="file" class="file_ba_pusat" style="display:none;"
+									accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+									onchange="odvp.show_name_file_ba(this)">
+							</label>
+						</span>
+					</div>
+					<small class="text-muted">Format: PDF, DOC, DOCX, JPG, PNG. Maks 5MB.</small>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">
+					<i class="fa fa-times"></i> Batal
+				</button>
+				<button type="button" class="btn btn-warning" onclick="odvp.edit_terima_doc_pusat(this)">
+					<i class="fa fa-save"></i> Simpan Edit Pusat
+				</button>
+			</div>
 		</div>
 	</div>
 </div>

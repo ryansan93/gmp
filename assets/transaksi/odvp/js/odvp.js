@@ -1149,6 +1149,135 @@ var odvp = {
 	    });
 	}, // end - exec_edit_terima_doc
 
+	// ---------------------------------------------------------------
+	// EDIT DARI PUSAT
+	// ---------------------------------------------------------------
+	show_modal_edit_pusat: function(elm) {
+		// Reset modal sebelum ditampilkan
+		$('#modal-edit-pusat').find('textarea.alasan_edit_pusat').val('');
+		$('#modal-edit-pusat').find('input.nama_file_ba').val('');
+		$('#modal-edit-pusat').find('input.file_ba_pusat').val('');
+
+		// Simpan referensi elm induk (div.detailed) agar bisa diakses saat submit
+		$('#modal-edit-pusat').data('parent-elm', elm);
+
+		$('#modal-edit-pusat').modal('show');
+	}, // end - show_modal_edit_pusat
+
+	show_name_file_ba: function(input) {
+		var file = input.files[0];
+		if ( file ) {
+			$(input).closest('.input-group').find('input.nama_file_ba').val(file.name);
+		}
+	}, // end - show_name_file_ba
+
+	edit_terima_doc_pusat: function(elm) {
+		var modal     = $('#modal-edit-pusat');
+		var alasan    = modal.find('textarea.alasan_edit_pusat').val();
+		var file_ba   = modal.find('input.file_ba_pusat').get(0).files[0];
+		var parentElm = modal.data('parent-elm');
+		var div       = $(parentElm).closest('div.detailed');
+
+		// Validasi alasan
+		if ( !alasan || alasan.trim() === '' ) {
+			bootbox.alert('Alasan edit wajib diisi.');
+			return;
+		}
+
+		// Validasi file BA
+		if ( !file_ba ) {
+			bootbox.alert('Dokumen Berita Acara wajib dilampirkan.');
+			return;
+		}
+
+		// Validasi ukuran file (maks 5MB)
+		if ( file_ba.size > 5 * 1024 * 1024 ) {
+			bootbox.alert('Ukuran file Berita Acara melebihi 5MB.');
+			return;
+		}
+
+		// Validasi field form utama
+		var err = 0;
+		$.map( $(div).find('[data-required=1]:not(.supplier, .jns_doc)'), function(ipt) {
+			if ( empty($(ipt).val()) && $(ipt).val() == 0 ) {
+				err++;
+				$(ipt).parent().addClass('has-error');
+			} else {
+				$(ipt).parent().removeClass('has-error');
+			}
+		});
+
+		if ( err > 0 ) {
+			bootbox.alert('Data form belum lengkap, mohon cek kembali.');
+			return;
+		}
+
+		bootbox.confirm('Apakah anda yakin ingin menyimpan perubahan data dari Pusat?', function(result) {
+			if ( result ) {
+				var data = {
+					'id'          : $(div).find('input[type=hidden]').data('id'),
+					'no_terima'   : $(div).find('input[type=hidden]').data('terima'),
+					'no_order'    : $(div).find('input.no_order').val(),
+					'no_sj'       : $(div).find('input.no_sj').val(),
+					'nopol'       : $(div).find('input.nopol').val(),
+					'datang'      : dateTimeSQL( $('[name=tgl_tiba_kdg]').data('DateTimePicker').date() ),
+					'kirim'       : dateTimeSQL( $('[name=tgl_kirim_doc]').data('DateTimePicker').date() ),
+					'supplier'    : $(div).find('select.supplier').select2('val'),
+					'jml_ekor'    : numeral.unformat( $(div).find('input.ekor').val() ),
+					'jml_box'     : numeral.unformat( $(div).find('input.box').val() ),
+					'harga'       : numeral.unformat( $(div).find('input.harga').val() ),
+					'total'       : numeral.unformat( $(div).find('input.total').val() ),
+					'bb'          : numeral.unformat( $(div).find('input.bb').val() ),
+					'kondisi'     : $(div).find('input.kondisi').val(),
+					'keterangan'  : $(div).find('textarea.ket').val(),
+					'uniformity'  : numeral.unformat( $(div).find('input.uniformity').val() ),
+					'version'     : $(div).find('input[type=hidden]').data('version'),
+					'alasan_edit' : alasan.trim()
+				};
+
+				var file_sj = $(div).find('.file_lampiran_sj').get(0).files[0];
+
+				modal.modal('hide');
+				odvp.exec_edit_terima_doc_pusat(data, file_sj, file_ba);
+			}
+		});
+	}, // end - edit_terima_doc_pusat
+
+	exec_edit_terima_doc_pusat: function(data, file_sj, file_ba) {
+		var formData = new FormData();
+		formData.append('data', JSON.stringify(data));
+		formData.append('file', file_sj);
+		formData.append('file_ba', file_ba);
+
+		$.ajax({
+			url: 'transaksi/ODVP/edit_terima_doc_pusat',
+			dataType: 'json',
+			type: 'post',
+			async: false,
+			processData: false,
+			contentType: false,
+			data: formData,
+			beforeSend: function() {
+				showLoading();
+			},
+			success: function(data) {
+				hideLoading();
+				if ( data.status == 1 ) {
+					bootbox.alert(data.message, function() {
+						odvp.setting_up();
+						odvp.get_lists_doc();
+						bootbox.hideAll();
+					});
+				} else {
+					bootbox.alert(data.message);
+				}
+			}
+		});
+	}, // end - exec_edit_terima_doc_pusat
+	// ---------------------------------------------------------------
+	// END - EDIT DARI PUSAT
+	// ---------------------------------------------------------------
+
 	delete_terima_doc: function(elm) {
 		var id = $(elm).data('id');
 		bootbox.confirm('Apakah anda yakin ingin meng-hapus data Terima DOC ?', function(result) {
