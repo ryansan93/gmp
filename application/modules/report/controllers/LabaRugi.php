@@ -272,68 +272,88 @@ class LabaRugi extends Public_Controller {
                             rdim_submit.noreg = rhpp.noreg 
                     left join
                         (
-                            select 
-                                rs.noreg as noreg, 
+                            select
+                                rs.noreg as noreg,
                                 min(rs.tgl_panen) as tgl_panen_awal,
                                 max(rs.tgl_panen) as tgl_panen_akhir,
                                 (DateDiff (Day,min(rs.tgl_panen),max(rs.tgl_panen)) + 1) as lama_panen,
                                 (DateDiff (Day,min(rs.tgl_panen),max(rs.tgl_panen)) + 1) as umur_panen,
                                 sum(drs.ekor) as ekor_panen,
                                 sum(drs.tonase) as kg_panen,
-                                sum(drs.tonase * drs.harga) as total, 
+                                sum(drs.tonase * drs.harga) as total,
                                 (sum(drs.tonase * drs.harga) / sum(drs.tonase)) as rata_harga_panen
-                            from det_real_sj drs 
-                            right join
-                                (select max(id) as id, tgl_panen, noreg from real_sj group by tgl_panen, noreg) rs 
+                            from det_real_sj drs
+                            inner join
+                                (select max(id) as id, tgl_panen, noreg from real_sj group by tgl_panen, noreg) rs
                                 on
                                     drs.id_header = rs.id
-                            group by 
-                                rs.noreg  
-                        ) drs 
+                            where
+                                rs.noreg in (
+                                    select noreg from tutup_siklus
+                                    where tgl_tutup between '".$start_date."' and '".$end_date."'
+                                )
+                            group by
+                                rs.noreg
+                        ) drs
                         on
                             drs.noreg = rhpp.noreg
                     left join
                         (
-                            select kp.tujuan as tujuan, sum(dtp.jumlah) as total_pakan from kirim_pakan kp 
-                            left join
-                                terima_pakan tp 
+                            select kp.tujuan as tujuan, sum(dtp.jumlah) as total_pakan
+                            from kirim_pakan kp
+                            inner join
+                                terima_pakan tp
                                 on
-                                    kp.id = tp.id_kirim_pakan 
-                            left join
-                                det_terima_pakan dtp  
+                                    kp.id = tp.id_kirim_pakan
+                            inner join
+                                det_terima_pakan dtp
                                 on
-                                    tp.id = dtp.id_header 
+                                    tp.id = dtp.id_header
+                            where
+                                kp.tujuan in (
+                                    select noreg from tutup_siklus
+                                    where tgl_tutup between '".$start_date."' and '".$end_date."'
+                                )
                             group by
                                 kp.tujuan
                         ) kp_tujuan
                         on
-                            drs.noreg = kp_tujuan.tujuan 
+                            drs.noreg = kp_tujuan.tujuan
                     left join
                         (
-                            select 
-                                kp.asal as asal, 
-                                sum(dtp.jumlah) AS total_pakan 
-                            from kirim_pakan kp 
-                            left join
-                                terima_pakan tp 
+                            select kp.asal as asal, sum(dtp.jumlah) AS total_pakan
+                            from kirim_pakan kp
+                            inner join
+                                terima_pakan tp
                                 on
-                                    kp.id = tp.id_kirim_pakan 
-                            left join
-                                det_terima_pakan dtp  
+                                    kp.id = tp.id_kirim_pakan
+                            inner join
+                                det_terima_pakan dtp
                                 on
-                                    tp.id = dtp.id_header 
+                                    tp.id = dtp.id_header
+                            where
+                                kp.asal in (
+                                    select noreg from tutup_siklus
+                                    where tgl_tutup between '".$start_date."' and '".$end_date."'
+                                )
                             group by
                                 kp.asal
                         ) kp_asal
                         on
-                            drs.noreg = kp_asal.asal 
+                            drs.noreg = kp_asal.asal
                     left join
                         (
-                            select rp.id_asal, sum(drp.jumlah) as total_retur from retur_pakan rp 
-                            left join
-                                det_retur_pakan drp 
+                            select rp.id_asal, sum(drp.jumlah) as total_retur
+                            from retur_pakan rp
+                            inner join
+                                det_retur_pakan drp
                                 on
-                                    rp.id = drp.id_header 
+                                    rp.id = drp.id_header
+                            where
+                                rp.id_asal in (
+                                    select noreg from tutup_siklus
+                                    where tgl_tutup between '".$start_date."' and '".$end_date."'
+                                )
                             group by
                                 rp.id_asal
                         ) as rp
@@ -636,50 +656,52 @@ class LabaRugi extends Public_Controller {
                 ) drs 
                 on
                     drs.noreg = rhpp.noreg
-            right join
+            left join
                 (
-                    select 
+                    select
                         kp.tujuan,
                         kp.kode_barang,
                         brg.nama as nama_barang,
-                        kp.total_pakan_terima,
-                        pindah_pakan.total_pindah_pakan,
-                        retur_pakan.total_retur_pakan,
                         kp.total_pakan_terima - (ISNULL(pindah_pakan.total_pindah_pakan, 0) + ISNULL(retur_pakan.total_retur_pakan, 0)) as total_pakan
-                    from 
+                    from
                         (
-                            select 
-                                kp.tujuan as tujuan, 
-                                dtp.item as kode_barang, 
-                                sum(dtp.jumlah) as total_pakan_terima 
-                            from kirim_pakan kp 
-                            right join
-                                terima_pakan tp 
+                            select
+                                kp.tujuan as tujuan,
+                                dtp.item as kode_barang,
+                                sum(dtp.jumlah) as total_pakan_terima
+                            from kirim_pakan kp
+                            inner join
+                                terima_pakan tp
                                 on
-                                    kp.id = tp.id_kirim_pakan 
-                            right join
-                                det_terima_pakan dtp  
+                                    kp.id = tp.id_kirim_pakan
+                            inner join
+                                det_terima_pakan dtp
                                 on
-                                    tp.id = dtp.id_header 
+                                    tp.id = dtp.id_header
+                            where
+                                kp.tujuan in (
+                                    select ts.noreg from tutup_siklus ts
+                                    where ts.tgl_tutup between '".$start_date."' and '".$end_date."'
+                                )
                             group by
                                 kp.tujuan,
                                 dtp.item
                         ) kp
                     left join
                         (
-                            select 
-                                kp.asal as asal, 
-                                dtp.item as kode_barang, 
-                                sum(dtp.jumlah) AS total_pindah_pakan 
-                            from kirim_pakan kp 
-                            left join
-                                terima_pakan tp 
+                            select
+                                kp.asal as asal,
+                                dtp.item as kode_barang,
+                                sum(dtp.jumlah) AS total_pindah_pakan
+                            from kirim_pakan kp
+                            inner join
+                                terima_pakan tp
                                 on
-                                    kp.id = tp.id_kirim_pakan 
-                            left join
-                                det_terima_pakan dtp  
+                                    kp.id = tp.id_kirim_pakan
+                            inner join
+                                det_terima_pakan dtp
                                 on
-                                    tp.id = dtp.id_header 
+                                    tp.id = dtp.id_header
                             group by
                                 kp.asal,
                                 dtp.item
@@ -689,15 +711,15 @@ class LabaRugi extends Public_Controller {
                             pindah_pakan.kode_barang = kp.kode_barang
                     left join
                         (
-                            select 
-                                rp.id_asal, 
+                            select
+                                rp.id_asal,
                                 drp.item as kode_barang,
-                                sum(drp.jumlah) as total_retur_pakan 
-                            from retur_pakan rp 
-                            left join
-                                det_retur_pakan drp 
+                                sum(drp.jumlah) as total_retur_pakan
+                            from retur_pakan rp
+                            inner join
+                                det_retur_pakan drp
                                 on
-                                    rp.id = drp.id_header 
+                                    rp.id = drp.id_header
                             group by
                                 rp.id_asal,
                                 drp.item
@@ -705,10 +727,10 @@ class LabaRugi extends Public_Controller {
                         on
                             retur_pakan.id_asal = kp.tujuan and
                             retur_pakan.kode_barang = kp.kode_barang
-                    right join
+                    inner join
                         (
-                            select brg1.* from barang brg1
-                            right join
+                            select brg1.kode, brg1.nama from barang brg1
+                            inner join
                                 (select max(id) as id, kode from barang group by kode) brg2
                                 on
                                     brg1.id = brg2.id
@@ -717,7 +739,7 @@ class LabaRugi extends Public_Controller {
                             brg.kode = kp.kode_barang
                 ) kp_tujuan
                 on
-                    drs.noreg = kp_tujuan.tujuan 
+                    drs.noreg = kp_tujuan.tujuan
             left join
                 (
                     select
@@ -782,7 +804,16 @@ class LabaRugi extends Public_Controller {
         ";
 
         $m_conf = new \Model\Storage\Conf();
-        $d_rhpp = $m_conf->hydrateRaw($sql);
+        try {
+            $d_rhpp = $m_conf->hydrateRaw($sql);
+        } catch (\Exception $e) {
+            $prev = $e->getPrevious();
+            $msg  = $prev ? $prev->getMessage() : $e->getMessage();
+            if ( is_array($msg) ) $msg = json_encode($msg);
+            log_message('error', '[LabaRugi::getDataViewForm] SQL Error: '.$msg);
+            cetak_r('[SQL ERROR] '.$msg, 1);
+            return null;
+        }
 
         $data = null;
         if ( $d_rhpp->count() > 0 ) {
@@ -854,6 +885,8 @@ class LabaRugi extends Public_Controller {
                 ksort($data);
             }
         }
+
+        // cetak_r( $data, 1 );
 
         return $data;
     }
