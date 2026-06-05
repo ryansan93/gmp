@@ -660,31 +660,13 @@ class Connection implements ConnectionInterface {
 	 */
 	protected function causedByLostConnection(QueryException $e)
 	{
-		$prev = $e->getPrevious();
-		if ( !$prev ) return false;
+		$message = $e->getPrevious()->getMessage();
 
-		$message = $prev->getMessage();
-
-		// SQLSRV driver may return array; normalize to string
-		if ( is_array($message) ) {
-			$message = implode(' ', array_map(function($m) {
-				return is_array($m) ? implode(' ', $m) : (string)$m;
-			}, $message));
-		}
-
-		$message = (string) $message;
-
-		$needles = [
+		return str_contains($message, [
 			'server has gone away',
 			'no connection to the server',
 			'Lost connection',
-		];
-
-		foreach ($needles as $needle) {
-			if ( str_contains($message, $needle) ) return true;
-		}
-
-		return false;
+		]);
 	}
 
 	/**
