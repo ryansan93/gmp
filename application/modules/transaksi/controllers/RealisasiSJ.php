@@ -227,13 +227,13 @@ class RealisasiSJ extends Public_Controller
                     sum(drs.tonase * drs.harga) as bruto,
                     case
                         when tp.pph > 0 then
-                            round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
+                            round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
                         else 
                             0
                     end as pph,
                     case
                         when tp.pph > 0 then
-                            sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
+                            sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
                         else 
                             sum(drs.tonase * drs.harga)
                     end as total
@@ -361,13 +361,13 @@ class RealisasiSJ extends Public_Controller
                     sum(drs.tonase * drs.harga) as bruto,
                     case
                         when tp.pph > 0 then
-                            round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
+                            round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
                         else 
                             0
                     end as pph,
                     case
                         when tp.pph > 0 then
-                            sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
+                            sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
                         else 
                             sum(drs.tonase * drs.harga)
                     end as total
@@ -471,6 +471,6 @@ class RealisasiSJ extends Public_Controller
         //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
         // }
         
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 4927, 4927, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 8646, 8646, 2);
     }
 }

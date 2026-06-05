@@ -781,13 +781,13 @@ class RealisasiSjMobile extends Public_Controller {
                             sum(drs.tonase * drs.harga) as bruto,
                             case
                                 when tp.pph > 0 then
-                                    round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
+                                    round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
                                 else 
                                     0
                             end as pph,
                             case
                                 when tp.pph > 0 then
-                                    sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
+                                    sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
                                 else 
                                     sum(drs.tonase * drs.harga)
                             end as total
@@ -978,13 +978,13 @@ class RealisasiSjMobile extends Public_Controller {
                         sum(drs.tonase * drs.harga) as bruto,
                         case
                             when tp.pph > 0 then
-                                round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
+                                round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
                             else 
                                 0
                         end as pph,
                         case
                             when tp.pph > 0 then
-                                sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 2)
+                                sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
                             else 
                                 sum(drs.tonase * drs.harga)
                         end as total
@@ -1172,6 +1172,21 @@ class RealisasiSjMobile extends Public_Controller {
         //     }
         // }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 5048, 5048, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 5048, 5048, 2);
+
+        $array = array(
+            10248,
+            10252,
+            10258,
+            10318,
+            10320,
+            10366,
+            10368,
+            10370
+        );
+
+        foreach ($array as $k_val => $v_val) {
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $v_val, $v_val, 2);
+        }
     }
 }
