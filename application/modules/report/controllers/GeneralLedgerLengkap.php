@@ -290,6 +290,8 @@ class GeneralLedgerLengkap extends Public_Controller {
                         data.no_coa,
                         data.unit,
                         data.nama_coa
+
+                    union all
                 ";
             }
         }
@@ -307,8 +309,6 @@ class GeneralLedgerLengkap extends Public_Controller {
             from
             (
                 ".$sql_sa."
-
-                union all
 
                 select
                     sc.no_coa,
