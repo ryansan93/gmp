@@ -257,10 +257,78 @@ class KartuStokSiklus extends Public_Controller {
                         (dss.jumlah * dss.hrg_beli) as debet,
                         0 as jml_kredit,
                         0 as kredit
-                    from det_stok_siklus dss 
+                    from det_stok_siklus dss
+                    where
+                        dss.tgl_trans < '".$_start_date."'
                     
                     union all
+
+                    /* KELUAR */
+                    /* PAKAN */
+                    select
+                        dss.noreg,
+                        dsts.tgl_trans as tanggal,
+                        case
+                            when dsts.tbl_name like '%terima%' then
+                                'MUTASI'
+                            when dsts.tbl_name like '%retur%' then
+                                'RETUR'
+                            else
+                                -- dss.jenis_trans
+                                'PEMAKAIAN'
+                        end as jenis_trans,
+                        case
+                            when dsts.tbl_name = 'lhk' then
+                                'LHK UMUR '+cast(l.umur as varchar(5))
+                            else
+                                dsts.kode_trans
+                        end as kode_trans,
+                        dsts.kode_barang,
+                        dss.jenis_barang,
+                        0 as jumlah,
+                        0 as nilai,
+                        0 as jml_debet,
+                        0 as debet,
+                        dsts.jumlah as jml_kredit,
+                        (dsts.jumlah * dss.hrg_beli) as kredit
+                    from det_stok_trans_siklus dsts
+                    left join
+                        det_stok_siklus dss 
+                        on
+                            dsts.id_header = dss.id
+                    left join
+                        lhk l
+                        on
+                            cast(l.id as varchar(20)) = dsts.kode_trans
+                    where
+                        dss.jenis_barang = 'pakan'
+                        and dsts.tgl_trans < '".$_start_date."'
+                    /* END - PAKAN */
+
+                    union all
+
+                    /* OVK */
+                    select
+                        dss.noreg,
+                        dss.tgl_trans as tanggal,
+                        'PEMAKAIAN OVK' as jenis_trans,
+                        dss.kode_trans,
+                        dss.kode_barang,
+                        dss.jenis_barang,
+                        0 as jumlah,
+                        0 as nilai,
+                        0 as jml_debet,
+                        0 as debet,
+                        dss.jumlah as jml_kredit,
+                        (dss.jumlah * dss.hrg_beli) as kredit
+                    from det_stok_siklus dss
+                    where
+                        dss.jenis_barang = 'voadip'
+                        and dss.tgl_trans < '".$_start_date."'
+                    /* END - OVK */
+                    /* END - KELUAR */
                     
+                    /*
                     select
                         dss.noreg,
                         dsts.tgl_trans as tanggal,
@@ -296,10 +364,11 @@ class KartuStokSiklus extends Public_Controller {
                         lhk l
                         on
                             cast(l.id as varchar(20)) = dsts.kode_trans
+                    */
                 ) data
                 where
-                    data.noreg is not null and
-                    data.tanggal < '".$_start_date."'
+                    data.noreg is not null 
+                    -- and data.tanggal < '".$_start_date."'
                 group by
                     data.noreg,
                     data.kode_barang,
@@ -339,6 +408,7 @@ class KartuStokSiklus extends Public_Controller {
                 union all
 
                 /* KELUAR */
+                /* PAKAN */
                 select
                     dss.noreg,
                     dsts.tgl_trans as tanggal,
@@ -364,7 +434,7 @@ class KartuStokSiklus extends Public_Controller {
                     0 as debet,
                     dsts.jumlah as jml_kredit,
                     (dsts.jumlah * dss.hrg_beli) as kredit,
-                    2 as urut
+                    3 as urut
                 from det_stok_trans_siklus dsts
                 left join
                     det_stok_siklus dss 
@@ -375,7 +445,31 @@ class KartuStokSiklus extends Public_Controller {
                     on
                         cast(l.id as varchar(20)) = dsts.kode_trans
                 where
-                    dsts.tgl_trans between '".$_start_date."' and '".$_end_date."'
+                    dsts.tgl_trans between '".$_start_date."' and '".$_end_date."' and
+                    dss.jenis_barang = 'pakan'
+                /* END - PAKAN */
+
+                union all
+
+                /* OVK */
+                select
+                    dss.noreg,
+                    dss.tgl_trans as tanggal,
+                    'PEMAKAIAN OVK' as jenis_trans,
+                    dss.kode_trans,
+                    dss.kode_barang,
+                    dss.jenis_barang,
+                    dss.hrg_beli,
+                    0 as jml_debet,
+                    0 as debet,
+                    dss.jumlah as jml_kredit,
+                    (dss.jumlah * dss.hrg_beli) as kredit,
+                    2 as urut
+                from det_stok_siklus dss
+                where
+                    dss.tgl_trans between '".$_start_date."' and '".$_end_date."' and
+                    dss.jenis_barang = 'voadip'
+                /* END - OVK */
                 /* END - KELUAR */
             ) data
             left join
