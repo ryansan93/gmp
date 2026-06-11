@@ -560,6 +560,11 @@ class PenerimaanDocMobile extends Public_Controller {
                         $m_terima_doc_ket->save();
                     }
                 }
+
+                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".substr($params['tiba'], 0, 10)."', 2, ".$d_order_doc->noreg.", null";
+                Modules::run('base/ExecStoredProcedure/exec', $sql);
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
     
                 $deskripsi_log_terima_doc = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $m_terima_doc, $deskripsi_log_terima_doc);
@@ -676,6 +681,11 @@ class PenerimaanDocMobile extends Public_Controller {
                 }
     
                 $d_terima_doc = $m_terima_doc->where('id', $id)->first();
+
+                $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$id."', '".substr($tgl_stok, 0, 10)."', 2, ".$d_order_doc->noreg.", null";
+                Modules::run('base/ExecStoredProcedure/exec', $sql);
+
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id, 2);
     
                 $deskripsi_log_terima_doc = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/save', $d_terima_doc, $deskripsi_log_terima_doc);
@@ -715,6 +725,11 @@ class PenerimaanDocMobile extends Public_Controller {
             $m_terima_doc->where('id', $d_terima_doc->id)->delete();
             $m_terima_doc_ket = new \Model\Storage\TerimaDocKet_model();
             $m_terima_doc_ket->where('id_header', $d_terima_doc->id)->delete();
+
+            $sql = "EXEC hitung_stok_siklus 'doc', 'terima_doc', '".$d_terima_doc->id."', '".substr($d_terima_doc->datang, 0, 10)."', 3, ".$d_order_doc->noreg.", null";
+            Modules::run('base/ExecStoredProcedure/exec', $sql);
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $d_terima_doc->id, $d_terima_doc->id, 3);
 
             $deskripsi_log = 'Hapus data penerimaan doc noreg '.$d_order_doc->noreg.' oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/delete', $d_terima_doc, $deskripsi_log);

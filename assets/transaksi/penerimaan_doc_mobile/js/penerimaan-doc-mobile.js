@@ -363,7 +363,17 @@ var pdm = {
 			            beforeSend : function(){ showLoading() },
 			            success : function(data){
 							if ( data.status == 1 ) {
-								pdm.execHitStokSiklus( data.content );
+								bootbox.alert(data.content.message, function() {
+									pdm.load_form(data.content.id, null, 'transaksi');
+
+									var div_riwayat = $('div#riwayat');
+									if ( !empty($(div_riwayat).find('select#select_mitra').val()) && !empty($(div_riwayat).find('select#select_noreg').val()) ) {
+										$('button.tampilkan_riwayat').click();
+									}
+								});
+
+								// pdm.execHitStokSiklus( data.content );
+
 								// bootbox.alert( data.message, function() {
 								// 	pdm.load_form(data.content.id, null, 'transaksi');
 			                    //     // location.reload();
@@ -461,7 +471,17 @@ var pdm = {
 			            beforeSend : function(){ showLoading() },
 			            success : function(data){
 							if ( data.status == 1 ) {
-								pdm.execHitStokSiklus( data.content );
+								bootbox.alert(data.content.message, function() {
+									pdm.load_form(data.content.id, null, 'transaksi');
+
+									var div_riwayat = $('div#riwayat');
+									if ( !empty($(div_riwayat).find('select#select_mitra').val()) && !empty($(div_riwayat).find('select#select_noreg').val()) ) {
+										$('button.tampilkan_riwayat').click();
+									}
+								});
+
+								// pdm.execHitStokSiklus( data.content );
+
 								// bootbox.alert( data.message, function() {
 								// 	pdm.load_form($(elm).attr('data-id'), null, 'transaksi');
 			                    //     // location.reload();
@@ -502,7 +522,17 @@ var pdm = {
 		            beforeSend: function(){ showLoading() },
 		            success: function(data){
 						if ( data.status == 1 ) {
-							pdm.execHitStokSiklus( data.content );
+							bootbox.alert(data.content.message, function() {
+								pdm.load_form(null, null, 'transaksi');
+
+								var div_riwayat = $('div#riwayat');
+								if ( !empty($(div_riwayat).find('select#select_mitra').val()) && !empty($(div_riwayat).find('select#select_noreg').val()) ) {
+									$('button.tampilkan_riwayat').click();
+								}
+							});
+							
+							// pdm.execHitStokSiklus( data.content );
+
 							// bootbox.alert( data.message, function() {
 							// 	var div_riwayat = $('div#riwayat');
 		                	// 	if ( !empty($(div_riwayat).find('select#select_mitra').val()) && !empty($(div_riwayat).find('select#select_noreg').val()) ) {
