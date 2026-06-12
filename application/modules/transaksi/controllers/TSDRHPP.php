@@ -414,7 +414,9 @@ class TSDRHPP extends Public_Controller {
         $m_ts = new \Model\Storage\TutupSiklus_model();
         $d_ts = $m_ts->where('noreg', $_noreg)->with(['potongan_pajak'])->first();
 
-        $id_tutup_siklus = null; $mitra = null; $noreg = null; $populasi = null; $kandang = null; $tgl_docin = null; $tutup_siklus = null; $biaya_materai = null; $potongan_pajak = null; $tgl_tutup = null; $rata_umur_panen = null; $biaya_opr = null;
+        $id_tutup_siklus = !empty($d_ts) ? $d_ts->id : null; $mitra = null; $noreg = null; $populasi = null; $kandang = null; $tgl_docin = null; $tutup_siklus = null; $biaya_materai = null; $potongan_pajak = null; $tgl_tutup = null; $rata_umur_panen = null; $biaya_opr = null;
+
+        // cetak_r( $id_tutup_siklus, 1 );
 
         $data_potongan_pajak = $this->get_data_potongan_pajak();
 
@@ -456,7 +458,7 @@ class TSDRHPP extends Public_Controller {
 
             $berita_acara = (isset($d_rhpp_plasma['berita_acara']) && !empty($d_rhpp_plasma['berita_acara'])) ? $d_rhpp_plasma['berita_acara'] : null;
 
-            $id_tutup_siklus = $d_rhpp_inti['id_ts'];
+            // $id_tutup_siklus = $d_rhpp_inti['id_ts'];
             $no_mitra = $d_rs['mitra']['d_mitra']['nomor'];
             $mitra = $d_rhpp_inti['mitra'];
             $noreg = $d_rhpp_inti['noreg'];
@@ -781,7 +783,7 @@ class TSDRHPP extends Public_Controller {
 
             $tgl_docin = isset($data_doc_inti['doc']['tgl_docin']) ? substr($data_doc_inti['doc']['tgl_docin'], 0, 10) : null;
 
-            $id_tutup_siklus = null;
+            // $id_tutup_siklus = null;
             $tutup_siklus = 0;
             $biaya_materai = 0;
             $potongan_pajak = 0;
@@ -793,8 +795,10 @@ class TSDRHPP extends Public_Controller {
             $m_ts = new \Model\Storage\TutupSiklus_model();
             $d_ts = $m_ts->where('noreg', $_noreg)->with(['potongan_pajak'])->first();
 
+            // cetak_r($_noreg, 1);
+
             if ( $d_ts ) {
-                $id_tutup_siklus = $d_ts->id;
+                // $id_tutup_siklus = $d_ts->id;
 
                 $tutup_siklus = 1;
                 $biaya_materai = $d_ts->biaya_materai;
@@ -891,6 +895,8 @@ class TSDRHPP extends Public_Controller {
             'non_group' => $non_group,
             'berita_acara' => $berita_acara
         );
+
+        // cetak_r( $data, 1 );
 
         $akses = hakAkses($this->url);
 
@@ -4019,6 +4025,7 @@ class TSDRHPP extends Public_Controller {
                                 (
                                     select noreg, max(tgl_panen) as tanggal from real_sj where noreg = '".$params['noreg']."' group by noreg
 
+                                    /*
                                     union all
 
                                     select
@@ -4034,6 +4041,7 @@ class TSDRHPP extends Public_Controller {
                                         kp.asal = '".$params['noreg']."'
                                     group by
                                         kp.asal
+                                    */
 
                                     union all
 
@@ -4757,7 +4765,36 @@ class TSDRHPP extends Public_Controller {
             $d_ts = $m_ts->where('id', $params['id'])->first();
 
             $m_rhpp = new \Model\Storage\Rhpp_model();
-            $d_rhpp_inti = $m_rhpp->where('id_ts', $params['id'])->where('jenis', 'rhpp_inti')->first()->toArray();
+            $_d_rhpp_inti = $m_rhpp->where('id_ts', $params['id'])->where('jenis', 'rhpp_inti')->first();
+
+            $d_rhpp_inti = null;
+
+            $d_rg = null;
+            if ( $_d_rhpp_inti ) {
+                $d_rhpp_inti = $_d_rhpp_inti->toArray();
+
+                $m_rg = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        rgn.noreg,
+                        rgh.tgl_submit
+                    from rhpp_group_noreg rgn
+                    left join
+                        rhpp_group rg
+                        on
+                            rgn.id_header = rg.id
+                    left join
+                        rhpp_group_header rgh
+                        on
+                            rg.id_header = rgh.id
+                    where
+                        rgn.noreg = '".$d_rhpp_inti['noreg']."'
+                    group by
+                        rgn.noreg,
+                        rgh.tgl_submit
+                ";
+                $d_rg = $m_rg->hydrateRaw( $sql );
+            }
 
             $d_rhpp_plasma = null;
             $_d_rhpp_plasma = $m_rhpp->where('id_ts', $params['id'])->where('jenis', 'rhpp_plasma')->first();
@@ -4768,28 +4805,7 @@ class TSDRHPP extends Public_Controller {
             $ket_delete = null;
             $delete = 1;
 
-            $m_rg = new \Model\Storage\Conf();
-            $sql = "
-                select
-                    rgn.noreg,
-                    rgh.tgl_submit
-                from rhpp_group_noreg rgn
-                left join
-                    rhpp_group rg
-                    on
-                        rgn.id_header = rg.id
-                left join
-                    rhpp_group_header rgh
-                    on
-                        rg.id_header = rgh.id
-                where
-                    rgn.noreg = '".$d_rhpp_inti['noreg']."'
-                group by
-                    rgn.noreg,
-                    rgh.tgl_submit
-            ";
-            $d_rg = $m_rg->hydrateRaw( $sql );
-            if ( $d_rg->count() > 0 ) {
+            if ( !empty($d_rg) && $d_rg->count() > 0 ) {
                 $d_rg = $d_rg->toArray()[0];
 
                 $ket_delete = 'Tidak bisa di hapus, karena data rhpp sudah di lakukan penggabungan rhpp pada tanggal <b>'.strtoupper(tglIndonesia($d_rg['tgl_submit'], '-', ' ')).'</b>.';
