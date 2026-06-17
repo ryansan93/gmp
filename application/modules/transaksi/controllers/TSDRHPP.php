@@ -4061,7 +4061,7 @@ class TSDRHPP extends Public_Controller {
                             on
                                 rs.noreg = pp.noreg
                         where
-                            pp.tanggal >= rs.tanggal
+                            pp.tanggal > rs.tanggal
                         group by
                             pp.noreg
                     ) pp_akhir_siklus
