@@ -116,10 +116,10 @@
 				<div class="form-group align-items-center hide">
 					<div class="col-lg-3">Harga</div>
 					<div class="col-lg-2">
-						<input type="text" class="form-control text-right harga" data-tipe="integer" maxlength="7" onblur="odvp.hit_total_order_doc(this)" value="<?php echo angkaRibuan($data_terima_doc['harga']); ?>" data-required="1" placeholder="HARGA">
+						<input type="text" class="form-control text-right harga" data-tipe="integer" maxlength="7" onblur="odvp.hit_total_order_doc(this)" value="<?php echo angkaRibuan($data_terima_doc['order_doc']['harga']); ?>" data-required="1" placeholder="HARGA">
 					</div>
 					<div class="col-lg-3">
-						<input type="text" class="form-control text-right total" data-tipe="integer" maxlength="5" readonly value="<?php echo angkaRibuan($data_terima_doc['total']); ?>" data-required="1" placeholder="TOTAL">
+						<input type="text" class="form-control text-right total" data-tipe="integer" maxlength="5" readonly value="<?php echo angkaRibuan($data_terima_doc['order_doc']['total']); ?>" data-required="1" placeholder="TOTAL">
 					</div>
 				</div>
 				<div class="form-group d-flex align-items-center">
