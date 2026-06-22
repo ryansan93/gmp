@@ -94,9 +94,9 @@ class LaporanHutangRingkas extends Public_Controller {
         }
 
         // (cap 2026-06-13 dihapus supaya cocok dgn data terkini / akhir bulan)
-        if ( $start_date == '2026-06-01' ) {
-            $end_date = '2026-06-14';
-        }
+        // if ( $start_date == '2026-06-01' ) {
+        //     $end_date = '2026-06-14';
+        // }
 
         $where = null;
         if ( $jenis != 'all' ) {
@@ -1486,7 +1486,7 @@ class LaporanHutangRingkas extends Public_Controller {
                 supl.nama asc,
                 data.jenis asc
         ";
-        cetak_r( $sql, 1 );
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
