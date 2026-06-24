@@ -77,7 +77,7 @@ class TerimaOvkJurnal extends Public_Controller {
                 dtp.kode_trans,
                 dtp.tbl_name,
                 dtp.jml_terima,
-                ds.jumlah as jml_stok,
+                isnull(sum(ds.jumlah), 0) as jml_stok,
                 isnull(sum(ds.jumlah), 0) - isnull(dtp.jml_terima, 0) as selisih,
                 ds.total as total_stok,
                 sum(dj.nominal) as nominal_jurnal,
@@ -215,10 +215,7 @@ class TerimaOvkJurnal extends Public_Controller {
                 dtp.tgl_trans asc,
                 dtp.kode_trans asc
         ";
-
-        // echo "<pre>";
-        // print_r($sql);
-        // die;
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

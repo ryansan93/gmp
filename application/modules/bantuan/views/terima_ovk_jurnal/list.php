@@ -10,9 +10,9 @@
         <tr>
             <td class="text-center"><?php echo tglIndonesia( $val['tanggal'], '-', ' ' ); ?></td>
             <td class="text-left"><?php echo $val['kode_trans']; ?></td>
-            <td class="text-right col-xs-1"><?php echo angkaRibuan($val['jml_terima'] / 50); ?></td>
-            <td class="text-right col-xs-1"><?php echo angkaRibuan($val['jml_stok'] / 50); ?></td>
-            <td class="text-right col-xs-1"><?php echo angkaRibuan($val['selisih'] / 50); ?></td>
+            <td class="text-right col-xs-1"><?php echo angkaRibuan($val['jml_terima']); ?></td>
+            <td class="text-right col-xs-1"><?php echo angkaRibuan($val['jml_stok']); ?></td>
+            <td class="text-right col-xs-1"><?php echo angkaRibuan($val['selisih']); ?></td>
             <td class="text-right col-xs-1"><?php echo angkaDecimal($val['total_stok']); ?></td>
             <td class="text-right col-xs-1"><?php echo angkaDecimal($val['nominal_jurnal']); ?></td>
             <td class="text-right col-xs-1"><?php echo angkaDecimal($val['selisih_jurnal']); ?></td>
