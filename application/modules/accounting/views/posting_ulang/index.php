@@ -58,7 +58,7 @@
 					</div>
                 </div>
 				<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
-					<button type="button" class="col-xs-12 btn btn-primary pull-right" onclick="hu.hitungUlang()">HITUNG ULANG</button>
+					<button type="button" class="col-xs-12 btn btn-primary pull-right" onclick="pu.postingUlang()">POSTING ULANG</button>
 				</div>
 			</div>
 		</div>
