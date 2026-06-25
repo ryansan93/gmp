@@ -94,9 +94,9 @@ class LaporanHutangRingkas extends Public_Controller {
         }
 
         // (cap 2026-06-13 dihapus supaya cocok dgn data terkini / akhir bulan)
-        // if ( $start_date == '2026-06-01' ) {
-        //     $end_date = '2026-06-14';
-        // }
+        if ( $start_date == '2026-06-01' ) {
+            $end_date = '2026-06-14';
+        }
 
         $where = null;
         if ( $jenis != 'all' ) {
@@ -136,10 +136,11 @@ class LaporanHutangRingkas extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select 
+            select
                 data.supplier,
                 supl.nama as nama_supplier,
                 data.jenis,
+                data.unit,
                 cast(isnull(sum(data.saldo_awal), 0) as decimal(15, 2)) as saldo_awal,
                 cast(isnull(sum(data.debet), 0) as decimal(15, 2)) as debet,
                 cast(isnull(sum(data.kredit), 0) as decimal(15, 2)) as kredit,
@@ -211,64 +212,38 @@ class LaporanHutangRingkas extends Public_Controller {
 
                             union all
 
-                            /* OA PAKAN */
+                            /* OA PAKAN - DEBET dari freight (terima_pakan) + pindah/retur (oa_pindah_pakan).
+                               unit = segmen ke-2 antar-slash dari no_sj/no_order. */
                             select
                                 oa.nomor,
                                 oa.supplier,
                                 sum(oa.total) as debet,
                                 0 as kredit,
                                 'OA PAKAN' as jenis,
-                                null as unit
+                                oa.unit
                             from (
-                                select kpop.nomor, kpop.ekspedisi_id as supplier, (kpop.total+kpop.potongan_pph_23) as total from konfirmasi_pembayaran_oa_pakan kpop
-                                where
-                                    kpop.tgl_bayar < '".$start_date."'
-
+                                select tp.no_bbm as nomor, kp.ekspedisi_id as supplier, substring(kp.no_sj, charindex('/',kp.no_sj+'//')+1, charindex('/',kp.no_sj+'//',charindex('/',kp.no_sj+'//')+1)-charindex('/',kp.no_sj+'//')-1) as unit, sum(dtp.jumlah)*kp.ongkos_angkut as total from det_terima_pakan dtp
+                                left join terima_pakan tp on dtp.id_header = tp.id
+                                left join kirim_pakan kp on tp.id_kirim_pakan = kp.id
+                                where tp.tgl_terima < '".$start_date."' and kp.jenis_kirim = 'opkg'
+                                group by tp.no_bbm, kp.ekspedisi_id, kp.ongkos_angkut, kp.no_sj
                                 union all
-
-                                select tp.no_bbm as nomor, kp.ekspedisi_id as supplier, sum(dtp.jumlah)*kp.ongkos_angkut as total from det_terima_pakan dtp
-                                left join
-                                    terima_pakan tp
-                                    on
-                                        dtp.id_header = tp.id
-                                left join
-                                    kirim_pakan kp
-                                    on
-                                        tp.id_kirim_pakan = kp.id
-                                where
-                                    tp.tgl_terima < '".$start_date."' and
-                                    kp.jenis_kirim = 'opkg' and
-                                    not exists (select * from konfirmasi_pembayaran_oa_pakan_det kpopd where no_sj = kp.no_sj)
-                                group by
-                                    tp.no_bbm, kp.ekspedisi_id, kp.ongkos_angkut
-
-                                union all
-
-                                select opp.no_sj as nomor, krm.ekspedisi_id as supplier, opp.ongkos_angkut as total from oa_pindah_pakan opp
-                                left join
-                                    (
-                                        select kp.no_sj, tp.no_bbm as kode_trans, kp.ekspedisi_id, tp.tgl_terima as tanggal from kirim_pakan kp
-                                        left join
-                                            terima_pakan tp 
-                                            on
-                                                kp.id = tp.id_kirim_pakan
-                                        group by
-                                            kp.no_sj, tp.no_bbm, kp.ekspedisi_id, tp.tgl_terima
-                                        
-                                        union all
-                                        
-                                        select no_retur as no_sj, no_retur as kode_trans, ekspedisi_id, tgl_retur as tanggal from retur_pakan rp 
-                                    ) krm
-                                    on
-                                        opp.no_sj = krm.no_sj
-                                where
-                                    krm.tanggal < '".$start_date."' and
-                                    not exists (select * from konfirmasi_pembayaran_oa_pakan_det kpopd where no_sj = opp.no_sj)
+                                select opp.no_sj as nomor, coalesce(krm.ekspedisi_id, (select min(e.nomor) from ekspedisi e where e.nama = opp.ekspedisi)) as supplier, coalesce(nullif(substring(opp.no_sj, charindex('/',opp.no_sj+'//')+1, charindex('/',opp.no_sj+'//',charindex('/',opp.no_sj+'//')+1)-charindex('/',opp.no_sj+'//')-1),''), substring(krm.no_order, charindex('/',krm.no_order+'//')+1, charindex('/',krm.no_order+'//',charindex('/',krm.no_order+'//')+1)-charindex('/',krm.no_order+'//')-1)) as unit, opp.ongkos_angkut as total from oa_pindah_pakan opp
+                                left join ( select kp.no_sj, tp.no_bbm as kode_trans, kp.ekspedisi_id, tp.tgl_terima as tanggal, kp.no_order from kirim_pakan kp left join terima_pakan tp on kp.id = tp.id_kirim_pakan group by kp.no_sj, tp.no_bbm, kp.ekspedisi_id, tp.tgl_terima, kp.no_order union all select no_retur as no_sj, no_retur as kode_trans, ekspedisi_id, tgl_retur as tanggal, no_order from retur_pakan rp ) krm on opp.no_sj = krm.no_sj
+                                where coalesce(krm.tanggal, opp.tgl_terima) < '".$start_date."'
                             ) oa
-                            group by
-                                oa.nomor,
-                                oa.supplier
+                            group by oa.nomor, oa.supplier, oa.unit
                             /* END - OA PAKAN */
+
+                            /* ===================================================================
+                               DEBET OA versi KONFIRMASI - DINONAKTIFKAN (revert ke freight 2026-06-23,
+                               karena saldo awal tak cocok GL: konfir < freight = freight belum dikonfirmasi).
+                            -----------------------------------------------------------------------
+                            select kpop.nomor, kpop.ekspedisi_id as supplier, (kpop.total + kpop.potongan_pph_23) as debet, 0 as kredit, 'OA PAKAN' as jenis, oa_unit.unit
+                            from konfirmasi_pembayaran_oa_pakan kpop
+                            left join ( select kpopd.id_header, min(substring(kp.no_order, charindex('/',kp.no_order+'//')+1, charindex('/',kp.no_order+'//',charindex('/',kp.no_order+'//')+1)-charindex('/',kp.no_order+'//')-1)) as unit from konfirmasi_pembayaran_oa_pakan_det kpopd left join kirim_pakan kp on kp.no_sj = kpopd.no_sj group by kpopd.id_header ) oa_unit on oa_unit.id_header = kpop.id
+                            where kpop.tgl_bayar < '".$start_date."'
+                            =================================================================== */
 
                             union all
 
@@ -293,6 +268,10 @@ class LaporanHutangRingkas extends Public_Controller {
 
                             union all
 
+                            /* === DEBET RHPP: dari konfirmasi_pembayaran_peternak -> operasional rhpp + rhpp_group ===
+                               Tanggal disamakan dgn det_jurnal (rhpp: tutup_siklus.tgl_tutup, rhpp_group: rhpp_group_header.tgl_submit),
+                               namun data tetap dari tabel OPERASIONAL (bukan det_jurnal) utk perbandingan operasional vs jurnal.
+                               --- BLOK LAMA (dikomen):
                             select
                                 kpp.nomor,
                                 kpp.mitra as supplier,
@@ -303,6 +282,149 @@ class LaporanHutangRingkas extends Public_Controller {
                             from konfirmasi_pembayaran_peternak kpp
                             where
                                 kpp.tgl_bayar < '".$start_date."'
+                               --- akhir blok lama === */
+
+                            /* RHPP single (jenis rhpp_plasma) */
+                            select
+                                r.invoice as nomor,
+                                r.mitra as supplier,
+                                r.pdpt_peternak_sudah_pajak as debet,
+                                0 as kredit,
+                                'RHPP' as jenis,
+                                SUBSTRING(REPLACE(REPLACE(r.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                            from rhpp r
+                            inner join tutup_siklus ts on r.id_ts = ts.id
+                            where
+                                r.jenis = 'rhpp_plasma'
+                                and r.invoice is not null and r.invoice <> ''
+                                /* skip noreg yg sudah masuk RHPP group (hindari double-count) */
+                                and not exists (select 1 from rhpp_group_noreg gn where gn.noreg = r.noreg)
+                                /* hanya pdpt>0 = hutang; pdpt<=0 = piutang/defisit peternak (GL posting 0) */
+                                and r.pdpt_peternak_sudah_pajak > 0
+                                and ts.tgl_tutup < '".$start_date."'
+
+                            union all
+
+                            /* RHPP group (jenis rhpp_plasma) */
+                            select
+                                rg.invoice as nomor,
+                                rgh.mitra as supplier,
+                                rg.pdpt_peternak_sudah_pajak as debet,
+                                0 as kredit,
+                                'RHPP' as jenis,
+                                SUBSTRING(REPLACE(REPLACE(rg.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                            from rhpp_group rg
+                            inner join rhpp_group_header rgh on rg.id_header = rgh.id
+                            where
+                                rg.jenis = 'rhpp_plasma'
+                                /* hanya pdpt>0 = hutang; pdpt<=0 = piutang/defisit peternak (GL posting 0) */
+                                and rg.pdpt_peternak_sudah_pajak > 0
+                                and rgh.tgl_submit < '".$start_date."'
+
+                            union all
+
+                            /* KOMPENSASI piutang kemitraan (single) - KREDIT (jurnal GL: D 21213 / K 11520) */
+                            select
+                                r.invoice as nomor,
+                                r.mitra as supplier,
+                                0 as debet,
+                                p.nominal as kredit,
+                                'RHPP' as jenis,
+                                SUBSTRING(REPLACE(REPLACE(r.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                            from rhpp_piutang p
+                            inner join rhpp r on p.id_header = r.id
+                            inner join tutup_siklus ts on r.id_ts = ts.id
+                            where
+                                r.jenis = 'rhpp_plasma'
+                                and r.invoice is not null and r.invoice <> ''
+                                and not exists (select 1 from rhpp_group_noreg gn where gn.noreg = r.noreg)
+                                and ts.tgl_tutup < '".$start_date."'
+
+                            union all
+
+                            /* KOMPENSASI piutang kemitraan (group) - KREDIT */
+                            select
+                                rg.invoice as nomor,
+                                rgh.mitra as supplier,
+                                0 as debet,
+                                p.nominal as kredit,
+                                'RHPP' as jenis,
+                                SUBSTRING(REPLACE(REPLACE(rg.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                            from rhpp_group_piutang p
+                            inner join rhpp_group rg on p.id_header = rg.id
+                            inner join rhpp_group_header rgh on rg.id_header = rgh.id
+                            where
+                                rg.jenis = 'rhpp_plasma'
+                                and rgh.tgl_submit < '".$start_date."'
+
+                            union all
+
+                            /* MEMORIAL (mm) yg MENAIKKAN 21213 -> DEBET (mm dianggap operasional)
+                               unit: dari no_invoice (konfir peternak) bila terisi, else m.unit */
+                            select
+                                mi.no_mm as nomor,
+                                m.keterangan as supplier,
+                                mi.nilai as debet,
+                                0 as kredit,
+                                'RHPP' as jenis,
+                                isnull(case when kpp.invoice is not null then SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) end, m.unit) as unit
+                            from mmitem mi
+                            inner join mm m on mi.no_mm = m.no_mm
+                            left join konfirmasi_pembayaran_peternak kpp on kpp.nomor = mi.no_invoice
+                            where
+                                mi.coa_asal like '21213%'
+                                and mi.tgl_mm < '".$start_date."'
+
+                            union all
+
+                            /* MEMORIAL (mm) yg MENURUNKAN 21213 -> KREDIT */
+                            select
+                                mi.no_mm as nomor,
+                                m.keterangan as supplier,
+                                0 as debet,
+                                mi.nilai as kredit,
+                                'RHPP' as jenis,
+                                isnull(case when kpp.invoice is not null then SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) end, m.unit) as unit
+                            from mmitem mi
+                            inner join mm m on mi.no_mm = m.no_mm
+                            left join konfirmasi_pembayaran_peternak kpp on kpp.nomor = mi.no_invoice
+                            where
+                                mi.coa_tujuan like '21213%'
+                                and mi.tgl_mm < '".$start_date."'
+
+                            union all
+
+                            /* KAS MASUK (km) yg MENAIKKAN 21213 -> DEBET (pengembalian/restore hutang) */
+                            select
+                                ki.no_km as nomor,
+                                k.keterangan as supplier,
+                                ki.nilai as debet,
+                                0 as kredit,
+                                'RHPP' as jenis,
+                                isnull(case when kpp.invoice is not null then SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) end, k.unit) as unit
+                            from kmitem ki
+                            inner join km k on ki.no_km = k.no_km
+                            left join konfirmasi_pembayaran_peternak kpp on kpp.nomor = ki.no_invoice
+                            where
+                                ki.coa_asal like '21213%'
+                                and ki.tgl_km < '".$start_date."'
+
+                            union all
+
+                            /* KAS MASUK (km) yg MENURUNKAN 21213 -> KREDIT */
+                            select
+                                ki.no_km as nomor,
+                                k.keterangan as supplier,
+                                0 as debet,
+                                ki.nilai as kredit,
+                                'RHPP' as jenis,
+                                isnull(case when kpp.invoice is not null then SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) end, k.unit) as unit
+                            from kmitem ki
+                            inner join km k on ki.no_km = k.no_km
+                            left join konfirmasi_pembayaran_peternak kpp on kpp.nomor = ki.no_invoice
+                            where
+                                ki.coa_tujuan like '21213%'
+                                and ki.tgl_km < '".$start_date."'
 
                             union all
 
@@ -688,33 +810,58 @@ class LaporanHutangRingkas extends Public_Controller {
                                 rpd.no_bayar as nomor,
                                 rp.peternak as supplier,
                                 0 as debet,
-                                rpd.transfer as kredit,
+                                /* lebih bayar: kredit 21213 dibatasi sebesar bill yg dikonfirmasi = min(transfer, tagihan, konfir.total); sisa transfer = piutang 11520, bukan 21213.
+                                   EPEK BYM/05/26/00219 di-cap via tagihan; THORIQ BYM/03/26/00263 di-cap via konfir.total.
+                                   Selain itu (round-down sub-rupiah), tambah rpd.pembulatan (=tagihan-transfer bila |selisih|<1) supaya kredit naik ke tagihan = clear 21213, mengikuti pembulatan rupiah penuh (96010). */
+                                case when rpd.transfer > isnull(rpd.tagihan, rpd.transfer) and isnull(rpd.tagihan, rpd.transfer) <= isnull(kpp.total, rpd.transfer) then rpd.tagihan
+                                     when rpd.transfer > isnull(kpp.total, rpd.transfer) then kpp.total
+                                     else rpd.transfer + isnull(rpd.pembulatan, 0) end as kredit,
                                 'RHPP' as jenis,
-                                SUBSTRING(REPLACE(REPLACE(rpd.no_bayar, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                                SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
                             from realisasi_pembayaran_det rpd
                             left join
                                 realisasi_pembayaran rp
                                 on
                                     rpd.id_header = rp.id
+                            left join
+                                konfirmasi_pembayaran_peternak kpp
+                                on
+                                    kpp.nomor = rpd.no_bayar
                             where
                                 rpd.transaksi = 'PLASMA' and
                                 (rp.tgl_realisasi is not null and rp.tgl_realisasi < '".$start_date."')
 
                             union all
 
-                            /* KREDIT OA PAKAN - pakai rp.ekspedisi sebagai supplier */
+                            /* KREDIT OA PAKAN - pakai rp.ekspedisi sebagai supplier.
+                               kredit = transfer + PPh23 konfir (= bruto yg dilunasi) agar cocok GL turun 21212 (11130.002 + 24623). */
                             select
                                 rpd.no_bayar as nomor,
                                 rp.ekspedisi as supplier,
                                 0 as debet,
-                                rpd.transfer as kredit,
+                                (rpd.transfer + isnull(kpop.potongan_pph_23, 0)) as kredit,
                                 'OA PAKAN' as jenis,
-                                null as unit
+                                oa_unit.unit
                             from realisasi_pembayaran_det rpd
                             left join
                                 realisasi_pembayaran rp
                                 on
                                     rpd.id_header = rp.id
+                            left join
+                                konfirmasi_pembayaran_oa_pakan kpop
+                                on
+                                    kpop.nomor = rpd.no_bayar
+                            left join
+                                /* unit per BYO (=1 unit): konfir det no_sj -> kirim_pakan.no_order, segmen ke-2 antar-slash */
+                                (
+                                    select kpopd.id_header,
+                                        min(substring(kp.no_order, charindex('/',kp.no_order+'//')+1, charindex('/',kp.no_order+'//',charindex('/',kp.no_order+'//')+1)-charindex('/',kp.no_order+'//')-1)) as unit
+                                    from konfirmasi_pembayaran_oa_pakan_det kpopd
+                                    left join kirim_pakan kp on kp.no_sj = kpopd.no_sj
+                                    group by kpopd.id_header
+                                ) oa_unit
+                                on
+                                    oa_unit.id_header = kpop.id
                             where
                                 rpd.transaksi = 'OA PAKAN' and
                                 (rp.tgl_realisasi is not null and rp.tgl_realisasi < '".$start_date."')
@@ -859,64 +1006,38 @@ class LaporanHutangRingkas extends Public_Controller {
 
                         union all
 
-                        /* OA PAKAN */
+                        /* OA PAKAN - DEBET dari freight (terima_pakan) + pindah/retur (oa_pindah_pakan).
+                           unit = segmen ke-2 antar-slash dari no_sj/no_order. */
                         select
                             oa.nomor,
                             oa.supplier,
                             sum(oa.total) as debet,
                             0 as kredit,
                             'OA PAKAN' as jenis,
-                            null as unit
+                            oa.unit
                         from (
-                            select kpop.nomor, kpop.ekspedisi_id as supplier, (kpop.total+kpop.potongan_pph_23) as total from konfirmasi_pembayaran_oa_pakan kpop
-                            where
-                                kpop.tgl_bayar between '".$start_date."' and '".$end_date."'
-
+                            select tp.no_bbm as nomor, kp.ekspedisi_id as supplier, substring(kp.no_sj, charindex('/',kp.no_sj+'//')+1, charindex('/',kp.no_sj+'//',charindex('/',kp.no_sj+'//')+1)-charindex('/',kp.no_sj+'//')-1) as unit, sum(dtp.jumlah)*kp.ongkos_angkut as total from det_terima_pakan dtp
+                            left join terima_pakan tp on dtp.id_header = tp.id
+                            left join kirim_pakan kp on tp.id_kirim_pakan = kp.id
+                            where tp.tgl_terima between '".$start_date."' and '".$end_date."' and kp.jenis_kirim = 'opkg'
+                            group by tp.no_bbm, kp.ekspedisi_id, kp.ongkos_angkut, kp.no_sj
                             union all
-
-                            select tp.no_bbm as nomor, kp.ekspedisi_id as supplier, sum(dtp.jumlah)*kp.ongkos_angkut as total from det_terima_pakan dtp
-                            left join
-                                terima_pakan tp
-                                on
-                                    dtp.id_header = tp.id
-                            left join
-                                kirim_pakan kp
-                                on
-                                    tp.id_kirim_pakan = kp.id
-                            where
-                                tp.tgl_terima between '".$start_date."' and '".$end_date."' and
-                                kp.jenis_kirim = 'opkg' and
-                                not exists (select * from konfirmasi_pembayaran_oa_pakan_det kpopd where no_sj = kp.no_sj)
-                            group by
-                                tp.no_bbm, kp.ekspedisi_id, kp.ongkos_angkut
-
-                            union all
-
-                            select opp.no_sj as nomor, krm.ekspedisi_id as supplier, opp.ongkos_angkut as total from oa_pindah_pakan opp
-                            left join
-                                (
-                                    select kp.no_sj, tp.no_bbm as kode_trans, kp.ekspedisi_id, tp.tgl_terima as tanggal from kirim_pakan kp
-                                    left join
-                                        terima_pakan tp 
-                                        on
-                                            kp.id = tp.id_kirim_pakan
-                                    group by
-                                        kp.no_sj, tp.no_bbm, kp.ekspedisi_id, tp.tgl_terima
-                                    
-                                    union all
-                                    
-                                    select no_retur as no_sj, no_retur as kode_trans, ekspedisi_id, tgl_retur as tanggal from retur_pakan rp 
-                                ) krm
-                                on
-                                    opp.no_sj = krm.no_sj
-                            where
-                                krm.tanggal between '".$start_date."' and '".$end_date."' and
-                                not exists (select * from konfirmasi_pembayaran_oa_pakan_det kpopd where no_sj = opp.no_sj)
+                            select opp.no_sj as nomor, coalesce(krm.ekspedisi_id, (select min(e.nomor) from ekspedisi e where e.nama = opp.ekspedisi)) as supplier, coalesce(nullif(substring(opp.no_sj, charindex('/',opp.no_sj+'//')+1, charindex('/',opp.no_sj+'//',charindex('/',opp.no_sj+'//')+1)-charindex('/',opp.no_sj+'//')-1),''), substring(krm.no_order, charindex('/',krm.no_order+'//')+1, charindex('/',krm.no_order+'//',charindex('/',krm.no_order+'//')+1)-charindex('/',krm.no_order+'//')-1)) as unit, opp.ongkos_angkut as total from oa_pindah_pakan opp
+                            left join ( select kp.no_sj, tp.no_bbm as kode_trans, kp.ekspedisi_id, tp.tgl_terima as tanggal, kp.no_order from kirim_pakan kp left join terima_pakan tp on kp.id = tp.id_kirim_pakan group by kp.no_sj, tp.no_bbm, kp.ekspedisi_id, tp.tgl_terima, kp.no_order union all select no_retur as no_sj, no_retur as kode_trans, ekspedisi_id, tgl_retur as tanggal, no_order from retur_pakan rp ) krm on opp.no_sj = krm.no_sj
+                            where coalesce(krm.tanggal, opp.tgl_terima) between '".$start_date."' and '".$end_date."'
                         ) oa
-                        group by
-                            oa.nomor,
-                            oa.supplier
+                        group by oa.nomor, oa.supplier, oa.unit
                         /* END - OA PAKAN */
+
+                        /* ===================================================================
+                           DEBET OA versi KONFIRMASI - DINONAKTIFKAN (revert ke freight 2026-06-23,
+                           karena saldo awal tak cocok GL: konfir < freight = freight belum dikonfirmasi).
+                        -----------------------------------------------------------------------
+                        select kpop.nomor, kpop.ekspedisi_id as supplier, (kpop.total + kpop.potongan_pph_23) as debet, 0 as kredit, 'OA PAKAN' as jenis, oa_unit.unit
+                        from konfirmasi_pembayaran_oa_pakan kpop
+                        left join ( select kpopd.id_header, min(substring(kp.no_order, charindex('/',kp.no_order+'//')+1, charindex('/',kp.no_order+'//',charindex('/',kp.no_order+'//')+1)-charindex('/',kp.no_order+'//')-1)) as unit from konfirmasi_pembayaran_oa_pakan_det kpopd left join kirim_pakan kp on kp.no_sj = kpopd.no_sj group by kpopd.id_header ) oa_unit on oa_unit.id_header = kpop.id
+                        where kpop.tgl_bayar between '".$start_date."' and '".$end_date."'
+                        =================================================================== */
 
                         union all
 
@@ -941,6 +1062,10 @@ class LaporanHutangRingkas extends Public_Controller {
 
                         union all
 
+                        /* === DEBET RHPP: dari konfirmasi_pembayaran_peternak -> operasional rhpp + rhpp_group ===
+                           Tanggal disamakan dgn det_jurnal (rhpp: tutup_siklus.tgl_tutup, rhpp_group: rhpp_group_header.tgl_submit),
+                           namun data tetap dari tabel OPERASIONAL (bukan det_jurnal) utk perbandingan operasional vs jurnal.
+                           --- BLOK LAMA (dikomen):
                         select
                             kpp.nomor,
                             kpp.mitra as supplier,
@@ -951,6 +1076,149 @@ class LaporanHutangRingkas extends Public_Controller {
                         from konfirmasi_pembayaran_peternak kpp
                         where
                             kpp.tgl_bayar between '".$start_date."' and '".$end_date."'
+                           --- akhir blok lama === */
+
+                        /* RHPP single (jenis rhpp_plasma) */
+                        select
+                            r.invoice as nomor,
+                            r.mitra as supplier,
+                            r.pdpt_peternak_sudah_pajak as debet,
+                            0 as kredit,
+                            'RHPP' as jenis,
+                            SUBSTRING(REPLACE(REPLACE(r.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                        from rhpp r
+                        inner join tutup_siklus ts on r.id_ts = ts.id
+                        where
+                            r.jenis = 'rhpp_plasma'
+                            and r.invoice is not null and r.invoice <> ''
+                            /* skip noreg yg sudah masuk RHPP group (hindari double-count) */
+                            and not exists (select 1 from rhpp_group_noreg gn where gn.noreg = r.noreg)
+                            /* hanya pdpt>0 = hutang; pdpt<=0 = piutang/defisit peternak (GL posting 0) */
+                            and r.pdpt_peternak_sudah_pajak > 0
+                            and ts.tgl_tutup between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        /* RHPP group (jenis rhpp_plasma) */
+                        select
+                            rg.invoice as nomor,
+                            rgh.mitra as supplier,
+                            rg.pdpt_peternak_sudah_pajak as debet,
+                            0 as kredit,
+                            'RHPP' as jenis,
+                            SUBSTRING(REPLACE(REPLACE(rg.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                        from rhpp_group rg
+                        inner join rhpp_group_header rgh on rg.id_header = rgh.id
+                        where
+                            rg.jenis = 'rhpp_plasma'
+                            /* hanya pdpt>0 = hutang; pdpt<=0 = piutang/defisit peternak (GL posting 0) */
+                            and rg.pdpt_peternak_sudah_pajak > 0
+                            and rgh.tgl_submit between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        /* KOMPENSASI piutang kemitraan (single) - KREDIT (jurnal GL: D 21213 / K 11520) */
+                        select
+                            r.invoice as nomor,
+                            r.mitra as supplier,
+                            0 as debet,
+                            p.nominal as kredit,
+                            'RHPP' as jenis,
+                            SUBSTRING(REPLACE(REPLACE(r.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                        from rhpp_piutang p
+                        inner join rhpp r on p.id_header = r.id
+                        inner join tutup_siklus ts on r.id_ts = ts.id
+                        where
+                            r.jenis = 'rhpp_plasma'
+                            and r.invoice is not null and r.invoice <> ''
+                            and not exists (select 1 from rhpp_group_noreg gn where gn.noreg = r.noreg)
+                            and ts.tgl_tutup between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        /* KOMPENSASI piutang kemitraan (group) - KREDIT */
+                        select
+                            rg.invoice as nomor,
+                            rgh.mitra as supplier,
+                            0 as debet,
+                            p.nominal as kredit,
+                            'RHPP' as jenis,
+                            SUBSTRING(REPLACE(REPLACE(rg.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                        from rhpp_group_piutang p
+                        inner join rhpp_group rg on p.id_header = rg.id
+                        inner join rhpp_group_header rgh on rg.id_header = rgh.id
+                        where
+                            rg.jenis = 'rhpp_plasma'
+                            and rgh.tgl_submit between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        /* MEMORIAL (mm) yg MENAIKKAN 21213 -> DEBET (mm dianggap operasional)
+                           unit: dari no_invoice (konfir peternak) bila terisi, else m.unit */
+                        select
+                            mi.no_mm as nomor,
+                            m.keterangan as supplier,
+                            mi.nilai as debet,
+                            0 as kredit,
+                            'RHPP' as jenis,
+                            isnull(case when kpp.invoice is not null then SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) end, m.unit) as unit
+                        from mmitem mi
+                        inner join mm m on mi.no_mm = m.no_mm
+                        left join konfirmasi_pembayaran_peternak kpp on kpp.nomor = mi.no_invoice
+                        where
+                            mi.coa_asal like '21213%'
+                            and mi.tgl_mm between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        /* MEMORIAL (mm) yg MENURUNKAN 21213 -> KREDIT */
+                        select
+                            mi.no_mm as nomor,
+                            m.keterangan as supplier,
+                            0 as debet,
+                            mi.nilai as kredit,
+                            'RHPP' as jenis,
+                            isnull(case when kpp.invoice is not null then SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) end, m.unit) as unit
+                        from mmitem mi
+                        inner join mm m on mi.no_mm = m.no_mm
+                        left join konfirmasi_pembayaran_peternak kpp on kpp.nomor = mi.no_invoice
+                        where
+                            mi.coa_tujuan like '21213%'
+                            and mi.tgl_mm between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        /* KAS MASUK (km) yg MENAIKKAN 21213 -> DEBET (pengembalian/restore hutang) */
+                        select
+                            ki.no_km as nomor,
+                            k.keterangan as supplier,
+                            ki.nilai as debet,
+                            0 as kredit,
+                            'RHPP' as jenis,
+                            isnull(case when kpp.invoice is not null then SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) end, k.unit) as unit
+                        from kmitem ki
+                        inner join km k on ki.no_km = k.no_km
+                        left join konfirmasi_pembayaran_peternak kpp on kpp.nomor = ki.no_invoice
+                        where
+                            ki.coa_asal like '21213%'
+                            and ki.tgl_km between '".$start_date."' and '".$end_date."'
+
+                        union all
+
+                        /* KAS MASUK (km) yg MENURUNKAN 21213 -> KREDIT */
+                        select
+                            ki.no_km as nomor,
+                            k.keterangan as supplier,
+                            0 as debet,
+                            ki.nilai as kredit,
+                            'RHPP' as jenis,
+                            isnull(case when kpp.invoice is not null then SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) end, k.unit) as unit
+                        from kmitem ki
+                        inner join km k on ki.no_km = k.no_km
+                        left join konfirmasi_pembayaran_peternak kpp on kpp.nomor = ki.no_invoice
+                        where
+                            ki.coa_tujuan like '21213%'
+                            and ki.tgl_km between '".$start_date."' and '".$end_date."'
 
                         union all
 
@@ -1336,33 +1604,58 @@ class LaporanHutangRingkas extends Public_Controller {
                             rpd.no_bayar as nomor,
                             rp.peternak as supplier,
                             0 as debet,
-                            rpd.transfer as kredit,
+                            /* lebih bayar: kredit 21213 dibatasi sebesar bill yg dikonfirmasi = min(transfer, tagihan, konfir.total); sisa transfer = piutang 11520, bukan 21213.
+                               EPEK BYM/05/26/00219 di-cap via tagihan; THORIQ BYM/03/26/00263 di-cap via konfir.total.
+                               Selain itu (round-down sub-rupiah), tambah rpd.pembulatan (=tagihan-transfer bila |selisih|<1) supaya kredit naik ke tagihan = clear 21213, mengikuti pembulatan rupiah penuh (96010). */
+                            case when rpd.transfer > isnull(rpd.tagihan, rpd.transfer) and isnull(rpd.tagihan, rpd.transfer) <= isnull(kpp.total, rpd.transfer) then rpd.tagihan
+                                 when rpd.transfer > isnull(kpp.total, rpd.transfer) then kpp.total
+                                 else rpd.transfer + isnull(rpd.pembulatan, 0) end as kredit,
                             'RHPP' as jenis,
-                            SUBSTRING(REPLACE(REPLACE(rpd.no_bayar, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
+                            SUBSTRING(REPLACE(REPLACE(kpp.invoice, 'INV/RHPP/G/', ''), 'INV/RHPP/', ''), 1, 3) as unit
                         from realisasi_pembayaran_det rpd
                         left join
                             realisasi_pembayaran rp
                             on
                                 rpd.id_header = rp.id
+                        left join
+                            konfirmasi_pembayaran_peternak kpp
+                            on
+                                kpp.nomor = rpd.no_bayar
                         where
                             rpd.transaksi = 'PLASMA' and
                             (rp.tgl_realisasi is not null and rp.tgl_realisasi between '".$start_date."' and '".$end_date."')
 
                         union all
 
-                        /* KREDIT OA PAKAN - pakai rp.ekspedisi sebagai supplier */
+                        /* KREDIT OA PAKAN - pakai rp.ekspedisi sebagai supplier.
+                           kredit = transfer + PPh23 konfir (= bruto yg dilunasi) agar cocok GL turun 21212 (11130.002 + 24623). */
                         select
                             rpd.no_bayar as nomor,
                             rp.ekspedisi as supplier,
                             0 as debet,
-                            rpd.transfer as kredit,
+                            (rpd.transfer + isnull(kpop.potongan_pph_23, 0)) as kredit,
                             'OA PAKAN' as jenis,
-                            null as unit
+                            oa_unit.unit
                         from realisasi_pembayaran_det rpd
                         left join
                             realisasi_pembayaran rp
                             on
                                 rpd.id_header = rp.id
+                        left join
+                            konfirmasi_pembayaran_oa_pakan kpop
+                            on
+                                kpop.nomor = rpd.no_bayar
+                        left join
+                            /* unit per BYO (=1 unit): konfir det no_sj -> kirim_pakan.no_order, segmen ke-2 antar-slash */
+                            (
+                                select kpopd.id_header,
+                                    min(substring(kp.no_order, charindex('/',kp.no_order+'//')+1, charindex('/',kp.no_order+'//',charindex('/',kp.no_order+'//')+1)-charindex('/',kp.no_order+'//')-1)) as unit
+                                from konfirmasi_pembayaran_oa_pakan_det kpopd
+                                left join kirim_pakan kp on kp.no_sj = kpopd.no_sj
+                                group by kpopd.id_header
+                            ) oa_unit
+                            on
+                                oa_unit.id_header = kpop.id
                         where
                             rpd.transaksi = 'OA PAKAN' and
                             (rp.tgl_realisasi is not null and rp.tgl_realisasi between '".$start_date."' and '".$end_date."')
@@ -1479,12 +1772,13 @@ class LaporanHutangRingkas extends Public_Controller {
             ".$where."
             group by
                 data.jenis,
-                -- data.unit,
+                data.unit,
                 data.supplier,
                 supl.nama
             order by
                 supl.nama asc,
-                data.jenis asc
+                data.jenis asc,
+                data.unit asc
         ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
