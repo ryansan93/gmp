@@ -1392,6 +1392,10 @@ class RhppGroup extends Public_Controller {
                             union all
 
                             select sum(nominal) as nominal, piutang_kode from rhpp_group_piutang group by piutang_kode
+
+                            union all
+
+                            select sum(nilai) as nominal, no_invoice as piutang_kode from kmitem k where no_invoice like 'PM%' group by no_invoice
                         ) data
                         group by
                             data.piutang_kode
