@@ -17,13 +17,13 @@ class CnPostDet_model extends Conf {
 		}
 
 		$sql = "
-			select 
+			select
                 cpd.*,
-                REPLACE(sj.tgl_sj, '-', '/')+' | '+sj.no_sj as no_sj,
-                sj.tagihan,
+                isnull(nullif(REPLACE(sj.tgl_sj, '-', '/')+' | '+sj.no_sj, ''), cpd.no_sj) as no_sj,
+                isnull(sj.tagihan, cpd.tagihan) as tagihan,
                 sum(isnull(_cpd.tot_pakai, 0)) as tot_pakai,
                 sum(isnull(rpd.tot_tf, 0)) as tot_tf,
-                (sj.tagihan - (sum(isnull(_cpd.tot_pakai, 0)) + sum(isnull(rpd.tot_tf, 0)))) as sisa
+                isnull((sj.tagihan - (sum(isnull(_cpd.tot_pakai, 0)) + sum(isnull(rpd.tot_tf, 0)))), cpd.sisa) as sisa
             from cn_post_det cpd
             left join
                 cn_post cp
@@ -124,6 +124,9 @@ class CnPostDet_model extends Conf {
                 cpd.id_header,
                 cpd.nomor,
                 cpd.pakai,
+                cpd.no_sj,
+                cpd.tagihan,
+                cpd.sisa,
                 sj.tagihan,
                 sj.no_sj,
                 sj.tgl_sj

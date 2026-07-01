@@ -50,6 +50,9 @@
 		</div>
 	</div>
 	<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+	<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+		<button type="button" class="btn btn-success" onclick="cn.openModalSj()"><i class="fa fa-plus"></i> Pilih No. SJ</button>
+	</div>
 	<div class="col-xs-12 no-padding">
 		<small>
 			<table class="table table-bordered" style="margin-bottom: 0px;">
@@ -62,32 +65,9 @@
 						<th class="col-xs-1">Action</th>
 					</tr>
 				</thead>
-				<tbody>
-					<tr>
-						<td>
-							<select class="form-control no_sj" data-required="1">
-							</select>
-						</td>
-						<td class="text-right tagihan">0</td>
-						<td class="text-right sisa">0</td>
-						<td>
-							<div class="col-xs-2 no-padding" style="padding-right: 5px;">
-								<button type="button" class="col-xs-12 btn btn-default" onclick="cn.samakanSisaTagihan(this)"><i class="fa fa-arrow-right"></i></button>
-							</div>
-							<div class="col-xs-10 no-padding" style="padding-left: 5px;">
-								<input type="text" class="col-xs-12 form-control pakai text-right" data-tipe="decimal" data-required="1" onblur="cn.hitTotalPakai()">
-							</div>
-						</td>
-						<td>
-							<div class="col-xs-12 no-padding">
-								<div class="col-xs-6 no-padding" style="padding-right: 5px;">
-									<button type="button" class="col-xs-12 btn btn-danger" onclick="cn.removeRow(this)"><i class="fa fa-minus"></i></button>
-								</div>
-								<div class="col-xs-6 no-padding" style="padding-left: 5px;">
-									<button type="button" class="col-xs-12 btn btn-primary" onclick="cn.addRow(this)"><i class="fa fa-plus"></i></button>
-								</div>
-							</div>
-						</td>
+				<tbody class="detail_sj">
+					<tr class="empty-row">
+						<td colspan="5" class="text-center">Belum ada SJ dipilih. Klik "Pilih No. SJ".</td>
 					</tr>
 				</tbody>
 			</table>
@@ -96,6 +76,47 @@
 	<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 	<div class="col-xs-12 no-padding">
 		<button type="button" class="col-xs-12 btn btn-primary" onclick="cn.save()"><i class="fa fa-save"></i> Simpan</button>
+	</div>
+
+	<!-- MODAL PILIH SJ -->
+	<div class="bootbox modal" id="modalSj" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">Pilih No. SJ (Belum Lunas)</h4>
+				</div>
+				<div class="modal-body">
+					<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+						<div class="search left-inner-addon">
+							<i class="glyphicon glyphicon-search"></i>
+							<input type="text" class="form-control sj_search" placeholder="Cari No. SJ / Unit ..." onkeyup="cn.filterSjModal(this)">
+						</div>
+					</div>
+					<div class="col-xs-12 no-padding" style="max-height: 420px; overflow: auto;">
+						<small>
+							<table class="table table-bordered table-hover tbl_sj col-xs-12 no-padding" style="margin-bottom: 0px;">
+								<thead>
+									<tr>
+										<th style="width: 34px;" class="text-center"><input type="checkbox" class="sj_check_all" onclick="cn.toggleAllSj(this)"></th>
+										<th>No. SJ</th>
+										<th class="text-right" style="width: 140px;">Tagihan</th>
+										<th class="text-right" style="width: 140px;">Sisa</th>
+									</tr>
+								</thead>
+								<tbody class="sj_modal_body">
+									<tr><td colspan="4" class="text-center">Pilih Jenis CN &amp; No. CN terlebih dahulu.</td></tr>
+								</tbody>
+							</table>
+						</small>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+					<button type="button" class="btn btn-primary" onclick="cn.pilihSj()"><i class="fa fa-check"></i> Pilih SJ Terpilih</button>
+				</div>
+			</div>
+		</div>
 	</div>
 <?php } else { ?>
 	<h4>CREDIT NOTE</h4>

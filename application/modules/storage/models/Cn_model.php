@@ -15,7 +15,7 @@ class Cn_model extends Conf {
 		return $id->nextId;
 	}
 
-	public function getData( $id = null, $start_date = null, $end_date = null, $kode_supl = null, $jenis = null ) {
+	public function getData( $id = null, $start_date = null, $end_date = null, $kode_supl = null, $jenis = null, $nomor_like = null ) {
 		$sql_condition = null;
 		if ( !empty($id) ) {
 			if ( !empty($sql_condition) ) {
@@ -30,6 +30,14 @@ class Cn_model extends Conf {
 				$sql_condition .= " and c.tanggal between '".$start_date."' and '".$end_date."'";
 			} else {
 				$sql_condition = "where c.tanggal between '".$start_date."' and '".$end_date."'";
+			}
+		}
+
+		if ( !empty($nomor_like) ) {
+			if ( !empty($sql_condition) ) {
+				$sql_condition .= " and c.nomor like '".$nomor_like."'";
+			} else {
+				$sql_condition = "where c.nomor like '".$nomor_like."'";
 			}
 		}
 

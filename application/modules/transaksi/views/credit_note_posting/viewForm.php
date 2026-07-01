@@ -7,7 +7,7 @@
 <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 	<div class="col-xs-12 no-padding">
 		<div class="col-xs-3 no-padding"><label class="label-control">No. CN</label></div>
-		<div class="col-xs-9 no-padding"><label class="label-control">: <?php echo $data['no_dok']; ?></label></div>
+		<div class="col-xs-9 no-padding"><label class="label-control">: <?php echo !empty($data['no_dok']) ? $data['no_dok'] : $data['nomor_cn']; ?></label></div>
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">

@@ -48,6 +48,7 @@ class CnPost_model extends Conf {
 				c.tanggal as tgl_cn,
 				c.nomor as nomor_cn,
 				c.no_dok,
+				c.supplier as supplier_cn,
 				supl.nama as nama_supplier,
 				(c.tot_cn - sum(isnull(_cpd.tot_pakai, 0))) as sisa
 			from
@@ -147,6 +148,7 @@ class CnPost_model extends Conf {
 				c.tanggal,
 				c.nomor,
 				c.no_dok,
+				c.supplier,
 				c.tot_cn,
 				supl.nama
 		";
