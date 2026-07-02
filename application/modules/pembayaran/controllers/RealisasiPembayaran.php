@@ -1020,11 +1020,12 @@ class RealisasiPembayaran extends Public_Controller
                 if ( $v_kpp['tgl_bayar'] >= '2026-01-01' ) {
                     $netto = ($v_kpp['total'] + $dn) - $cn;
                     $pph = 0;
-                    $jumlah = (($netto-$pph) > $bayar) ? ($netto-$pph) - $bayar : 0;
+                    $jumlah = (round(($netto - $pph), 2) > round($bayar, 2)) ? round(($netto - $pph), 2) - round($bayar, 2) : 0;
                 } else {
                     $pph = 0;
                     $netto = $v_kpp['total'] - $pph;
-                    $jumlah = (($netto + $dn) > ($bayar + $cn)) ? ($netto + $dn) - ($bayar + $cn) : 0;
+                    $sisa = round(($netto + $dn) - ($bayar + $cn), 2);
+                    $jumlah = ($sisa > 0) ? $sisa : 0;
                 }
 
                 $data[] = array(
@@ -1116,6 +1117,7 @@ class RealisasiPembayaran extends Public_Controller
                     cpd.tot_cn,
                     dpd.tot_dn
 
+                /*
                 union all
 
                 select
@@ -1153,9 +1155,9 @@ class RealisasiPembayaran extends Public_Controller
                     m.tgl_mm between '".$params['start_date']."' and '".$params['end_date']."' and
                     m.no_supplier = '".$params['supplier']."' and
                     mi.coa_tujuan in ('21174.000', '21180.300')
+                */
             ) data
         ";
-        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         if ( $d_conf->count() > 0 ) {
