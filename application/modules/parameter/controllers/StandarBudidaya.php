@@ -134,6 +134,7 @@ class StandarBudidaya extends Public_Controller
 					$m_sbi->fcr = $val['fcr'];
 					$m_sbi->kons_pakan_harian = $val['kons_pakan_harian'];
 					$m_sbi->bb = $val['bb'];
+					$m_sbi->dg = $val['dg'];
 					$m_sbi->ip = $val['ip'];
 					$m_sbi->save();
 					Modules::run( 'base/event/save', $m_sbi, $deskripsi_log);
@@ -192,6 +193,7 @@ class StandarBudidaya extends Public_Controller
 					$m_sbi->fcr = $val['fcr'];
 					$m_sbi->kons_pakan_harian = $val['kons_pakan_harian'];
 					$m_sbi->bb = $val['bb'];
+					$m_sbi->dg = $val['dg'];
 					$m_sbi->ip = $val['ip'];
 					$m_sbi->save();
 					Modules::run( 'base/event/save', $m_sbi, $deskripsi_log);

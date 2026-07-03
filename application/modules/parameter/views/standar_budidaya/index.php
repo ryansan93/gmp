@@ -123,6 +123,7 @@
 									<tr>
 										<th class="text-center">Umur (hari)</th>
 										<th class="text-center">Berat Badan (g)</th>
+										<th class="text-center">DG (g)</th>
 										<th class="text-center">FCR</th>
 										<th class="text-center">Daya Hidup (%)</th>
 										<th class="text-center">IP</th>
@@ -136,7 +137,10 @@
 											<input class="form-control text-right" type="text" name="umur" value="" data-tipe="integer" isedit="1">
 										</td>
 										<td class="col-sm-1">
-											<input class="form-control text-right" type="text" name="bb" value="" data-tipe="integer" onchange="" isedit="1">
+											<input class="form-control text-right" type="text" name="bb" value="" data-tipe="integer" onchange="sb.calcDG()" isedit="1">
+										</td>
+										<td class="col-sm-1">
+											<input class="form-control text-right" type="text" name="dg" value="" data-tipe="integer" disabled>
 										</td>
 										<td class="col-sm-1">
 											<input class="form-control text-right" type="text" name="fcr" value="" data-tipe="decimal3" isedit="1">

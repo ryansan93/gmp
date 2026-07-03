@@ -43,6 +43,7 @@
 			<tr>
 				<th class="text-center">Umur (hari)</th>
 				<th class="text-center">Berat Badan (g)</th>
+				<th class="text-center">DG (g)</th>
 				<th class="text-center">FCR</th>
 				<th class="text-center">Daya Hidup (%)</th>
 				<th class="text-center">IP</th>
@@ -59,7 +60,10 @@
 						<input class="form-control text-center" type="text" name="umur" value="<?php echo $v_detail['umur'] ?>" data-tipe="integer" <?php echo $disabled; ?> isedit="1" data-required="1">
 					</td>
 					<td class="col-sm-1">
-						<input class="form-control text-right" type="text" name="bb" value="<?php echo angkaDecimal($v_detail['bb']); ?>" data-tipe="decimal" <?php echo $disabled; ?> isedit="1" data-required="1">
+						<input class="form-control text-right" type="text" name="bb" value="<?php echo angkaDecimal($v_detail['bb']); ?>" data-tipe="decimal" onchange="sb.calcDG()" <?php echo $disabled; ?> isedit="1" data-required="1">
+					</td>
+					<td class="col-sm-1">
+						<input class="form-control text-right" type="text" name="dg" value="<?php echo angkaRibuan($v_detail['dg']); ?>" data-tipe="integer" disabled>
 					</td>
 					<td class="col-sm-1">
 						<input class="form-control text-right" type="text" name="fcr" value="<?php echo angkaDecimalFormat($v_detail['fcr'], 3); ?>" data-tipe="decimal3" <?php echo $disabled; ?> isedit="1" data-required="1">

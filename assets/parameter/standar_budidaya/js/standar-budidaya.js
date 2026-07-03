@@ -7,6 +7,7 @@ var sb = {
 
         sb.hide_btn_remove();
         App.formatNumber();
+        sb.calcDG();
     }, // end - start_up
 
     hide_btn_remove: function() {
@@ -74,6 +75,7 @@ var sb = {
                 });
 
                 App.formatNumber();
+                sb.calcDG();
             },
         });
     }, // end - load_form
@@ -113,6 +115,20 @@ var sb = {
 
         return data_row;
     }, // end - getDataRow
+
+    calcDG : function() {
+        var table = $('#tb_input_standar_budidaya');
+        var rows = table.find('tbody tr');
+        var prev_bb = 0;
+
+        rows.each(function() {
+            var $row = $(this);
+            var bb = numeral.unformat($row.find('input[name=bb]').val()) || 0;
+            var dg = bb - prev_bb;
+            $row.find('input[name=dg]').val(numeral.formatInt(dg));
+            prev_bb = bb;
+        });
+    }, // end - calcDG
 
     save : function(elm){
         var tbl = $('#tb_input_standar_budidaya');
