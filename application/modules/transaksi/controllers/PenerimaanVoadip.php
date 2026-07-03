@@ -1050,11 +1050,22 @@ class PenerimaanVoadip extends Public_Controller {
         }
     }
 
+    public function hitStokSiklus() {
+        $sql = "EXEC hitung_stok_voadip_by_transaksi 'terima_voadip', '10502', '2026-04-06', 0, 2";
+        $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '10502', '2026-04-06', 2";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        cetak_r($d_conf, 1);
+    }
+
     public function tes()
     {
-        // $conf = new \Model\Storage\Conf();
-        // $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '1665', '2025-10-11', 2, null, null";
-        // $d_conf = $conf->hydrateRaw($sql);
+        $conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '11322', '2026-04-18', 2, null, null";
+        $d_conf = $conf->hydrateRaw($sql);
 
         // $conf = new \Model\Storage\Conf();
         // $sql = "
@@ -1102,21 +1113,16 @@ class PenerimaanVoadip extends Public_Controller {
         //     }
         // }
 
-        $arr = array(
-            1403,
-            1442,
-            1445,
-            1510,
-            1524,
-            1596,
-            1619,
-            1721,
-            1748,
-            1762
-        );
+        // $arr = array(
+        //     10966
+        // );
 
-        foreach ($arr as $key => $value) {
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
-        }
+        // foreach ($arr as $key => $value) {
+        //     // Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+            
+        //     $conf = new \Model\Storage\Conf();
+        //     $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$value."', '2026-04-11', 2";
+        //     $d_conf = $conf->hydrateRaw($sql);
+        // }
     }
 }

@@ -794,11 +794,11 @@ class ReturPakan extends Public_Controller
             }
 
             $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_pakan_by_transaksi 'retur_pakan', '".$id."', '".$tanggal."', ".$delete.", 0";
+            $sql = "EXEC hitung_stok_siklus 'pakan', 'retur_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
             $d_conf = $conf->hydrateRaw($sql);
 
             $conf = new \Model\Storage\Conf();
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'retur_pakan', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
+            $sql = "EXEC hitung_stok_pakan_by_transaksi 'retur_pakan', '".$id."', '".$tanggal."', ".$delete.", 0";
             $d_conf = $conf->hydrateRaw($sql);
 
             $id_old = null;

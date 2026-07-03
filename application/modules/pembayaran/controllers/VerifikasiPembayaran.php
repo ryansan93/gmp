@@ -1492,7 +1492,7 @@ class VerifikasiPembayaran extends Public_Controller
         //     }
         // }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 3977, 3977, 2, 'realisasi_pembayaran', '2026-04-22');
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 4483, 4483, 2, 'realisasi_pembayaran', '2026-05-22');
 
         // $start_date = '2026-03-01';
         // $end_date = '2026-03-31';
@@ -1508,5 +1508,13 @@ class VerifikasiPembayaran extends Public_Controller
         // }
 
         // cetak_r( $data );
+
+        $arr = array(
+            array('2026-06-08', 'realisasi_pembayaran', 4778)
+        );
+
+        foreach ($arr as $key => $value) {
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $value[2], $value[2], 2, $value[1], $value[0]);
+        }
     }
 }

@@ -2693,9 +2693,21 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
         // cetak_r( $kode_unit );
 
-        $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '41803', '2026-04-24', 0, 2";
+        $id = 52028;
+        $id_old = 52028;
+        $tanggal = '2026-06-15';
+        $status = 2;
+        $status_jurnal = 2;
+        $delete = 0;
+        $noreg1 = '25110670401';
+        $noreg2 = '25100150201';
+
+        $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
         $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
 
-        // $return = Modules::run( 'base/InsertJurnal/exec', $this->url, 43521, 43521, 2);
+        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
+        $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+        $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
     }
 }

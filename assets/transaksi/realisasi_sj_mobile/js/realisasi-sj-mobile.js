@@ -367,6 +367,8 @@ var rsm = {
     save: function() {
     	var div = $('div#transaksi');
 
+		$('.btn_save').disabled = true;
+
     	var err = 0;
     	$.map( $(div).find('[data-required=1]'), function(ipt) {
     		if ( empty( $(ipt).val() ) ) {
@@ -378,12 +380,15 @@ var rsm = {
     	});
 
     	if ( err > 0 ) {
-    		bootbox.alert('Harap lengkapi data terlebih dahulu.');
+    		bootbox.alert('Harap lengkapi data terlebih dahulu.', function() {
+				$('.btn_save').disabled = false;
+			});
     	} else {
-			$('.btn_save').disabled = true;
     		bootbox.confirm('Apakah anda yakin ingin menyimpan data realisai SJ ?', function(result) {
     			if ( result ) {
     				// var formData = new FormData();
+
+					showLoading();
 
     				var detail = [];
     				$.map( $(div).find('table.data_do tbody tr.header'), function(tr_header) {
@@ -446,7 +451,7 @@ var rsm = {
 			            processData: false,
 			            contentType: false,
 			            data: formData,
-			            beforeSend: function(){ showLoading() },
+			            beforeSend: function(){},
 			            success: function(data){
 							$('.btn_save').disabled = false;
 							

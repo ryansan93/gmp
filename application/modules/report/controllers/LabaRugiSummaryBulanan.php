@@ -84,7 +84,7 @@ class LabaRugiSummaryBulanan extends Public_Controller {
                 on
                     srg.id_header = sr.id
             where
-                sr.nama = 'LAPORAN LABA RUGI - SUMMARY BULANAN'
+                sr.nama = 'LABA RUGI UNIT'
         ";
         $d_srg = $m_conf->hydrateRaw( $sql );
 
@@ -122,16 +122,9 @@ class LabaRugiSummaryBulanan extends Public_Controller {
     {
         $params = $this->input->get('params');
 
-        // cetak_r( $params, 1);
-
         $perusahaan = $params['perusahaan'];
         $bulan = $params['bulan'];
         $tahun = substr($params['tahun'], 0, 4);
-
-        // $sql_unit = "rdim_submit.kode_unit = '".$unit."' and";
-        // if ( $unit == 'all' ) {
-        //     $sql_unit = null;
-        // }
 
         $bulan_awal = 1;
         $bulan_akhir = 12;
@@ -164,151 +157,81 @@ class LabaRugiSummaryBulanan extends Public_Controller {
                 if ( $d_srgi->count() > 0 ) {
                     $d_srgi = $d_srgi->toArray();
 
-                    // cetak_r( $v_srg['nama'] );
-                    // cetak_r( $d_srgi );
-
                     foreach ($d_srgi as $k_srgi => $v_srgi) {
-                        $nama_kolom = 'coa_'.$v_srgi['posisi_jurnal'];
-
                         $m_conf = new \Model\Storage\Conf();
                         $sql = "
                             select
                                 srgi.item_report_id as item_report_id,
                                 srgi.item_report_nama as item_report_nama,
                                 case
-                                    when srgi.posisi = 'debet' then
-                                        sum(dj.nominal)
-                                end as debet,
-                                case
-                                    when srgi.posisi = 'kredit' then
-                                        sum(dj.nominal)
-                                end as kredit,
+                                    when srgi.posisi like 'debet' then
+                                        case
+                                            when round(sum(dj.debet) - sum(dj.kredit), 0) < 0 then
+                                                abs(round(sum(dj.debet) - sum(dj.kredit), 0))
+                                            else
+                                                0-round(sum(dj.debet) - sum(dj.kredit), 0)
+                                        end
+                                    else
+                                        case
+                                            when round(sum(dj.debet) - sum(dj.kredit), 0) > 0 then
+                                                0-round(sum(dj.debet) - sum(dj.kredit), 0)
+                                            else
+                                                abs(round(sum(dj.debet) - sum(dj.kredit), 0))
+                                        end
+                                end as nominal,
+                                -- round(sum(dj.debet) - sum(dj.kredit), 0) as nominal,
                                 srgi.urut
                             from
                                 (
                                     select data.* from (
                                         select
                                             dj.id as id,
-                                            dj.id_header as id_header,
                                             case
                                                 when dj.periode is not null then
                                                     dj.periode
                                                 else
                                                     dj.tanggal
                                             end as tanggal,
-                                            dj.det_jurnal_trans_id,
-                                            dj.jurnal_trans_sumber_tujuan_id,
-                                            dj.supplier,
                                             dj.perusahaan,
-                                            cast(dj.keterangan as varchar(250)) as keterangan,
-                                            dj.nominal as nominal,
-                                            dj.saldo,
-                                            dj.ref_id,
-                                            dj.asal,
-                                            dj.coa_asal,
-                                            dj.tujuan,
-                                            dj.coa_tujuan,
-                                            dj.unit,
-                                            dj.pic,
-                                            dj.tbl_name,
-                                            dj.tbl_id as tbl_id
-                                        from det_jurnal dj
-                                        where
-                                            dj.".$nama_kolom." = '".$v_srgi['no_coa']."' and
-                                            '".$v_srgi['posisi_data']."' not like '%saldo%'
-
-                                        union all
-
-                                        select
-                                            dj.id as id,
-                                            dj.id_header as id_header,
                                             case
-                                                when dj.periode is not null then
-                                                    dj.periode
+                                                when dj.coa_tujuan = '".$v_srgi['no_coa']."' then
+                                                    dj.nominal
                                                 else
-                                                    dj.tanggal
-                                            end as tanggal,
-                                            dj.det_jurnal_trans_id,
-                                            dj.jurnal_trans_sumber_tujuan_id,
-                                            dj.supplier,
-                                            dj.perusahaan,
-                                            cast(dj.keterangan as varchar(250)) as keterangan,
+                                                    0
+                                            end as debet,
                                             case
                                                 when dj.coa_asal = '".$v_srgi['no_coa']."' then
-                                                    (0-dj.nominal)
+                                                    dj.nominal
                                                 else
-                                                    dj.nominal 
-                                            end as nominal,
-                                            dj.saldo,
-                                            dj.ref_id,
-                                            dj.asal,
-                                            '".$v_srgi['no_coa']."',
-                                            dj.tujuan,
-                                            '".$v_srgi['no_coa']."',
-                                            dj.unit,
-                                            dj.pic,
-                                            dj.tbl_name,
-                                            dj.tbl_id as tbl_id
+                                                    0
+                                            end as kredit,
+                                            case
+                                                when dj.coa_asal = '".$v_srgi['no_coa']."' then
+                                                    dj.coa_asal
+                                                else
+                                                    dj.coa_tujuan
+                                            end as coa,
+                                            case
+                                                when dj.coa_asal = '".$v_srgi['no_coa']."' then
+                                                    dj.unit
+                                                else
+                                                    case
+                                                        when dj.unit_tujuan is not null then
+                                                            dj.unit_tujuan
+                                                        else
+                                                            dj.unit
+                                                    end
+                                            end as unit
                                         from det_jurnal dj
                                         where
                                             (dj.coa_asal = '".$v_srgi['no_coa']."' or dj.coa_tujuan = '".$v_srgi['no_coa']."') and
-                                            '".$v_srgi['posisi_data']."' like '%saldo%'
-
-                                        /*
-                                        select
-                                            max(dj.id) as id,
-                                            max(dj.id_header) as id_header,
-                                            case
-                                                when dj.periode is not null then
-                                                    dj.periode
-                                                else
-                                                    dj.tanggal
-                                            end as tanggal,
-                                            dj.det_jurnal_trans_id,
-                                            dj.jurnal_trans_sumber_tujuan_id,
-                                            dj.supplier,
-                                            dj.perusahaan,
-                                            cast(dj.keterangan as varchar(250)) as keterangan,
-                                            max(dj.nominal) as nominal,
-                                            dj.saldo,
-                                            dj.ref_id,
-                                            dj.asal,
-                                            dj.coa_asal,
-                                            dj.tujuan,
-                                            dj.coa_tujuan,
-                                            dj.unit,
-                                            dj.pic,
-                                            dj.tbl_name,
-                                            max(dj.tbl_id) as tbl_id
-                                        from det_jurnal dj
-                                        where
-                                            dj.".$nama_kolom." = '".$v_srgi['no_coa']."'
-                                        group by
-                                            dj.tanggal,
-                                            dj.periode,
-                                            dj.det_jurnal_trans_id,
-                                            dj.jurnal_trans_sumber_tujuan_id,
-                                            dj.supplier,
-                                            dj.perusahaan,
-                                            cast(dj.keterangan as varchar(250)),
-                                            dj.saldo,
-                                            dj.ref_id,
-                                            dj.asal,
-                                            dj.coa_asal,
-                                            dj.tujuan,
-                                            dj.coa_tujuan,
-                                            dj.unit,
-                                            dj.pic,
-                                            dj.tbl_name
-                                        */
+                                            dj.tanggal between '".$start_date."' and '".$end_date."'
                                     ) data
-                                    where
-                                        data.tanggal between '".$start_date."' and '".$end_date."'
                                 ) dj
                             left join
                                 (
                                     select srgi.*, ir.nama as item_report_nama from setting_report_group_item srgi
-                                    right join
+                                    left join
                                         item_report ir
                                         on
                                             srgi.item_report_id = ir.id
@@ -316,16 +239,14 @@ class LabaRugiSummaryBulanan extends Public_Controller {
                                         srgi.id_header = '".$v_srg['id']."'
                                 ) srgi
                                 on
-                                    dj.".$nama_kolom." = srgi.no_coa and
-                                    '".$v_srgi['posisi_jurnal']."' = srgi.posisi_jurnal 
+                                    dj.coa = srgi.no_coa
                             left join
                                 (
                                     select kode, kode_gabung_perusahaan from perusahaan group by kode, kode_gabung_perusahaan
                                 ) p
                                 on
                                     dj.perusahaan = p.kode
-                            where
-                                p.kode_gabung_perusahaan = '".$perusahaan."'
+                            -- where p.kode_gabung_perusahaan = '".$perusahaan."'
                             group by
                                 srgi.item_report_id,
                                 srgi.item_report_nama,
@@ -334,10 +255,6 @@ class LabaRugiSummaryBulanan extends Public_Controller {
                             order by
                                 srgi.urut asc
                         ";
-                        // if ( $v_srgi['no_coa'] == '919900' ) {
-                        //     // cetak_r($v_srgi);
-                        //     cetak_r( $sql );
-                        // }
                         $d_srgi = $m_conf->hydrateRaw( $sql );
 
                         if ( $d_srgi->count() > 0 ) {
@@ -354,37 +271,25 @@ class LabaRugiSummaryBulanan extends Public_Controller {
                             if ( !isset($data['lr_kotor']) ) {
                                 $data['lr_kotor']['nama'] = 'LABA KOTOR';
                                 $data['lr_kotor']['detail'][0] = array(
-                                    'debet' => 0,
-                                    'kredit' => 0
+                                    'nominal' => 0
                                 );
                             }
         
                             foreach ($d_srgi as $key => $value) {
                                 $key = $value['item_report_id'];
 
-                                // if ( $value['item_report_nama'] == 'BIAYA GAJI KARYAWAN' ) {
-                                //     cetak_r( $value );
-                                // }
-
-                                // if ( $key == 10 ) {
-                                //     cetak_r( $d_srgi );
-                                // }
-
                                 if ( !isset($data[ $v_srg['id'] ]['detail'][ $key ]) ) {
                                     $data[ $v_srg['id'] ]['detail'][ $key ] = array(
                                         'item_report_id' => $value['item_report_id'],
                                         'item_report_nama' => $value['item_report_nama'],
-                                        'debet' => $value['debet'],
-                                        'kredit' => $value['kredit']
+                                        'nominal' => $value['nominal']
                                     );
                                 } else {
-                                    $data[ $v_srg['id'] ]['detail'][ $key ]['debet'] += $value['debet'];
-                                    $data[ $v_srg['id'] ]['detail'][ $key ]['kredit'] += $value['kredit'];
+                                    $data[ $v_srg['id'] ]['detail'][ $key ]['nominal'] += $value['nominal'];
                                 }
         
                                 if ( stristr($v_srg['nama'], 'PENJUALAN') !== false || stristr($v_srg['nama'], 'BEBAN POKOK PENJUALAN') !== false ) {
-                                    $data['lr_kotor']['detail'][0]['debet'] += $value['debet'];
-                                    $data['lr_kotor']['detail'][0]['kredit'] += $value['kredit'];
+                                    $data['lr_kotor']['detail'][0]['nominal'] += $value['nominal'];
                                 }
 
                                 ksort($data[ $v_srg['id'] ]['detail']);
@@ -392,156 +297,6 @@ class LabaRugiSummaryBulanan extends Public_Controller {
                         }
                     }
                 }
-
-                // $m_conf = new \Model\Storage\Conf();
-                // $sql = "
-                //     select * from
-                //     (
-                //         select
-                //             case
-                //                 when srgi_debet.posisi = 'debet' then
-                //                     srgi_debet.item_report_id
-                //                 when srgi_kredit.posisi = 'kredit' then
-                //                     srgi_kredit.item_report_id
-                //             end as item_report_id,
-                //             case
-                //                 when srgi_debet.posisi = 'debet' then
-                //                     srgi_debet.item_report_nama
-                //                 when srgi_kredit.posisi = 'kredit' then
-                //                     srgi_kredit.item_report_nama
-                //             end as item_report_nama,
-                //             case
-                //                 when srgi_debet.posisi = 'debet' then
-                //                     sum(dj.nominal)
-                //             end as debet,
-                //             case
-                //                 when srgi_kredit.posisi = 'kredit' then
-                //                     sum(dj.nominal)
-                //             end as kredit
-                //         from (
-                //                 select
-                //                     max(dj.id) as id,
-                //                     max(dj.id_header) as id_header,
-                //                     dj.tanggal,
-                //                     dj.det_jurnal_trans_id,
-                //                     dj.jurnal_trans_sumber_tujuan_id,
-                //                     dj.supplier,
-                //                     dj.perusahaan,
-                //                     cast(dj.keterangan as varchar(250)) as keterangan,
-                //                     max(dj.nominal) as nominal,
-                //                     dj.saldo,
-                //                     dj.ref_id,
-                //                     dj.asal,
-                //                     dj.coa_asal,
-                //                     dj.tujuan,
-                //                     dj.coa_tujuan,
-                //                     dj.unit,
-                //                     dj.pic,
-                //                     dj.tbl_name,
-                //                     max(dj.tbl_id) as tbl_id
-                //                 from det_jurnal dj
-                //                 group by
-                //                     dj.tanggal,
-                //                     dj.det_jurnal_trans_id,
-                //                     dj.jurnal_trans_sumber_tujuan_id,
-                //                     dj.supplier,
-                //                     dj.perusahaan,
-                //                     cast(dj.keterangan as varchar(250)),
-                //                     dj.saldo,
-                //                     dj.ref_id,
-                //                     dj.asal,
-                //                     dj.coa_asal,
-                //                     dj.tujuan,
-                //                     dj.coa_tujuan,
-                //                     dj.unit,
-                //                     dj.pic,
-                //                     dj.tbl_name
-                //             ) dj
-                //         left join
-                //             (
-                //                 select srgi.*, ir.nama as item_report_nama from setting_report_group_item srgi
-                //                 right join
-                //                     item_report ir
-                //                     on
-                //                         srgi.item_report_id = ir.id
-                //                 where
-                //                     srgi.posisi = 'kredit'
-                //             ) srgi_kredit
-                //             on
-                //                 dj.coa_tujuan = srgi_kredit.no_coa 
-                //                 or
-                //                 dj.coa_asal = srgi_kredit.no_coa
-                //         left join
-                //             (
-                //                 select srgi.*, ir.nama as item_report_nama from setting_report_group_item srgi
-                //                 right join
-                //                     item_report ir
-                //                     on
-                //                         srgi.item_report_id = ir.id
-                //                 where
-                //                     srgi.posisi = 'debet'
-                //             ) srgi_debet
-                //             on
-                //                 dj.coa_tujuan = srgi_debet.no_coa 
-                //                 or
-                //                 dj.coa_asal = srgi_debet.no_coa
-                //         left join
-                //             (
-                //                 select kode, kode_gabung_perusahaan from perusahaan group by kode, kode_gabung_perusahaan
-                //             ) p
-                //             on
-                //                 dj.perusahaan = p.kode
-                //         where
-                //             p.kode_gabung_perusahaan = '".$perusahaan."' and
-                //             dj.tanggal between '".$start_date."' and '".$end_date."' and
-                //             (srgi_kredit.id_header = ".$v_srg['id']." or srgi_debet.id_header = ".$v_srg['id'].")
-                //         group by
-                //             srgi_debet.item_report_id,
-                //             srgi_kredit.item_report_id,
-                //             srgi_debet.item_report_nama,
-                //             srgi_kredit.item_report_nama,
-                //             srgi_debet.posisi,
-                //             srgi_kredit.posisi
-                //     ) _data
-                //     where
-                //         _data.item_report_id is not null
-                // ";
-
-                // $d_srgi = $m_conf->hydrateRaw( $sql );
-
-                // if ( $d_srgi->count() > 0 ) {
-                //     if ( !isset($data[ $v_srg['id'] ]) ) {
-                //         $data[ $v_srg['id'] ] = array(
-                //             'id' => $v_srg['id'],
-                //             'nama' => $v_srg['nama'],
-                //             'detail' => null
-                //         );
-                //     }
-
-                //     $d_srgi = $d_srgi->toArray();
-
-                //     if ( !isset($data['lr_kotor']) ) {
-                //         $data['lr_kotor']['nama'] = 'LABA KOTOR';
-                //         $data['lr_kotor']['detail'][0] = array(
-                //             'debet' => 0,
-                //             'kredit' => 0
-                //         );
-                //     }
-
-                //     foreach ($d_srgi as $key => $value) {
-                //         $data[ $v_srg['id'] ]['detail'][ $value['item_report_id'] ] = array(
-                //             'item_report_id' => $value['item_report_id'],
-                //             'item_report_nama' => $value['item_report_nama'],
-                //             'debet' => $value['debet'],
-                //             'kredit' => $value['kredit']
-                //         );
-
-                //         if ( stristr($v_srg['nama'], 'PENJUALAN') !== false || stristr($v_srg['nama'], 'BEBAN POKOK PENJUALAN') !== false ) {
-                //             $data['lr_kotor']['detail'][0]['debet'] += $value['debet'];
-                //             $data['lr_kotor']['detail'][0]['kredit'] += $value['kredit'];
-                //         }
-                //     }
-                // }
             }
         }
 

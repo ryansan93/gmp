@@ -14,6 +14,8 @@
                                     <th class="col-xs-1">Noreg</th>
                                     <th class="col-xs-2">Nama Plasma</th>
                                     <th class="col-xs-1">Kandang</th>
+                                    <th class="col-xs-1">Tgl LHK Terakhir</th>
+                                    <th class="col-xs-1">Umur LHK Terakhir</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -22,7 +24,7 @@
                                     <?php foreach ($data as $key => $value) { ?>
                                         <?php if ( $value['unit'] != $unit ) { ?>
                                             <tr>
-                                                <td colspan="3">
+                                                <td colspan="5">
                                                     <b>
                                                         <?php echo $value['unit']; ?>
                                                     </b>
@@ -31,9 +33,9 @@
                                         <?php } ?>
                                         <?php if ( $value['nik_ppl'] != $nik ) { ?>
                                             <tr>
-                                                <td colspan="3">
+                                                <td colspan="5">
                                                     <b>
-                                                        <?php echo !empty($value['nik_ppl']) ? $value['nik_ppl'] : '-'; ?> | <?php echo !empty($value['nama_ppl']) ? $value['nama_ppl'] : '-'; ?>
+                                                        <?php echo !empty($value['nik_ppl']) ? $value['nik_ppl'] : '-'; ?> | <?php echo !empty($value['nama_ppl']) ? strtoupper($value['nama_ppl']) : '-'; ?>
                                                     </b>
                                                 </td>
                                             </tr>
@@ -42,13 +44,15 @@
                                             <td><?php echo $value['noreg']; ?></td>
                                             <td><?php echo $value['nama_mitra']; ?></td>
                                             <td><?php echo $value['kandang']; ?></td>
+                                            <td><?php echo tglIndonesia($value['tgl_lhk_terakhir'], '-', ' '); ?></td>
+                                            <td><?php echo $value['umur']; ?></td>
                                         </tr>
                                         <?php $unit = $value['unit']; ?>
                                         <?php $nik = $value['nik_ppl']; ?>
 
                                         <?php if ( isset($data[ $key+1 ]['unit']) && ($value['unit'] != $data[ $key+1 ]['unit']) ) { ?>
                                             <tr>
-                                                <td colspan="3"><br></td>
+                                                <td colspan="5"><br></td>
                                             </tr>
                                         <?php } ?>
                                     <?php } ?>

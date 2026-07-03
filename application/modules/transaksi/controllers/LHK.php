@@ -1156,7 +1156,7 @@ class LHK extends Public_Controller
                                         dsts.id_header = dss.id
                                 where 
                                     dsts.kode_trans <> '".$id."' and 
-                                    dsts.tgl_trans > '".$tanggal."' and
+                                    dsts.tgl_trans >= '".$tanggal."' and
                                     dss.jenis_barang = 'pakan' and
                                     dss.noreg = '".$noreg."' and
                                     dss.tgl_trans <= '".$tanggal."'

@@ -483,6 +483,8 @@ class Pelanggan extends Public_Controller {
         // mengambil data pelanggan
 		$m_pelanggan = new \Model\Storage\Pelanggan_model();
 		$d_pelanggan = $m_pelanggan->where('tipe', 'pelanggan')->where('id', $id)->with('telepons')->with('banks')->with('logs')->first();
+
+		// cetak_r( $d_pelanggan, 1 );
 		
 		// mengambil lokasi
 		$lokasi = new \Model\Storage\Lokasi_model();

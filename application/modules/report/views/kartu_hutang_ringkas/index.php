@@ -64,6 +64,18 @@
 				</select>
 			</div>
 		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Jenis Hutang</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control jenis_hutang" multiple="multiple">
+					<?php if ( !empty($jenis_hutang) ) { ?>
+						<?php foreach ($jenis_hutang as $v) { ?>
+							<option value="<?php echo $v['value']; ?>"><?php echo $v['label']; ?></option>
+						<?php } ?>
+					<?php } ?>
+				</select>
+			</div>
+		</div>
 		<div class="col-xs-12 no-padding">
 			<div class="col-xs-12 no-padding">
 				<button type="button" class="col-xs-12 btn btn-primary" onclick="khl.getData()"><i class="fa fa-search"></i> Tampilkan</button>

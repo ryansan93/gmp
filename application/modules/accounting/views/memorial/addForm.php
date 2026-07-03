@@ -6,10 +6,10 @@
 				<input type="text" class="col-xs-12 form-control no_mm uppercase" placeholder="No. Memo" disabled>
 			</div>
 		</div>
-		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 			<div class="col-xs-3 no-padding"><label class="control-label">Voucher</label></div>
 			<div class="col-xs-6 no-padding" style="padding-right: 5px;">
-				<select class="form-control jurnal_trans" data-required="1">
+				<select class="form-control jurnal_trans">
 					<?php if ( !empty($jurnal_trans) ): ?>
 						<?php foreach ($jurnal_trans as $k_jt => $v_jt): ?>
 							<option value="<?php echo $v_jt['kode']; ?>" data-id="<?php echo $v_jt['id']; ?>"><?php echo $v_jt['nama']; ?></option>
@@ -18,7 +18,7 @@
 				</select>
 			</div>
 		</div>
-		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+		<!-- <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 			<div class="col-xs-3 no-padding"><label class="control-label">Unit</label></div>
 			<div class="col-xs-3 no-padding" style="padding-right: 5px;">
 				<select class="form-control unit" data-required="1">
@@ -29,7 +29,7 @@
 					<?php endif ?>
 				</select>
 			</div>
-		</div>
+		</div> -->
 		<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 			<div class="col-xs-3 no-padding"><label class="control-label">Tanggal Memo</label></div>
 			<div class="col-xs-4 no-padding">
@@ -119,10 +119,11 @@
 				<table class="table table-bordered tbl_detail" style="margin-bottom: 0px; max-width: 100%; width: 100%;">
 					<thead>
 						<tr>
-							<th class="col-xs-2">Transaksi</th>
+							<th class="col-xs-1">Unit</th>
+							<th class="col-xs-2 hide">Transaksi</th>
 							<th class="col-xs-2">Debet</th>
 							<th class="col-xs-2">Kredit</th>
-							<th class="col-xs-3">Keterangan</th>
+							<th class="col-xs-2">Keterangan</th>
 							<th class="col-xs-1">No. Invoice</th>
 							<th class="col-xs-1">Nilai</th>
 							<th class="col-xs-1">Action</th>
@@ -131,6 +132,15 @@
 					<tbody>
 						<tr class="data" data-urut="">
 							<td>
+								<select class="form-control unit" data-required="1">
+									<?php if ( !empty($unit) ): ?>
+										<?php foreach ($unit as $k_unit => $v_unit): ?>
+											<option value="<?php echo $v_unit['kode']; ?>"><?php echo $v_unit['nama']; ?></option>
+										<?php endforeach ?>
+									<?php endif ?>
+								</select>
+							</td>
+							<td class="hide">
 								<select class="form-control det_jurnal_trans">
 									<option value="">Pilih Transaksi</option>
 									<?php if ( !empty($det_jurnal_trans) ): ?>

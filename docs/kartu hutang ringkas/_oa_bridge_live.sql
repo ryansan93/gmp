@@ -1,0 +1,12 @@
+SET NOCOUNT ON;
+DECLARE @start date='2026-06-01';
+DECLARE @d1 decimal(18,2), @d2 decimal(18,2), @ktr decimal(18,2), @pph decimal(18,2);
+SELECT @d1=SUM(kpop.total+kpop.potongan_pph_23) FROM konfirmasi_pembayaran_oa_pakan kpop WHERE kpop.tgl_bayar<@start;
+SELECT @d2=SUM(x.t) FROM (SELECT SUM(dtp.jumlah)*kp.ongkos_angkut t FROM det_terima_pakan dtp LEFT JOIN terima_pakan tp ON dtp.id_header=tp.id LEFT JOIN kirim_pakan kp ON tp.id_kirim_pakan=kp.id WHERE tp.tgl_terima<@start AND kp.jenis_kirim='opkg' AND NOT EXISTS(SELECT * FROM konfirmasi_pembayaran_oa_pakan_det kpopd WHERE no_sj=kp.no_sj) GROUP BY tp.no_bbm, kp.ekspedisi_id, kp.ongkos_angkut) x;
+SELECT @ktr=SUM(rpd.transfer) FROM realisasi_pembayaran_det rpd JOIN realisasi_pembayaran rp ON rpd.id_header=rp.id WHERE rpd.transaksi='OA PAKAN' AND rp.tgl_realisasi<@start;
+SELECT @pph=SUM(potongan_pph_23) FROM konfirmasi_pembayaran_oa_pakan WHERE tgl_bayar<@start;
+SELECT CAST(@d1 AS decimal(18,2)) d1_konfir_bruto, CAST(@d2 AS decimal(18,2)) d2_freight_blm_konfir, CAST(@ktr AS decimal(18,2)) transfer, CAST(@pph AS decimal(18,2)) pph_konfir;
+PRINT '--- GL 21212 TURUN per lawan akun ---';
+SELECT dj.coa_asal, COUNT(*) n, CAST(SUM(dj.nominal) AS decimal(18,2)) total FROM det_jurnal dj WHERE dj.coa_tujuan='21212.000' AND dj.tanggal<@start GROUP BY dj.coa_asal ORDER BY SUM(dj.nominal) DESC;
+PRINT '--- GL 21212 NAIK per lawan akun ---';
+SELECT dj.coa_tujuan, COUNT(*) n, CAST(SUM(dj.nominal) AS decimal(18,2)) total FROM det_jurnal dj WHERE dj.coa_asal='21212.000' AND dj.tanggal<@start GROUP BY dj.coa_tujuan ORDER BY SUM(dj.nominal) DESC;

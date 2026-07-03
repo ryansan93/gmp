@@ -123,6 +123,14 @@ class LaporanHutangRingkas extends Public_Controller {
             }
         }
 
+        // Optimasi: push-down filter jenis ke level "trans" agar SQL Server mem-prune
+        // branch UNION ALL jenis yang tidak dipilih (RHPP/OA/dll tak ikut dihitung).
+        // Hasil identik dgn filter luar data.jenis; hanya mempercepat.
+        $jenis_filter_trans = '';
+        if ( !empty($jenis_hutang) ) {
+            $jenis_filter_trans = "where trans.jenis in ('".implode("', '", $jenis_hutang)."')";
+        }
+
         // cetak_r( $where, 1 );
 
         // $valid_jenis = array('DOC', 'PAKAN', 'OVK', 'OVK EXTERN', 'RHPP', 'OA PAKAN');
@@ -458,7 +466,7 @@ class LaporanHutangRingkas extends Public_Controller {
                                 dn_post dp 
                                 on
                                     dpd.id_header = dp.id
-                            left join
+                            left hash join
                                 (
                                     /* DOC */
                                     select
@@ -616,7 +624,7 @@ class LaporanHutangRingkas extends Public_Controller {
                                 cn_post cp
                                 on
                                     cpd.id_header = cp.id
-                            left join
+                            left hash join
                                 (
                                     /* DOC */
                                     select
@@ -741,7 +749,7 @@ class LaporanHutangRingkas extends Public_Controller {
                                 realisasi_pembayaran rp
                                 on
                                     rpd.id_header = rp.id
-                            left join
+                            left hash join
                                 (
                                     select kpdd.kode_unit, kpd.nomor, kpd.tgl_bayar as tanggal, ((kpdd.total - case when kpd.tgl_bayar >= '2026-01-01' then isnull((select sum(cpd.pakai) from cn_post_det cpd where cpd.nomor = kpd.nomor), 0) else 0 end - isnull((select sum(mi.nilai) from mmitem mi where mi.coa_asal = '12040.000' and mi.coa_tujuan = '21180.200' and mi.no_invoice = kpd.nomor), 0)) * (0.25/100)) as pph from konfirmasi_pembayaran_doc_det kpdd 
                                     left join
@@ -897,7 +905,7 @@ class LaporanHutangRingkas extends Public_Controller {
                                     mm m
                                     on
                                         mi.no_mm = m.no_mm
-                                left join
+                                left hash join
                                     (
                                         select nomor, supplier from konfirmasi_pembayaran_voadip group by nomor, supplier
 
@@ -938,6 +946,7 @@ class LaporanHutangRingkas extends Public_Controller {
                             /* END - BAYAR LEWAT MEMO */
                             /* END - KREDIT */
                         ) trans
+                        ".$jenis_filter_trans."
                         group by
                             trans.supplier,
                             trans.jenis,
@@ -1252,7 +1261,7 @@ class LaporanHutangRingkas extends Public_Controller {
                             dn_post dp 
                             on
                                 dpd.id_header = dp.id
-                        left join
+                        left hash join
                             (
                                 /* DOC */
                                 select
@@ -1410,7 +1419,7 @@ class LaporanHutangRingkas extends Public_Controller {
                             cn_post cp
                             on
                                 cpd.id_header = cp.id
-                        left join
+                        left hash join
                             (
                                 /* DOC */
                                 select
@@ -1535,7 +1544,7 @@ class LaporanHutangRingkas extends Public_Controller {
                             realisasi_pembayaran rp
                             on
                                 rpd.id_header = rp.id
-                        left join
+                        left hash join
                             (
                                 select kpdd.kode_unit, kpd.nomor, kpd.tgl_bayar as tanggal, ((kpdd.total - case when kpd.tgl_bayar >= '2026-01-01' then isnull((select sum(cpd.pakai) from cn_post_det cpd where cpd.nomor = kpd.nomor), 0) else 0 end - isnull((select sum(mi.nilai) from mmitem mi where mi.coa_asal = '12040.000' and mi.coa_tujuan = '21180.200' and mi.no_invoice = kpd.nomor), 0)) * (0.25/100)) as pph from konfirmasi_pembayaran_doc_det kpdd 
                                 left join
@@ -1691,7 +1700,7 @@ class LaporanHutangRingkas extends Public_Controller {
                                 mm m
                                 on
                                     mi.no_mm = m.no_mm
-                            left join
+                            left hash join
                                 (
                                     select nomor, supplier from konfirmasi_pembayaran_voadip group by nomor, supplier
 
@@ -1732,6 +1741,7 @@ class LaporanHutangRingkas extends Public_Controller {
                         /* END - BAYAR LEWAT MEMO */
                         /* END - KREDIT */
                     ) trans
+                    ".$jenis_filter_trans."
                     group by
                         trans.supplier,
                         trans.jenis,

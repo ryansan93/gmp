@@ -253,11 +253,19 @@
 									<tr>
 										<td colspan="2">&nbsp;</td>
 									</tr>
-									<?php foreach ($data['lhk_pakan'] as $k_pkn => $v_pkn) { ?>
-										<tr class="pakan" data-id="<?php echo $v_pkn['kode_barang']; ?>">
-											<td class="nama"><?php echo strtoupper($v_pkn['pakan']['nama']); ?></td>
+									<?php foreach ($data_pakan as $k_dp => $v_dp) { ?>
+										<tr class="pakan" data-id="<?php echo $v_dp['kode']; ?>">
+											<?php 
+												$jumlah = 0;
+												foreach ($data['lhk_pakan'] as $k_pkn => $v_pkn) {
+													if ( $v_pkn['kode_barang'] == $v_dp['kode'] ) {
+														$jumlah = $v_pkn['jumlah'];
+													}
+												} 
+											?>
+											<td class="nama"><?php echo strtoupper($v_dp['nama']); ?></td>
 											<td>
-												<input type="text" class="form-control text-right jumlah" data-tipe="integer" placeholder="Jumlah" onblur="lhk.hitJmlPakan(this)" value="<?php echo angkaRibuan($v_pkn['jumlah']); ?>">
+												<input type="text" class="form-control text-right jumlah" data-tipe="integer" placeholder="Jumlah" onblur="lhk.hitJmlPakan(this)" value="<?php echo angkaRibuan($jumlah); ?>">
 											</td>
 										</tr>
 									<?php } ?>

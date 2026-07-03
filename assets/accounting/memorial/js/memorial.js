@@ -117,6 +117,7 @@ var mm = {
 
         $(tr).find('select.asal').select2();
         $(tr).find('select.tujuan').select2();
+        $(tr).find('select.unit').select2();
 
         var val_det_jurnal_trans = $(tr).find('select.det_jurnal_trans').select2().val();
 
@@ -201,12 +202,12 @@ var mm = {
         var tr = $(elm).closest('tr');
         var tbody = $(tr).closest('tbody');
 
-        $(tr).find('select.det_jurnal_trans, select.asal, select.tujuan').select2('destroy')
+        $(tr).find('select.unit, select.det_jurnal_trans, select.asal, select.tujuan').select2('destroy')
                                    .removeAttr('data-live-search')
                                    .removeAttr('data-select2-id')
                                    .removeAttr('aria-hidden')
                                    .removeAttr('tabindex');
-        $(tr).find('select.det_jurnal_trans option, select.asal option, select.tujuan option').removeAttr('data-select2-id');
+        $(tr).find('select.unit option, select.det_jurnal_trans option, select.asal option, select.tujuan option').removeAttr('data-select2-id');
 
         var tr_clone = $(tr).clone();
 
@@ -762,7 +763,8 @@ var mm = {
                             'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
                             'no_invoice': $(tr).find('input.no_invoice').val(),
-							'nilai': numeral.unformat($(tr).find('input.nilai').val())
+							'nilai': numeral.unformat($(tr).find('input.nilai').val()),
+                            'unit': $(tr).find('select.unit').select2().val()
                         };
 
                         no_urut++;
@@ -785,7 +787,7 @@ var mm = {
 						// 'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						// 'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
-						'unit': $(dcontent).find('select.unit').select2().val(),
+						// 'unit': $(dcontent).find('select.unit').select2().val(),
                         'detail': detail
                     };
 
@@ -837,7 +839,8 @@ var mm = {
                             'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
                             'keterangan': $(tr).find('input.keterangan').val().toUpperCase(),
                             'no_invoice': $(tr).find('input.no_invoice').val(),
-							'nilai': numeral.unformat($(tr).find('input.nilai').val())
+							'nilai': numeral.unformat($(tr).find('input.nilai').val()),
+                            'unit': $(tr).find('select.unit').select2().val()
                         };
 
                         no_urut++;
@@ -861,7 +864,7 @@ var mm = {
 						// 'tgl_tempo': !empty($(dcontent).find('#TglTempo input').val()) ? dateSQL( $(dcontent).find('#TglTempo').data('DateTimePicker').date() ) : null,
 						// 'tgl_cair': !empty($(dcontent).find('#TglCair input').val()) ? dateSQL( $(dcontent).find('#TglCair').data('DateTimePicker').date() ) : null,
                         'nilai': numeral.unformat($(dcontent).find('div.nilai input').val()),
-						'unit': $(dcontent).find('select.unit').select2().val(),
+						// 'unit': $(dcontent).find('select.unit').select2().val(),
                         'detail': detail
                     };
 

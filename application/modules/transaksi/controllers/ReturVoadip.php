@@ -1096,18 +1096,18 @@ class ReturVoadip extends Public_Controller
 
     public function tes()
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select * from retur_voadip rv where tgl_retur >= '2026-01-01'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        $arr = array(
+            1524,
+            1596,
+            1619,
+            1721,
+            1748
+        );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
-
-            foreach ($d_conf as $key => $value) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
-            }
+        foreach ($arr as $key => $value) {
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
         }
+
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 1510, 1510, 2);
     }
 }

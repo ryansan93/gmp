@@ -95,6 +95,10 @@ class GeneralLedger extends Public_Controller {
             $sql_unit = "where data.unit = '".$unit."'";
         }
 
+        // if ( $start_date == '2026-06-01' ) {
+        //     $end_date = '2026-06-14';
+        // }
+
         $m_conf = new \Model\Storage\Conf();
         $sql_sa = "
             /* SALDO AWAL */

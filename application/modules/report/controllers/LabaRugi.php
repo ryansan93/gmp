@@ -109,385 +109,312 @@ class LabaRugi extends Public_Controller {
         $params = $this->input->get('params');
 
         $perusahaan = $params['perusahaan'];
-        $unit = $params['unit'];
-        $bulan = $params['bulan'];
-        $tahun = substr($params['tahun'], 0, 4);
+        $unit       = $params['unit'];
+        $bulan      = $params['bulan'];
+        $tahun      = substr($params['tahun'], 0, 4);
 
-        $sql_unit = "and rdim_submit.kode_unit = '".$unit."'";
-        if ( $unit == 'all' ) {
-            $sql_unit = null;
+        $sql_unit = null;
+        if ( $unit != 'all' ) {
+            $sql_unit = "and rdim_submit.kode_unit = '".$unit."'";
         }
 
-        $sql_perusahaan = "and prs.kode_gabung_perusahaan = '".$perusahaan."'";
-        if ( $perusahaan == 'all' ) {
-            $sql_perusahaan = null;
+        $sql_perusahaan = null;
+        if ( $perusahaan != 'all' ) {
+            $sql_perusahaan = "and prs.kode_gabung_perusahaan = '".$perusahaan."'";
         }
 
-        $i = 0;
-        $_bulan = 12;
-        if ( $bulan != 'all' ) {
-            $i = $bulan-1;
-            $_bulan = $bulan;
+        /* ── Date range & month-grouping SQL fragments ───────────────────── */
+        if ( $bulan == 'all' ) {
+            $start_date    = $tahun.'-01-01 00:00:00';
+            $end_date      = $tahun.'-12-31 23:59:59';
+            $sql_sel_month = 'MONTH(ts.tgl_tutup) as bulan_num,';
+            $sql_grp_month = 'MONTH(ts.tgl_tutup),';
+            $sql_outer_sel = 'bulan_num,';
+            $sql_outer_grp = 'GROUP BY bulan_num';
+            $sql_order     = 'ORDER BY bulan_num';
+        } else {
+            $angka_bulan   = str_pad($bulan, 2, '0', STR_PAD_LEFT);
+            $date_first    = $tahun.'-'.$angka_bulan.'-01';
+            $start_date    = date('Y-m-d', strtotime($date_first)).' 00:00:00';
+            $end_date      = date('Y-m-t', strtotime($date_first)).' 23:59:59';
+            $sql_sel_month = '';
+            $sql_grp_month = '';
+            $sql_outer_sel = '';
+            $sql_outer_grp = '';
+            $sql_order     = '';
         }
 
-        $data = null;
-        for (; $i < $_bulan; $i++) { 
-            $angka_bulan = (strlen($i+1) == 1) ? '0'.($i+1) : ($i+1);
-
-            $date = $tahun.'-'.$angka_bulan.'-01';
-            $start_date = date("Y-m-d", strtotime($date)).' 00:00:00';
-            $end_date = date("Y-m-t", strtotime($date)).' 23:59:59';
-
-            $sql = "
+        /* ── Single SQL (1 query for all months, or 1 query for specific month) */
+        $sql = "
+            select
+                {$sql_outer_sel}
+                count(*) as jumlah_rhpp,
+                sum(ekor_panen) as ekor_panen,
+                sum(total_pakai_pakan) as total_pakai_pakan,
+                sum(lama_panen) / count(*) as lama_panen,
+                sum(kg_panen) as kg_panen,
+                sum(total) as total,
+                sum(rata_harga_panen) / count(*) as rata_harga_panen,
+                sum(umur) / count(*) as umur,
+                ABS(((sum(populasi_panen) - sum(ekor_panen)) / sum(populasi_panen)) * 100) as deplesi,
+                sum(fcr) / count(*) as fcr,
+                sum(bb) / count(*) as bb,
+                sum(ip) / count(*) as ip,
+                sum(rhpp_ke_pusat) / count(*) as rata_rhpp_ke_pusat,
+                sum(transfer) / count(*) as rata_transfer,
+                sum(lr_inti) as lr_inti,
+                ABS(sum(lr_inti)) - sum(biaya_operasional) as lr_inti_tanpa_ops_300,
+                sum(bonus_pasar) as bonus_pasar,
+                sum(tot_pembelian_sapronak) as total_sapronak,
+                sum(pdpt_peternak_belum_pajak) as total_pendapatan_peternak,
+                (sum(pdpt_peternak_belum_pajak) / sum(populasi_panen)) as rata_total_pendapatan_peternak,
+                sum(biaya_materai) as total_biaya_materai,
+                sum(biaya_operasional) as total_biaya_ops_300,
+                sum(modal_inti) / count(*) as modal_inti,
+                sum(modal_inti_sebenarnya) / count(*) as modal_inti_sebenarnya
+            from (
                 select
-                    count(*) as jumlah_rhpp,
-                    sum(ekor_panen) as ekor_panen,
-                    sum(total_pakai_pakan) as total_pakai_pakan,
-                    sum(lama_panen) / count(*) as lama_panen,
-                    sum(ekor_panen) as ekor_panen,
-                    sum(kg_panen) as kg_panen,
-                    sum(total) as total,
-                    sum(rata_harga_panen) / count(*) as rata_harga_panen,
-                    sum(umur) / count(*) as umur,
-                    ABS(((sum(populasi_panen) - sum(ekor_panen)) / sum(populasi_panen)) * 100) as deplesi,
-                    sum(fcr) / count(*) as fcr,
-                    sum(bb) / count(*) as bb,
-                    sum(ip) / count(*) as ip,
-                    sum(rhpp_ke_pusat) / count(*) as rata_rhpp_ke_pusat,
-                    sum(transfer) / count(*) as rata_transfer,
-                    sum(lr_inti) as lr_inti,
-                    ABS(sum(lr_inti)) - sum(biaya_operasional) as lr_inti_tanpa_ops_300,
-                    sum(bonus_pasar) as bonus_pasar,
-                    sum(tot_pembelian_sapronak) as total_sapronak,
-                    sum(pdpt_peternak_belum_pajak) as total_pendapatan_peternak,
-                    (sum(pdpt_peternak_belum_pajak) / sum(populasi_panen)) as rata_total_pendapatan_peternak,
-                    sum(biaya_materai) as total_biaya_materai,
-                    sum(biaya_operasional) as total_biaya_ops_300,
-                    sum(modal_inti) / count(*) as modal_inti,
-                    sum(modal_inti_sebenarnya) / count(*) as modal_inti_sebenarnya
-                from (
-                    select 
-                        ts.noreg,
-                        ts.tgl_tutup,
-                        CAST(drs.ekor_panen AS FLOAT) as ekor_panen,
-                        sum(drs.kg_panen) as kg_panen,
-                        drs.total as total,
-                        drs.rata_harga_panen as rata_harga_panen,
-                        kp_tujuan.total_pakan as total_pakan_terima,
-                        CASE
-                            WHEN kp_asal.total_pakan IS NOT NULL THEN kp_asal.total_pakan
-                            ELSE 0
-                        END AS total_pakan_pindah,
-                        CASE
-                            WHEN rp.total_retur IS NOT NULL THEN rp.total_retur
-                            ELSE 0
-                        END AS total_retur,
-                        CASE
-                            WHEN kp_asal.total_pakan IS NOT NULL AND rp.total_retur IS NOT NULL THEN (kp_tujuan.total_pakan - kp_asal.total_pakan - rp.total_retur)
-                            WHEN kp_asal.total_pakan IS NOT NULL AND rp.total_retur IS NULL THEN (kp_tujuan.total_pakan - kp_asal.total_pakan)
-                            WHEN kp_asal.total_pakan IS NULL AND rp.total_retur IS NOT NULL THEN (kp_tujuan.total_pakan - rp.total_retur)
-                            ELSE kp_tujuan.total_pakan
-                        END AS total_pakai_pakan,
-                        drs.tgl_panen_awal,
-                        drs.tgl_panen_akhir,
-                        drs.lama_panen,
-                        (DateDiff (Day,rhpp.tgl_docin,max(drs.tgl_panen_akhir)) + 1) as umur,
-                        CAST(rhpp.populasi AS FLOAT) as populasi_panen,
-                        CAST(rhpp.fcr AS FLOAT) as fcr,
-                        CAST(rhpp.bb AS FLOAT) as bb,
-                        CAST(rhpp.ip AS FLOAT) as ip,
-                        (sum((DateDiff (Day,drs.tgl_panen_akhir,ts.tgl_tutup) + 1)) / count(*)) as rhpp_ke_pusat,
-                        (sum((DateDiff (Day,drs.tgl_panen_akhir,kp.tgl_bayar) + 1)) / count(*)) as transfer,
-                        rhpp.lr_inti,
-                        rhpp.bonus_pasar,
-                        rhpp.tot_pembelian_sapronak,
-                        rhpp.pdpt_peternak_belum_pajak,
-                        rhpp.biaya_materai,
-                        rhpp.biaya_operasional,
-                        (rhpp.tot_pembelian_sapronak+rhpp.pdpt_peternak_belum_pajak+rhpp.biaya_materai+rhpp.biaya_operasional) / sum(drs.kg_panen) as modal_inti,
-                        ((rhpp.tot_pembelian_sapronak+rhpp.pdpt_peternak_belum_pajak+rhpp.biaya_materai+rhpp.biaya_operasional)-rhpp.bonus_pasar) / sum(drs.kg_panen) as modal_inti_sebenarnya
-                    from
-                        tutup_siklus ts 
-                    right join
-                        (
-                            select max(id) as id, noreg from tutup_siklus group by noreg
-                        ) _ts
-                        on
-                            ts.id = _ts.id
-                    right join
-                        (
-                            select r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg, r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip, rhpp_inti.lr_inti, isnull(rhpp_plasma.bonus_pasar, 0) as bonus_pasar, rhpp_inti.tot_pembelian_sapronak, isnull(rhpp_plasma.pdpt_peternak_belum_pajak, 0) as pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional
-                            from rhpp r
-                            left join
-                                (
-                                    select noreg, bonus_pasar, pdpt_peternak_belum_pajak from rhpp r where jenis = 'rhpp_plasma'
-                                ) rhpp_plasma
-                                on
-                                    rhpp_plasma.noreg = r.noreg 
-                            left join
-                                (
-                                    select noreg, lr_inti, biaya_materai, biaya_operasional, tot_pembelian_sapronak from rhpp r where jenis = 'rhpp_inti'
-                                ) rhpp_inti
-                                on
-                                    rhpp_inti.noreg = r.noreg
-                            right join
-                                tutup_siklus ts 
-                                on
-                                    r.id_ts = ts.id
-                            right join
-                                (
-                                    select rs.noreg, k.id as id_kandang, k.kandang as no_kandang, w.kode as kode_unit from rdim_submit rs
-                                    right join
-                                        kandang k 
-                                        on
-                                            rs.kandang = k.id
-                                    right join
-                                        wilayah w 
-                                        on
-                                            k.unit = w.id
-                                )  rdim_submit
-                                on
-                                    rdim_submit.noreg = r.noreg 
-                            where
-                                r.lr_inti is not null and
-                                ts.tgl_tutup between '".$start_date."' and '".$end_date."'
-                                ".$sql_unit."
-                            group by r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg, r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip, rhpp_inti.lr_inti, rhpp_plasma.bonus_pasar, rhpp_inti.tot_pembelian_sapronak, rhpp_plasma.pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional
-                        ) rhpp
-                        on
-                            rhpp.noreg = ts.noreg
-                    right join
-                        (
-                            select rs.noreg, k.id as id_kandang, k.kandang as no_kandang, w.kode as kode_unit from rdim_submit rs
-                            right join
-                                kandang k 
-                                on
-                                    rs.kandang = k.id
-                            right join
-                                wilayah w 
-                                on
-                                    k.unit = w.id
-                        )  rdim_submit
-                        on
-                            rdim_submit.noreg = rhpp.noreg 
-                    left join
-                        (
-                            select
-                                rs.noreg as noreg,
-                                min(rs.tgl_panen) as tgl_panen_awal,
-                                max(rs.tgl_panen) as tgl_panen_akhir,
-                                (DateDiff (Day,min(rs.tgl_panen),max(rs.tgl_panen)) + 1) as lama_panen,
-                                (DateDiff (Day,min(rs.tgl_panen),max(rs.tgl_panen)) + 1) as umur_panen,
-                                sum(drs.ekor) as ekor_panen,
-                                sum(drs.tonase) as kg_panen,
-                                sum(drs.tonase * drs.harga) as total,
-                                (sum(drs.tonase * drs.harga) / sum(drs.tonase)) as rata_harga_panen
-                            from det_real_sj drs
-                            inner join
-                                (select max(id) as id, tgl_panen, noreg from real_sj group by tgl_panen, noreg) rs
-                                on
-                                    drs.id_header = rs.id
-                            where
-                                rs.noreg in (
-                                    select noreg from tutup_siklus
-                                    where tgl_tutup between '".$start_date."' and '".$end_date."'
-                                )
-                            group by
-                                rs.noreg
-                        ) drs
-                        on
-                            drs.noreg = rhpp.noreg
-                    left join
-                        (
-                            select kp.tujuan as tujuan, sum(dtp.jumlah) as total_pakan
-                            from kirim_pakan kp
-                            inner join
-                                terima_pakan tp
-                                on
-                                    kp.id = tp.id_kirim_pakan
-                            inner join
-                                det_terima_pakan dtp
-                                on
-                                    tp.id = dtp.id_header
-                            where
-                                kp.tujuan in (
-                                    select noreg from tutup_siklus
-                                    where tgl_tutup between '".$start_date."' and '".$end_date."'
-                                )
-                            group by
-                                kp.tujuan
-                        ) kp_tujuan
-                        on
-                            drs.noreg = kp_tujuan.tujuan
-                    left join
-                        (
-                            select kp.asal as asal, sum(dtp.jumlah) AS total_pakan
-                            from kirim_pakan kp
-                            inner join
-                                terima_pakan tp
-                                on
-                                    kp.id = tp.id_kirim_pakan
-                            inner join
-                                det_terima_pakan dtp
-                                on
-                                    tp.id = dtp.id_header
-                            where
-                                kp.asal in (
-                                    select noreg from tutup_siklus
-                                    where tgl_tutup between '".$start_date."' and '".$end_date."'
-                                )
-                            group by
-                                kp.asal
-                        ) kp_asal
-                        on
-                            drs.noreg = kp_asal.asal
-                    left join
-                        (
-                            select rp.id_asal, sum(drp.jumlah) as total_retur
-                            from retur_pakan rp
-                            inner join
-                                det_retur_pakan drp
-                                on
-                                    rp.id = drp.id_header
-                            where
-                                rp.id_asal in (
-                                    select noreg from tutup_siklus
-                                    where tgl_tutup between '".$start_date."' and '".$end_date."'
-                                )
-                            group by
-                                rp.id_asal
-                        ) as rp
-                        on
-                            drs.noreg = rp.id_asal
-                    left join
-                        (
-                            select
-                                kppd2.noreg,
-                                kpp.tgl_bayar
-                            from 
-                                konfirmasi_pembayaran_peternak_det2 kppd2
-                            right join
-                                konfirmasi_pembayaran_peternak_det kppd
-                                on
-                                    kppd2.id_header = kppd.id 
-                            right join
-                                konfirmasi_pembayaran_peternak kpp 
-                                on
-                                    kpp.id = kppd.id_header 
-                            group by
-                                kppd2.noreg,
-                                kpp.tgl_bayar
-                        ) kp
-                        on
-                            kp.noreg = ts.noreg 
-                    left join
-                        (
-                            select mm1.* from mitra_mapping mm1
-                            left join
-                                (select max(id) as id, nim from mitra_mapping group by nim) mm2
-                                on
-                                    mm1.id = mm2.id
-                        ) mm
-                        on
-                            mm.nim = substring(ts.noreg, 0, 8)
-                    left join
-                        mitra m
-                        on
-                            m.id = mm.mitra
-                    left join
-                        perusahaan prs
-                        on
-                            prs.kode = m.perusahaan
-                    where
-                        ts.tgl_tutup between '".$start_date."' and '".$end_date."'
-                        ".$sql_unit."
-                        ".$sql_perusahaan."
-                    group by
-                        ts.noreg,
-                        ts.tgl_tutup,
-                        kp_tujuan.total_pakan,
-                        kp_asal.total_pakan,
-                        rp.total_retur,
-                        drs.ekor_panen,
-                        drs.total,
-                        drs.rata_harga_panen,
-                        drs.tgl_panen_awal,
-                        drs.tgl_panen_akhir,
-                        drs.lama_panen,
-                        drs.umur_panen,
-                        rhpp.tgl_docin,
-                        rhpp.populasi,
-                        rhpp.fcr,
-                        rhpp.bb,
-                        rhpp.ip,
-                        rhpp.lr_inti,
-                        rhpp.bonus_pasar,
-                        rhpp.tot_pembelian_sapronak,
-                        rhpp.pdpt_peternak_belum_pajak,
-                        rhpp.biaya_materai,
-                        rhpp.biaya_operasional
-                ) as data
-            ";
+                    {$sql_sel_month}
+                    ts.noreg,
+                    ts.tgl_tutup,
+                    CAST(drs.ekor_panen AS FLOAT) as ekor_panen,
+                    sum(drs.kg_panen) as kg_panen,
+                    drs.total as total,
+                    drs.rata_harga_panen as rata_harga_panen,
+                    kp_tujuan.total_pakan as total_pakan_terima,
+                    ISNULL(kp_asal.total_pakan, 0) AS total_pakan_pindah,
+                    ISNULL(rp.total_retur, 0) AS total_retur,
+                    kp_tujuan.total_pakan - ISNULL(kp_asal.total_pakan, 0) - ISNULL(rp.total_retur, 0) AS total_pakai_pakan,
+                    drs.tgl_panen_awal,
+                    drs.tgl_panen_akhir,
+                    drs.lama_panen,
+                    (DateDiff(Day, rhpp.tgl_docin, max(drs.tgl_panen_akhir)) + 1) as umur,
+                    CAST(rhpp.populasi AS FLOAT) as populasi_panen,
+                    CAST(rhpp.fcr AS FLOAT) as fcr,
+                    CAST(rhpp.bb AS FLOAT) as bb,
+                    CAST(rhpp.ip AS FLOAT) as ip,
+                    (sum((DateDiff(Day, drs.tgl_panen_akhir, ts.tgl_tutup) + 1)) / count(*)) as rhpp_ke_pusat,
+                    (sum((DateDiff(Day, drs.tgl_panen_akhir, kp.tgl_bayar) + 1)) / count(*)) as transfer,
+                    rhpp.lr_inti,
+                    rhpp.bonus_pasar,
+                    rhpp.tot_pembelian_sapronak,
+                    rhpp.pdpt_peternak_belum_pajak,
+                    rhpp.biaya_materai,
+                    rhpp.biaya_operasional,
+                    (rhpp.tot_pembelian_sapronak + rhpp.pdpt_peternak_belum_pajak + rhpp.biaya_materai + rhpp.biaya_operasional) / sum(drs.kg_panen) as modal_inti,
+                    ((rhpp.tot_pembelian_sapronak + rhpp.pdpt_peternak_belum_pajak + rhpp.biaya_materai + rhpp.biaya_operasional) - rhpp.bonus_pasar) / sum(drs.kg_panen) as modal_inti_sebenarnya
+                from
+                    tutup_siklus ts
+                inner join
+                    (
+                        select max(id) as id, noreg
+                        from tutup_siklus
+                        where tgl_tutup between '".$start_date."' and '".$end_date."'
+                        group by noreg
+                    ) _ts on ts.id = _ts.id
+                inner join
+                    (
+                        select
+                            r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg,
+                            r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip,
+                            rhpp_inti.lr_inti,
+                            isnull(rhpp_plasma.bonus_pasar, 0) as bonus_pasar,
+                            rhpp_inti.tot_pembelian_sapronak,
+                            isnull(rhpp_plasma.pdpt_peternak_belum_pajak, 0) as pdpt_peternak_belum_pajak,
+                            rhpp_inti.biaya_materai,
+                            rhpp_inti.biaya_operasional
+                        from rhpp r
+                        inner join tutup_siklus ts on r.id_ts = ts.id
+                        inner join
+                            (
+                                select rs.noreg, w.kode as kode_unit
+                                from rdim_submit rs
+                                inner join kandang k on rs.kandang = k.id
+                                inner join wilayah w on k.unit = w.id
+                            ) rdim_submit on rdim_submit.noreg = r.noreg
+                        left join
+                            (
+                                select noreg, bonus_pasar, pdpt_peternak_belum_pajak
+                                from rhpp where jenis = 'rhpp_plasma'
+                            ) rhpp_plasma on rhpp_plasma.noreg = r.noreg
+                        left join
+                            (
+                                select noreg, lr_inti, biaya_materai, biaya_operasional, tot_pembelian_sapronak
+                                from rhpp where jenis = 'rhpp_inti'
+                            ) rhpp_inti on rhpp_inti.noreg = r.noreg
+                        where
+                            r.lr_inti is not null and
+                            ts.tgl_tutup between '".$start_date."' and '".$end_date."'
+                            ".$sql_unit."
+                        group by
+                            r.noreg, r.populasi, r.tgl_docin, r.jml_panen_ekor, r.jml_panen_kg,
+                            r.bb, r.fcr, r.deplesi, r.rata_umur, r.ip,
+                            rhpp_inti.lr_inti, rhpp_plasma.bonus_pasar, rhpp_inti.tot_pembelian_sapronak,
+                            rhpp_plasma.pdpt_peternak_belum_pajak, rhpp_inti.biaya_materai, rhpp_inti.biaya_operasional
+                    ) rhpp on rhpp.noreg = ts.noreg
+                inner join
+                    (
+                        select rs.noreg, k.id as id_kandang, k.kandang as no_kandang, w.kode as kode_unit
+                        from rdim_submit rs
+                        inner join kandang k on rs.kandang = k.id
+                        inner join wilayah w on k.unit = w.id
+                    ) rdim_submit on rdim_submit.noreg = rhpp.noreg
+                left join
+                    (
+                        select rs.noreg, min(rs.tgl_panen) as tgl_panen_awal, max(rs.tgl_panen) as tgl_panen_akhir,
+                            (DateDiff(Day, min(rs.tgl_panen), max(rs.tgl_panen)) + 1) as lama_panen,
+                            (DateDiff(Day, min(rs.tgl_panen), max(rs.tgl_panen)) + 1) as umur_panen,
+                            sum(drs.ekor) as ekor_panen, sum(drs.tonase) as kg_panen,
+                            sum(drs.tonase * drs.harga) as total,
+                            (sum(drs.tonase * drs.harga) / sum(drs.tonase)) as rata_harga_panen
+                        from det_real_sj drs
+                        inner join (select max(id) as id, tgl_panen, noreg from real_sj group by tgl_panen, noreg) rs on drs.id_header = rs.id
+                        where rs.noreg in (select noreg from tutup_siklus where tgl_tutup between '".$start_date."' and '".$end_date."')
+                        group by rs.noreg
+                    ) drs on drs.noreg = rhpp.noreg
+                left join
+                    (
+                        select kp.tujuan, sum(dtp.jumlah) as total_pakan
+                        from kirim_pakan kp
+                        inner join terima_pakan tp on kp.id = tp.id_kirim_pakan
+                        inner join det_terima_pakan dtp on tp.id = dtp.id_header
+                        where kp.tujuan in (select noreg from tutup_siklus where tgl_tutup between '".$start_date."' and '".$end_date."')
+                        group by kp.tujuan
+                    ) kp_tujuan on drs.noreg = kp_tujuan.tujuan
+                left join
+                    (
+                        select kp.asal, sum(dtp.jumlah) as total_pakan
+                        from kirim_pakan kp
+                        inner join terima_pakan tp on kp.id = tp.id_kirim_pakan
+                        inner join det_terima_pakan dtp on tp.id = dtp.id_header
+                        where kp.asal in (select noreg from tutup_siklus where tgl_tutup between '".$start_date."' and '".$end_date."')
+                        group by kp.asal
+                    ) kp_asal on drs.noreg = kp_asal.asal
+                left join
+                    (
+                        select rp.id_asal, sum(drp.jumlah) as total_retur
+                        from retur_pakan rp
+                        inner join det_retur_pakan drp on rp.id = drp.id_header
+                        where rp.id_asal in (select noreg from tutup_siklus where tgl_tutup between '".$start_date."' and '".$end_date."')
+                        group by rp.id_asal
+                    ) rp on drs.noreg = rp.id_asal
+                left join
+                    (
+                        select kppd2.noreg, kpp.tgl_bayar
+                        from konfirmasi_pembayaran_peternak_det2 kppd2
+                        inner join konfirmasi_pembayaran_peternak_det kppd on kppd2.id_header = kppd.id
+                        inner join konfirmasi_pembayaran_peternak kpp on kpp.id = kppd.id_header
+                        where kppd2.noreg in (select noreg from tutup_siklus where tgl_tutup between '".$start_date."' and '".$end_date."')
+                        group by kppd2.noreg, kpp.tgl_bayar
+                    ) kp on kp.noreg = ts.noreg
+                left join
+                    (
+                        select mm1.*
+                        from mitra_mapping mm1
+                        inner join (select max(id) as id, nim from mitra_mapping group by nim) mm2 on mm1.id = mm2.id
+                    ) mm on mm.nim = substring(ts.noreg, 0, 8)
+                left join mitra m on m.id = mm.mitra
+                left join perusahaan prs on prs.kode = m.perusahaan
+                where
+                    ts.tgl_tutup between '".$start_date."' and '".$end_date."'
+                    ".$sql_unit."
+                    ".$sql_perusahaan."
+                group by
+                    {$sql_grp_month}
+                    ts.noreg,
+                    ts.tgl_tutup,
+                    kp_tujuan.total_pakan,
+                    kp_asal.total_pakan,
+                    rp.total_retur,
+                    drs.ekor_panen,
+                    drs.total,
+                    drs.rata_harga_panen,
+                    drs.tgl_panen_awal,
+                    drs.tgl_panen_akhir,
+                    drs.lama_panen,
+                    drs.umur_panen,
+                    rhpp.tgl_docin,
+                    rhpp.populasi,
+                    rhpp.fcr,
+                    rhpp.bb,
+                    rhpp.ip,
+                    rhpp.lr_inti,
+                    rhpp.bonus_pasar,
+                    rhpp.tot_pembelian_sapronak,
+                    rhpp.pdpt_peternak_belum_pajak,
+                    rhpp.biaya_materai,
+                    rhpp.biaya_operasional
+            ) as data
+            {$sql_outer_grp}
+            {$sql_order}
+        ";
 
-            $m_conf = new \Model\Storage\Conf();
-            $d_conf = $m_conf->hydrateRaw($sql);
+        $m_conf = new \Model\Storage\Conf();
+        $d_conf = $m_conf->hydrateRaw($sql);
+        $results = ( $d_conf->count() > 0 ) ? $d_conf->toArray() : [];
 
-            $_data = null;
-            if ( $d_conf->count() > 0 ) {
-                $_data = $d_conf->toArray();
+        /* ── Map results ke struktur $data per bulan ─────────────────────── */
+        $data = null;
+
+        if ( $bulan == 'all' ) {
+            for ($m = 1; $m <= 12; $m++) {
+                $date_m     = $tahun.'-'.str_pad($m, 2, '0', STR_PAD_LEFT).'-01';
+                $nama_bulan = explode(' ', tglIndonesia($date_m, '-', ' ', true))[1];
+                $data[$m-1] = [
+                    'bulan'       => $nama_bulan,
+                    'jumlah_rhpp' => 0,
+                    'data'        => [ 'performa' => null, 'panen_dan_rhpp_plasma' => null, 'laporan_inti' => null ],
+                ];
             }
-
-            $nama_bulan = explode(' ', tglIndonesia($date, '-', ' ', true))[1];
-
-            $kolom_performa = array('ekor_panen', 'total_pakai_pakan', 'lama_panen', 'umur', 'deplesi', 'fcr', 'bb', 'ip');
-            $kolom_panen_dan_rhpp_plasma = array('ekor_panen', 'kg_panen', 'total', 'rata_harga_panen', 'total_pendapatan_peternak', 'rata_total_pendapatan_peternak', 'rata_rhpp_ke_pusat', 'rata_transfer');
-            $kolom_laporan_inti = array('modal_inti', 'modal_inti_sebenarnya', 'total_biaya_ops_300', 'lr_inti_tanpa_ops_300', 'lr_inti', 'total_biaya_ops_300');
-            $performa = null;
-            $panen_dan_rhpp_plasma = null;
-            $laporan_inti = null;
-            if ( !empty($_data) ) {
-                if ( !empty($kolom_performa) ) {
-                    foreach ($kolom_performa as $key => $value) {
-                        if ( !empty($_data[0][ $value ]) ) {
-                            $performa[ $value ] = $_data[0][ $value ];
-                        }
-                    }
-                }
-
-                if ( !empty($kolom_panen_dan_rhpp_plasma) ) {
-                    foreach ($kolom_panen_dan_rhpp_plasma as $key => $value) {
-                        if ( !empty($_data[0][ $value ]) ) {
-                            $panen_dan_rhpp_plasma[ $value ] = $_data[0][ $value ];
-                        }
-                    }
-                }
-
-                if ( !empty($kolom_laporan_inti) ) {
-                    foreach ($kolom_laporan_inti as $key => $value) {
-                        if ( !empty($_data[0][ $value ]) ) {
-                            $laporan_inti[ $value ] = $_data[0][ $value ];
-                        }
-                    }
-                }
+            foreach ($results as $row) {
+                $idx = (int)$row['bulan_num'] - 1;
+                $data[$idx]['jumlah_rhpp'] = $row['jumlah_rhpp'];
+                $data[$idx]['data']        = $this->_buildDataColumns($row);
             }
-
-            $data[ $i ]['bulan'] = $nama_bulan;
-            $data[ $i ]['jumlah_rhpp'] = $_data[0]['jumlah_rhpp'];
-            $data[ $i ]['data'] = array(
-                'performa' => $performa, 
-                'panen_dan_rhpp_plasma' => $panen_dan_rhpp_plasma, 
-                'laporan_inti' => $laporan_inti
-            );
+        } else {
+            $idx        = (int)$bulan - 1;
+            $date_m     = $tahun.'-'.str_pad($bulan, 2, '0', STR_PAD_LEFT).'-01';
+            $nama_bulan = explode(' ', tglIndonesia($date_m, '-', ' ', true))[1];
+            $row        = !empty($results) ? $results[0] : null;
+            $data[$idx] = [
+                'bulan'       => $nama_bulan,
+                'jumlah_rhpp' => $row ? $row['jumlah_rhpp'] : 0,
+                'data'        => $row ? $this->_buildDataColumns($row) : [ 'performa' => null, 'panen_dan_rhpp_plasma' => null, 'laporan_inti' => null ],
+            ];
         }
 
-        $content['data'] = $data;
-        $content['tahun'] = $tahun;
-        $content['unit'] = $unit;
+        $content['data']       = $data;
+        $content['tahun']      = $tahun;
+        $content['unit']       = $unit;
         $content['perusahaan'] = $perusahaan;
 
         $html = $this->load->view('report/laba_rugi/list', $content, TRUE);
-
         echo $html;
+    }
+
+    private function _buildDataColumns(array $row)
+    {
+        $kolom_performa              = ['ekor_panen', 'total_pakai_pakan', 'lama_panen', 'umur', 'deplesi', 'fcr', 'bb', 'ip'];
+        $kolom_panen_dan_rhpp_plasma = ['ekor_panen', 'kg_panen', 'total', 'rata_harga_panen', 'total_pendapatan_peternak', 'rata_total_pendapatan_peternak', 'rata_rhpp_ke_pusat', 'rata_transfer'];
+        $kolom_laporan_inti          = ['modal_inti', 'modal_inti_sebenarnya', 'total_biaya_ops_300', 'lr_inti_tanpa_ops_300', 'lr_inti'];
+
+        $performa = $panen_dan_rhpp_plasma = $laporan_inti = null;
+
+        foreach ($kolom_performa as $col) {
+            if ( !empty($row[$col]) ) $performa[$col] = $row[$col];
+        }
+        foreach ($kolom_panen_dan_rhpp_plasma as $col) {
+            if ( !empty($row[$col]) ) $panen_dan_rhpp_plasma[$col] = $row[$col];
+        }
+        foreach ($kolom_laporan_inti as $col) {
+            if ( !empty($row[$col]) ) $laporan_inti[$col] = $row[$col];
+        }
+
+        return [
+            'performa'              => $performa,
+            'panen_dan_rhpp_plasma' => $panen_dan_rhpp_plasma,
+            'laporan_inti'          => $laporan_inti,
+        ];
     }
 
     public function getDataViewForm($unit, $bulan, $tahun, $perusahaan)
@@ -635,25 +562,26 @@ class LabaRugi extends Public_Controller {
                     rdim_submit.noreg = rhpp.noreg 
             left join
                 (
-                    select 
-                        rs.noreg as noreg, 
+                    select
+                        rs.noreg as noreg,
                         min(rs.tgl_panen) as tgl_panen_awal,
                         max(rs.tgl_panen) as tgl_panen_akhir,
-                        (DateDiff (Day,min(rs.tgl_panen),max(rs.tgl_panen)) + 1) as lama_panen,
-                        (DateDiff (Day,min(rs.tgl_panen),max(rs.tgl_panen)) + 1) as umur_panen,
+                        (DateDiff(Day, min(rs.tgl_panen), max(rs.tgl_panen)) + 1) as lama_panen,
+                        (DateDiff(Day, min(rs.tgl_panen), max(rs.tgl_panen)) + 1) as umur_panen,
                         sum(drs.ekor) as ekor_panen,
                         sum(drs.tonase) as kg_panen,
-                        sum(drs.tonase * drs.harga) as total, 
+                        sum(drs.tonase * drs.harga) as total,
                         (sum(drs.tonase * drs.harga) / sum(drs.tonase)) as rata_harga_panen
-                    from 
-                        det_real_sj drs 
-                    right join
-                        (select max(id) as id, tgl_panen, noreg from real_sj group by tgl_panen, noreg) rs 
-                        on
-                            drs.id_header = rs.id
-                    group by 
-                        rs.noreg  
-                ) drs 
+                    from det_real_sj drs
+                    inner join
+                        (select max(id) as id, tgl_panen, noreg from real_sj group by tgl_panen, noreg) rs
+                        on drs.id_header = rs.id
+                    where rs.noreg in (
+                        select noreg from tutup_siklus
+                        where tgl_tutup between '".$start_date."' and '".$end_date."'
+                    )
+                    group by rs.noreg
+                ) drs
                 on
                     drs.noreg = rhpp.noreg
             left join
@@ -696,12 +624,14 @@ class LabaRugi extends Public_Controller {
                             from kirim_pakan kp
                             inner join
                                 terima_pakan tp
-                                on
-                                    kp.id = tp.id_kirim_pakan
+                                on kp.id = tp.id_kirim_pakan
                             inner join
                                 det_terima_pakan dtp
-                                on
-                                    tp.id = dtp.id_header
+                                on tp.id = dtp.id_header
+                            where kp.asal in (
+                                select noreg from tutup_siklus
+                                where tgl_tutup between '".$start_date."' and '".$end_date."'
+                            )
                             group by
                                 kp.asal,
                                 dtp.item
@@ -718,8 +648,11 @@ class LabaRugi extends Public_Controller {
                             from retur_pakan rp
                             inner join
                                 det_retur_pakan drp
-                                on
-                                    rp.id = drp.id_header
+                                on rp.id = drp.id_header
+                            where rp.id_asal in (
+                                select noreg from tutup_siklus
+                                where tgl_tutup between '".$start_date."' and '".$end_date."'
+                            )
                             group by
                                 rp.id_asal,
                                 drp.item
@@ -745,22 +678,19 @@ class LabaRugi extends Public_Controller {
                     select
                         kppd2.noreg,
                         kpp.tgl_bayar
-                    from 
-                        konfirmasi_pembayaran_peternak_det2 kppd2
-                    right join
-                        konfirmasi_pembayaran_peternak_det kppd
-                        on
-                            kppd2.id_header = kppd.id 
-                    right join
-                        konfirmasi_pembayaran_peternak kpp 
-                        on
-                            kpp.id = kppd.id_header 
+                    from konfirmasi_pembayaran_peternak_det2 kppd2
+                    inner join konfirmasi_pembayaran_peternak_det kppd on kppd2.id_header = kppd.id
+                    inner join konfirmasi_pembayaran_peternak kpp on kpp.id = kppd.id_header
+                    where kppd2.noreg in (
+                        select noreg from tutup_siklus
+                        where tgl_tutup between '".$start_date."' and '".$end_date."'
+                    )
                     group by
                         kppd2.noreg,
                         kpp.tgl_bayar
                 ) kp
                 on
-                    kp.noreg = ts.noreg 
+                    kp.noreg = ts.noreg
             left join
                 perusahaan prs
                 on

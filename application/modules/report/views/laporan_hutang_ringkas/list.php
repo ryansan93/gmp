@@ -9,7 +9,8 @@
     <tr class="abu">
         <td class="col-xs-1"><b>ID Supplier</b></td>
         <td class="col-xs-2"><b>Nama Supplier</b></td>
-        <td class="col-xs-2"><b>Jenis</b></td>
+        <td class="col-xs-1"><b>Jenis</b></td>
+        <td class="col-xs-1"><b>Unit</b></td>
         <td class="col-xs-2"><b>Saldo Awal</b></td>
         <td class="col-xs-1"><b>Debet</b></td>
         <td class="col-xs-1"><b>Kredit</b></td>
@@ -21,6 +22,7 @@
             <td><?php echo strtoupper($value['supplier']); ?></td>
             <td><?php echo strtoupper($value['nama_supplier']); ?></td>
             <td><?php echo strtoupper($value['jenis']); ?></td>
+            <td><?php echo strtoupper($value['unit']); ?></td>
             <td class="text-right"><?php echo ($value['saldo_awal'] >= 0) ? angkaDecimal($value['saldo_awal']) : '('.angkaDecimal(abs($value['saldo_awal'])).')'; ?></td>
             <td class="text-right"><?php echo angkaDecimal($value['debet']); ?></td>
             <td class="text-right"><?php echo angkaDecimal($value['kredit']); ?></td>
@@ -37,7 +39,7 @@
     <?php } ?>
 
     <tr class="kuning">
-        <td colspan="3"><b>Total Keseluruhan</b></td>
+        <td colspan="4"><b>Total Keseluruhan</b></td>
         <td class="text-right"><b><?php echo ($gt_saldo_awal >= 0) ? angkaDecimal($gt_saldo_awal) : '('.angkaDecimal(abs($gt_saldo_awal)).')'; ?></b></td>
         <td class="text-right"><b><?php echo angkaDecimal($gt_debet); ?></b></td>
         <td class="text-right"><b><?php echo angkaDecimal($gt_kredit); ?></b></td>

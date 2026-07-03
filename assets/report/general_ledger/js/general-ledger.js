@@ -34,7 +34,7 @@ var gl = {
 			var params = {
 				'bulan': $('.bulan').select2().val(),
 				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() ),
-				'unit': $('.unit').select2().val(),
+				'unit': $('select.unit').select2().val(),
 				'perusahaan': $('.perusahaan').select2().val()
 			};
 
@@ -115,7 +115,7 @@ var gl = {
 			var params = {
 				'bulan': $('.bulan').select2().val(),
 				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() ),
-				'unit': $('.unit').select2().val(),
+				'unit': $('select.unit').select2().val(),
 				'perusahaan': $('.perusahaan').select2().val()
 			};
 

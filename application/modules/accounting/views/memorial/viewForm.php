@@ -5,7 +5,7 @@
 			<label class="control-label">: <?php echo $data['no_mm']; ?></label>
 		</div>
 	</div>
-	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<div class="col-xs-12 no-padding hide" style="margin-bottom: 5px;">
 		<div class="col-xs-3 no-padding"><label class="control-label">Voucher</label></div>
 		<div class="col-xs-4 no-padding">
 			<label class="control-label">: <?php echo strtoupper($data['jurnal_trans_nama']); ?></label>
@@ -63,7 +63,7 @@
 			<table class="table table-bordered tbl_detail" style="margin-bottom: 0px; max-width: 100%; width: 100%;">
 				<thead>
 					<tr>
-						<th class="col-xs-2">Transaksi</th>
+						<th class="col-xs-2">Unit</th>
 						<th class="col-xs-2">Debet</th>
 						<th class="col-xs-2">Kredit</th>
 						<th class="col-xs-3">Keterangan</th>
@@ -75,7 +75,8 @@
 					<?php if ( !empty($detail) ) { ?>
 						<?php foreach ($detail as $k_det => $v_det) { ?>
 							<tr class="data" data-urut="">
-								<td><?php echo strtoupper($v_det['det_jurnal_trans_nama']) ?></td>
+								<!-- <td><?php echo strtoupper($v_det['det_jurnal_trans_nama']) ?></td> -->
+								<td><?php echo strtoupper($v_det['unit']) ?></td>
 								<td><?php echo (isset($v_det['coa_tujuan']) && !empty($v_det['coa_tujuan'])) ? strtoupper($v_det['coa_tujuan'].' | '.$v_det['coa_tujuan_nama']) : '-'; ?></td>
 								<td><?php echo (isset($v_det['coa_asal']) && !empty($v_det['coa_asal'])) ? strtoupper($v_det['coa_asal'].' | '.$v_det['coa_asal_nama']) : '-'; ?></td>
 								<td><?php echo !empty($v_det['keterangan']) ? strtoupper($v_det['keterangan']) : '-'; ?></td>

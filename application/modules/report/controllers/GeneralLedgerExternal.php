@@ -797,6 +797,7 @@ class GeneralLedgerExternal extends Public_Controller {
                 data.no_coa asc,
                 data.unit asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

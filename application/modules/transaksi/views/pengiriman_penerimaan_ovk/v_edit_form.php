@@ -19,7 +19,7 @@
         </div>
         <div class="col-lg-2" style="padding-left: 0px;">
             <div class="input-group date datetimepicker" name="tgl_kirim_ov" id="tgl_kirim_ov">
-                <input type="text" class="form-control text-center" placeholder="Tanggal Kirim" data-tgl="<?php echo $data_ov['tanggal']; ?>" />
+                <input type="text" class="form-control text-center" placeholder="Tanggal Kirim" data-tgl="<?php echo (isset($data_ov['tanggal']) && !empty($data_ov['tanggal'])) ? $data_ov['tanggal'] : ''; ?>" />
                 <span class="input-group-addon">
                     <span class="glyphicon glyphicon-calendar"></span>
                 </span>
@@ -259,7 +259,7 @@
 		<div class="col-lg-2">Tgl Terima</div>
 		<div class="col-lg-2">
 			<div class="input-group date datetimepicker lock_date_fiskal" name="tgl_terima" id="tgl_terima">
-		        <input type="text" class="form-control text-center" placeholder="Tanggal Terima" data-required="1" data-tgl="<?php echo $data['terima']['tgl_terima']; ?>" />
+		        <input type="text" class="form-control text-center" placeholder="Tanggal Terima" data-required="1" data-tgl="<?php echo (isset($data['terima']['tgl_terima']) && !empty($data['terima']['tgl_terima'])) ? $data['terima']['tgl_terima'] : ''; ?>" />
 		        <span class="input-group-addon">
 		            <span class="glyphicon glyphicon-calendar"></span>
 		        </span>

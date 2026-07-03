@@ -1512,75 +1512,29 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-        // $arr = array(
-        //     15030,
-        //     15161,
-        //     15186,
-        //     15238,
-        //     15315,
-        //     15334,
-        //     15340,
-        //     15753,
-        //     16003,
-        //     16042,
-        //     16136,
-        //     16145,
-        //     16297,
-        //     16627,
-        //     16747,
-        //     16752,
-        //     16905,
-        //     17023,
-        //     17024,
-        //     17040,
-        //     17076,
-        //     17133,
-        //     17178,
-        //     17218
+        $arr = array(
+            32370
+        );
 
-        //     'BCA32602030168',
-        //     'BCA32602030184',
-        //     'BCA32602040009',
-        //     'BCA32602040140',
-        //     'BCA32602040143',
-        //     'BCA32602040168',
-        //     'BCA32602050093',
-        //     'BCA32602050150',
-        //     'BCA32602060060',
-        //     'BCA32602060062',
-        //     'BCA32602070002',
-        //     'BCA32602070055',
-        //     'BCA32602080001',
-        //     'BCA32602090112',
-        //     'BCA32602090174',
-        //     'BCA32602090183',
-        //     'BCA32602110016',
-        //     'BCA32602110026',
-        //     'BCA32602110049',
-        //     'BCA32602130104',
-        //     'BCA32602140038',
-        //     'BCA32602150104',
-        //     'BCA32602160001',
-        //     'BCA32602160020',
-        //     'BCA32602180007',
-        //     'BCA32602190049',
-        //     'BCA32602190058',
-        //     'BCA32602190086',
-        //     'BCA32602200101',
-        //     'BCA32602200106',
-        //     'BCA32602200120',
-        //     'BCA32602210067',
-        //     'BCA32602210091',
-        //     'BCA32602220059',
-        //     'BCA32602220065',
+        foreach ($arr as $key => $value) {
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+            // Modules::run( 'base/InsertJurnal/exec', $this->url, 13188, 13188, 3);
+        }
 
-        // );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select * from pembayaran_pelanggan pp where no_pelanggan = '21B201' and tgl_bayar >= '2026-03-01'
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        // foreach ($arr as $key => $value) {
-        //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
-        //     // Modules::run( 'base/InsertJurnal/exec', $this->url, 13188, 13188, 3);
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
+
+        //     foreach ($d_conf as $key => $value) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+        //     }
         // }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 16905, 16905, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 19471, 19471, 2);
 	}
 }

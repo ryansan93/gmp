@@ -166,9 +166,9 @@ class RpahMobile extends Public_Controller {
         $params = $this->input->get('params');
         $edit = $this->input->get('edit');
 
-        $noreg = $params['noreg'];
-        $tgl_panen = $params['tgl_panen'];
-        $nomor = $params['nomor'];
+        $noreg = (isset($params['noreg']) && !empty($params['noreg'])) ? $params['noreg'] : null;
+        $tgl_panen = (isset($params['tgl_panen']) && !empty($params['tgl_panen'])) ? $params['tgl_panen'] : null;
+        $nomor = (isset($params['nomor']) && !empty($params['nomor'])) ? $params['nomor'] : null;
 
         $content = array();
         $html = "url not found";

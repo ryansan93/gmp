@@ -86,7 +86,7 @@ class Pegawai extends Public_Controller
 					'nik' => $v_karyawan['nik'],
 					'nama' => $v_karyawan['nama'],
 					'jabatan' => $v_karyawan['jabatan'],
-					'atasan' => isset($d_atasan['nama']) ? $d_atasan['nama'] : null,
+					'atasan' => (isset($d_atasan['nama']) && !empty($d_atasan['nama'])) ? $d_atasan['nama'] : null,
 					'marketing' => $v_karyawan['marketing'],
 					'kordinator' => $v_karyawan['kordinator'],
 					'status' => $v_karyawan['status'],

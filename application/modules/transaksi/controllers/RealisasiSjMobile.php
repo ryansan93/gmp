@@ -1175,14 +1175,7 @@ class RealisasiSjMobile extends Public_Controller {
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 5048, 5048, 2);
 
         $array = array(
-            10248,
-            10252,
-            10258,
-            10318,
-            10320,
-            10366,
-            10368,
-            10370
+            11655
         );
 
         foreach ($array as $k_val => $v_val) {

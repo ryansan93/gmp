@@ -683,6 +683,7 @@ class PenerimaanPakan extends Public_Controller {
             $deskripsi_log_terima_pakan = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $d_terima_pakan, $deskripsi_log_terima_pakan);
 
+            $tanggal = $params['tgl_terima'];
             $noreg1 = null;
             $noreg2 = null;
             $m_conf = new \Model\Storage\Conf();
@@ -708,6 +709,34 @@ class PenerimaanPakan extends Public_Controller {
                 if ( $d_conf['jenis_kirim'] == 'opkp' ) {
                     $noreg1 = $d_conf['asal'];
                     $noreg2 = $d_conf['tujuan'];
+
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select
+                            min(tp_asal.tgl_terima) as tanggal
+                        from terima_pakan tp 
+                        left join
+                            kirim_pakan kp 
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        left join
+                            det_kirim_pakan dkp 
+                            on
+                                dkp.id_header = kp.id
+                        left join
+                            kirim_pakan kp_asal
+                            on	
+                                dkp.no_sj_asal = kp_asal.no_sj
+                        left join
+                            terima_pakan tp_asal
+                            on
+                                kp_asal.id = tp_asal.id_kirim_pakan 
+                        where tp.id = ".$id_terima."
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+                    if ( $d_conf->count() > 0 ) {
+                        $tanggal = $d_conf->toArray()[0]['tanggal'];
+                    }
                 }
             }
 
@@ -715,7 +744,7 @@ class PenerimaanPakan extends Public_Controller {
             // $this->result['content'] = array('id_terima' => $id_terima);
             $this->result['content'] = array(
                 'id' => $id_terima,
-                'tanggal' => $params['tgl_terima'],
+                'tanggal' => $tanggal,
                 'delete' => 0,
                 'message' => 'Data Penerimaan Pakan berhasil di simpan.',
                 'status_jurnal' => 2,
@@ -812,6 +841,34 @@ class PenerimaanPakan extends Public_Controller {
                     if ( $d_conf['jenis_kirim'] == 'opkp' ) {
                         $noreg1 = $d_conf['asal'];
                         $noreg2 = $d_conf['tujuan'];
+
+                        $m_conf = new \Model\Storage\Conf();
+                        $sql = "
+                            select
+                                min(tp_asal.tgl_terima) as tanggal
+                            from terima_pakan tp 
+                            left join
+                                kirim_pakan kp 
+                                on
+                                    tp.id_kirim_pakan = kp.id
+                            left join
+                                det_kirim_pakan dkp 
+                                on
+                                    dkp.id_header = kp.id
+                            left join
+                                kirim_pakan kp_asal
+                                on	
+                                    dkp.no_sj_asal = kp_asal.no_sj
+                            left join
+                                terima_pakan tp_asal
+                                on
+                                    kp_asal.id = tp_asal.id_kirim_pakan 
+                            where tp.id = ".$params['id']."
+                        ";
+                        $d_conf = $m_conf->hydrateRaw( $sql );
+                        if ( $d_conf->count() > 0 ) {
+                            $tgl_trans = $d_conf->toArray()[0]['tanggal'];
+                        }
                     }
                 }
 
@@ -850,6 +907,7 @@ class PenerimaanPakan extends Public_Controller {
             $deskripsi_log_terima_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
 
+            $tanggal = $d_terima_pakan->tgl_terima;
             $noreg1 = null;
             $noreg2 = null;
             $m_conf = new \Model\Storage\Conf();
@@ -875,13 +933,41 @@ class PenerimaanPakan extends Public_Controller {
                 if ( $d_conf['jenis_kirim'] == 'opkp' ) {
                     $noreg1 = $d_conf['asal'];
                     $noreg2 = $d_conf['tujuan'];
+
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select
+                            min(tp_asal.tgl_terima) as tanggal
+                        from terima_pakan tp 
+                        left join
+                            kirim_pakan kp 
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        left join
+                            det_kirim_pakan dkp 
+                            on
+                                dkp.id_header = kp.id
+                        left join
+                            kirim_pakan kp_asal
+                            on	
+                                dkp.no_sj_asal = kp_asal.no_sj
+                        left join
+                            terima_pakan tp_asal
+                            on
+                                kp_asal.id = tp_asal.id_kirim_pakan 
+                        where tp.id = ".$params['id']."
+                    ";
+                    $d_conf = $m_conf->hydrateRaw( $sql );
+                    if ( $d_conf->count() > 0 ) {
+                        $tanggal = $d_conf->toArray()[0]['tanggal'];
+                    }
                 }
             }
 
             $this->result['status'] = 1;
             $this->result['content'] = array(
                 'id' => $d_terima_pakan->id,
-                'tanggal' => $d_terima_pakan->tgl_terima,
+                'tanggal' => $tanggal,
                 'delete' => 1,
                 'message' => 'Data Penerimaan Pakan berhasil di hapus.',
                 'status_jurnal' => 3,
@@ -1190,17 +1276,23 @@ class PenerimaanPakan extends Public_Controller {
     }
 
     public function hitStokSiklus() {
-        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '11456', '2025-12-04', 2, '25102450101', '25110400101'";
+        $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '40953', '2026-04-19', 0, 2";
         $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '40953', '2026-04-19', 2";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        cetak_r($d_conf, 1);
     }
 
     public function tes() {
-        // $arr = array(
-        //     17485,
-        //     17486,
-        //     19343,
-        //     19369,
-        // );
+        $arr = array(
+            '40953'
+        );
+        foreach ($arr as $key => $value) {
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+        }
 
         // $conf = new \Model\Storage\Conf();
         // $sql = "
@@ -1243,6 +1335,14 @@ class PenerimaanPakan extends Public_Controller {
         //     }
         // }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 20511, 20511, 3);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 23432, 23432, 2);
+    }
+
+    public function fDelete($id) {
+        $m_tp = new \Model\Storage\TerimaPakan_model();
+        $m_tp->where('id', $id)->delete();
+
+        $m_dtp = new \Model\Storage\TerimaPakanDetail_model();
+        $m_dtp->where('id_header', $id)->delete();
     }
 }

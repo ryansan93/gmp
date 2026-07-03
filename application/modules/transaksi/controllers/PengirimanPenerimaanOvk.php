@@ -1907,47 +1907,55 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 }
             }
 
-            $id = $d_terima_voadip->id;
-            $id_old = $d_terima_voadip->id;
-            $tanggal = $d_terima_voadip->tgl_terima;
+            $id = (!empty($d_terima_voadip)) ? $d_terima_voadip->id : null;
+            $id_old = (!empty($d_terima_voadip)) ? $d_terima_voadip->id : null;
+            $tanggal = (!empty($d_terima_voadip)) ? $d_terima_voadip->tgl_terima : null;
             $delete = 1;
             $status_jurnal = 3;
             $status = 3;
             $noreg1_old = $noreg1;
             $noreg2_old = $noreg2;
 
-            $m_conf = new \Model\Storage\Conf();
-            $sql = "
-                select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
-            ";
-            $d_conf = $m_conf->hydrateRaw( $sql );
-
-            $id_kirim_voadip = null;
-            if ( $d_conf->count() > 0 ) {
-                $id_kirim_voadip = $d_conf->toArray()[0]['id_kirim_voadip'];
-            }
-            
-            $this->insertKonfirmasi( $id, $delete );
-
-            $sql = "EXEC hitung_stok_voadip_by_transaksi 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
-
-            $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1."', '".$noreg2."'";
-            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
-
-            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
-                if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
-                    $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1_old."', '".$noreg2_old."'";
-                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+            if ( !empty($id) ) {
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select id_kirim_voadip from terima_voadip tv where tv.id = '".$id."'
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+    
+                $id_kirim_voadip = null;
+                if ( $d_conf->count() > 0 ) {
+                    $id_kirim_voadip = $d_conf->toArray()[0]['id_kirim_voadip'];
                 }
+                
+                $this->insertKonfirmasi( $id, $delete );
+    
+                $sql = "EXEC hitung_stok_voadip_by_transaksi 'terima_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+    
+                $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1."', '".$noreg2."'";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+    
+                if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                    if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                        $sql = "EXEC hitung_stok_siklus 'voadip', 'terima_voadip', '".$id."', '".$tanggal."', ".$status.",'".$noreg1_old."', '".$noreg2_old."'";
+                        $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                    }
+                }
+                
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
+            } else {
+                $m_kirim_detail = new \Model\Storage\KirimVoadipDetail_model();
+                $m_kirim_detail->where('id_header', $params['id'])->delete();
+
+                $m_kirim = new \Model\Storage\KirimVoadip_model();
+                $m_kirim->where('id', $params['id'])->delete();
             }
-            
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
 
             $this->result['status'] = 1;
             $this->result['content'] = array(
-                'id' => $d_terima_voadip->id,
-                'tanggal' => $d_terima_voadip->tgl_terima,
+                'id' => (!empty($d_terima_voadip)) ? $d_terima_voadip->id : null,
+                'tanggal' => (!empty($d_terima_voadip)) ? $d_terima_voadip->tgl_terima : null,
                 'delete' => 1,
                 'message' => 'Data Voadip (terima + kirim) berhasil di hapus.',
                 'status_jurnal' => 3,

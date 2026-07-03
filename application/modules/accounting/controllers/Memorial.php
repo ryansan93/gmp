@@ -228,7 +228,7 @@ class Memorial extends Public_Controller {
             $m_mm->supplier = $params['supplier'];
             $m_mm->keterangan = $params['keterangan'];
             $m_mm->nilai = $params['nilai'];
-            $m_mm->unit = $params['unit'];
+            // $m_mm->unit = $params['unit'];
             $m_mm->save();
 
             foreach ($params['detail'] as $k_det => $v_det) {
@@ -245,6 +245,7 @@ class Memorial extends Public_Controller {
                 $m_mmi->keterangan = $v_det['keterangan'];
                 $m_mmi->no_invoice = $v_det['no_invoice'];
                 $m_mmi->nilai = $v_det['nilai'];
+                $m_mmi->unit = $v_det['unit'];
                 $m_mmi->save();
 
                 $id_djt = null;
@@ -265,7 +266,8 @@ class Memorial extends Public_Controller {
                 $m_djurnal->coa_asal = (isset($v_det['coa_asal']) && !empty($v_det['coa_asal'])) ? $v_det['coa_asal'] : null;
                 $m_djurnal->tujuan = (isset($v_det['coa_tujuan']) && !empty($v_det['coa_tujuan'])) ? $v_det['coa_tujuan_nama'] : null;
                 $m_djurnal->coa_tujuan = (isset($v_det['coa_tujuan']) && !empty($v_det['coa_tujuan'])) ? $v_det['coa_tujuan'] : null;
-                $m_djurnal->unit = $params['unit'];
+                // $m_djurnal->unit = $params['unit'];
+                $m_djurnal->unit = $v_det['unit'];
                 $m_djurnal->tbl_name = $m_mm->getTable();
                 $m_djurnal->tbl_id = $no_mm;
                 $m_djurnal->invoice = $v_det['no_invoice'];
@@ -309,7 +311,7 @@ class Memorial extends Public_Controller {
                     'supplier' => $params['supplier'],
                     'keterangan' => $params['keterangan'],
                     'nilai' => $params['nilai'],
-                    'unit' => $params['unit'],
+                    // 'unit' => $params['unit'],
                 )
             );
 
@@ -333,6 +335,7 @@ class Memorial extends Public_Controller {
                 $m_mmi->keterangan = $v_det['keterangan'];
                 $m_mmi->no_invoice = $v_det['no_invoice'];
                 $m_mmi->nilai = $v_det['nilai'];
+                $m_mmi->unit = $v_det['unit'];
                 $m_mmi->save();
 
                 $id_djt = null;
@@ -353,7 +356,8 @@ class Memorial extends Public_Controller {
                 $m_djurnal->coa_asal = (isset($v_det['coa_asal']) && !empty($v_det['coa_asal'])) ? $v_det['coa_asal'] : null;
                 $m_djurnal->tujuan = (isset($v_det['coa_tujuan']) && !empty($v_det['coa_tujuan'])) ? $v_det['coa_tujuan_nama'] : null;
                 $m_djurnal->coa_tujuan = (isset($v_det['coa_tujuan']) && !empty($v_det['coa_tujuan'])) ? $v_det['coa_tujuan'] : null;
-                $m_djurnal->unit = $params['unit'];
+                // $m_djurnal->unit = $params['unit'];
+                $m_djurnal->unit = $v_det['unit'];
                 $m_djurnal->tbl_name = $m_mm->getTable();
                 $m_djurnal->tbl_id = $no_mm;
                 $m_djurnal->invoice = $v_det['no_invoice'];
@@ -544,9 +548,65 @@ class Memorial extends Public_Controller {
 
     public function tes()
     {
-        $tanggal = '2025-11-10';
-        $periode = substr(str_replace('-', '', $tanggal), 2, 6);
+        // $tanggal = '2025-11-10';
+        // $periode = substr(str_replace('-', '', $tanggal), 2, 6);
 
-        cetak_r( $periode );
+        // cetak_r( $periode );
+
+        $array = array(
+            'MM2606120001',
+            'MM2606120002',
+            'MM2606120003',
+            'MM2606120004',
+            'MM2606120005',
+            'MM2606120006',
+            'MM2606120007',
+            'MM2606120008',
+            'MM2606120009',
+            'MM2606120010',
+            'MM2606120011',
+            'MM2606120012',
+            'MM2606120013',
+            'MM2606120014',
+        );
+
+        foreach ($array as $key => $value) {
+            $m_mm = new \Model\Storage\Mm_model();
+
+            $m_djurnal = new \Model\Storage\DetJurnal_model();
+            $m_djurnal->where('tbl_name', $m_mm->getTable())->where('tbl_id', $value)->delete();
+
+            $m_mm = new \Model\Storage\Mm_model();
+            $d_mm = $m_mm->where('no_mm', $value)->first()->toArray();
+
+            $m_mmi = new \Model\Storage\MmItem_model;
+            $d_mmi = $m_mmi->where('no_mm', $value)->get()->toArray();
+
+            foreach ($d_mmi as $k_mmi => $v_mmi) {
+                $m_coa = new \Model\Storage\Coa_model();
+                $d_coa_asal = $m_coa->where('coa', $v_mmi['coa_asal'])->first()->toArray();
+                $d_coa_tujuan = $m_coa->where('coa', $v_mmi['coa_tujuan'])->first()->toArray();
+
+                $m_djurnal = new \Model\Storage\DetJurnal_model();
+                $m_djurnal->tanggal = $d_mm['tgl_mm'];
+                $m_djurnal->det_jurnal_trans_id = null;
+                $m_djurnal->supplier = $d_mm['no_supplier'];
+                $m_djurnal->keterangan = $v_mmi['keterangan'];
+                $m_djurnal->nominal = $v_mmi['nilai'];
+                $m_djurnal->asal = (isset($v_mmi['coa_asal']) && !empty($v_mmi['coa_asal'])) ? $d_coa_asal['nama_coa'] : null;
+                $m_djurnal->coa_asal = (isset($v_mmi['coa_asal']) && !empty($v_mmi['coa_asal'])) ? $v_mmi['coa_asal'] : null;
+                $m_djurnal->tujuan = (isset($v_mmi['coa_tujuan']) && !empty($v_mmi['coa_tujuan'])) ? $d_coa_tujuan['nama_coa'] : null;
+                $m_djurnal->coa_tujuan = (isset($v_mmi['coa_tujuan']) && !empty($v_mmi['coa_tujuan'])) ? $v_mmi['coa_tujuan'] : null;
+                // $m_djurnal->unit = $params['unit'];
+                $m_djurnal->unit = $d_mm['unit'];
+                $m_djurnal->tbl_name = $m_mm->getTable();
+                $m_djurnal->tbl_id = $d_mm['no_mm'];
+                $m_djurnal->invoice = $v_mmi['no_invoice'];
+                $m_djurnal->kode_trans = $d_mm['no_mm'];
+                $m_djurnal->kode_jurnal = $d_mm['no_mm'];
+                $m_djurnal->pelanggan = $d_mm['no_pelanggan'];
+                $m_djurnal->save();
+            }
+        }
     }
 }

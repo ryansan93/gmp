@@ -85,49 +85,49 @@ class TerimaPakanJurnal extends Public_Controller {
                 isnull(ds.total, 0) - isnull(sum(dj.nominal), 0) as selisih_jurnal
             from 
             (
-                    select 
-                        tp.id as tbl_id, 
-                        sum(dtp.jumlah) as jml_terima, 
-                        kp.no_order as kode_trans,
-                        tp.tgl_terima as tgl_trans, 
-                        'terima_pakan' as tbl_name
-                    from det_terima_pakan dtp 
-                    left join
-                        terima_pakan tp 
-                        on
-                            dtp.id_header = tp.id
-                    left join
-                        kirim_pakan kp 
-                        on
-                            tp.id_kirim_pakan = kp.id
-                    where
-                        tp.tgl_terima between '".$start_date."' and '".$end_date."'
-                    group by
-                        tp.id, 
-                        kp.no_order, 
-                        tp.tgl_terima
+                select 
+                    tp.id as tbl_id, 
+                    sum(dtp.jumlah) as jml_terima, 
+                    kp.no_order as kode_trans,
+                    tp.tgl_terima as tgl_trans, 
+                    'terima_pakan' as tbl_name
+                from det_terima_pakan dtp 
+                left join
+                    terima_pakan tp 
+                    on
+                        dtp.id_header = tp.id
+                left join
+                    kirim_pakan kp 
+                    on
+                        tp.id_kirim_pakan = kp.id
+                where
+                    tp.tgl_terima between '".$start_date."' and '".$end_date."'
+                group by
+                    tp.id, 
+                    kp.no_order, 
+                    tp.tgl_terima
 
-                    union all
+                union all
 
-                    select
-                        rp.id as tbl_id, 
-                        sum(drp.jumlah) as jml_terima, 
-                        rp.no_retur as kode_trans,
-                        rp.tgl_retur as tgl_trans, 
-                        'retur_pakan' as tbl_name
-                    from det_retur_pakan drp
-                    left join
-                        retur_pakan rp
-                        on
-                            drp.id_header = rp.id
-                    where
-                        rp.tgl_retur between '".$start_date."' and '".$end_date."'
-                    group by
-                        rp.id, 
-                        rp.no_order,
-                        rp.tgl_retur,
-                        rp.no_retur
-                ) dtp
+                select
+                    rp.id as tbl_id, 
+                    sum(drp.jumlah) as jml_terima, 
+                    rp.no_retur as kode_trans,
+                    rp.tgl_retur as tgl_trans, 
+                    'retur_pakan' as tbl_name
+                from det_retur_pakan drp
+                left join
+                    retur_pakan rp
+                    on
+                        drp.id_header = rp.id
+                where
+                    rp.tgl_retur between '".$start_date."' and '".$end_date."'
+                group by
+                    rp.id, 
+                    rp.no_order,
+                    rp.tgl_retur,
+                    rp.no_retur
+            ) dtp
             left join
                 (
                     select 
@@ -212,6 +212,7 @@ class TerimaPakanJurnal extends Public_Controller {
                 isnull(ds.jumlah, 0) - isnull(dtp.jml_terima, 0) <> 0 or
                 isnull(ds.total, 0) - isnull(sum(dj.nominal), 0) <> 0
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;

@@ -96,13 +96,13 @@ var kpm = {
             format: 'DD MMM Y'
 		});
 
-		// $.map( $('.date'), function(ipt) {
-        //     var tgl = $(ipt).find('input').data('tgl');
-        //     if ( !empty(tgl) ) {
-        //         $(ipt).data("DateTimePicker").date(new Date(tgl));
-        //         $(ipt).data("DateTimePicker").minDate(moment(tgl));
-        //     }
-        // });
+		$.map( $('.date'), function(ipt) {
+            var tgl = $(ipt).find('input').data('tgl');
+            if ( !empty(tgl) ) {
+                $(ipt).data("DateTimePicker").date(new Date(tgl));
+                $(ipt).data("DateTimePicker").minDate(moment(tgl));
+            }
+        });
 
         $("#tanggal").on("dp.change", function (e) {
 			kpm.set_umur_populasi(this);

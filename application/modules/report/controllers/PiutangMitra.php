@@ -218,6 +218,10 @@ class PiutangMitra extends Public_Controller
                         union all
 
                         select piutang_kode, sum(nominal) as nominal from rhpp_group_piutang group by piutang_kode
+
+                        union all
+
+                        select invoice as piutang_kode, sum(nominal) as nominal from det_jurnal where invoice is not null and invoice like 'PM%' group by invoice
                     ) data
                     group by
                         data.piutang_kode
@@ -279,6 +283,22 @@ class PiutangMitra extends Public_Controller
                             rhpp_group_header rgh
                             on
                                 rgh.id = rg.id_header
+
+                        union all
+
+                        select 
+                            invoice as piutang_kode,
+                            tanggal,
+                            sum(nominal) as nominal,
+                            'BANK - '+tbl_id as jenis
+                        from det_jurnal 
+                        where 
+                            invoice is not null and 
+                            invoice like 'PM%' 
+                        group by 
+                            invoice,
+                            tanggal,
+                            tbl_id
                     ) data
                     where
                         data.piutang_kode = '".$v_piutang['kode']."'

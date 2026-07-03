@@ -471,6 +471,6 @@ class RealisasiSJ extends Public_Controller
         //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
         // }
         
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 8646, 8646, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 10940, 10940, 2);
     }
 }

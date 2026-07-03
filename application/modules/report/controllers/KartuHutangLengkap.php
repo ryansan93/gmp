@@ -380,10 +380,22 @@ class KartuHutangLengkap extends Public_Controller {
                             on
                                 mi.no_mm = m.no_mm
                         where 
-                            mi.coa_tujuan in ('21180.300') and
+                            mi.coa_asal in ('21180.300', '21174.000') and
                             cast(mi.tgl_mm as date) < '".$start_date."'
                     ) inv_mm
                     /* END - INVOICE LEWAT MEMO */
+
+                    union all
+
+                    /* INVOICE LEWAT PIUTANG */
+                    select
+                        p.kode as nomor,
+                        p.mitra as supplier,
+                        p.nominal as total
+                    from piutang p
+                    where 
+                        cast(p.tanggal as date) < '".$start_date."'
+                    /* END - INVOICE LEWAT PIUTANG */
                 ) inv
                 left join
                     (
@@ -567,12 +579,32 @@ class KartuHutangLengkap extends Public_Controller {
                                     0 as saldo
                                 from mmitem 
                                 where 
-                                    coa_tujuan in ('21180.300') and
+                                    coa_tujuan in ('21180.300', '21174.000') and
                                     tgl_mm < '".$start_date."'
                                 group by
                                     no_invoice
                             ) byr_mm
                             /* END - BAYAR LEWAT MEMO */
+
+                            union all
+
+                            /* BAYAR LEWAT BANK */
+                            select 
+                                invoice as nomor,
+                                0 as cn, 
+                                0 as dn, 
+                                0 as potongan, 
+                                0 as uang_muka, 
+                                sum(nominal) as nominal,
+                                0 as saldo
+                            from det_jurnal 
+                            where 
+                                invoice is not null and 
+                                invoice like 'PM%' and
+                                tanggal < '".$start_date."'
+                            group by 
+                                invoice
+                            /* END - BAYAR LEWAT BANK */
                         ) byr
                         group by
                             byr.nomor
@@ -773,10 +805,24 @@ class KartuHutangLengkap extends Public_Controller {
                             on
                                 mi.no_mm = m.no_mm
                         where 
-                            mi.coa_tujuan in ('21180.300') and
+                            mi.coa_asal in ('21180.300', '21174.000') and
                             cast(mi.tgl_mm as date) between '".$start_date."' and '".$end_date."'
                     ) inv_mm
                     /* END - INVOICE LEWAT MEMO */
+
+                    union all
+
+                    /* INVOICE LEWAT PIUTANG */
+                    select
+                        p.tanggal,
+                        p.kode as nomor,
+                        p.mitra as supplier,
+                        p.nominal as total,
+                        p.kode as kode_trans
+                    from piutang p
+                    where 
+                        cast(p.tanggal as date) between '".$start_date."' and '".$end_date."'
+                    /* END - INVOICE LEWAT PIUTANG */
                 ) inv
                 /* END - TRANSAKSI DI BULAN ITU */
 
@@ -804,7 +850,13 @@ class KartuHutangLengkap extends Public_Controller {
                         end as supplier,
                         rpd.no_bayar as nomor,
                         0 as debet,
-                        sum(rpd.potongan+rpd.uang_muka+rpd.transfer+isnull(kpop.potongan_pph_23, 0)) as kredit,
+                        case
+                            when ( sum(rpd.potongan+rpd.uang_muka+rpd.transfer+isnull(kpop.potongan_pph_23, 0)) ) > sum(rpd.tagihan) then
+                                sum(rpd.tagihan)
+                            else
+                                sum(rpd.potongan+rpd.uang_muka+rpd.transfer+isnull(kpop.potongan_pph_23, 0))
+                        end as kredit,
+                        -- sum(rpd.potongan+rpd.uang_muka+rpd.transfer+isnull(kpop.potongan_pph_23, 0)) as kredit,
                         rpd.no_bayar as kode_trans
                     from realisasi_pembayaran_det rpd
                     left join
@@ -893,10 +945,36 @@ class KartuHutangLengkap extends Public_Controller {
                             on
                                 mi.no_invoice = konfir.nomor
                         where 
-                            mi.coa_tujuan in ('21180.300') and
+                            mi.coa_tujuan in ('21180.300', '21174.000') and
                             cast(mi.tgl_mm as date) between '".$start_date."' and '".$end_date."'
                     ) byr_mm
                     /* END - BAYAR LEWAT MEMO */
+
+                    union all
+
+                    /* BAYAR LEWAT BANK */
+                    select
+                        dj.tanggal,
+                        p.mitra as supplier,
+                        dj.invoice as nomor,
+                        0 as debet,
+                        sum(dj.nominal) as kredit,
+                        dj.tbl_id as kode_trans
+                    from det_jurnal dj
+                    left join
+                        piutang p 
+                        on
+                            dj.invoice = p.kode
+                    where 
+                        dj.invoice is not null and 
+                        dj.invoice like 'PM%' and
+                        dj.tanggal between '".$start_date."' and '".$end_date."'
+                    group by 
+                        dj.tanggal,
+                        p.mitra,
+                        dj.invoice,
+                        dj.tbl_id
+                    /* END - BAYAR LEWAT BANK */
                 ) byr
             ) data
             left join
