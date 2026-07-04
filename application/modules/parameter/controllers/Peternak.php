@@ -982,7 +982,7 @@ class Peternak extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        cetak_r( $params, 1 );
+        // cetak_r( $params, 1 );
 
         // NOTE: 0. prepare
         $model = new \Model\Storage\Conf();
@@ -994,6 +994,36 @@ class Peternak extends Public_Controller {
             $m_mitra = new \Model\Storage\Mitra_model();
             $id_mitra = $m_mitra->getNextIdentity();
             $nomor_mitra = $m_mitra->getNextNomor();
+
+            $arr = array(
+                'id' => $id_mitra,
+                'nomor' => $nomor_mitra,
+                'nama' => $params['nama'],
+                'ktp' => $params['ktp'],
+                'npwp' => $params['npwp'],
+                'skb' => $params['skb'] ?: null,
+                'tgl_habis_skb' => $params['tgl_habis_skb'] ?: null,
+                'alamat_kecamatan' => $params['alamat']['kecamatan'],
+                'alamat_kelurahan' => $params['alamat']['kelurahan'],
+                'alamat_rt' => (isset($params['alamat']['rt']) && !empty($params['alamat']['rt']) && $params['alamat']['rt'] > 0) ?: 0,
+                'alamat_rw' => (isset($params['alamat']['rw']) && !empty($params['alamat']['rw']) && $params['alamat']['rw'] > 0) ?: 0,
+                'alamat_jalan' => $params['alamat']['alamat'] ?: null,
+                'bank' => $params['d_bank']['bank'] ?: null,
+                'rekening_cabang_bank' => $params['d_bank']['cabang'] ?: null,
+                'rekening_nomor' => $params['d_bank']['rekening'] ?: null,
+                'rekening_pemilik' => $params['d_bank']['pemilik'] ?: null,
+                'status' => $status,
+                'keterangan_jaminan' => $params['keterangan_jaminan'],
+                'jenis' => $params['jenis_mitra'],
+                'mstatus' => 1,
+                'version' => 1,
+                'perusahaan' => $params['perusahaan'],
+                'plafon' => $params['plafon'],
+                'jatuh_tempo' => $params['jatuh_tempo'],
+                'pemilik' => (isset($params['pemilik']) && !empty($params['pemilik'])) ? $params['pemilik'] : $nomor_mitra,
+            );
+
+            cetak_r( $arr, 1 );
 
             $m_mitra->id = $id_mitra;
             $m_mitra->nomor = $nomor_mitra;
