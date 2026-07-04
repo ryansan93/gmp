@@ -3587,7 +3587,7 @@ class TSDRHPP extends Public_Controller {
                             }
 
                             if ( $v_drs['tonase'] > 0 ) {
-                                $harga_pasar = ($v_drs['harga'] > 0) ? $v_drs['harga'] : 0;
+                                $harga_pasar = ($v_drs['harga'] > 0) ? (!empty($v_drs['harga_jadi']) ? $v_drs['harga_jadi'] : $v_drs['harga']) : 0;
                                 $harga_kontrak = 0;
 
                                 $idx = 0;
