@@ -982,6 +982,8 @@ class Peternak extends Public_Controller {
     {
         $params = $this->input->post('params');
 
+        cetak_r( $params, 1 );
+
         // NOTE: 0. prepare
         $model = new \Model\Storage\Conf();
         $now = $model->getDate();
