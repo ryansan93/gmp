@@ -1144,6 +1144,7 @@ class LHK extends Public_Controller
                                 group by
                                     dss.noreg
 
+                                /*
                                 union all
         
                                 select
@@ -1162,6 +1163,7 @@ class LHK extends Public_Controller
                                     dss.tgl_trans <= '".$tanggal."'
                                 group by
                                     dss.noreg
+                                */
     
                                 union all
         
