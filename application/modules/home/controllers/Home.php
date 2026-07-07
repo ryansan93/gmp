@@ -80,23 +80,23 @@ class Home extends Public_Controller
 		*/
 
 		// LHK
-		// $url = 'report/LHK/formAck';
-		// $akses = hakAkses('/transaksi/LHK');
-		// if ( !empty($akses['a_ack']) && $akses['a_ack'] == 1 ) {
-		// 	$status = getStatus('submit');
+		$url = 'report/LHK/formAck';
+		$akses = hakAkses('/transaksi/LHK');
+		if ( !empty($akses['a_ack']) && $akses['a_ack'] == 1 ) {
+			$status = getStatus('submit');
 
-		// 	$m_kry = new \Model\Storage\Karyawan_model();
-		// 	$nik = $m_kry->getNik( $this->userdata['detail_user']['nama_detuser'] );
+			$m_kry = new \Model\Storage\Karyawan_model();
+			$nik = $m_kry->getNik( $this->userdata['detail_user']['nama_detuser'] );
 
-		// 	$m_lhk = new \Model\Storage\Lhk_model();
-		// 	$data = $m_lhk->notifData($nik, $status);
+			$m_lhk = new \Model\Storage\Lhk_model();
+			$data = $m_lhk->notifData($nik, $status);
 
-		// 	if ( $data ) {
-		// 		$notif[$url] = $this->mappingNotif($data, $url, 'ACK Laporan Harian Kandang');
-		// 		$notif[$url]['link'] = $url;
-		// 		$notif[$url]['jenis'] = 'window.open';
-		// 	}
-		// }
+			if ( $data ) {
+				$notif[$url] = $this->mappingNotif($data, $url, 'ACK Laporan Harian Kandang');
+				$notif[$url]['link'] = $url;
+				$notif[$url]['jenis'] = 'window.open';
+			}
+		}
 		// END - LHK
 
         return $notif;
