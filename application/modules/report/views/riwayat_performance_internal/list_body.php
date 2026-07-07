@@ -76,7 +76,7 @@
 
                 <div class="kdg-metrics">
                     <div class="metric"><span>Umur</span><b><?php echo _ang($k['umur']); ?></b></div>
-                    <div class="metric"><span>BW</span><b class="<?php echo _stdCls($k['bw'], $k['std_bw']); ?>"><?php echo _minParen(angkaDecimal($k['bw'])); ?></b></div>
+                    <div class="metric"><span>BW</span><b class="<?php echo _stdCls($k['bw'], $k['std_bw']); ?>"><?php echo _minParen(angkaDecimalFormat($k['bw'], 3)); ?></b></div>
                     <div class="metric"><span>DG</span><b class="<?php echo _stdCls($k['dg'], $k['std_dg']); ?>"><?php echo _minParen(angkaDecimal($k['dg'])); ?></b></div>
                     <div class="metric"><span>FCR</span><b class="<?php echo _stdCls($k['fcr'], $k['std_fcr'], false); ?>"><?php echo _minParen(angkaDecimalFormat($k['fcr'], 3)); ?></b></div>
                     <div class="metric"><span>Ekor Mati</span><b><?php echo _minParen(_ang($k['ekor_mati'])); ?></b></div>
