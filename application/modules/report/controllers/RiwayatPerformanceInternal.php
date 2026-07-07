@@ -211,11 +211,19 @@ class RiwayatPerformanceInternal extends MY_Controller {
 
             foreach ($farm['mitra'] as $nomor => $mitra) {
                 foreach ($mitra['kandang'] as $no_kandang) {
-                    $row['kandang'][] = $this->getPerforma($farm['db'], $nomor, $no_kandang, $tgl);
+                    $performa = $this->getPerforma($farm['db'], $nomor, $no_kandang, $tgl);
+
+                    // sembunyikan kandang yang belum ada LHK
+                    if ($performa['has_lhk']) {
+                        $row['kandang'][] = $performa;
+                    }
                 }
             }
 
-            $data[] = $row;
+            // skip farm yang tidak punya kandang ber-LHK
+            if (!empty($row['kandang'])) {
+                $data[] = $row;
+            }
         }
 
         // urutkan sesuai 'urut'
@@ -307,6 +315,7 @@ class RiwayatPerformanceInternal extends MY_Controller {
         $std = $this->getStandarPerUmur($metrik['umur'], $tgl);
 
         return array(
+            'has_lhk'      => ($metrik['umur'] !== null), // false jika belum ada LHK utk siklus ini
             'db'           => $db,
             'mitra'        => $mitra,
             'no_kandang'   => $no_kandang,
