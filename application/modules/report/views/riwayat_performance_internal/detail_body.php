@@ -121,7 +121,7 @@
 
                 <div class="lhk-metrics">
                     <div class="m"><span>BW</span><b class="<?php echo _stdCls($l['bb'], $l['std_bw']); ?>"><?php echo _minParen(angkaDecimalFormat($l['bb'], 3)); ?></b></div>
-                    <div class="m"><span>DG</span><b class="<?php echo _stdCls($l['dg'], $l['std_dg']); ?>"><?php echo ($l['dg'] === null) ? '-' : _minParen(angkaDecimal($l['dg'])); ?></b></div>
+                    <div class="m"><span>DG</span><b class="<?php echo _stdCls($l['dg'], $l['std_dg']); ?>"><?php echo ($l['dg'] === null) ? '-' : _minParen(angkaDecimalFormat($l['dg'], 3)); ?></b></div>
                     <div class="m"><span>FCR</span><b class="<?php echo _stdCls($l['fcr'], $l['std_fcr'], false); ?>"><?php echo _minParen(angkaDecimalFormat($l['fcr'], 3)); ?></b></div>
                     <div class="m"><span>IP</span><b class="<?php echo _stdCls($l['ip'], $l['std_ip']); ?>"><?php echo _minParen(angkaDecimalFormat($l['ip'], 2)); ?></b></div>
                     <div class="m"><span>Ekor Mati</span><b><?php echo _minParen(_v($l['ekor_mati'])); ?></b></div>
