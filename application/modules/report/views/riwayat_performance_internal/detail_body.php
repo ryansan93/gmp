@@ -28,6 +28,7 @@
             if ($actual === null || $std === null || $actual === '' || $std === '') return '';
             $a = (float)$actual;
             $s = (float)$std;
+            if ($s == 0) return '';   // standar 0/kosong (mis. IP belum diisi) -> tanpa warna
             if ($higherIsBetter) {
                 if ($a < $s) return 'std-below';
                 if ($a > $s) return 'std-above';
@@ -104,8 +105,8 @@
     </div>
 
     <div class="legend">
-        <div class="lg"><span class="dot red"></span>Di bawah standar</div>
-        <div class="lg"><span class="dot blue"></span>Di atas standar</div>
+        <div class="lg"><span class="dot red"></span>Lebih buruk dari standar</div>
+        <div class="lg"><span class="dot blue"></span>Lebih baik dari standar</div>
         <div class="lg"><span class="dot black"></span>Sesuai / tanpa standar</div>
     </div>
 

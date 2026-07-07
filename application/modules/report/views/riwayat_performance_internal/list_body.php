@@ -43,6 +43,7 @@
             if ($actual === null || $std === null || $actual === '' || $std === '') return '';
             $a = (float)$actual;
             $s = (float)$std;
+            if ($s == 0) return '';   // standar 0/kosong (mis. IP belum diisi) -> tanpa warna
             if ($higherIsBetter) {
                 if ($a < $s) return 'std-below';
                 if ($a > $s) return 'std-above';

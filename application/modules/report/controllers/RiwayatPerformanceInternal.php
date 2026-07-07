@@ -323,8 +323,9 @@ class RiwayatPerformanceInternal extends MY_Controller {
             'ekor_mati'    => $metrik['ekor_mati'],
             'ip'           => $metrik['ip'],
             'keterangan'   => $metrik['keterangan'],
-            'std_bw'       => $std['bb'] ?? null,
-            'std_dg'       => $std['dg'] ?? null,
+            // standar bb & dg dalam GRAM, LHK dalam KG -> setarakan ke kg utk perbandingan warna
+            'std_bw'       => isset($std['bb']) ? (float)$std['bb'] / 1000 : null,
+            'std_dg'       => isset($std['dg']) ? (float)$std['dg'] / 1000 : null,
             'std_fcr'      => $std['fcr'] ?? null,
             'std_ip'       => $std['ip'] ?? null,
         );
@@ -636,8 +637,9 @@ class RiwayatPerformanceInternal extends MY_Controller {
                 $r['dg'] = $dg;
 
                 $std = $this->getStandarPerUmur($r['umur'], $tgl);
-                $r['std_bw']  = $std['bb'] ?? null;
-                $r['std_dg']  = $std['dg'] ?? null;
+                // standar bb & dg dalam GRAM, LHK dalam KG -> setarakan ke kg utk perbandingan warna
+                $r['std_bw']  = isset($std['bb']) ? (float)$std['bb'] / 1000 : null;
+                $r['std_dg']  = isset($std['dg']) ? (float)$std['dg'] / 1000 : null;
                 $r['std_fcr'] = $std['fcr'] ?? null;
                 $r['std_ip']  = $std['ip'] ?? null;
 

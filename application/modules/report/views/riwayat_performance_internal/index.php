@@ -230,8 +230,8 @@
     </div>
     <div class="wrap">
         <div class="legend">
-            <div class="lg"><span class="dot red"></span>Di bawah standar</div>
-            <div class="lg"><span class="dot blue"></span>Di atas standar</div>
+            <div class="lg"><span class="dot red"></span>Lebih buruk dari standar</div>
+            <div class="lg"><span class="dot blue"></span>Lebih baik dari standar</div>
             <div class="lg"><span class="dot black"></span>Sesuai / tanpa standar</div>
         </div>
         <div id="reportWrap"></div>
