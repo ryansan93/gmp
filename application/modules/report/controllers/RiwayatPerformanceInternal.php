@@ -373,9 +373,11 @@ class RiwayatPerformanceInternal extends MY_Controller {
      * lewat order_doc (pola sama dengan RealisasiChickIn).
      * PPL & supervisor = nama karyawan (join nik, versi terbaru per nik).
      *
-     * Batas tanggal: hanya siklus yang tgl chick-in (rs.tgl_docin) <= tgl yang
-     * dipertimbangkan, lalu diambil yang paling baru -> siklus yang aktif pada
-     * tanggal batas (bisa siklus lama, bukan yang sekarang).
+     * Batas tanggal: ambil siklus TERBARU dgn tgl chick-in (rs.tgl_docin) <= tgl.
+     * Jika siklus terbaru itu SUDAH tutup s/d tgl (tutup_siklus.tgl_tutup <= tgl),
+     * dianggap tidak ada siklus aktif -> kandang disembunyikan. Sengaja tidak
+     * mundur ke siklus lama (siklus lama dgn tgl_tutup NULL krn belum tercatat di
+     * tutup_siklus bisa keliru dianggap masih berjalan).
      *
      * @param string $db         'default' | 'mgb'
      * @param string $mitra      nomor mitra
@@ -395,7 +397,8 @@ class RiwayatPerformanceInternal extends MY_Controller {
                 td.datang    as real_tgl,
                 td.jml_ekor  as real_ekor,
                 k_ppl.nama   as ppl,
-                k_spv.nama   as supervisor
+                k_spv.nama   as supervisor,
+                ts.tgl_tutup as tgl_tutup
             from rdim_submit rs
             left join
                 kandang kdg
@@ -459,6 +462,10 @@ class RiwayatPerformanceInternal extends MY_Controller {
                 ) td
                 on
                     rs.noreg = td.noreg
+            left join
+                tutup_siklus ts
+                on
+                    ts.noreg = rs.noreg
             where
                 m.nomor = '" . $mitra . "' and
                 kdg.kandang = '" . $no_kandang . "' and
@@ -478,6 +485,14 @@ class RiwayatPerformanceInternal extends MY_Controller {
 
         if ($d_conf->count() > 0) {
             $row = $d_conf->toArray()[0];
+
+            // siklus TERBARU sudah tutup s/d tgl -> tidak ada siklus aktif, kandang
+            // disembunyikan. Sengaja TIDAK mundur ke siklus lama: siklus lama yang
+            // tgl_tutup-nya NULL (belum sempat dicatat di tutup_siklus) bisa keliru
+            // dianggap masih berjalan.
+            if (!empty($row['tgl_tutup']) && substr($row['tgl_tutup'], 0, 10) <= $tgl) {
+                return $res;
+            }
 
             // pakai realisasi terima_doc jika ada, selain itu rencana rdim_submit
             $ada_terima_doc = ($row['real_ekor'] !== null);
