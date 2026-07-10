@@ -145,6 +145,7 @@
 													<th class="col-xs-3" style="background-color: #adb3ff;">Tonase</th>
 													<th class="col-xs-1" style="background-color: #adb3ff;">BB</th>
 													<th class="col-xs-2 <?php echo $hide_input_harga; ?>" style="background-color: #adb3ff;">Harga</th>
+													<th class="col-xs-2 <?php echo $hide_input_harga; ?>" style="background-color: #adb3ff;">Harga Jadi</th>
 													<th class="col-xs-1 <?php echo $unhide_input_harga; ?>" style="background-color: #adb3ff;">Action</th>
 												</tr>
 											</thead>
@@ -164,6 +165,9 @@
 															<td class="text-right <?php echo $hide_input_harga; ?>">
 																<input type="text" class="form-control text-right harga" data-tipe="integer" style="height: fit-content; padding: 0px 3px 0px 3px;" maxlength="7" placeholder="Harga" value="<?php echo angkaRibuan($v_realisasi['harga']); ?>" <?php echo $readonly; ?> />
 															</td>
+															<td class="text-right <?php echo $hide_input_harga; ?>">
+																<input type="text" class="form-control text-right harga_jadi" data-tipe="integer" style="height: fit-content; padding: 0px 3px 0px 3px;" maxlength="7" placeholder="Harga Jadi" value="<?php echo angkaRibuan($v_realisasi['harga_jadi']); ?>" <?php echo $readonly; ?> />
+															</td>
 															<td rowspan="3" class="<?php echo $unhide_input_harga; ?>">
 																<?php if ( empty($readonly) ): ?>
 																	<div class="col-xs-12 no-padding">
@@ -179,7 +183,7 @@
 														</tr>
 														<tr class="rpah_bottom">
 															<th style="background-color: #adb3ff;">Jenis Ayam</th>
-															<td colspan="<?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? 3 : 2; ?>">
+															<td colspan="<?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? 4 : 2; ?>">
 																<select class="jenis_ayam form-control" style="height: fit-content; padding: 0px 3px 0px 3px;" data-required="1" <?php echo $readonly_input_harga; ?>  <?php echo $disabled; ?> >
 																	<option value="">Pilih Jenis Ayam</option>
 																	<?php foreach ($jenis_ayam as $k_ja => $v_ja): ?>
@@ -196,7 +200,7 @@
 														</tr>
 														<tr class="rpah_bottom">
 															<th style="background-color: #adb3ff;">No. Nota</th>
-															<td colspan="<?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? 3 : 2; ?>">
+															<td colspan="<?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? 4 : 2; ?>">
 																<input type="text" class="form-control no_nota" placeholder="No. Nota" data-required="1" style="height: fit-content; padding: 0px 3px 0px 3px;" maxlength="15" value="<?php echo $v_realisasi['no_nota'] ?>" <?php echo $readonly_input_harga; ?> <?php echo $disabled; ?>>
 															</td>
 														</tr>
@@ -217,6 +221,9 @@
 															<td class="text-right <?php echo $hide_input_harga; ?>">
 																<input type="text" class="form-control text-right harga" data-tipe="integer" style="height: fit-content; padding: 0px 3px 0px 3px;" maxlength="7" placeholder="Harga" value="<?php echo angkaRibuan(0); ?>" />
 															</td>
+															<td class="text-right <?php echo $hide_input_harga; ?>">
+																<input type="text" class="form-control text-right harga_jadi" data-tipe="integer" style="height: fit-content; padding: 0px 3px 0px 3px;" maxlength="7" placeholder="Harga Jadi" value="<?php echo angkaRibuan(0); ?>" />
+															</td>
 															<td rowspan="2" class="<?php echo $unhide_input_harga; ?>">
 																<div class="col-xs-12 no-padding">
 																	<div class="col-xs-6 no-padding text-center">
@@ -230,7 +237,7 @@
 														</tr>
 														<tr class="rpah_bottom">
 															<th style="background-color: #adb3ff;">Jenis Ayam</th>
-															<td colspan="<?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? 3 : 2; ?>">
+															<td colspan="<?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? 4 : 2; ?>">
 																<select class="jenis_ayam form-control" style="height: fit-content; padding: 0px 3px 0px 3px;" data-required="1" <?php echo $readonly_input_harga; ?>>
 																	<option value="">Pilih Jenis Ayam</option>
 																	<?php foreach ($jenis_ayam as $k_ja => $v_ja): ?>
@@ -241,7 +248,7 @@
 														</tr>
 														<tr class="rpah_bottom">
 															<th style="background-color: #adb3ff;">No. Nota</th>
-															<td colspan="<?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? 3 : 2; ?>">
+															<td colspan="<?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? 4 : 2; ?>">
 																<input type="text" class="form-control no_nota" placeholder="No. Nota" data-required="1" style="height: fit-content; padding: 0px 3px 0px 3px;" maxlength="15" <?php echo $readonly_input_harga; ?>>
 															</td>
 														</tr>

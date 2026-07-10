@@ -61,6 +61,7 @@
 														<th class="text-center">Tonase</th>
 														<th class="text-center">BB</th>
 														<th class="text-center">Harga</th>
+														<th class="text-center">Harga Jadi</th>
 														<th class="text-center">Jenis Ayam</th>
 														<th class="text-center">No. Nota</th>
 														<th class="text-center"></th>
@@ -82,6 +83,9 @@
 																	</td>
 																	<td class="text-right">
 																		<input type="text" class="form-control harga text-right" placeholder="Harga" data-tipe="decimal" value="<?php echo angkaDecimal($v_drs['harga']); ?>">
+																	</td>
+																	<td class="text-right">
+																		<input type="text" class="form-control harga_jadi text-right" placeholder="Harga Jadi" data-tipe="decimal" value="<?php echo angkaDecimal($v_drs['harga_jadi']); ?>">
 																	</td>
 																	<td class="text-right">
 																		<select class="form-control jenis_ayam" data-required="1">
@@ -127,6 +131,9 @@
 															</td>
 															<td class="text-right">
 																<input type="text" class="form-control harga text-right" placeholder="Harga" data-tipe="decimal" value="<?php echo angkaDecimal(0); ?>">
+															</td>
+															<td class="text-right">
+																<input type="text" class="form-control harga_jadi text-right" placeholder="Harga Jadi" data-tipe="decimal" value="<?php echo angkaDecimal(0); ?>">
 															</td>
 															<td class="text-right">
 																<select class="form-control jenis_ayam" data-required="1">

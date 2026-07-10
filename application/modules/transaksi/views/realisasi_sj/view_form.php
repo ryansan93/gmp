@@ -13,7 +13,7 @@
 						<th class="col-md-1 text-center" rowspan="2">No. DO</th>
 						<th class="col-md-1 text-center" rowspan="2">No. SJ</th>
 						<th class="text-center" colspan="4">Pengajuan</th>
-						<th class="text-center" colspan="5">Realisasi</th>
+						<th class="text-center" colspan="6">Realisasi</th>
 						<th class="col-md-1 text-center" rowspan="2">No. Nota</th>
 					</tr>
 					<tr>
@@ -25,6 +25,7 @@
 						<th class="col-md-1 text-center">Tonase</th>
 						<th class="col-md-1 text-center" style="width: 3%;">BB</th>
 						<th class="col-md-1 text-center">Harga</th>
+						<th class="col-md-1 text-center">Harga Jadi</th>
 						<th class="col-md-1 text-center">Jenis Ayam</th>
 					</tr>
 				</thead>
@@ -62,6 +63,10 @@
 													<td class="text-right">
 														<?php echo angkaDecimal($v_drs['harga']); ?>
 														<input type="text" class="form-control harga text-right hide" data-tipe="decimal" value="<?php echo angkaDecimal($v_drs['harga']); ?>">
+													</td>
+													<td class="text-right">
+														<?php echo angkaDecimal($v_drs['harga_jadi']); ?>
+														<input type="text" class="form-control harga_jadi text-right hide" data-tipe="decimal" value="<?php echo angkaDecimal($v_drs['harga_jadi']); ?>">
 													</td>
 													<td class="text-center">
 														<?php 

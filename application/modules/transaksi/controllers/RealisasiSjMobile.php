@@ -261,6 +261,7 @@ class RealisasiSjMobile extends Public_Controller {
                         'ekor' => $v_dreal_sj['ekor'],
                         'bb' => $v_dreal_sj['bb'],
                         'harga' => $v_dreal_sj['harga'],
+                        'harga_jadi' => $v_dreal_sj['harga_jadi'],
                         'jenis_ayam' => $v_dreal_sj['jenis_ayam'],
                         'no_nota' => $v_dreal_sj['no_nota']
                     );
@@ -368,6 +369,7 @@ class RealisasiSjMobile extends Public_Controller {
                                         'ekor' => $v_dreal_sj['ekor'],
                                         'bb' => $v_dreal_sj['bb'],
                                         'harga' => $v_dreal_sj['harga'],
+                                        'harga_jadi' => $v_dreal_sj['harga_jadi'],
                                         'jenis_ayam' => $v_dreal_sj['jenis_ayam'],
                                         'no_nota' => $v_dreal_sj['no_nota']
                                     );
@@ -744,6 +746,7 @@ class RealisasiSjMobile extends Public_Controller {
                         $m_det_real_sj->ekor = $val['ekor'];
                         $m_det_real_sj->bb = $val['bb'];
                         $m_det_real_sj->harga = $val['harga'];
+                        $m_det_real_sj->harga_jadi = !empty($val['harga_jadi']) ? $val['harga_jadi'] : null;
                         $m_det_real_sj->no_do = $val['no_do'];
                         $m_det_real_sj->no_sj = $val['no_sj'];
                         $m_det_real_sj->jenis_ayam = $val['jenis_ayam'];
@@ -918,6 +921,7 @@ class RealisasiSjMobile extends Public_Controller {
                                 'ekor' => $val['ekor'],
                                 'bb' => $val['bb'],
                                 'harga' => $val['harga'],
+                                'harga_jadi' => !empty($val['harga_jadi']) ? $val['harga_jadi'] : null,
                                 'no_do' => $val['no_do'],
                                 'no_sj' => $val['no_sj'],
                                 'jenis_ayam' => $val['jenis_ayam'],
@@ -935,6 +939,7 @@ class RealisasiSjMobile extends Public_Controller {
                         $m_det_real_sj->ekor = $val['ekor'];
                         $m_det_real_sj->bb = $val['bb'];
                         $m_det_real_sj->harga = $val['harga'];
+                        $m_det_real_sj->harga_jadi = !empty($val['harga_jadi']) ? $val['harga_jadi'] : null;
                         $m_det_real_sj->no_do = $val['no_do'];
                         $m_det_real_sj->no_sj = $val['no_sj'];
                         $m_det_real_sj->jenis_ayam = $val['jenis_ayam'];

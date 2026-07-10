@@ -117,6 +117,7 @@
 													<th class="col-xs-3" style="background-color: #adb3ff;">Tonase</th>
 													<th class="col-xs-1" style="background-color: #adb3ff;">BB</th>
 													<th class="col-xs-2 <?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? null : 'hide'; ?>" style="background-color: #adb3ff;">Harga</th>
+													<th class="col-xs-2 <?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? null : 'hide'; ?>" style="background-color: #adb3ff;">Harga Jadi</th>
 												</tr>
 											</thead>
 											<tbody>
@@ -134,11 +135,14 @@
 														<td class="text-right <?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? null : 'hide'; ?>">
 															<?php echo angkaRibuan($v_realisasi['harga']); ?>
 														</td>
+														<td class="text-right <?php echo (!empty($akses['a_khusus']) && in_array('input harga realisasi sj', $akses['a_khusus'])) ? null : 'hide'; ?>">
+															<?php echo angkaRibuan($v_realisasi['harga_jadi']); ?>
+														</td>
 													</tr>
 													<tr class="rpah_bottom">
 														<th style="background-color: #adb3ff;">Jenis Ayam</th>
-														<td colspan="3">
-															<?php 
+														<td colspan="4">
+															<?php
 																$_jenis_ayam = null;
 																foreach ($jenis_ayam as $k_ja => $v_ja) {
 																	if ( $k_ja == $v_realisasi['jenis_ayam'] ) {
@@ -152,7 +156,7 @@
 													</tr>
 													<tr class="rpah_bottom">
 														<th style="background-color: #adb3ff;">No. Nota</th>
-														<td colspan="3">
+														<td colspan="4">
 															<?php echo !empty($v_realisasi['no_nota']) ? strtoupper($v_realisasi['no_nota']) : '-'; ?>
 														</td>
 													</tr>

@@ -25,6 +25,7 @@
 							<th class="col-xs-3" style="background-color: #adb3ff;">Tonase</th>
 							<th class="col-xs-1" style="background-color: #adb3ff;">BB</th>
 							<th class="col-xs-2 hide" style="background-color: #adb3ff;">Harga</th>
+							<th class="col-xs-2 hide" style="background-color: #adb3ff;">Harga Jadi</th>
 							<th class="col-xs-1" style="background-color: #adb3ff;">Action</th>
 						</tr>
 					</thead>
@@ -41,6 +42,9 @@
 							</td>
 							<td class="hide">
 								<input type="text" class="form-control text-right harga" data-tipe="integer" style="height: fit-content; padding: 0px 3px 0px 3px;" maxlength="7" placeholder="Harga" value="0"  />
+							</td>
+							<td class="hide">
+								<input type="text" class="form-control text-right harga_jadi" data-tipe="integer" style="height: fit-content; padding: 0px 3px 0px 3px;" maxlength="7" placeholder="Harga Jadi" value="0"  />
 							</td>
 							<td rowspan="3">
 								<div class="col-xs-12 no-padding">

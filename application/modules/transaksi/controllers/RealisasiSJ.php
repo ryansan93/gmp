@@ -207,6 +207,7 @@ class RealisasiSJ extends Public_Controller
                         $m_det_real_sj->ekor = $v_real['ekor'];
                         $m_det_real_sj->bb = $v_real['bb'];
                         $m_det_real_sj->harga = $v_real['harga'];
+                        $m_det_real_sj->harga_jadi = !empty($v_real['harga_jadi']) ? $v_real['harga_jadi'] : null;
                         $m_det_real_sj->no_do = $val['no_do'];
                         $m_det_real_sj->no_sj = $val['no_sj'];
                         $m_det_real_sj->jenis_ayam = $v_real['jenis_ayam'];
@@ -228,13 +229,13 @@ class RealisasiSJ extends Public_Controller
                     case
                         when tp.pph > 0 then
                             round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
-                        else 
+                        else
                             0
                     end as pph,
                     case
                         when tp.pph > 0 then
                             sum(drs.tonase * drs.harga) - round(sum(drs.tonase * drs.harga) * (tp.pph/100), 0)
-                        else 
+                        else
                             sum(drs.tonase * drs.harga)
                     end as total
                 from det_real_sj drs
@@ -341,6 +342,7 @@ class RealisasiSJ extends Public_Controller
                         $m_det_real_sj->ekor = $v_real['ekor'];
                         $m_det_real_sj->bb = $v_real['bb'];
                         $m_det_real_sj->harga = $v_real['harga'];
+                        $m_det_real_sj->harga_jadi = !empty($v_real['harga_jadi']) ? $v_real['harga_jadi'] : null;
                         $m_det_real_sj->no_do = $val['no_do'];
                         $m_det_real_sj->no_sj = $val['no_sj'];
                         $m_det_real_sj->jenis_ayam = $v_real['jenis_ayam'];

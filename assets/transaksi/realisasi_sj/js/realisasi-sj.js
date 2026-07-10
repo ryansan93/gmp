@@ -235,6 +235,7 @@ var real_sj = {
 								'ekor' : numeral.unformat( $(tr_real).find('input.ekor').val() ),
 								'bb' : numeral.unformat( $(tr_real).find('input.bb').val() ),
 								'harga' : numeral.unformat( $(tr_real).find('input.harga').val() ),
+								'harga_jadi' : numeral.unformat( $(tr_real).find('input.harga_jadi').val() ),
 								'jenis_ayam' : $(tr_real).find('select.jenis_ayam').val(),
 								'no_nota' : $(tr_real).find('input.no_nota').val()
 							};
@@ -345,6 +346,7 @@ var real_sj = {
 								'ekor' : numeral.unformat( $(tr_real).find('input.ekor').val() ),
 								'bb' : numeral.unformat( $(tr_real).find('input.bb').val() ),
 								'harga' : numeral.unformat( $(tr_real).find('input.harga').val() ),
+								'harga_jadi' : numeral.unformat( $(tr_real).find('input.harga_jadi').val() ),
 								'jenis_ayam' : $(tr_real).find('select.jenis_ayam').val(),
 								'no_nota' : $(tr_real).find('input.no_nota').val()
 							};
