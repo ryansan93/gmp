@@ -283,7 +283,7 @@ class LaporanPenjualanAyam extends Public_Controller {
                 data.*,
                 m.nama as nama_mitra,
                 w.nama as nama_unit,
-                data.tonase * data.harga as total,
+                -- data.tonase * data.harga as total,
                 tp.pph
             from
             (
@@ -297,6 +297,9 @@ class LaporanPenjualanAyam extends Public_Controller {
                     drs.no_do,
                     drs.no_sj,
                     drsi.no_inv,
+                    drsi.total,
+                    drsi.bruto,
+                    drsi.pph as nil_pph,
                     drs.jenis_ayam,
                     drs.no_nota,
                     SUBSTRING(drs.no_do, 4, 3) as unit,
@@ -394,6 +397,9 @@ class LaporanPenjualanAyam extends Public_Controller {
             'nama_mitra' => $_data[0]['nama_mitra'],
             'noreg' => $_data[0]['noreg'],
             'pph' => $_data[0]['pph'],
+            'bruto' => $_data[0]['bruto'],
+            'total' => $_data[0]['total'],
+            'nil_pph' => $_data[0]['nil_pph'],
             'nama_karyawan' => $this->userdata['detail_user']['nama_detuser'],
             'waktu' => $now
         );
@@ -401,8 +407,6 @@ class LaporanPenjualanAyam extends Public_Controller {
 
         $content['data'] = $data;
         $content['detail'] = $detail;
-
-        // cetak_r( $content, 1 );
 
         $res_view_html = $this->load->view($this->pathView.'exportPdf', $content, true);
 

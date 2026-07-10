@@ -353,15 +353,18 @@
 								<?php } ?>
                                 <tr class="foot total">
 									<td class="text-right" colspan="5" style="vertical-align: top;">Bruto</td>
-									<td class="text-right"><?php echo angkaDecimal($total); ?></td>
+									<!-- <td class="text-right"><?php echo angkaDecimal($total); ?></td> -->
+									<td class="text-right"><?php echo angkaDecimal($data['bruto']); ?></td>
 								</tr>
 								<tr class="foot total">
 									<td class="text-right" colspan="5" style="vertical-align: top;">Pot. PPH</td>
-									<td class="text-right"><?php echo angkaDecimal($total * ($data['pph']/100)); ?></td>
+									<!-- <td class="text-right"><?php echo angkaDecimal($total * ($data['pph']/100)); ?></td> -->
+									<td class="text-right"><?php echo angkaDecimal($data['nil_pph']); ?></td>
 								</tr>
                                 <tr class="foot total">
 									<td class="text-right" colspan="5" style="vertical-align: top;">Total</td>
-									<td class="text-right"><?php echo angkaDecimal($total - ($total * ($data['pph']/100))); ?></td>
+									<!-- <td class="text-right"><?php echo angkaDecimal($total - ($total * ($data['pph']/100))); ?></td> -->
+									<td class="text-right"><?php echo angkaDecimal($data['total']); ?></td>
 								</tr>
 							</tbody>
 						</table>
