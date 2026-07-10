@@ -4156,6 +4156,7 @@ class TSDRHPP extends Public_Controller {
                         $message .= '<br>';
                         $message .= 'Cek data di laporan kartu stok siklus, dan segera perbaiki data.';
                     } else {
+                        /*
                         if ($d_conf['jml_pindah_akhir_siklus'] != $d_conf['sisa_pakan']) {
                             $status = 0;
     
@@ -4188,6 +4189,7 @@ class TSDRHPP extends Public_Controller {
                                 $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
                             }
                         }
+                        */
                     }
                 }
             }
