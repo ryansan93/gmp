@@ -7,9 +7,9 @@ use PhpOffice\PhpSpreadsheet\Style\Border as Border;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat as NumberFormat;
 use PhpOffice\PhpSpreadsheet\Shared\Date as Date;
 
-class KertasKerjaHpp extends Public_Controller {
+class LembarKerjaHpp extends Public_Controller {
 
-    private $pathView = 'report/kertas_kerja_hpp/';
+    private $pathView = 'report/lembar_kerja_hpp/';
     private $url;
     private $akses;
 
@@ -29,16 +29,16 @@ class KertasKerjaHpp extends Public_Controller {
     public function index($params = null)
     {
         $akses = $this->akses;
-        if ( $akses['a_view'] == 1 ) {
+        // if ( $akses['a_view'] == 1 ) {
             $this->add_external_js(array(
                 "assets/select2/js/select2.min.js",
                 "assets/jquery/tupage-table/jquery.tupage.table.js",
-                "assets/report/kertas_kerja_hpp/js/kertas-kerja-hpp.js",
+                "assets/report/lembar_kerja_hpp/js/lembar-kerja-hpp.js",
             ));
             $this->add_external_css(array(
                 "assets/select2/css/select2.min.css",
                 "assets/jquery/tupage-table/jquery.tupage.table.css",
-                "assets/report/kertas_kerja_hpp/css/kertas-kerja-hpp.css",
+                "assets/report/lembar_kerja_hpp/css/lembar-kerja-hpp.css",
             ));
 
             $data = $this->includes;
@@ -57,14 +57,14 @@ class KertasKerjaHpp extends Public_Controller {
 
             $content['unit'] = $m_wil->getDataUnit(1, $this->userid);
             $content['periode'] = $periode;
-            $content['title_menu'] = 'Laporan Kertas Kerja HPP';
+            $content['title_menu'] = 'Laporan Lembar Kerja HPP';
 
             // Load Indexx
             $data['view'] = $this->load->view($this->pathView.'index', $content, TRUE);
             $this->load->view($this->template, $data);
-        } else {
-            showErrorAkses();
-        }
+        // } else {
+        //     showErrorAkses();
+        // }
     }
 
     public function getData($params) {
@@ -1266,6 +1266,78 @@ class KertasKerjaHpp extends Public_Controller {
         ";
 
         /* QUERY BARU */
+        // Untuk kolom Proporsi: awal & akhir bulan dari end_date
+        $eom_end_date = date('Y-m-t', strtotime($end_date));
+        $month_start_end_date = date('Y-m-01', strtotime($end_date));
+
+        // Catatan: start_date_proporsi / end_date_proporsi / hari / proporsi sekarang dihitung sekali
+        // di CTE noreg_hari_proporsi (bukan di sini lagi), supaya bisa dipakai juga untuk alokasi BL/BTL per unit.
+
+        // BL (Biaya Langsung) / BTL (Biaya Tidak Langsung) - dibedakan cukup dari no. COA saja (gabungan
+        // COA 60xxx dan 50xxx), tidak perlu lihat jenis mitra. COA 60151.000 (Biaya Pengangkutan)
+        // dikecualikan total (tidak masuk BL atau BTL)
+        $coa_bl = "'60801.000','60802.000','60803.000','60807.000','60807.001','60807.002','60807.003',
+            '50101.000','50158.001','50300.000','50300.001','50300.002'";
+        $coa_btl = "'60105.000','60151.001','60602.000','60604.000','60605.000','60854.000','60905.000','60922.000',
+            '50102.000','50158.000','50602.000','50604.000','50605.000','50901.000','50905.000','50911.000','50922.001'";
+
+        // Persentase Dijual = Terjual / Stock Tersedia (sisa_stok), dipakai untuk kolom Dijual (persentase x nilai Tersedia)
+        // Kalau ekor panen (terjual) periode ini > stok tersedia, persentase dianggap 100% (jangan lebih dari 1)
+        $persen_dijual = "
+            case
+                when data.ekor_panen_periode > ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) - (data.ekor_mati - data.ekor_mati_awal)) then 1
+                when ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) - (data.ekor_mati - data.ekor_mati_awal)) <> 0
+                then cast(data.ekor_panen_periode as float) / ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) - (data.ekor_mati - data.ekor_mati_awal))
+                else 0
+            end
+        ";
+
+        // Saldo Awal = Saldo Akhir punya rumus yang sama, tapi datanya "sebelum start_date" (kumulatif dari awal).
+        // persen_dijual_awal = ekor panen sebelum start_date / stock tersedia sebelum start_date (saldo_awal_stok)
+        // Sama juga: kalau ekor panen > stok tersedia sebelum start_date, persentase dianggap 100%
+        $persen_dijual_awal = "
+            case
+                when data.ekor_panen_awal > (data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) then 1
+                when (data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) <> 0
+                then cast(data.ekor_panen_awal as float) / (data.populasi - data.ekor_mati_awal - data.ekor_panen_awal)
+                else 0
+            end
+        ";
+        // RHPP sebelum start_date: pakai rumus Saldo Akhir RHPP biasa (bukan versi zero-out/selisih)
+        $rhpp_awal_expr = "
+            case
+                when data.pdpt_peternak_awal <> 0 then data.pdpt_peternak_awal
+                when data.is_panen_sebagian_awal = 1 then 5000 * data.populasi
+                else data.pdpt_peternak_awal
+            end
+        ";
+        // RHPP periode berjalan (dipakai untuk Produksi/Tersedia/Dijual/Saldo Akhir)
+        $produksi_rhpp_expr = "
+            case
+                when data.pdpt_peternak <> 0 then data.pdpt_peternak
+                when data.is_panen_sebagian = 1 then 5000 * data.populasi
+                else data.pdpt_peternak
+            end
+        ";
+        // TERSEDIA per kategori = Saldo Awal + Produksi. Dipakai ulang oleh Dijual & Saldo Akhir
+        // supaya keduanya konsisten dengan definisi Tersedia yang sesungguhnya (bukan cuma Produksi).
+        $sa_awal_doc_expr = "(data.pemakaian_doc_awal - (".$persen_dijual_awal.") * data.pemakaian_doc_awal)";
+        $sa_awal_pakan_expr = "(data.pemakaian_pkn_awal - (".$persen_dijual_awal.") * data.pemakaian_pkn_awal)";
+        $sa_awal_ovk_expr = "(data.pemakaian_ovk_awal - (".$persen_dijual_awal.") * data.pemakaian_ovk_awal)";
+        $sa_awal_oa_expr = "(data.pemakaian_oa_awal - (".$persen_dijual_awal.") * data.pemakaian_oa_awal)";
+        $sa_awal_rhpp_expr = "((".$rhpp_awal_expr.") - (".$persen_dijual_awal.") * (".$rhpp_awal_expr."))";
+
+        $tersedia_doc_expr = "(".$sa_awal_doc_expr." + data.pemakaian_doc)";
+        $tersedia_pakan_expr = "(".$sa_awal_pakan_expr." + data.pemakaian_pkn)";
+        $tersedia_ovk_expr = "(".$sa_awal_ovk_expr." + data.pemakaian_ovk)";
+        $tersedia_oa_expr = "(".$sa_awal_oa_expr." + data.pemakaian_oa)";
+        $tersedia_rhpp_expr = "(".$sa_awal_rhpp_expr." + (".$produksi_rhpp_expr."))";
+        // BL/BTL: Saldo Awal-nya masih 0, jadi Tersedia BL/BTL = Produksi BL/BTL = nilai dari det_jurnal
+        $tersedia_bl_expr = "data.nilai_bl";
+        $tersedia_btl_expr = "data.nilai_btl";
+        $tersedia_total_expr = "(".$tersedia_doc_expr." + ".$tersedia_pakan_expr." + ".$tersedia_ovk_expr." + ".$tersedia_oa_expr."
+            + ".$tersedia_bl_expr." + ".$tersedia_btl_expr." + ".$tersedia_rhpp_expr.")";
+
         $sql = "
             with
             -- ============================================================
@@ -1276,6 +1348,55 @@ class KertasKerjaHpp extends Public_Controller {
                 from lhk l1
                 inner join (select noreg, max(umur) as umur from lhk group by noreg) l2
                     on l1.noreg = l2.noreg and l1.umur = l2.umur
+            ),
+            -- Ekor mati kumulatif per noreg per akhir periode (end_date) - dari lhk terakhir s/d end_date
+            lhk_upto_end as (
+                select l1.noreg, l1.ekor_mati
+                from lhk l1
+                inner join (
+                    select noreg, max(umur) as umur from lhk where tanggal <= '".$end_date."' group by noreg
+                ) l2 on l1.noreg = l2.noreg and l1.umur = l2.umur
+            ),
+            -- Ekor panen kumulatif per noreg s/d end_date
+            panen_upto_end as (
+                select noreg, sum(netto_ekor) as ekor_panen
+                from real_sj
+                where tgl_panen <= '".$end_date."'
+                group by noreg
+            ),
+            -- Panen terakhir dalam bulan end_date (s/d end_date), untuk kolom Proporsi
+            panen_bulan_enddate as (
+                select noreg, max(tgl_panen) as tgl_panen_terakhir_bulan
+                from real_sj
+                where tgl_panen between '".$month_start_end_date."' and '".$end_date."'
+                group by noreg
+            ),
+            -- Noreg yang sudah pernah panen tapi sebelum bulan terpilih (sudah habis dipanen bulan lalu), untuk Proporsi
+            panen_sebelum_bulan as (
+                select distinct noreg
+                from real_sj
+                where tgl_panen < '".$month_start_end_date."'
+            ),
+            -- Sama seperti lhk_upto_end/panen_upto_end, tapi filter < start_date, untuk Saldo Awal Stok
+            lhk_upto_start as (
+                select l1.noreg, l1.ekor_mati
+                from lhk l1
+                inner join (
+                    select noreg, max(umur) as umur from lhk where tanggal < '".$start_date."' group by noreg
+                ) l2 on l1.noreg = l2.noreg and l1.umur = l2.umur
+            ),
+            panen_upto_start as (
+                select noreg, sum(netto_ekor) as ekor_panen
+                from real_sj
+                where tgl_panen < '".$start_date."'
+                group by noreg
+            ),
+            -- Ekor panen di periode berjalan (start_date s/d end_date), untuk kolom Terjual
+            panen_periode as (
+                select noreg, sum(netto_ekor) as ekor_panen
+                from real_sj
+                where tgl_panen between '".$start_date."' and '".$end_date."'
+                group by noreg
             ),
             kp_opkg as (
                 select no_order from kirim_pakan
@@ -1292,6 +1413,19 @@ class KertasKerjaHpp extends Public_Controller {
             kv_opkp as (
                 select no_order from kirim_voadip
                 where jenis_kirim = 'opkp' and tgl_kirim between '".prev_date($start_date)."' and '".next_date($end_date)."'
+            ),
+            -- Sama seperti kp_opkg/kp_opkp/kv_opkg/kv_opkp, tapi untuk data sebelum start_date (Saldo Awal)
+            kp_opkg_awal as (
+                select no_order from kirim_pakan where jenis_kirim = 'opkg' and tgl_kirim < '".$start_date."'
+            ),
+            kp_opkp_awal as (
+                select no_order from kirim_pakan where jenis_kirim = 'opkp' and tgl_kirim < '".$start_date."'
+            ),
+            kv_opkg_awal as (
+                select no_order from kirim_voadip where jenis_kirim = 'opkg' and tgl_kirim < '".$start_date."'
+            ),
+            kv_opkp_awal as (
+                select no_order from kirim_voadip where jenis_kirim = 'opkp' and tgl_kirim < '".$start_date."'
             ),
 
             -- ============================================================
@@ -1317,6 +1451,26 @@ class KertasKerjaHpp extends Public_Controller {
                 left join kv_opkg on dss.kode_trans = kv_opkg.no_order and dss.jenis_barang = 'voadip'
                 left join kv_opkp on dss.kode_trans = kv_opkp.no_order and dss.jenis_barang = 'voadip'
                 where dss.tgl_trans between '".$start_date."' and '".$end_date."'
+                    and dss.jenis_barang in ('pakan', 'voadip')
+                group by dss.noreg
+            ),
+            -- Sama seperti dss_period, tapi sebelum start_date (Saldo Awal) - hanya kolom yang dipakai untuk OVK/OA
+            dss_awal as (
+                select dss.noreg,
+                    sum(case when dss.jenis_barang = 'voadip' and kv_opkg_awal.no_order is not null
+                        then dss.jumlah * dss.hrg_beli else 0 end) as beli_ovk,
+                    sum(case when dss.jenis_barang = 'voadip' and kv_opkp_awal.no_order is not null
+                        then dss.jumlah * dss.hrg_beli else 0 end) as mutasi_msk_ovk,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkg_awal.no_order is not null
+                        then dss.jumlah * dss.oa else 0 end) as beli_oa,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkp_awal.no_order is not null
+                        then dss.jumlah * dss.oa else 0 end) as mutasi_msk_oa
+                from det_stok_siklus dss
+                left join kp_opkg_awal on dss.kode_trans = kp_opkg_awal.no_order and dss.jenis_barang = 'pakan'
+                left join kp_opkp_awal on dss.kode_trans = kp_opkp_awal.no_order and dss.jenis_barang = 'pakan'
+                left join kv_opkg_awal on dss.kode_trans = kv_opkg_awal.no_order and dss.jenis_barang = 'voadip'
+                left join kv_opkp_awal on dss.kode_trans = kv_opkp_awal.no_order and dss.jenis_barang = 'voadip'
+                where dss.tgl_trans < '".$start_date."'
                     and dss.jenis_barang in ('pakan', 'voadip')
                 group by dss.noreg
             ),
@@ -1348,6 +1502,25 @@ class KertasKerjaHpp extends Public_Controller {
                     and dss.jenis_barang in ('pakan', 'voadip')
                 group by dss.noreg
             ),
+            -- Sama seperti dsts_period, tapi sebelum start_date (Saldo Awal) - hanya kolom yang dipakai
+            dsts_awal as (
+                select dss.noreg,
+                    sum(case when dss.jenis_barang = 'pakan' and dsts.tbl_name = 'lhk'
+                        then dsts.jumlah * dss.hrg_beli else 0 end) as pemakaian_pkn,
+                    sum(case when dss.jenis_barang = 'voadip' and dsts.tbl_name <> 'lhk'
+                        then dsts.jumlah * dss.hrg_beli else 0 end) as mutasi_klwr_ovk,
+                    sum(case when dss.jenis_barang = 'pakan' and kp_opkp_awal.no_order is not null
+                        then dsts.jumlah * dss.oa else 0 end) as mutasi_klwr_oa,
+                    sum(case when dss.jenis_barang = 'pakan' and rp.no_retur is not null
+                        then -dsts.jumlah * dss.oa else 0 end) as koreksi_oa
+                from det_stok_trans_siklus dsts
+                inner join det_stok_siklus dss on dsts.id_header = dss.id
+                left join kp_opkp_awal on dsts.kode_trans = kp_opkp_awal.no_order
+                left join retur_pakan rp on dsts.kode_trans = rp.no_retur and rp.jenis_retur = 'opkp'
+                where dsts.tgl_trans < '".$start_date."'
+                    and dss.jenis_barang in ('pakan', 'voadip')
+                group by dss.noreg
+            ),
 
             -- ============================================================
             -- 4. MM pemakaian (1 scan mmitem)
@@ -1359,6 +1532,16 @@ class KertasKerjaHpp extends Public_Controller {
                 inner join mm m on mi.no_mm = m.no_mm
                 where (mi.coa_asal = '71101.000' or mi.coa_tujuan = '71101.000')
                     and m.tgl_mm between '".$start_date."' and '".$end_date."'
+                group by mi.noreg
+            ),
+            -- Sama seperti mm_agg, tapi sebelum start_date (Saldo Awal)
+            mm_awal as (
+                select mi.noreg,
+                    sum(case when mi.coa_asal = '71101.000' then -mi.nilai else mi.nilai end) as mm_pemakaian_pkn
+                from mmitem mi
+                inner join mm m on mi.no_mm = m.no_mm
+                where (mi.coa_asal = '71101.000' or mi.coa_tujuan = '71101.000')
+                    and m.tgl_mm < '".$start_date."'
                 group by mi.noreg
             ),
 
@@ -1378,12 +1561,26 @@ class KertasKerjaHpp extends Public_Controller {
                 where rn = 1
                 group by noreg
             ),
+            doc_ranked_before as (
+                select *, row_number() over (partition by noreg, jenis_trans order by id desc) as rn
+                from det_stok_siklus
+                where jenis_barang = 'doc' and tgl_trans < '".$start_date."'
+            ),
             doc_saldo as (
                 select noreg,
                     sum(case when jenis_trans like 'ORDER' then jumlah * hrg_beli else 0 end) as doc_debet,
                     sum(case when jenis_trans not like 'ORDER' then jumlah * hrg_beli else 0 end) as doc_kredit
-                from doc_ranked
-                where rn = 1 and tgl_trans < '".$start_date."'
+                from doc_ranked_before
+                where rn = 1
+                group by noreg
+            ),
+            -- Pemakaian DOC sebelum start_date (Saldo Awal), pakai doc_ranked_before yang sama
+            doc_period_awal as (
+                select noreg,
+                    sum(case when jenis_trans like 'ORDER' then jumlah * hrg_beli else 0 end) as beli_doc,
+                    sum(case when jenis_trans not like 'ORDER' then jumlah * hrg_beli else 0 end) as koreksi_doc
+                from doc_ranked_before
+                where rn = 1
                 group by noreg
             ),
 
@@ -1461,6 +1658,58 @@ class KertasKerjaHpp extends Public_Controller {
                 ) rgn on rg.id = rgn.id_header
                 where rg.jenis = 'rhpp_plasma' and rgh.tgl_submit between '".$start_date."' and '".$end_date."'
             ),
+            -- Sama seperti rhpp_data, tapi sebelum start_date (Saldo Awal)
+            rhpp_data_awal as (
+                select r.noreg, r.pdpt_peternak_belum_pajak
+                from rhpp r
+                inner join tutup_siklus ts on r.id_ts = ts.id
+                where ts.tgl_tutup < '".$start_date."'
+                    and r.jenis = 'rhpp_plasma'
+                    and not exists (select * from rhpp_group_noreg where noreg = r.noreg)
+
+                union all
+
+                select rgn.noreg, rg.pdpt_peternak_belum_pajak
+                from rhpp_group rg
+                inner join rhpp_group_header rgh on rg.id_header = rgh.id
+                inner join (
+                    select rgn.id_header, min(rgn.noreg) as noreg
+                    from (
+                        select rgn.*, lhk.tanggal
+                        from rhpp_group_noreg rgn
+                        left join lhk_last lhk on lhk.noreg = rgn.noreg
+                    ) rgn
+                    inner join (
+                        select rgn.id_header, max(lhk.tanggal) as tgl_akhir_siklus
+                        from rhpp_group_noreg rgn
+                        left join lhk_last lhk on lhk.noreg = rgn.noreg
+                        group by rgn.id_header
+                    ) rgn_max on rgn.id_header = rgn_max.id_header and rgn.tanggal = rgn_max.tgl_akhir_siklus
+                    group by rgn.id_header
+                ) rgn on rg.id = rgn.id_header
+                where rg.jenis = 'rhpp_plasma' and rgh.tgl_submit < '".$start_date."'
+            ),
+
+            -- Noreg yang belum tutup siklus per akhir periode (end_date) tapi sudah ada panen sebagian (real_sj) di periode ini
+            panen_sebagian as (
+                select distinct rs.noreg
+                from real_sj rs
+                where rs.tgl_panen between '".$start_date."' and '".$end_date."'
+                    and not exists (
+                        select 1 from tutup_siklus ts
+                        where ts.noreg = rs.noreg and ts.tgl_tutup <= '".$end_date."'
+                    )
+            ),
+            -- Sama seperti panen_sebagian, tapi dicek per awal periode (sebelum start_date) untuk Saldo Awal
+            panen_sebagian_awal as (
+                select distinct rs.noreg
+                from real_sj rs
+                where rs.tgl_panen < '".$start_date."'
+                    and not exists (
+                        select 1 from tutup_siklus ts
+                        where ts.noreg = rs.noreg and ts.tgl_tutup < '".$start_date."'
+                    )
+            ),
 
             -- ============================================================
             -- 8. HELPERS for outer joins
@@ -1482,6 +1731,16 @@ class KertasKerjaHpp extends Public_Controller {
                 from terima_doc td1
                 inner join (select max(id) as id, no_order from terima_doc group by no_order) td2
                     on td1.id = td2.id
+            ),
+            -- BL/BTL per noreg dari det_jurnal (coa_tujuan), sesuai periode berjalan, dibedakan cukup dari no. COA
+            det_jurnal_bl_btl as (
+                select dj.noreg,
+                    sum(case when dj.coa_tujuan in (".$coa_bl.") then dj.nominal else 0 end) as nilai_bl,
+                    sum(case when dj.coa_tujuan in (".$coa_btl.") then dj.nominal else 0 end) as nilai_btl
+                from det_jurnal dj
+                where dj.tanggal between '".$start_date."' and '".$end_date."'
+                    and dj.noreg is not null
+                group by dj.noreg
             ),
 
             -- ============================================================
@@ -1544,6 +1803,86 @@ class KertasKerjaHpp extends Public_Controller {
                 left join sa_oa on n.noreg = sa_oa.noreg
                 left join doc_saldo sa_doc on n.noreg = sa_doc.noreg
                 left join rhpp_data rhpp on n.noreg = rhpp.noreg
+            ),
+
+            -- ============================================================
+            -- 10b. PROPORSI per noreg (dipakai untuk kolom Proporsi & alokasi BL/BTL per unit)
+            -- ============================================================
+            noreg_base as (
+                select c.noreg,
+                    w.kode as unit,
+                    case when td.datang is not null then td.datang else rs.tgl_docin end as tgl_chick_in,
+                    case when td.jml_ekor is not null then td.jml_ekor else rs.populasi end as populasi
+                from combined c
+                left join rdim_submit rs on c.noreg = rs.noreg
+                left join mitra_mapping_max mm on mm.nim = rs.nim
+                left join mitra m on m.id = mm.id
+                left join kandang k on k.id = rs.kandang
+                left join wilayah w on k.unit = w.id
+                left join order_doc_max od on c.noreg = od.noreg
+                left join terima_doc_max td on td.no_order = od.no_order
+                where m.id is not null
+            ),
+            noreg_hari_proporsi as (
+                select nb.noreg, nb.unit, nb.populasi,
+                    (case
+                        when psb.noreg is not null then null
+                        when nb.tgl_chick_in > '".$eom_end_date."' then null
+                        when '".$start_date."' < nb.tgl_chick_in then nb.tgl_chick_in
+                        else '".$start_date."'
+                    end) as start_date_proporsi,
+                    (case
+                        when psb.noreg is not null then null
+                        when nb.tgl_chick_in > '".$eom_end_date."' then null
+                        when pbe.tgl_panen_terakhir_bulan is not null then pbe.tgl_panen_terakhir_bulan
+                        else '".$eom_end_date."'
+                    end) as end_date_proporsi,
+                    isnull(datediff(day,
+                        (case
+                            when psb.noreg is not null then null
+                            when nb.tgl_chick_in > '".$eom_end_date."' then null
+                            when '".$start_date."' < nb.tgl_chick_in then nb.tgl_chick_in
+                            else '".$start_date."'
+                        end),
+                        (case
+                            when psb.noreg is not null then null
+                            when nb.tgl_chick_in > '".$eom_end_date."' then null
+                            when pbe.tgl_panen_terakhir_bulan is not null then pbe.tgl_panen_terakhir_bulan
+                            else '".$eom_end_date."'
+                        end)
+                    ), 0) as hari,
+                    isnull(datediff(day,
+                        (case
+                            when psb.noreg is not null then null
+                            when nb.tgl_chick_in > '".$eom_end_date."' then null
+                            when '".$start_date."' < nb.tgl_chick_in then nb.tgl_chick_in
+                            else '".$start_date."'
+                        end),
+                        (case
+                            when psb.noreg is not null then null
+                            when nb.tgl_chick_in > '".$eom_end_date."' then null
+                            when pbe.tgl_panen_terakhir_bulan is not null then pbe.tgl_panen_terakhir_bulan
+                            else '".$eom_end_date."'
+                        end)
+                    ), 0) * nb.populasi as proporsi
+                from noreg_base nb
+                left join panen_bulan_enddate pbe on pbe.noreg = nb.noreg
+                left join panen_sebelum_bulan psb on psb.noreg = nb.noreg
+            ),
+            unit_proporsi_total as (
+                select unit, sum(proporsi) as total_proporsi
+                from noreg_hari_proporsi
+                group by unit
+            ),
+            -- BL/BTL yang di-posting di level unit (noreg null), untuk dialokasikan ke tiap noreg pakai proporsi
+            det_jurnal_bl_btl_pool as (
+                select dj.unit,
+                    sum(case when dj.coa_tujuan in (".$coa_bl.") then dj.nominal else 0 end) as pool_bl,
+                    sum(case when dj.coa_tujuan in (".$coa_btl.") then dj.nominal else 0 end) as pool_btl
+                from det_jurnal dj
+                where dj.tanggal between '".$start_date."' and '".$end_date."'
+                    and dj.noreg is null
+                group by dj.unit
             )
             -- ============================================================
             -- 11. FINAL SELECT
@@ -1552,8 +1891,76 @@ class KertasKerjaHpp extends Public_Controller {
                 data.unit,
                 data.noreg,
                 data.nama,
+                data.jenis_mitra,
                 data.tgl_chick_in,
                 data.populasi,
+                -- SALDO AWAL (grup Saldo Awal di view) = rumus Saldo Akhir (Tersedia - Dijual),
+                -- tapi datanya dihitung sebelum start_date (kumulatif dari awal)
+                (".$sa_awal_doc_expr.") as sa_awal_doc,
+                (".$sa_awal_pakan_expr.") as sa_awal_pakan,
+                (".$sa_awal_ovk_expr.") as sa_awal_ovk,
+                (".$sa_awal_oa_expr.") as sa_awal_oa,
+                0 as sa_awal_bl,
+                0 as sa_awal_btl,
+                (".$sa_awal_rhpp_expr.") as sa_awal_rhpp,
+                (".$sa_awal_doc_expr." + ".$sa_awal_pakan_expr." + ".$sa_awal_ovk_expr." + ".$sa_awal_oa_expr." + ".$sa_awal_rhpp_expr.") as sa_awal_total,
+                -- PRODUKSI (grup Produksi di view, sesuai periode start_date s/d end_date)
+                data.pemakaian_doc as produksi_doc,
+                data.pemakaian_pkn as produksi_pakan,
+                data.pemakaian_ovk as produksi_ovk,
+                data.pemakaian_oa as produksi_oa,
+                data.nilai_bl as produksi_bl,
+                data.nilai_btl as produksi_btl,
+                -- RHPP: normal dari tutup siklus/rhpp_group; kalau belum tutup siklus tapi sudah ada
+                -- panen sebagian (real_sj) di periode ini, dipakai estimasi 5000 * populasi
+                (".$produksi_rhpp_expr.") as produksi_rhpp,
+                (data.pemakaian_doc + data.pemakaian_pkn + data.pemakaian_ovk + data.pemakaian_oa
+                    + data.nilai_bl + data.nilai_btl
+                    + (".$produksi_rhpp_expr.")) as produksi_total,
+                -- TERSEDIA (grup Tersedia di view) = Saldo Awal + Produksi
+                (".$tersedia_doc_expr.") as tersedia_doc,
+                (".$tersedia_pakan_expr.") as tersedia_pakan,
+                (".$tersedia_ovk_expr.") as tersedia_ovk,
+                (".$tersedia_oa_expr.") as tersedia_oa,
+                (".$tersedia_bl_expr.") as tersedia_bl,
+                (".$tersedia_btl_expr.") as tersedia_btl,
+                (".$tersedia_rhpp_expr.") as tersedia_rhpp,
+                (".$tersedia_total_expr.") as tersedia_total,
+                -- DIJUAL (grup Dijual di view) = persentase (Terjual / Stock Tersedia) x nilai Tersedia
+                (".$persen_dijual.") * (".$tersedia_doc_expr.") as dijual_doc,
+                (".$persen_dijual.") * (".$tersedia_pakan_expr.") as dijual_pakan,
+                (".$persen_dijual.") * (".$tersedia_ovk_expr.") as dijual_ovk,
+                (".$persen_dijual.") * (".$tersedia_oa_expr.") as dijual_oa,
+                (".$persen_dijual.") * (".$tersedia_bl_expr.") as dijual_bl,
+                (".$persen_dijual.") * (".$tersedia_btl_expr.") as dijual_btl,
+                (".$persen_dijual.") * (".$tersedia_rhpp_expr.") as dijual_rhpp,
+                (".$persen_dijual.") * (".$tersedia_total_expr.") as dijual_total,
+                -- TERJUAL (ekor) = ekor panen di periode berjalan (start_date s/d end_date)
+                data.ekor_panen_periode as terjual,
+                -- PERSENTASE = Terjual / Stock Tersedia x 100
+                (".$persen_dijual.") * 100 as persentase_dijual,
+                -- START/END DATE PROPORSI, HARI & PROPORSI (sudah dihitung sekali di noreg_hari_proporsi)
+                data.start_date_proporsi,
+                data.end_date_proporsi,
+                data.hari,
+                data.proporsi,
+                -- SALDO AKHIR (grup Saldo Akhir di view) = Tersedia - Dijual
+                ((".$tersedia_doc_expr.") - (".$persen_dijual.") * (".$tersedia_doc_expr.")) as saldo_akhir_doc,
+                ((".$tersedia_pakan_expr.") - (".$persen_dijual.") * (".$tersedia_pakan_expr.")) as saldo_akhir_pakan,
+                ((".$tersedia_ovk_expr.") - (".$persen_dijual.") * (".$tersedia_ovk_expr.")) as saldo_akhir_ovk,
+                ((".$tersedia_oa_expr.") - (".$persen_dijual.") * (".$tersedia_oa_expr.")) as saldo_akhir_oa,
+                ((".$tersedia_bl_expr.") - (".$persen_dijual.") * (".$tersedia_bl_expr.")) as saldo_akhir_bl,
+                ((".$tersedia_btl_expr.") - (".$persen_dijual.") * (".$tersedia_btl_expr.")) as saldo_akhir_btl,
+                ((".$tersedia_rhpp_expr.") - (".$persen_dijual.") * (".$tersedia_rhpp_expr.")) as saldo_akhir_rhpp,
+                ((".$tersedia_total_expr.") - (".$persen_dijual.") * (".$tersedia_total_expr.")) as saldo_akhir_total,
+                -- STOCK TERSEDIA (ekor) = populasi - ekor mati - ekor panen, kumulatif s/d end_date
+                (data.populasi - data.ekor_mati - data.ekor_panen) as stock_tersedia,
+                -- SALDO AWAL STOK (ekor) = rumus sama, tapi kumulatif < start_date
+                (data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) as saldo_awal_stok,
+                -- SISA STOK (ekor) = saldo_awal_stok - jumlah kematian di periode berjalan
+                -- (ekor_mati kumulatif s/d end_date - ekor_mati kumulatif < start_date)
+                ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal)
+                    - (data.ekor_mati - data.ekor_mati_awal)) as sisa_stok,
                 data.sa_pkn,
                 data.beli_pkn,
                 data.mutasi_msk_pkn,
@@ -1584,8 +1991,6 @@ class KertasKerjaHpp extends Public_Controller {
                 data.koreksi_oa,
                 (data.beli_oa + data.mutasi_msk_oa + data.koreksi_oa) - data.mutasi_klwr_oa as pemakaian_oa,
                 (data.beli_oa + data.mutasi_msk_oa) - data.mutasi_klwr_oa + data.koreksi_oa as net_oa,
-                (data.sa_oa + data.beli_oa + data.mutasi_msk_oa)
-                    - data.mutasi_klwr_oa + data.koreksi_oa as saldo_akhir_oa,
                 data.pdpt_peternak,
                 data.pdpt_peternak + data.pemakaian_pkn + data.pemakaian_ovk
                     + data.pemakaian_doc + data.pemakaian_oa as total
@@ -1595,6 +2000,7 @@ class KertasKerjaHpp extends Public_Controller {
                     w.kode as unit,
                     c.noreg,
                     m.nama,
+                    j.kode as jenis_mitra,
                     case when td.datang is not null then td.datang else rs.tgl_docin end as tgl_chick_in,
                     case when td.jml_ekor is not null then td.jml_ekor else rs.populasi end as populasi,
                     c.sa_pkn, c.beli_pkn, c.mutasi_msk_pkn, c.mutasi_klwr_pkn,
@@ -1602,20 +2008,66 @@ class KertasKerjaHpp extends Public_Controller {
                     c.sa_ovk, c.beli_ovk, c.mutasi_msk_ovk, c.mutasi_klwr_ovk, c.pemakaian_ovk,
                     c.sa_doc, c.beli_doc, c.mutasi_msk_doc, c.mutasi_klwr_doc, c.koreksi_doc, c.pemakaian_doc,
                     c.sa_oa, c.beli_oa, c.mutasi_msk_oa, c.mutasi_klwr_oa, c.koreksi_oa, c.pemakaian_oa,
-                    c.pdpt_peternak
+                    c.pdpt_peternak,
+                    case when ps.noreg is not null then 1 else 0 end as is_panen_sebagian,
+                    case when psa.noreg is not null then 1 else 0 end as is_panen_sebagian_awal,
+                    coalesce(lu.ekor_mati, 0) as ekor_mati,
+                    coalesce(pu.ekor_panen, 0) as ekor_panen,
+                    coalesce(lus.ekor_mati, 0) as ekor_mati_awal,
+                    coalesce(pus.ekor_panen, 0) as ekor_panen_awal,
+                    coalesce(pp.ekor_panen, 0) as ekor_panen_periode,
+                    -- Pemakaian & RHPP sebelum start_date, untuk Saldo Awal
+                    (coalesce(dsts_a.pemakaian_pkn, 0) + coalesce(mm_a.mm_pemakaian_pkn, 0)) as pemakaian_pkn_awal,
+                    (coalesce(dss_a.beli_ovk, 0) + coalesce(dss_a.mutasi_msk_ovk, 0) - coalesce(dsts_a.mutasi_klwr_ovk, 0)) as pemakaian_ovk_awal,
+                    (coalesce(doc_a.beli_doc, 0) + coalesce(doc_a.koreksi_doc, 0)) as pemakaian_doc_awal,
+                    (coalesce(dss_a.beli_oa, 0) + coalesce(dss_a.mutasi_msk_oa, 0)
+                        + coalesce(dsts_a.koreksi_oa, 0) - coalesce(dsts_a.mutasi_klwr_oa, 0)) as pemakaian_oa_awal,
+                    coalesce(rhpp_a.pdpt_peternak_belum_pajak, 0) as pdpt_peternak_awal,
+                    -- Proporsi (dihitung sekali di noreg_hari_proporsi, dipakai juga untuk alokasi BL/BTL)
+                    nhp.start_date_proporsi,
+                    nhp.end_date_proporsi,
+                    nhp.hari,
+                    nhp.proporsi,
+                    -- BL/BTL = langsung tertag ke noreg (det_jurnal_bl_btl) + alokasi proporsional dari pool
+                    -- biaya level unit (det_jurnal.noreg is null), dibagi sesuai porsi Proporsi masing-masing noreg
+                    (coalesce(djbb.nilai_bl, 0) + coalesce(djp.pool_bl, 0) * case
+                        when coalesce(upt.total_proporsi, 0) <> 0 then cast(nhp.proporsi as float) / upt.total_proporsi
+                        else 0
+                    end) as nilai_bl,
+                    (coalesce(djbb.nilai_btl, 0) + coalesce(djp.pool_btl, 0) * case
+                        when coalesce(upt.total_proporsi, 0) <> 0 then cast(nhp.proporsi as float) / upt.total_proporsi
+                        else 0
+                    end) as nilai_btl
                 from combined c
                 left join rdim_submit rs on c.noreg = rs.noreg
                 left join mitra_mapping_max mm on mm.nim = rs.nim
                 left join mitra m on m.id = mm.id
+                left join jenis j on m.jenis = j.kode
                 left join kandang k on k.id = rs.kandang
                 left join wilayah w on k.unit = w.id
                 left join order_doc_max od on c.noreg = od.noreg
                 left join terima_doc_max td on td.no_order = od.no_order
+                left join panen_sebagian ps on ps.noreg = c.noreg
+                left join panen_sebagian_awal psa on psa.noreg = c.noreg
+                left join lhk_upto_end lu on lu.noreg = c.noreg
+                left join panen_upto_end pu on pu.noreg = c.noreg
+                left join lhk_upto_start lus on lus.noreg = c.noreg
+                left join panen_upto_start pus on pus.noreg = c.noreg
+                left join panen_periode pp on pp.noreg = c.noreg
+                left join dss_awal dss_a on dss_a.noreg = c.noreg
+                left join dsts_awal dsts_a on dsts_a.noreg = c.noreg
+                left join mm_awal mm_a on mm_a.noreg = c.noreg
+                left join doc_period_awal doc_a on doc_a.noreg = c.noreg
+                left join rhpp_data_awal rhpp_a on rhpp_a.noreg = c.noreg
+                left join noreg_hari_proporsi nhp on nhp.noreg = c.noreg
+                left join unit_proporsi_total upt on upt.unit = w.kode
+                left join det_jurnal_bl_btl djbb on djbb.noreg = c.noreg
+                left join det_jurnal_bl_btl_pool djp on djp.unit = w.kode
                 where m.id is not null
                     ".$sql_unit."
             ) data
             order by
-                data.noreg asc,
+                data.unit asc,
                 data.tgl_chick_in asc;
         ";
         // cetak_r( $sql, 1 );
@@ -1666,14 +2118,14 @@ class KertasKerjaHpp extends Public_Controller {
         $start_date = $params['start_date'];
         $end_date = $params['end_date'];
 
-        $filename = strtoupper("KERTAS_KERJA_PERIODE_");
+        $filename = strtoupper("LEMBAR_KERJA_PERIODE_");
         $filename = $filename.str_replace('-', '', $start_date).'_'.str_replace('-', '', $end_date).'.xls';
 
         $arr_column = null;
 
         $idx = 0;
         $arr_column[ $idx ] = array(
-            'A' => array('value' => 'KERTAS KERJA', 'data_type' => 'string', 'text_style' => 'bold')
+            'A' => array('value' => 'LEMBAR KERJA', 'data_type' => 'string', 'text_style' => 'bold')
         );
         $idx++;
         $arr_column[ $idx ] = array(
