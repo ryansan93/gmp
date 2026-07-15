@@ -223,7 +223,7 @@ class SisaTagihanBakulPerTanggal extends Public_Controller {
                 ((drsi.total+isnull(dpp.dn, 0))-(isnull(dpp.cn, 0)+isnull(dpp.penyesuaian, 0)+isnull(dpp.bayar, 0))) as sisa_tagihan
             from det_real_sj_inv drsi
             left join
-                det_real_sj drs
+                (select no_pelanggan, no_do, no_sj, id_header from det_real_sj group by no_pelanggan, no_do, no_sj, id_header) drs
                 on
                     drsi.no_sj = drs.no_sj
             left join
@@ -253,7 +253,7 @@ class SisaTagihanBakulPerTanggal extends Public_Controller {
             left join
             	(
             		select rs.noreg, m.nama, m.nomor, m.perusahaan, ts.tgl_tutup from rdim_submit rs
-            		left join
+            		left hash join
             			(
             				select mm1.* from mitra_mapping mm1
             				right join
@@ -284,7 +284,7 @@ class SisaTagihanBakulPerTanggal extends Public_Controller {
                 ) plg
                 on
                     plg.nomor = drs.no_pelanggan
-            left join
+            left hash join
                 (
                     select prs1.* from perusahaan prs1
                     right join

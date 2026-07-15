@@ -432,7 +432,7 @@ class SisaTagihanPerPelanggan extends Public_Controller {
                     real_sj rs
                     on
                         drs.id_header = rs.id
-                left join
+                left hash join
                     (
                         select plg1.* from pelanggan plg1
                         right join
