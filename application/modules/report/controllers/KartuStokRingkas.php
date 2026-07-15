@@ -173,16 +173,21 @@ class KartuStokRingkas extends Public_Controller {
                     select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_voadip av -- where av.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
 
+                // Sumber jumlah keluar diambil langsung dari dokumen fisik (bukan det_stok_trans),
+                // karena det_stok_trans berhenti dicatat begitu jml_stok layer mentok 0 -- order yang
+                // melebihi stok yang tersedia jadi tidak pernah tercatat/terpotong di sana (lihat kasus
+                // oversell). try_cast (bukan cast biasa) supaya kode gudang legacy yang tidak
+                // numerik/kepanjangan tidak membuat query error -- cukup jadi NULL & tidak match apapun.
                 $sql_jenis_trans_keluar = "
-                    select tv.tgl_terima as tanggal, kv.no_order as kode_trans, kv.no_order, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv left join terima_voadip tv on tv.id_kirim_voadip = kv.id -- where kv.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tv.tgl_terima as tanggal, try_cast(kv.asal as int) as kode_gudang, dkv.item as kode_barang, 'voadip' as jenis_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans, 'DISTRIBUSI' as jenis_trans from kirim_voadip kv left join terima_voadip tv on tv.id_kirim_voadip = kv.id join det_kirim_voadip dkv on dkv.id_header = kv.id group by tv.tgl_terima, kv.asal, dkv.item, kv.no_order
 
                     union all
 
-                    select rv.tgl_retur as tanggal, rv.no_retur as kode_trans, rv.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_voadip rv where rv.jenis_retur = 'opkg' -- where rv.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rv.tgl_retur as tanggal, try_cast(rv.id_asal as int) as kode_gudang, drv.item as kode_barang, 'voadip' as jenis_barang, sum(drv.jumlah) as jumlah, rv.no_retur as kode_trans, 'RETUR DARI GUDANG' as jenis_trans from retur_voadip rv join det_retur_voadip drv on drv.id_header = rv.id where rv.jenis_retur = 'opkg' group by rv.tgl_retur, rv.id_asal, drv.item, rv.no_retur
 
                     union all
 
-                    select av.tanggal, av.kode as kode_trans, av.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_voadip av -- where av.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select av.tanggal, av.kode_gudang, av.kode_barang, 'voadip' as jenis_barang, av.jumlah, av.kode as kode_trans, 'ADJUSTMENT OUT' as jenis_trans from adjout_voadip av
                 ";
             } else {
                 $sql_jenis_trans_masuk = "
@@ -197,16 +202,21 @@ class KartuStokRingkas extends Public_Controller {
                     select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT IN' as jenis_trans from adjin_pakan ap -- where ap.tanggal between '".$_start_date."' and '".$_end_date."'
                 ";
 
+                // Sumber jumlah keluar diambil langsung dari dokumen fisik (bukan det_stok_trans),
+                // karena det_stok_trans berhenti dicatat begitu jml_stok layer mentok 0 -- order yang
+                // melebihi stok yang tersedia jadi tidak pernah tercatat/terpotong di sana (lihat kasus
+                // oversell). try_cast (bukan cast biasa) supaya kode gudang legacy yang tidak
+                // numerik/kepanjangan tidak membuat query error -- cukup jadi NULL & tidak match apapun.
                 $sql_jenis_trans_keluar = "
-                    select tp.tgl_terima as tanggal, kp.no_order as kode_trans, kp.no_order, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id -- where kp.tgl_kirim between '".$_start_date."' and '".$_end_date."'
+                    select tp.tgl_terima as tanggal, try_cast(kp.asal as int) as kode_gudang, dkp.item as kode_barang, 'pakan' as jenis_barang, sum(dkp.jumlah) as jumlah, kp.no_order as kode_trans, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id join det_kirim_pakan dkp on dkp.id_header = kp.id group by tp.tgl_terima, kp.asal, dkp.item, kp.no_order
 
                     union all
 
-                    select rp.tgl_retur as tanggal, rp.no_retur as kode_trans, rp.no_order, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp -- where rp.tgl_retur between '".$_start_date."' and '".$_end_date."'
+                    select rp.tgl_retur as tanggal, try_cast(rp.id_asal as int) as kode_gudang, drp.item as kode_barang, 'pakan' as jenis_barang, sum(drp.jumlah) as jumlah, rp.no_retur as kode_trans, 'RETUR DARI GUDANG' as jenis_trans from retur_pakan rp join det_retur_pakan drp on drp.id_header = rp.id where rp.jenis_retur = 'opkg' group by rp.tgl_retur, rp.id_asal, drp.item, rp.no_retur
 
                     union all
 
-                    select ap.tanggal, ap.kode as kode_trans, ap.kode as no_order, 'ADJUSTMENT OUT' as jenis_trans from adjout_pakan ap -- where ap.tanggal between '".$_start_date."' and '".$_end_date."'
+                    select ap.tanggal, ap.kode_gudang, ap.kode_barang, 'pakan' as jenis_barang, ap.jumlah, ap.kode as kode_trans, 'ADJUSTMENT OUT' as jenis_trans from adjout_pakan ap
                 ";
             }
 
@@ -378,139 +388,82 @@ class KartuStokRingkas extends Public_Controller {
                 union all
 
                 /* KELUAR */
-                /*
+                -- Jumlah keluar diambil dari dokumen fisik (kirim/retur/adjustment), BUKAN dari
+                -- det_stok_trans. det_stok_trans berhenti dicatat begitu jml_stok layer di det_stok
+                -- mentok 0, jadi order yang melebihi stok yang tersedia (oversell) tidak pernah
+                -- tercatat/terpotong di sana -- ini yang membuat saldo laporan sebelumnya tidak
+                -- pernah bisa minus walau fisiknya sudah minus.
                 select
-                    -- klwr.tanggal,
-                    -- jt.tanggal,
-                    klwr.kode_gudang,
-                    klwr.kode_barang,
-                    klwr.jenis_barang,
-                    klwr.hrg_beli,
+                    x.kode_gudang,
+                    x.kode_barang,
+                    x.jenis_barang,
+                    x.hrg_beli,
                     0 as jml_saldo_awal,
                     0 as saldo_awal,
                     0 as jml_debet,
                     0 as debet,
-                    sum(klwr.jumlah) as jml_kredit,
-                    sum(klwr.jumlah * klwr.hrg_beli) as kredit
-                    -- klwr.kode_trans as kode_trans,
-                    -- klwr.jenis_trans as jenis_trans,
-                    -- jt.jenis_trans,
-                    -- 3 as urut
+                    isnull(sum(x.jumlah), 0) as jml_kredit,
+                    isnull(sum(x.jumlah * x.hrg_beli), 0) as kredit
                 from
                 (
                     select
-                        -- s.periode as tanggal,
-                        ds.kode_gudang,
-                        ds.kode_barang,
-                        ds.jenis_barang,
-                        dst.kode_trans,
-                        ds.jenis_trans,
-                        ds.hrg_beli,
-                        sum(isnull(dst.jumlah, 0)) as jumlah
-                    from det_stok_trans dst
-                    left join
-                        det_stok ds
-                        on
-                            ds.id = dst.id_header
-                    left join
-                        stok s
-                        on
-                            ds.id_header = s.id
-                    where
-                        -- s.periode between '".$_start_date."' and '".$_end_date."' and
-                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
-                        (dst.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
-                    group by
-                        -- s.periode,
-                        ds.kode_gudang,
-                        ds.kode_barang,
-                        ds.jenis_barang,
-                        dst.kode_trans,
-                        ds.jenis_trans,
-                        ds.hrg_beli
-                ) klwr
-                left join
+                        klwr.kode_gudang,
+                        klwr.kode_barang,
+                        klwr.jenis_barang,
+                        klwr.tanggal,
+                        klwr.jumlah,
+                        klwr.kode_trans,
+                        isnull(hrg.hrg_beli, hp.hrg_beli) as hrg_beli
+                    from
                     (
                         ".$sql_jenis_trans_keluar."
-                    ) jt
-                    on
-                        klwr.kode_trans = jt.kode_trans
-                where
-                    jt.tanggal between '".$_start_date."' and '".$_end_date."'
-                group by
-                    klwr.kode_gudang,
-                    klwr.kode_barang,
-                    klwr.jenis_barang,
-                    klwr.hrg_beli
-                */
-                /* END - KELUAR */
-
-                /* KELUAR */
-                select
-                    -- klwr.tanggal,
-                    -- jt.tanggal,
-                    klwr.kode_gudang,
-                    klwr.kode_barang,
-                    klwr.jenis_barang,
-                    klwr.hrg_beli,
-                    0 as jml_saldo_awal,
-                    0 as saldo_awal,
-                    0 as jml_debet,
-                    0 as debet,
-                    isnull(sum(klwr.jumlah), 0) as jml_kredit,
-                    isnull(sum((klwr.jumlah * klwr.hrg_beli)), 0) as kredit
-                    -- klwr.kode_trans as kode_trans,
-                    -- klwr.jenis_trans as jenis_trans,
-                    -- jt.jenis_trans,
-                    -- 3 as urut
-                from
-                (
-                    select
-                        -- dst.tgl_trans as tanggal,
-                        ds.kode_gudang,
-                        ds.kode_barang,
-                        ds.jenis_barang,
-                        dst.kode_trans,
-                        ds.jenis_trans,
-                        ds.hrg_beli,
-                        sum(isnull(dst.jumlah, 0)) as jumlah
-                    from det_stok_trans dst
+                    ) klwr
                     left join
-                        det_stok ds
+                        (
+                            -- harga rata-rata tertimbang dari layer det_stok yang benar-benar
+                            -- terpotong untuk kode_trans ini (kalau ada)
+                            select
+                                ds.kode_gudang,
+                                ds.kode_barang,
+                                dst.kode_trans,
+                                sum(dst.jumlah * ds.hrg_beli) / sum(dst.jumlah) as hrg_beli
+                            from det_stok_trans dst
+                            left join
+                                det_stok ds
+                                on
+                                    ds.id = dst.id_header
+                            where
+                                dst.jumlah <> 0
+                            group by
+                                ds.kode_gudang, ds.kode_barang, dst.kode_trans
+                        ) hrg
                         on
-                            ds.id = dst.id_header
-                    left join
-                        stok s
-                        on
-                            ds.id_header = s.id
+                            hrg.kode_gudang = klwr.kode_gudang and
+                            hrg.kode_barang = klwr.kode_barang and
+                            hrg.kode_trans = klwr.kode_trans
+                    outer apply
+                        (
+                            -- fallback kalau kode_trans ini sama sekali tidak pernah kepotong stok:
+                            -- pakai harga layer det_stok terdekat tanggalnya untuk gudang+barang yang sama
+                            select top 1
+                                ds2.hrg_beli
+                            from det_stok ds2
+                            where
+                                ds2.kode_gudang = klwr.kode_gudang and
+                                ds2.kode_barang = klwr.kode_barang
+                            order by
+                                abs(datediff(day, ds2.tgl_trans, klwr.tanggal)) asc
+                        ) hp
                     where
-                        -- dst.tgl_trans between '".$_start_date."' and '".$_end_date."' and
-                        ds.kode_gudang = '".$_kode_gudang."' and
-                        (dst.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
-                    group by
-                        -- dst.tgl_trans,
-                        ds.kode_gudang,
-                        ds.kode_barang,
-                        ds.jenis_barang,
-                        dst.kode_trans,
-                        ds.jenis_trans,
-                        ds.hrg_beli
-                ) klwr
-                left join
-                    (
-                        ".$sql_jenis_trans_keluar."
-                    ) jt
-                    on
-                        klwr.kode_trans = jt.no_order 
-                        -- and
-                        -- klwr.tanggal = jt.tanggal
-                where
-                    jt.tanggal between '".$_start_date."' and '".$_end_date."'
+                        (klwr.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (klwr.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
+                        klwr.tanggal between '".$_start_date."' and '".$_end_date."'
+                ) x
                 group by
-                    klwr.kode_gudang,
-                    klwr.kode_barang,
-                    klwr.jenis_barang,
-                    klwr.hrg_beli
+                    x.kode_gudang,
+                    x.kode_barang,
+                    x.jenis_barang,
+                    x.hrg_beli
                 /* END - KELUAR */
             ) data
             left join
