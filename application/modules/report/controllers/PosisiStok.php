@@ -91,38 +91,39 @@ class PosisiStok extends Public_Controller {
     }
 
     /**
-     * Posisi stok per tanggal, dihitung SEPENUHNYA dari dokumen fisik (kirim/retur/adjustment),
-     * bukan dari det_stok/det_stok_trans.
+     * Posisi stok akhir per tanggal, dihitung dari det_stok/det_stok_trans -- metodologi
+     * yang SAMA dengan Kartu Stok (report/KartuStok.php), supaya kedua laporan konsisten.
      *
-     * KENAPA DIROMBAK TOTAL (bukan cuma KELUAR): det_stok_trans berhenti dicatat begitu
-     * jml_stok layer di det_stok mentok 0 -- order yang melebihi stok yang tersedia (oversell)
-     * tidak pernah tercatat/terpotong di sana. Tapi ternyata Saldo Awal (dari det_stok) JUGA
-     * tidak bisa dipakai apa adanya: jml_stok didesain tidak pernah negatif, jadi begitu satu
-     * hari mengalami oversell dan turun ke 0, hari-hari SESUDAHNYA mulai menghitung dari 0 lagi
-     * -- defisitnya "hilang" dan tidak pernah terbawa ke Saldo Awal hari berikutnya. Karena itu
-     * seluruh SALDO AWAL/MASUK/KELUAR di sini dihitung dari ledger dokumen fisik yang sama,
-     * supaya konsisten dan defisit ikut terbawa.
+     * Cuma tampilkan SISA (saldo akhir positif) per gudang+barang, diitemisasi per kode_trans
+     * (layer stok) -- tidak ada baris minus/keluar sendiri. "Saldo akhir tanggal X" ekuivalen
+     * dengan "Saldo Awal tanggal X+1" versi Kartu Stok: pakai stok.periode = X+1 (snapshot
+     * proses hitung-stok yang jalan di awal hari X+1, sudah mencakup semua transaksi s/d
+     * akhir hari X) dan det_stok.tgl_trans < X+1.
      *
-     * Struktur:
-     * - SALDO AWAL: satu baris teragregasi per gudang+barang = seluruh masuk dikurangi seluruh
-     *   keluar SEBELUM tanggal laporan (tidak diitemisasi per transaksi -- kalau diitemisasi,
-     *   baris bisa menumpuk ratusan sejak barang itu ada).
-     * - MASUK/KELUAR: diitemisasi per transaksi, HANYA PADA tanggal laporan itu sendiri (supaya
-     *   tidak dobel-hitung dengan yang sudah masuk Saldo Awal).
-     * - Harga per baris: rata-rata tertimbang dari layer det_stok yang benar-benar terpotong
-     *   untuk kode_trans itu (kalau ada), fallback ke harga layer det_stok terdekat tanggalnya.
+     * GAP: batch hitung-stok jalan sekali semalam, jadi periode = X+1 belum tentu ada (mis.
+     * tanggal laporan = hari ini, batch besok pagi belum jalan). Kalau begitu, pakai periode
+     * TERAKHIR yang tersedia sebagai dasar, lalu tambahkan transaksi fisik (kirim/retur/
+     * adjustment, sama seperti sumber Kartu Stok) dari SETELAH periode itu s/d tanggal laporan,
+     * supaya transaksi hari berjalan tetap ikut kehitung walau belum diproses batch.
+     *
+     * NETTING: keluar di masa gap TIDAK ditampilkan sebagai baris minus sendiri -- dipakai
+     * (FIFO, layer terlama dulu) utk mengurangi layer yang ada, baru SISA per layer yang
+     * ditampilkan. Layer yang habis terpakai (sisa 0) tidak ditampilkan sama sekali.
      */
     public function mappingDataReport($_kode_brg, $_kode_gudang, $_jenis, $_date)
     {
         $jenis = ( stristr($_jenis, 'obat') !== false ) ? 'voadip' : $_jenis;
+        $next_date = date('Y-m-d', strtotime($_date.' +1 day'));
 
         $m_conf = new \Model\Storage\Conf();
 
-        // MASUK mentah: barang tiba di gudang -- lewat kirim (supplier->gudang ATAU
-        // gudang->gudang, ditandai jenis_tujuan='gudang'), retur dari plasma (jenis_retur=
-        // 'opkp'), atau adjustment in.
-        $sql_masuk_raw = "
-            select kv.tgl_kirim as tanggal, try_cast(kv.tujuan as int) as kode_gudang, dkv.item as kode_barang, '".$jenis."' as jenis_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans, 'ORDER' as jenis_trans
+        $data = null;
+
+        // Transaksi fisik "gap" -- masuk & keluar, sumber sama dgn sql_jenis_trans_masuk/keluar
+        // di KartuStok. Cuma dipakai kalau ada tanggal setelah periode batch terakhir s/d
+        // tanggal laporan (biasanya cuma "hari ini").
+        $sql_gap_masuk = "
+            select kv.tgl_kirim as tanggal, try_cast(kv.tujuan as int) as kode_gudang, dkv.item as kode_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans
             from kirim_".$jenis." kv
             join det_kirim_".$jenis." dkv on dkv.id_header = kv.id
             where kv.jenis_tujuan = 'gudang'
@@ -130,7 +131,7 @@ class PosisiStok extends Public_Controller {
 
             union all
 
-            select rv.tgl_retur as tanggal, try_cast(rv.id_tujuan as int) as kode_gudang, drv.item as kode_barang, '".$jenis."' as jenis_barang, sum(drv.jumlah) as jumlah, rv.no_retur as kode_trans, 'RETUR DARI PLASMA' as jenis_trans
+            select rv.tgl_retur as tanggal, try_cast(rv.id_tujuan as int) as kode_gudang, drv.item as kode_barang, sum(drv.jumlah) as jumlah, rv.no_retur as kode_trans
             from retur_".$jenis." rv
             join det_retur_".$jenis." drv on drv.id_header = rv.id
             where rv.jenis_retur = 'opkp'
@@ -138,21 +139,19 @@ class PosisiStok extends Public_Controller {
 
             union all
 
-            select av.tanggal, av.kode_gudang, av.kode_barang, '".$jenis."' as jenis_barang, av.jumlah, av.kode as kode_trans, 'ADJUSTMENT IN' as jenis_trans
+            select av.tanggal, av.kode_gudang, av.kode_barang, av.jumlah, av.kode as kode_trans
             from adjin_".$jenis." av
         ";
 
-        // KELUAR mentah: barang keluar gudang -- kirim ke peternak/gudang lain (asal=gudang),
-        // retur gudang ke atas (jenis_retur='opkg', saat ini tidak ada data), atau adjustment out.
-        $sql_keluar_raw = "
-            select kv.tgl_kirim as tanggal, try_cast(kv.asal as int) as kode_gudang, dkv.item as kode_barang, '".$jenis."' as jenis_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans, 'DISTRIBUSI' as jenis_trans
+        $sql_gap_keluar = "
+            select kv.tgl_kirim as tanggal, try_cast(kv.asal as int) as kode_gudang, dkv.item as kode_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans
             from kirim_".$jenis." kv
             join det_kirim_".$jenis." dkv on dkv.id_header = kv.id
             group by kv.tgl_kirim, kv.asal, dkv.item, kv.no_order
 
             union all
 
-            select rv.tgl_retur as tanggal, try_cast(rv.id_asal as int) as kode_gudang, drv.item as kode_barang, '".$jenis."' as jenis_barang, sum(drv.jumlah) as jumlah, rv.no_retur as kode_trans, 'RETUR DARI GUDANG' as jenis_trans
+            select rv.tgl_retur as tanggal, try_cast(rv.id_asal as int) as kode_gudang, drv.item as kode_barang, sum(drv.jumlah) as jumlah, rv.no_retur as kode_trans
             from retur_".$jenis." rv
             join det_retur_".$jenis." drv on drv.id_header = rv.id
             where rv.jenis_retur = 'opkg'
@@ -160,23 +159,51 @@ class PosisiStok extends Public_Controller {
 
             union all
 
-            select av.tanggal, av.kode_gudang, av.kode_barang, '".$jenis."' as jenis_barang, av.jumlah, av.kode as kode_trans, 'ADJUSTMENT OUT' as jenis_trans
+            select av.tanggal, av.kode_gudang, av.kode_barang, av.jumlah, av.kode as kode_trans
             from adjout_".$jenis." av
         ";
 
-        $data = null;
-
         $sql = "
-            ;with ledger as (
-                select tanggal, kode_gudang, kode_barang, jenis_barang, jumlah, kode_trans, jenis_trans, 'masuk' as arah from ( ".$sql_masuk_raw." ) m
-                union all
-                select tanggal, kode_gudang, kode_barang, jenis_barang, jumlah, kode_trans, jenis_trans, 'keluar' as arah from ( ".$sql_keluar_raw." ) k
+            ;with eff as (
+                -- periode terbaru yang <= next_date -- kalau batch hitung-stok untuk next_date
+                -- belum jalan (mis. tanggal laporan = hari ini, batch besok pagi belum ada),
+                -- jatuh ke periode terakhir yang tersedia daripada kosong sama sekali.
+                select max(periode) as p from stok where periode <= '".$next_date."'
             ),
-            priced as (
+            supply as (
+                -- layer dari snapshot det_stok periode terakhir yang tersedia (selalu lebih
+                -- lama drpd transaksi gap manapun -- FIFO alami lewat urutan tanggal)
                 select
-                    l.tanggal, l.kode_gudang, l.kode_barang, l.jenis_barang, l.jumlah, l.kode_trans, l.jenis_trans, l.arah,
-                    isnull(hrg.hrg_beli, hp.hrg_beli) as hrg_beli
-                from ledger l
+                    ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans as tanggal,
+                    sum(isnull(ds.jml_stok, 0) + isnull(dst.jumlah, 0)) as jumlah
+                from det_stok ds
+                left join
+                    (select id_header, sum(jumlah) as jumlah from det_stok_trans group by id_header) dst
+                    on
+                        ds.id = dst.id_header
+                left join
+                    stok s
+                    on
+                        ds.id_header = s.id
+                cross join eff
+                where
+                    s.periode = eff.p and
+                    ds.tgl_trans < eff.p and
+                    ds.jenis_barang = '".$jenis."' and
+                    (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                    (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                group by
+                    ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans
+
+                union all
+
+                -- masuk di masa gap: tanggal >= periode terakhir s/d tanggal laporan (inklusif),
+                -- belum ikut batch hitung-stok manapun
+                select
+                    g.kode_gudang, g.kode_barang, g.kode_trans,
+                    isnull(hrg.hrg_beli, hp.hrg_beli) as hrg_beli, g.tanggal, g.jumlah
+                from ( ".$sql_gap_masuk." ) g
+                cross join eff
                 left join
                     (
                         -- harga rata-rata tertimbang dari layer det_stok yang benar-benar
@@ -189,94 +216,72 @@ class PosisiStok extends Public_Controller {
                         where dst.jumlah <> 0
                         group by ds.kode_gudang, ds.kode_barang, dst.kode_trans
                     ) hrg
-                    on hrg.kode_gudang = l.kode_gudang and hrg.kode_barang = l.kode_barang and hrg.kode_trans = l.kode_trans
+                    on hrg.kode_gudang = g.kode_gudang and hrg.kode_barang = g.kode_barang and hrg.kode_trans = g.kode_trans
                 outer apply
                     (
                         -- fallback: harga layer det_stok terdekat tanggalnya untuk gudang+barang
                         -- yang sama, kalau kode_trans ini sama sekali tidak pernah kepotong stok
                         select top 1 ds2.hrg_beli
                         from det_stok ds2
-                        where ds2.kode_gudang = l.kode_gudang and ds2.kode_barang = l.kode_barang
-                        order by abs(datediff(day, ds2.tgl_trans, l.tanggal)) asc
+                        where ds2.kode_gudang = g.kode_gudang and ds2.kode_barang = g.kode_barang
+                        order by abs(datediff(day, ds2.tgl_trans, g.tanggal)) asc
                     ) hp
                 where
-                    l.kode_gudang is not null and
-                    (l.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
-                    (l.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    g.kode_gudang is not null and
+                    g.tanggal >= eff.p and g.tanggal <= '".$_date."' and
+                    (g.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                    (g.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+            ),
+            demand as (
+                -- total keluar di masa gap per gudang+barang -- dipakai (bukan ditampilkan)
+                -- utk netting FIFO thd supply, sama seperti det_stok_trans akan lakukan
+                -- begitu batch hitung-stok jalan
+                select kode_gudang, kode_barang, sum(jumlah) as total_keluar
+                from ( ".$sql_gap_keluar." ) k
+                cross join eff
+                where
+                    k.tanggal >= eff.p and k.tanggal <= '".$_date."' and
+                    (k.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                    (k.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                group by kode_gudang, kode_barang
+            ),
+            fifo as (
+                select
+                    s.kode_gudang, s.kode_barang, s.kode_trans, s.hrg_beli, s.jumlah,
+                    sum(s.jumlah) over (partition by s.kode_gudang, s.kode_barang order by s.tanggal, s.kode_trans rows unbounded preceding) as running_after,
+                    isnull(d.total_keluar, 0) as total_demand
+                from supply s
+                left join demand d on d.kode_gudang = s.kode_gudang and d.kode_barang = s.kode_barang
             )
             select
-                data.tanggal,
-                data.kode_gudang,
-                data.kode_barang,
-                data.jenis_barang,
-                data.hrg_beli,
-                sum(data.jml_saldo_awal) as jml_saldo_awal,
-                sum(data.saldo_awal) as saldo_awal,
-                sum(data.jml_debet) as jml_debet,
-                sum(data.debet) as debet,
-                sum(data.jml_kredit) as jml_kredit,
-                sum(data.kredit) as kredit,
-                (isnull(sum(data.jml_saldo_awal), 0) + isnull(sum(data.jml_debet), 0)) - isnull(sum(data.jml_kredit), 0) as jml_saldo_akhir,
-                (isnull(sum(data.saldo_awal), 0) + isnull(sum(data.debet), 0)) - isnull(sum(data.kredit), 0) as saldo_akhir,
-                data.kode_trans,
-                data.jenis_trans,
+                sa.kode_gudang,
+                sa.kode_barang,
+                '".$jenis."' as jenis_barang,
+                '".$_date."' as tanggal,
+                '' as jenis_trans,
+                sa.kode_trans,
+                sa.hrg_beli,
+                sa.sisa as jml_saldo_akhir,
+                (sa.sisa * sa.hrg_beli) as saldo_akhir,
                 gdg.nama as nama_gudang,
                 brg.nama as nama_barang
             from
             (
-                /* SALDO AWAL - satu baris teragregasi per gudang+barang, seluruh histori
-                   sebelum tanggal laporan */
                 select
-                    '".$_date."' as tanggal,
-                    kode_gudang,
-                    kode_barang,
-                    jenis_barang,
-                    sum(case when arah = 'masuk' then jumlah * hrg_beli else -(jumlah * hrg_beli) end) / nullif(sum(case when arah = 'masuk' then jumlah else -jumlah end), 0) as hrg_beli,
-                    sum(case when arah = 'masuk' then jumlah else -jumlah end) as jml_saldo_awal,
-                    sum(case when arah = 'masuk' then jumlah * hrg_beli else -(jumlah * hrg_beli) end) as saldo_awal,
-                    0 as jml_debet,
-                    0 as debet,
-                    0 as jml_kredit,
-                    0 as kredit,
-                    'Saldo Awal' as kode_trans,
-                    null as jenis_trans
-                from priced
-                where tanggal < '".$_date."'
-                group by kode_gudang, kode_barang, jenis_barang
-                /* END - SALDO AWAL */
-
-                union all
-
-                /* MASUK - diitemisasi, hanya pada tanggal laporan */
-                select
-                    tanggal, kode_gudang, kode_barang, jenis_barang, hrg_beli,
-                    0 as jml_saldo_awal, 0 as saldo_awal,
-                    jumlah as jml_debet, (jumlah * hrg_beli) as debet,
-                    0 as jml_kredit, 0 as kredit,
-                    kode_trans, jenis_trans
-                from priced
-                where arah = 'masuk' and tanggal = '".$_date."'
-                /* END - MASUK */
-
-                union all
-
-                /* KELUAR - diitemisasi, hanya pada tanggal laporan */
-                select
-                    tanggal, kode_gudang, kode_barang, jenis_barang, hrg_beli,
-                    0 as jml_saldo_awal, 0 as saldo_awal,
-                    0 as jml_debet, 0 as debet,
-                    jumlah as jml_kredit, (jumlah * hrg_beli) as kredit,
-                    kode_trans, jenis_trans
-                from priced
-                where arah = 'keluar' and tanggal = '".$_date."'
-                /* END - KELUAR */
-            ) data
+                    kode_gudang, kode_barang, kode_trans, hrg_beli,
+                    case
+                        when running_after <= total_demand then 0
+                        when (running_after - jumlah) >= total_demand then jumlah
+                        else running_after - total_demand
+                    end as sisa
+                from fifo
+            ) sa
             left join
                 (
                     select * from gudang
                 ) gdg
                 on
-                    data.kode_gudang = gdg.id
+                    sa.kode_gudang = gdg.id
             left join
                 (
                     select brg1.* from barang brg1
@@ -288,23 +293,13 @@ class PosisiStok extends Public_Controller {
                             brg1.id = brg2.id
                 ) brg
                 on
-                    data.kode_barang = brg.kode
+                    sa.kode_barang = brg.kode
             where
-                data.jenis_barang like '%".$jenis."%'
-            group by
-                data.tanggal,
-                data.kode_gudang,
-                data.kode_barang,
-                data.jenis_barang,
-                data.hrg_beli,
-                data.kode_trans,
-                data.jenis_trans,
-                gdg.nama,
-                brg.nama
+                sa.sisa <> 0
             order by
-                data.kode_gudang asc,
+                sa.kode_gudang asc,
                 brg.nama asc,
-                data.tanggal asc
+                sa.kode_trans asc
         ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
