@@ -691,7 +691,7 @@ class BankStart extends Public_Controller {
                             rekening_masuk rm
                             on
                                 pp.kode_umb = rm.no_bukti
-                        left join
+                        left hash join
                             (
                                 select plg1.* from pelanggan plg1
                                 right join
@@ -756,11 +756,14 @@ class BankStart extends Public_Controller {
                 data.kode asc
         ";
         // cetak_r( $sql, 1 );
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // Hasil bisa ribuan baris -- hydrateRaw() membungkus tiap baris jadi Eloquent
+        // model (mahal, ~2ms/baris) padahal cuma dipakai sebagai array biasa di
+        // view/export. Ambil langsung via connection->select() lalu cast ke array.
+        $items = $m_conf->getConnection()->select( $sql );
 
         $data = null;
-        if ($d_conf->count() > 0 ) {
-            $data = $d_conf->toArray();
+        if ( count($items) > 0 ) {
+            $data = array_map(function($item) { return (array) $item; }, $items);
         }
 
         return $data;
