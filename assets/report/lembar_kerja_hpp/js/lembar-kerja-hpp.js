@@ -5,6 +5,7 @@ var lkh = {
 
 	settingUp: function () {
 		$('select.unit').select2();
+		$('select.tutup_siklus').select2();
 
 		$('#Tahun').datetimepicker({
             locale: 'id',
@@ -59,6 +60,7 @@ var lkh = {
 			var periode = lkh.getPeriodeParams();
 			var params = {
 				'unit': $('.unit').select2('val'),
+				'tutup_siklus': $('.tutup_siklus').select2('val'),
 				'start_date': periode.start_date,
 				'end_date': periode.end_date
 			};
@@ -99,6 +101,7 @@ var lkh = {
 			var periode = lkh.getPeriodeParams();
 			var params = {
 				'unit': $('.unit').select2('val'),
+				'tutup_siklus': $('.tutup_siklus').select2('val'),
 				'start_date': periode.start_date,
 				'end_date': periode.end_date
 			};
@@ -146,6 +149,7 @@ var lkh = {
 			var periode = lkh.getPeriodeParams();
 			var params = {
 				'unit': $('.unit').select2('val'),
+				'tutup_siklus': $('.tutup_siklus').select2('val'),
 				'start_date': periode.start_date,
 				'end_date': periode.end_date
 			};

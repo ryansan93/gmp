@@ -51,6 +51,18 @@
 				</div>
 			</div>
 		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding">
+				<div class="col-xs-12 no-padding"><label class="control-label">Tutup Siklus</label></div>
+				<div class="col-xs-12 no-padding">
+					<select class="form-control tutup_siklus" data-required="1">
+						<option value="all">ALL</option>
+						<option value="sudah">SUDAH TUTUP SIKLUS</option>
+						<option value="belum">BELUM TUTUP SIKLUS</option>
+					</select>
+				</div>
+			</div>
+		</div>
 		<div class="col-xs-12 no-padding">
 			<div class="col-xs-12 no-padding">
 				<button type="button" class="col-xs-12 btn btn-primary" onclick="lkh.getLists()"><i class="fa fa-search"></i> Tampilkan</button>
@@ -78,6 +90,7 @@
 							<th rowspan="2" class="page0 text-center col-xs-1">Plasma</th>
 							<th rowspan="2" class="page0 text-center col-xs-1">Jenis Mitra</th>
 							<th rowspan="2" class="page0 text-center col-xs-1">Tgl CI</th>
+							<th rowspan="2" class="page0 text-center col-xs-1">Tgl Tutup Siklus</th>
 							<th rowspan="2" class="page0 text-center col-xs-1">Populasi</th>
 							<th colspan="8" class="page1 text-center">Saldo Awal</th>
 							<th colspan="8" class="page2 text-center">Produksi</th>
@@ -138,7 +151,7 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td colspan="54">Data tidak ditemukan.</td>
+							<td colspan="55">Data tidak ditemukan.</td>
 						</tr>
 					</tbody>
 				</table>

@@ -28,7 +28,7 @@
         $render_total_row = function($label, $t) use ($fmt) {
             ?>
             <tr class="cursor-p" style="font-weight: bold; background-color: #f5f5f5;">
-                <td class="page0 text-center" colspan="6"><?php echo $label; ?></td>
+                <td class="page0 text-center" colspan="7"><?php echo $label; ?></td>
                 <td class="text-right page1"><?php echo $fmt($t['sa_awal_doc']); ?></td>
                 <td class="text-right page1"><?php echo $fmt($t['sa_awal_pakan']); ?></td>
                 <td class="text-right page1"><?php echo $fmt($t['sa_awal_ovk']); ?></td>
@@ -89,6 +89,7 @@
             <td class="page0" title="PLASMA"><?php echo strtoupper($value['nama']); ?></td>
             <td class="page0 text-center" title="JENIS MITRA"><?php echo !empty($value['jenis_mitra']) ? strtoupper($value['jenis_mitra']) : '-'; ?></td>
             <td class="page0" title="TGL CI"><?php echo strtoupper(tglIndonesia($value['tgl_chick_in'], '-', ' ')); ?></td>
+            <td class="page0" title="TGL TUTUP SIKLUS"><?php echo !empty($value['tgl_tutup_siklus']) ? strtoupper(tglIndonesia($value['tgl_tutup_siklus'], '-', ' ')) : '-'; ?></td>
             <td class="text-right page0" title="POPULASI"><?php echo angkaDecimal($value['populasi']); ?></td>
             <!-- SALDO AWAL = rumus Saldo Akhir (Tersedia - Dijual), dihitung sebelum start_date -->
             <td class="text-right page1" title="SALDO AWAL DOC"><?php echo ($value['sa_awal_doc'] >= 0) ? angkaDecimal($value['sa_awal_doc']) : '('.angkaDecimal(abs($value['sa_awal_doc'])).')'; ?></td>
@@ -162,6 +163,6 @@
     <?php $render_total_row('GRAND TOTAL', $total); ?>
 <?php else: ?>
 	<tr>
-        <td colspan="54">Data tidak ditemukan.</td>
+        <td colspan="55">Data tidak ditemukan.</td>
     </tr>
 <?php endif ?>

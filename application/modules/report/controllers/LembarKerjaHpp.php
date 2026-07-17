@@ -100,6 +100,15 @@ class LembarKerjaHpp extends Public_Controller {
             $sql_unit = " and w.kode = '".$unit."'";
         }
 
+        // Filter Tutup Siklus: all (default) / sudah (tsk.tgl_tutup terisi) / belum (tsk.tgl_tutup masih null)
+        $tutup_siklus = isset($params['tutup_siklus']) ? $params['tutup_siklus'] : 'all';
+        $sql_tutup_siklus = null;
+        if ( $tutup_siklus == 'sudah' ) {
+            $sql_tutup_siklus = " and tsk.tgl_tutup is not null";
+        } else if ( $tutup_siklus == 'belum' ) {
+            $sql_tutup_siklus = " and tsk.tgl_tutup is null";
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
@@ -2208,6 +2217,7 @@ class LembarKerjaHpp extends Public_Controller {
                 data.nama,
                 data.jenis_mitra,
                 data.tgl_chick_in,
+                data.tgl_tutup_siklus,
                 data.populasi,
                 -- SALDO AWAL (grup Saldo Awal di view) = rumus Saldo Akhir (Tersedia - Dijual),
                 -- tapi datanya dihitung sebelum start_date (kumulatif dari awal)
@@ -2334,6 +2344,7 @@ class LembarKerjaHpp extends Public_Controller {
                     m.nama,
                     j.kode as jenis_mitra,
                     case when td.datang is not null then td.datang else rs.tgl_docin end as tgl_chick_in,
+                    tsk.tgl_tutup as tgl_tutup_siklus,
                     case when td.jml_ekor is not null then td.jml_ekor else rs.populasi end as populasi,
                     c.sa_pkn, c.beli_pkn, c.mutasi_msk_pkn, c.mutasi_klwr_pkn,
                     c.koreksi_pkn, c.pemakaian_pkn, c.sisa_pkn,
@@ -2430,6 +2441,10 @@ class LembarKerjaHpp extends Public_Controller {
                 left join wilayah w on k.unit = w.id
                 left join order_doc_max od on c.noreg = od.noreg
                 left join terima_doc_max td on td.no_order = od.no_order
+                -- Tgl Tutup Siklus (tampil di kolom sebelah Tgl CI) - noreg di tutup_siklus UNIK (1 baris per
+                -- noreg, dicek: 3177 total baris = 3177 distinct noreg), jadi aman LEFT JOIN langsung tanpa
+                -- risiko duplikasi baris
+                left join tutup_siklus tsk on tsk.noreg = c.noreg
                 left join panen_sebagian ps on ps.noreg = c.noreg
                 left join panen_sebagian_awal psa on psa.noreg = c.noreg
                 left join lhk_upto_end lu on lu.noreg = c.noreg
@@ -2464,6 +2479,7 @@ class LembarKerjaHpp extends Public_Controller {
                 left join history_saldo_awal hsa on hsa.noreg = c.noreg
                 where m.id is not null
                     ".$sql_unit."
+                    ".$sql_tutup_siklus."
             ) data
             order by
                 data.unit asc,
