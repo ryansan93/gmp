@@ -1,4 +1,87 @@
 <?php if ( !empty($data) && count($data) > 0 ): ?>
+    <?php
+        $total_fields = [
+            'sa_awal_doc', 'sa_awal_pakan', 'sa_awal_ovk', 'sa_awal_oa', 'sa_awal_bl', 'sa_awal_btl', 'sa_awal_rhpp', 'sa_awal_total',
+            'produksi_doc', 'produksi_pakan', 'produksi_ovk', 'produksi_oa', 'produksi_bl', 'produksi_btl', 'produksi_rhpp', 'produksi_total',
+            'tersedia_doc', 'tersedia_pakan', 'tersedia_ovk', 'tersedia_oa', 'tersedia_bl', 'tersedia_btl', 'tersedia_rhpp', 'tersedia_total',
+            'sisa_stok', 'terjual', 'proporsi',
+            'dijual_doc', 'dijual_pakan', 'dijual_ovk', 'dijual_oa', 'dijual_bl', 'dijual_btl', 'dijual_rhpp', 'dijual_total',
+            'saldo_akhir_doc', 'saldo_akhir_pakan', 'saldo_akhir_ovk', 'saldo_akhir_oa', 'saldo_akhir_bl', 'saldo_akhir_btl', 'saldo_akhir_rhpp', 'saldo_akhir_total',
+        ];
+        // Total per unit (data sudah terurut "order by unit asc" dari query) + Grand Total seluruh baris
+        $unit_totals = [];
+        $total = array_fill_keys($total_fields, 0);
+        foreach ($data as $v) {
+            $u = $v['unit'];
+            if ( !isset($unit_totals[$u]) ) {
+                $unit_totals[$u] = array_fill_keys($total_fields, 0);
+            }
+            foreach ($total_fields as $f) {
+                $val = isset($v[$f]) ? $v[$f] : 0;
+                $unit_totals[$u][$f] += $val;
+                $total[$f] += $val;
+            }
+        }
+        $fmt = function($v) {
+            return ($v >= 0) ? angkaDecimal($v) : '('.angkaDecimal(abs($v)).')';
+        };
+        $render_total_row = function($label, $t) use ($fmt) {
+            ?>
+            <tr class="cursor-p" style="font-weight: bold; background-color: #f5f5f5;">
+                <td class="page0 text-center" colspan="6"><?php echo $label; ?></td>
+                <td class="text-right page1"><?php echo $fmt($t['sa_awal_doc']); ?></td>
+                <td class="text-right page1"><?php echo $fmt($t['sa_awal_pakan']); ?></td>
+                <td class="text-right page1"><?php echo $fmt($t['sa_awal_ovk']); ?></td>
+                <td class="text-right page1"><?php echo $fmt($t['sa_awal_oa']); ?></td>
+                <td class="text-right page1"><?php echo $fmt($t['sa_awal_bl']); ?></td>
+                <td class="text-right page1"><?php echo $fmt($t['sa_awal_btl']); ?></td>
+                <td class="text-right page1"><?php echo $fmt($t['sa_awal_rhpp']); ?></td>
+                <td class="text-right page1"><?php echo $fmt($t['sa_awal_total']); ?></td>
+                <td class="text-right page2"><?php echo $fmt($t['produksi_doc']); ?></td>
+                <td class="text-right page2"><?php echo $fmt($t['produksi_pakan']); ?></td>
+                <td class="text-right page2"><?php echo $fmt($t['produksi_ovk']); ?></td>
+                <td class="text-right page2"><?php echo $fmt($t['produksi_oa']); ?></td>
+                <td class="text-right page2"><?php echo $fmt($t['produksi_bl']); ?></td>
+                <td class="text-right page2"><?php echo $fmt($t['produksi_btl']); ?></td>
+                <td class="text-right page2"><?php echo $fmt($t['produksi_rhpp']); ?></td>
+                <td class="text-right page2"><?php echo $fmt($t['produksi_total']); ?></td>
+                <td class="text-right page3"><?php echo $fmt($t['tersedia_doc']); ?></td>
+                <td class="text-right page3"><?php echo $fmt($t['tersedia_pakan']); ?></td>
+                <td class="text-right page3"><?php echo $fmt($t['tersedia_ovk']); ?></td>
+                <td class="text-right page3"><?php echo $fmt($t['tersedia_oa']); ?></td>
+                <td class="text-right page3"><?php echo $fmt($t['tersedia_bl']); ?></td>
+                <td class="text-right page3"><?php echo $fmt($t['tersedia_btl']); ?></td>
+                <td class="text-right page3"><?php echo $fmt($t['tersedia_rhpp']); ?></td>
+                <td class="text-right page3"><?php echo $fmt($t['tersedia_total']); ?></td>
+                <td class="text-right page4">-</td>
+                <td class="text-right page4"><?php echo $fmt($t['sisa_stok']); ?></td>
+                <td class="text-right page4"><?php echo $fmt($t['terjual']); ?></td>
+                <td class="text-right page4">-</td>
+                <td class="text-center page4">-</td>
+                <td class="text-center page4">-</td>
+                <td class="text-right page4">-</td>
+                <td class="text-right page4"><?php echo $fmt($t['proporsi']); ?></td>
+                <td class="text-right page5"><?php echo $fmt($t['dijual_doc']); ?></td>
+                <td class="text-right page5"><?php echo $fmt($t['dijual_pakan']); ?></td>
+                <td class="text-right page5"><?php echo $fmt($t['dijual_ovk']); ?></td>
+                <td class="text-right page5"><?php echo $fmt($t['dijual_oa']); ?></td>
+                <td class="text-right page5"><?php echo $fmt($t['dijual_bl']); ?></td>
+                <td class="text-right page5"><?php echo $fmt($t['dijual_btl']); ?></td>
+                <td class="text-right page5"><?php echo $fmt($t['dijual_rhpp']); ?></td>
+                <td class="text-right page5"><?php echo $fmt($t['dijual_total']); ?></td>
+                <td class="text-right page6"><?php echo $fmt($t['saldo_akhir_doc']); ?></td>
+                <td class="text-right page6"><?php echo $fmt($t['saldo_akhir_pakan']); ?></td>
+                <td class="text-right page6"><?php echo $fmt($t['saldo_akhir_ovk']); ?></td>
+                <td class="text-right page6"><?php echo $fmt($t['saldo_akhir_oa']); ?></td>
+                <td class="text-right page6"><?php echo $fmt($t['saldo_akhir_bl']); ?></td>
+                <td class="text-right page6"><?php echo $fmt($t['saldo_akhir_btl']); ?></td>
+                <td class="text-right page6"><?php echo $fmt($t['saldo_akhir_rhpp']); ?></td>
+                <td class="text-right page6"><?php echo $fmt($t['saldo_akhir_total']); ?></td>
+            </tr>
+            <?php
+        };
+        $data_count = count($data);
+    ?>
     <?php foreach ($data as $key => $value) { ?>
         <tr class="cursor-p">
             <td class="page0" title="UNIT"><?php echo $value['unit']; ?></td>
@@ -68,7 +151,15 @@
             <td class="text-right page6" title="SALDO AKHIR RHPP"><?php echo ($value['saldo_akhir_rhpp'] >= 0) ? angkaDecimal($value['saldo_akhir_rhpp']) : '('.angkaDecimal(abs($value['saldo_akhir_rhpp'])).')'; ?></td>
             <td class="text-right page6" title="SALDO AKHIR TOTAL"><?php echo ($value['saldo_akhir_total'] >= 0) ? angkaDecimal($value['saldo_akhir_total']) : '('.angkaDecimal(abs($value['saldo_akhir_total'])).')'; ?></td>
         </tr>
+        <?php
+            // Baris TOTAL per unit - tampil begitu baris terakhir milik unit ini selesai (data terurut per unit)
+            $is_last_row_of_unit = ($key == $data_count - 1) || ($data[$key + 1]['unit'] !== $value['unit']);
+            if ( $is_last_row_of_unit ) {
+                $render_total_row('TOTAL '.$value['unit'], $unit_totals[$value['unit']]);
+            }
+        ?>
     <?php } ?>
+    <?php $render_total_row('GRAND TOTAL', $total); ?>
 <?php else: ?>
 	<tr>
         <td colspan="54">Data tidak ditemukan.</td>

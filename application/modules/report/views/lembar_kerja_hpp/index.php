@@ -147,6 +147,7 @@
 		<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 		<div class="col-xs-12 no-padding">
 			<button type="button" class="btn btn-default pull-right" onclick="lkh.excryptParams(this)"><i class="fa fa-file-excel-o"></i> Export Excel</button>
+			<button type="button" class="btn btn-success pull-right" style="margin-right: 5px;" onclick="lkh.prosesHpp()"><i class="fa fa-save"></i> Proses HPP</button>
 		</div>
 	</div>
 </div>

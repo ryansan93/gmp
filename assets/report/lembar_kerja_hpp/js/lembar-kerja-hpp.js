@@ -127,6 +127,49 @@ var lkh = {
     exportExcel : function (params) {
 		goToURL('report/LembarKerjaHpp/exportExcel/'+params);
 	}, // end - exportExcel
+
+	prosesHpp: function() {
+		var err = 0;
+
+		$.map( $('[data-required=1]'), function (ipt) {
+			if ( empty( $(ipt).val() ) ) {
+				$(ipt).parent().addClass('has-error');
+				err++;
+			} else {
+				$(ipt).parent().removeClass('has-error');
+			}
+		});
+
+		if ( err > 0 ) {
+			bootbox.alert('Harap lengkapi data terlebih dahulu.');
+		} else {
+			var periode = lkh.getPeriodeParams();
+			var params = {
+				'unit': $('.unit').select2('val'),
+				'start_date': periode.start_date,
+				'end_date': periode.end_date
+			};
+
+			bootbox.confirm('Proses HPP akan menghitung ulang & menyimpan histori Saldo Awal/Akhir periode '+periode.start_date+' s/d '+periode.end_date+'. Baris histori lama pada periode ini (sesuai unit terpilih) akan ditimpa. Lanjutkan?', function(ok) {
+				if ( ok ) {
+					$.ajax({
+						url: 'report/LembarKerjaHpp/prosesHpp',
+						data: {
+							'params': params
+						},
+						type: 'POST',
+						dataType: 'JSON',
+						beforeSend: function() { showLoading(); },
+						success: function(data) {
+							hideLoading();
+
+							bootbox.alert( data.message );
+						}
+					});
+				}
+			});
+		}
+	}, // end - prosesHpp
 };
 
 lkh.startUp();
