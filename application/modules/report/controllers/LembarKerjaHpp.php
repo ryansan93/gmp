@@ -1484,15 +1484,14 @@ class LembarKerjaHpp extends Public_Controller {
         $sa_awal_bl_expr = "round(coalesce(data.hist_saldo_akhir_bl, ".$sa_awal_bl_expr_calc."), 0)";
         $sa_awal_btl_expr = "round(coalesce(data.hist_saldo_akhir_btl, ".$sa_awal_btl_expr_calc."), 0)";
 
-        $tersedia_doc_expr = "round(".$sa_awal_doc_expr." + data.pemakaian_doc, 0)";
-        $tersedia_pakan_expr = "round(".$sa_awal_pakan_expr." + data.pemakaian_pkn, 0)";
-        $tersedia_ovk_expr = "round(".$sa_awal_ovk_expr." + data.pemakaian_ovk, 0)";
-        $tersedia_oa_expr = "round(".$sa_awal_oa_expr." + data.pemakaian_oa, 0)";
-        $tersedia_rhpp_expr = "round(".$sa_awal_rhpp_expr." + (".$produksi_rhpp_expr."), 0)";
-        $tersedia_bl_expr = "round(".$sa_awal_bl_expr." + data.nilai_bl, 0)";
-        $tersedia_btl_expr = "round(".$sa_awal_btl_expr." + data.nilai_btl, 0)";
-        $tersedia_total_expr = "(".$tersedia_doc_expr." + ".$tersedia_pakan_expr." + ".$tersedia_ovk_expr." + ".$tersedia_oa_expr."
-            + ".$tersedia_bl_expr." + ".$tersedia_btl_expr." + ".$tersedia_rhpp_expr.")";
+        // Catatan optimasi (2026-07-17): persen_dijual, sa_awal_*, produksi_rhpp & tersedia_* sekarang
+        // dihitung SEKALI sbg kolom alias di subquery berlapis (lapisan "base" & "calc" di final SELECT),
+        // BUKAN di-inline/tempel ulang tekstual di tiap kolom turunan spt sebelumnya. Ekspresi sa_awal
+        // (yg paling gede - berisi rantai coalesce histori + fallback kalkulasi awal/awal2) dulunya
+        // ter-copy puluhan kali (dijual_total & saldo_akhir_total masing2 expand 7-14x) - bikin teks SQL
+        // bengkak ~160KB & SQL Server compile ulang query raksasa tiap request (tanggal inline = teks beda
+        // per periode = plan cache miss). Hasil angka IDENTIK (ekspresi sama, cuma dihitung 1x), sudah
+        // diverifikasi diff baris-per-baris output lama vs baru.
 
         $sql = "
             with
@@ -2212,132 +2211,160 @@ class LembarKerjaHpp extends Public_Controller {
             -- 11. FINAL SELECT
             -- ============================================================
             select
-                data.unit,
-                data.noreg,
-                data.nama,
-                data.jenis_mitra,
-                data.tgl_chick_in,
-                data.tgl_tutup_siklus,
-                data.populasi,
+                calc.unit,
+                calc.noreg,
+                calc.nama,
+                calc.jenis_mitra,
+                calc.tgl_chick_in,
+                calc.tgl_tutup_siklus,
+                calc.populasi,
                 -- SALDO AWAL (grup Saldo Awal di view) = rumus Saldo Akhir (Tersedia - Dijual),
-                -- tapi datanya dihitung sebelum start_date (kumulatif dari awal)
-                (".$sa_awal_doc_expr.") as sa_awal_doc,
-                (".$sa_awal_pakan_expr.") as sa_awal_pakan,
-                (".$sa_awal_ovk_expr.") as sa_awal_ovk,
-                (".$sa_awal_oa_expr.") as sa_awal_oa,
-                (".$sa_awal_bl_expr.") as sa_awal_bl,
-                (".$sa_awal_btl_expr.") as sa_awal_btl,
-                (".$sa_awal_rhpp_expr.") as sa_awal_rhpp,
-                round(".$sa_awal_doc_expr." + ".$sa_awal_pakan_expr." + ".$sa_awal_ovk_expr." + ".$sa_awal_oa_expr."
-                    + ".$sa_awal_bl_expr." + ".$sa_awal_btl_expr." + ".$sa_awal_rhpp_expr.", 0) as sa_awal_total,
+                -- tapi datanya dihitung sebelum start_date (kumulatif dari awal).
+                -- Sudah dihitung sekali di lapisan base (lihat bawah), di sini tinggal pakai.
+                calc.sa_awal_doc,
+                calc.sa_awal_pakan,
+                calc.sa_awal_ovk,
+                calc.sa_awal_oa,
+                calc.sa_awal_bl,
+                calc.sa_awal_btl,
+                calc.sa_awal_rhpp,
+                round(calc.sa_awal_doc + calc.sa_awal_pakan + calc.sa_awal_ovk + calc.sa_awal_oa
+                    + calc.sa_awal_bl + calc.sa_awal_btl + calc.sa_awal_rhpp, 0) as sa_awal_total,
                 -- PRODUKSI (grup Produksi di view, sesuai periode start_date s/d end_date)
-                round(data.pemakaian_doc, 0) as produksi_doc,
-                round(data.pemakaian_pkn, 0) as produksi_pakan,
-                round(data.pemakaian_ovk, 0) as produksi_ovk,
-                round(data.pemakaian_oa, 0) as produksi_oa,
-                data.nilai_bl as produksi_bl,
-                data.nilai_btl as produksi_btl,
-                -- RHPP: normal dari tutup siklus/rhpp_group; kalau belum tutup siklus tapi sudah ada
-                -- panen sebagian (real_sj) di periode ini, dipakai estimasi 5000 * populasi
-                round((".$produksi_rhpp_expr."), 0) as produksi_rhpp,
+                round(calc.pemakaian_doc, 0) as produksi_doc,
+                round(calc.pemakaian_pkn, 0) as produksi_pakan,
+                round(calc.pemakaian_ovk, 0) as produksi_ovk,
+                round(calc.pemakaian_oa, 0) as produksi_oa,
+                calc.nilai_bl as produksi_bl,
+                calc.nilai_btl as produksi_btl,
+                round(calc.produksi_rhpp_calc, 0) as produksi_rhpp,
                 -- Total = JUMLAH kolom kategori yg sudah dibulatkan masing2 (BUKAN dibulatkan sbg satu rumus
                 -- besar) - supaya Total selalu persis sama dgn penjumlahan kategori yg tampil di layar
                 -- (kalau dibulatkan terpisah, bulatkan-lalu-jumlah vs jumlah-lalu-bulatkan bisa beda
                 -- 1 rupiah krn arah pembulatan tiap kategori beda2 - ketauan dari kasus Saldo Akhir Maret
                 -- vs Saldo Awal April PANJI PAMUNGKAS/25120300201, 2026-07-17).
-                (round(data.pemakaian_doc, 0) + round(data.pemakaian_pkn, 0) + round(data.pemakaian_ovk, 0) + round(data.pemakaian_oa, 0)
-                    + data.nilai_bl + data.nilai_btl
-                    + round((".$produksi_rhpp_expr."), 0)) as produksi_total,
-                -- TERSEDIA (grup Tersedia di view) = Saldo Awal + Produksi
-                (".$tersedia_doc_expr.") as tersedia_doc,
-                (".$tersedia_pakan_expr.") as tersedia_pakan,
-                (".$tersedia_ovk_expr.") as tersedia_ovk,
-                (".$tersedia_oa_expr.") as tersedia_oa,
-                (".$tersedia_bl_expr.") as tersedia_bl,
-                (".$tersedia_btl_expr.") as tersedia_btl,
-                (".$tersedia_rhpp_expr.") as tersedia_rhpp,
-                round(".$tersedia_total_expr.", 0) as tersedia_total,
+                (round(calc.pemakaian_doc, 0) + round(calc.pemakaian_pkn, 0) + round(calc.pemakaian_ovk, 0) + round(calc.pemakaian_oa, 0)
+                    + calc.nilai_bl + calc.nilai_btl
+                    + round(calc.produksi_rhpp_calc, 0)) as produksi_total,
+                -- TERSEDIA (grup Tersedia di view) = Saldo Awal + Produksi (dihitung di lapisan calc)
+                calc.tersedia_doc,
+                calc.tersedia_pakan,
+                calc.tersedia_ovk,
+                calc.tersedia_oa,
+                calc.tersedia_bl,
+                calc.tersedia_btl,
+                calc.tersedia_rhpp,
+                round(calc.tersedia_doc + calc.tersedia_pakan + calc.tersedia_ovk + calc.tersedia_oa
+                    + calc.tersedia_bl + calc.tersedia_btl + calc.tersedia_rhpp, 0) as tersedia_total,
                 -- DIJUAL (grup Dijual di view) = persentase (Terjual / Stock Tersedia) x nilai Tersedia
-                round((".$persen_dijual.") * (".$tersedia_doc_expr."), 0) as dijual_doc,
-                round((".$persen_dijual.") * (".$tersedia_pakan_expr."), 0) as dijual_pakan,
-                round((".$persen_dijual.") * (".$tersedia_ovk_expr."), 0) as dijual_ovk,
-                round((".$persen_dijual.") * (".$tersedia_oa_expr."), 0) as dijual_oa,
-                round((".$persen_dijual.") * (".$tersedia_bl_expr."), 0) as dijual_bl,
-                round((".$persen_dijual.") * (".$tersedia_btl_expr."), 0) as dijual_btl,
-                round((".$persen_dijual.") * (".$tersedia_rhpp_expr."), 0) as dijual_rhpp,
+                round(calc.persen_dijual * calc.tersedia_doc, 0) as dijual_doc,
+                round(calc.persen_dijual * calc.tersedia_pakan, 0) as dijual_pakan,
+                round(calc.persen_dijual * calc.tersedia_ovk, 0) as dijual_ovk,
+                round(calc.persen_dijual * calc.tersedia_oa, 0) as dijual_oa,
+                round(calc.persen_dijual * calc.tersedia_bl, 0) as dijual_bl,
+                round(calc.persen_dijual * calc.tersedia_btl, 0) as dijual_btl,
+                round(calc.persen_dijual * calc.tersedia_rhpp, 0) as dijual_rhpp,
                 -- Total = jumlah kolom kategori yg sudah dibulatkan (lihat catatan di produksi_total)
-                (round((".$persen_dijual.") * (".$tersedia_doc_expr."), 0) + round((".$persen_dijual.") * (".$tersedia_pakan_expr."), 0)
-                    + round((".$persen_dijual.") * (".$tersedia_ovk_expr."), 0) + round((".$persen_dijual.") * (".$tersedia_oa_expr."), 0)
-                    + round((".$persen_dijual.") * (".$tersedia_bl_expr."), 0) + round((".$persen_dijual.") * (".$tersedia_btl_expr."), 0)
-                    + round((".$persen_dijual.") * (".$tersedia_rhpp_expr."), 0)) as dijual_total,
+                (round(calc.persen_dijual * calc.tersedia_doc, 0) + round(calc.persen_dijual * calc.tersedia_pakan, 0)
+                    + round(calc.persen_dijual * calc.tersedia_ovk, 0) + round(calc.persen_dijual * calc.tersedia_oa, 0)
+                    + round(calc.persen_dijual * calc.tersedia_bl, 0) + round(calc.persen_dijual * calc.tersedia_btl, 0)
+                    + round(calc.persen_dijual * calc.tersedia_rhpp, 0)) as dijual_total,
                 -- TERJUAL (ekor) = ekor panen di periode berjalan (start_date s/d end_date)
-                data.ekor_panen_periode as terjual,
+                calc.ekor_panen_periode as terjual,
                 -- PERSENTASE = Terjual / Stock Tersedia x 100
-                (".$persen_dijual.") * 100 as persentase_dijual,
+                calc.persen_dijual * 100 as persentase_dijual,
                 -- START/END DATE PROPORSI, HARI & PROPORSI (sudah dihitung sekali di noreg_hari_proporsi)
-                data.start_date_proporsi,
-                data.end_date_proporsi,
-                data.hari,
-                data.proporsi,
+                calc.start_date_proporsi,
+                calc.end_date_proporsi,
+                calc.hari,
+                calc.proporsi,
                 -- SALDO AKHIR (grup Saldo Akhir di view) = Tersedia - Dijual
-                round((".$tersedia_doc_expr.") - (".$persen_dijual.") * (".$tersedia_doc_expr."), 0) as saldo_akhir_doc,
-                round((".$tersedia_pakan_expr.") - (".$persen_dijual.") * (".$tersedia_pakan_expr."), 0) as saldo_akhir_pakan,
-                round((".$tersedia_ovk_expr.") - (".$persen_dijual.") * (".$tersedia_ovk_expr."), 0) as saldo_akhir_ovk,
-                round((".$tersedia_oa_expr.") - (".$persen_dijual.") * (".$tersedia_oa_expr."), 0) as saldo_akhir_oa,
-                round((".$tersedia_bl_expr.") - (".$persen_dijual.") * (".$tersedia_bl_expr."), 0) as saldo_akhir_bl,
-                round((".$tersedia_btl_expr.") - (".$persen_dijual.") * (".$tersedia_btl_expr."), 0) as saldo_akhir_btl,
-                round((".$tersedia_rhpp_expr.") - (".$persen_dijual.") * (".$tersedia_rhpp_expr."), 0) as saldo_akhir_rhpp,
+                round(calc.tersedia_doc - calc.persen_dijual * calc.tersedia_doc, 0) as saldo_akhir_doc,
+                round(calc.tersedia_pakan - calc.persen_dijual * calc.tersedia_pakan, 0) as saldo_akhir_pakan,
+                round(calc.tersedia_ovk - calc.persen_dijual * calc.tersedia_ovk, 0) as saldo_akhir_ovk,
+                round(calc.tersedia_oa - calc.persen_dijual * calc.tersedia_oa, 0) as saldo_akhir_oa,
+                round(calc.tersedia_bl - calc.persen_dijual * calc.tersedia_bl, 0) as saldo_akhir_bl,
+                round(calc.tersedia_btl - calc.persen_dijual * calc.tersedia_btl, 0) as saldo_akhir_btl,
+                round(calc.tersedia_rhpp - calc.persen_dijual * calc.tersedia_rhpp, 0) as saldo_akhir_rhpp,
                 -- Total = jumlah kolom kategori yg sudah dibulatkan (lihat catatan di produksi_total)
-                (round((".$tersedia_doc_expr.") - (".$persen_dijual.") * (".$tersedia_doc_expr."), 0)
-                    + round((".$tersedia_pakan_expr.") - (".$persen_dijual.") * (".$tersedia_pakan_expr."), 0)
-                    + round((".$tersedia_ovk_expr.") - (".$persen_dijual.") * (".$tersedia_ovk_expr."), 0)
-                    + round((".$tersedia_oa_expr.") - (".$persen_dijual.") * (".$tersedia_oa_expr."), 0)
-                    + round((".$tersedia_bl_expr.") - (".$persen_dijual.") * (".$tersedia_bl_expr."), 0)
-                    + round((".$tersedia_btl_expr.") - (".$persen_dijual.") * (".$tersedia_btl_expr."), 0)
-                    + round((".$tersedia_rhpp_expr.") - (".$persen_dijual.") * (".$tersedia_rhpp_expr."), 0)) as saldo_akhir_total,
+                (round(calc.tersedia_doc - calc.persen_dijual * calc.tersedia_doc, 0)
+                    + round(calc.tersedia_pakan - calc.persen_dijual * calc.tersedia_pakan, 0)
+                    + round(calc.tersedia_ovk - calc.persen_dijual * calc.tersedia_ovk, 0)
+                    + round(calc.tersedia_oa - calc.persen_dijual * calc.tersedia_oa, 0)
+                    + round(calc.tersedia_bl - calc.persen_dijual * calc.tersedia_bl, 0)
+                    + round(calc.tersedia_btl - calc.persen_dijual * calc.tersedia_btl, 0)
+                    + round(calc.tersedia_rhpp - calc.persen_dijual * calc.tersedia_rhpp, 0)) as saldo_akhir_total,
                 -- STOCK TERSEDIA (ekor) = populasi - ekor mati - ekor panen, kumulatif s/d end_date
-                (data.populasi - data.ekor_mati - data.ekor_panen) as stock_tersedia,
+                (calc.populasi - calc.ekor_mati - calc.ekor_panen) as stock_tersedia,
                 -- SALDO AWAL STOK (ekor) = rumus sama, tapi kumulatif < start_date
-                (data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) as saldo_awal_stok,
+                (calc.populasi - calc.ekor_mati_awal - calc.ekor_panen_awal) as saldo_awal_stok,
                 -- SISA STOK (ekor) = saldo_awal_stok - jumlah kematian di periode berjalan
                 -- (ekor_mati kumulatif s/d end_date - ekor_mati kumulatif < start_date)
-                ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal)
-                    - (data.ekor_mati - data.ekor_mati_awal)) as sisa_stok,
-                data.sa_pkn,
-                data.beli_pkn,
-                data.mutasi_msk_pkn,
-                data.mutasi_klwr_pkn,
-                data.koreksi_pkn,
-                data.pemakaian_pkn,
-                (data.sa_pkn + data.beli_pkn + data.mutasi_msk_pkn)
-                    - (data.mutasi_klwr_pkn + data.pemakaian_pkn) + data.koreksi_pkn as sisa_pkn,
-                data.sa_ovk,
-                data.beli_ovk,
-                data.mutasi_msk_ovk,
-                data.mutasi_klwr_ovk,
-                data.pemakaian_ovk,
-                (data.sa_ovk + data.beli_ovk + data.mutasi_msk_ovk)
-                    - (data.mutasi_klwr_ovk + data.pemakaian_ovk) as sisa_ovk,
-                data.sa_doc,
-                data.beli_doc,
-                data.mutasi_msk_doc,
-                data.mutasi_klwr_doc,
-                data.koreksi_doc,
-                data.pemakaian_doc,
-                (data.sa_doc + data.beli_doc + data.mutasi_msk_doc + data.koreksi_doc)
-                    - (data.mutasi_klwr_doc + data.pemakaian_doc) as sisa_doc,
-                data.sa_oa,
-                data.beli_oa,
-                data.mutasi_msk_oa,
-                data.mutasi_klwr_oa,
-                data.koreksi_oa,
-                (data.beli_oa + data.mutasi_msk_oa + data.koreksi_oa) - data.mutasi_klwr_oa as pemakaian_oa,
-                (data.beli_oa + data.mutasi_msk_oa) - data.mutasi_klwr_oa + data.koreksi_oa as net_oa,
-                data.pdpt_peternak,
-                data.pdpt_peternak + data.pemakaian_pkn + data.pemakaian_ovk
-                    + data.pemakaian_doc + data.pemakaian_oa as total
+                ((calc.populasi - calc.ekor_mati_awal - calc.ekor_panen_awal)
+                    - (calc.ekor_mati - calc.ekor_mati_awal)) as sisa_stok,
+                calc.sa_pkn,
+                calc.beli_pkn,
+                calc.mutasi_msk_pkn,
+                calc.mutasi_klwr_pkn,
+                calc.koreksi_pkn,
+                calc.pemakaian_pkn,
+                (calc.sa_pkn + calc.beli_pkn + calc.mutasi_msk_pkn)
+                    - (calc.mutasi_klwr_pkn + calc.pemakaian_pkn) + calc.koreksi_pkn as sisa_pkn,
+                calc.sa_ovk,
+                calc.beli_ovk,
+                calc.mutasi_msk_ovk,
+                calc.mutasi_klwr_ovk,
+                calc.pemakaian_ovk,
+                (calc.sa_ovk + calc.beli_ovk + calc.mutasi_msk_ovk)
+                    - (calc.mutasi_klwr_ovk + calc.pemakaian_ovk) as sisa_ovk,
+                calc.sa_doc,
+                calc.beli_doc,
+                calc.mutasi_msk_doc,
+                calc.mutasi_klwr_doc,
+                calc.koreksi_doc,
+                calc.pemakaian_doc,
+                (calc.sa_doc + calc.beli_doc + calc.mutasi_msk_doc + calc.koreksi_doc)
+                    - (calc.mutasi_klwr_doc + calc.pemakaian_doc) as sisa_doc,
+                calc.sa_oa,
+                calc.beli_oa,
+                calc.mutasi_msk_oa,
+                calc.mutasi_klwr_oa,
+                calc.koreksi_oa,
+                (calc.beli_oa + calc.mutasi_msk_oa + calc.koreksi_oa) - calc.mutasi_klwr_oa as pemakaian_oa,
+                (calc.beli_oa + calc.mutasi_msk_oa) - calc.mutasi_klwr_oa + calc.koreksi_oa as net_oa,
+                calc.pdpt_peternak,
+                calc.pdpt_peternak + calc.pemakaian_pkn + calc.pemakaian_ovk
+                    + calc.pemakaian_doc + calc.pemakaian_oa as total
             from
             (
+                -- Lapisan calc: Tersedia per kategori = Saldo Awal (dari lapisan base) + Produksi.
+                -- Dipisah dari lapisan base krn butuh referensi alias sa_awal_* (ga bisa refer alias
+                -- sesama SELECT di SQL Server).
+                select base.*,
+                    round(base.sa_awal_doc + base.pemakaian_doc, 0) as tersedia_doc,
+                    round(base.sa_awal_pakan + base.pemakaian_pkn, 0) as tersedia_pakan,
+                    round(base.sa_awal_ovk + base.pemakaian_ovk, 0) as tersedia_ovk,
+                    round(base.sa_awal_oa + base.pemakaian_oa, 0) as tersedia_oa,
+                    round(base.sa_awal_bl + base.nilai_bl, 0) as tersedia_bl,
+                    round(base.sa_awal_btl + base.nilai_btl, 0) as tersedia_btl,
+                    round(base.sa_awal_rhpp + base.produksi_rhpp_calc, 0) as tersedia_rhpp
+                from
+                (
+                -- Lapisan base: hitung SEKALI ekspresi2 berat yg dipakai berulang di kolom2 turunan -
+                -- persen_dijual, produksi RHPP, dan Saldo Awal per kategori (coalesce snapshot histori
+                -- vs fallback rekalkulasi awal/awal2).
+                select data.*,
+                    (".$persen_dijual.") as persen_dijual,
+                    (".$produksi_rhpp_expr.") as produksi_rhpp_calc,
+                    (".$sa_awal_doc_expr.") as sa_awal_doc,
+                    (".$sa_awal_pakan_expr.") as sa_awal_pakan,
+                    (".$sa_awal_ovk_expr.") as sa_awal_ovk,
+                    (".$sa_awal_oa_expr.") as sa_awal_oa,
+                    (".$sa_awal_bl_expr.") as sa_awal_bl,
+                    (".$sa_awal_btl_expr.") as sa_awal_btl,
+                    (".$sa_awal_rhpp_expr.") as sa_awal_rhpp
+                from
+                (
                 select
                     w.kode as unit,
                     c.noreg,
@@ -2480,10 +2507,12 @@ class LembarKerjaHpp extends Public_Controller {
                 where m.id is not null
                     ".$sql_unit."
                     ".$sql_tutup_siklus."
-            ) data
+                ) data
+                ) base
+            ) calc
             order by
-                data.unit asc,
-                data.tgl_chick_in asc;
+                calc.unit asc,
+                calc.tgl_chick_in asc;
         ";
         // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw( $sql );
