@@ -162,11 +162,11 @@ class VerifikasiPembayaran extends Public_Controller
                 end as verifikasi,
                 c.unit,
                 case
-                    when att.filename is not null then
-                        att.filename
+                    when att.path is not null then
+                        att.path
                     else
                         data.lampiran_realisasi
-                end as filename
+                end as path
             from
             (
                 select
@@ -389,8 +389,6 @@ class VerifikasiPembayaran extends Public_Controller
             order by
                 lt.waktu asc
         ";
-        
-        // cetak_r( $sql, 1 );
 
         $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -1034,7 +1032,7 @@ class VerifikasiPembayaran extends Public_Controller
             foreach ($groupedFiles as $file) {
                 if ($file['error'] === 0) {
                     $ext        = pathinfo($file['name'], PATHINFO_EXTENSION);
-                    $targetFile = $uploadDir . ubahNama($file['name']);
+                    $targetFile = ubahNama($file['name']);
 
                     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
 
