@@ -1216,6 +1216,18 @@ class RealisasiPembayaran extends Public_Controller
                         where 
                             coa_tujuan in ('21174.000', '21180.300') and
                             no_invoice = '".$v_kpv['nomor']."'
+
+                        union all
+
+                        select
+                            0-nilai as bayar,
+                            0 as dn,
+                            0 as cn,
+                            0-nilai as transfer
+                        from mmitem 
+                        where 
+                            coa_asal in ('21174.000', '21180.300') and
+                            no_invoice = '".$v_kpv['nomor']."'
                     ) rp
                 ";
                 $d_conf = $m_conf->hydrateRaw( $sql );
