@@ -26,6 +26,12 @@ class SqlServerConnector extends Connector implements ConnectorInterface {
 	{
 		$options = $this->getOptions($config);
 
+		// pdo_sqlsrv TIDAK terima "QueryTimeout" sbg DSN keyword (beda dari LoginTimeout yg emang DSN
+		// keyword valid) - query timeout wajib lewat PDO attribute PDO::SQLSRV_ATTR_QUERY_TIMEOUT.
+		if (isset($config['query_timeout']) && defined('PDO::SQLSRV_ATTR_QUERY_TIMEOUT')) {
+			$options[constant('PDO::SQLSRV_ATTR_QUERY_TIMEOUT')] = $config['query_timeout'];
+		}
+
 		return $this->createConnection($this->getDsn($config), $config, $options);
 	}
 
@@ -88,6 +94,15 @@ class SqlServerConnector extends Connector implements ConnectorInterface {
 
 		if (isset($config['appname'])) {
 			$arguments['APP'] = $config['appname'];
+		}
+
+		// LoginTimeout (detik) - koneksi ke DB live sering lambat/tdk stabil (network jitter), tanpa ini
+		// query berat (mis. Lembar Kerja HPP, teks SQL ~150KB) bisa kena ODBC default timeout ("TCP
+		// Provider: Timeout error [258]") walau sebenarnya bakal selesai kalau dikasih waktu lebih. (Query
+		// timeout-nya sendiri diset terpisah lewat PDO::SQLSRV_ATTR_QUERY_TIMEOUT, lihat connect() - DSN
+		// keyword "QueryTimeout" TIDAK valid utk pdo_sqlsrv, beda dgn LoginTimeout yg valid sbg DSN.)
+		if (isset($config['login_timeout'])) {
+			$arguments['LoginTimeout'] = $config['login_timeout'];
 		}
 
 		return $this->buildConnectString('sqlsrv', $arguments);

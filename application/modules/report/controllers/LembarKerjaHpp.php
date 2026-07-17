@@ -2562,6 +2562,7 @@ class LembarKerjaHpp extends Public_Controller {
                             'nama' => $v['nama'],
                             'jenis_mitra' => $v['jenis_mitra'],
                             'tgl_chick_in' => $v['tgl_chick_in'],
+                            'tgl_tutup_siklus' => $v['tgl_tutup_siklus'],
                             'populasi' => $v['populasi'],
                             'tahun' => $tahun,
                             'bulan' => $bulan,
@@ -2672,103 +2673,139 @@ class LembarKerjaHpp extends Public_Controller {
         $filename = strtoupper("LEMBAR_KERJA_PERIODE_");
         $filename = $filename.str_replace('-', '', $start_date).'_'.str_replace('-', '', $end_date).'.xls';
 
-        $arr_column = null;
+        // Susunan kolom PERSIS sama dgn tabel di view (index.php/list.php): identitas (7 kolom, rowspan 2
+        // baris header) -> Saldo Awal/Produksi/Tersedia (masing2 8 kolom: DOC/Pakan/OVK/OA/BL/BTL/RHPP/Total)
+        // -> 8 kolom tengah tunggal (Buku Balik Cad RHPP s/d Proporsi) -> Dijual/Saldo Akhir (masing2 8 kolom).
+        // Dibangun via loop (bukan hardcode huruf kolom spt versi lama) supaya selalu sinkron kalau view-nya
+        // berubah lagi nanti - tinggal ubah array definisi di sini, gak perlu itung ulang huruf Excel manual.
+        $sub_kategori = array(
+            array('key' => 'doc', 'label' => 'DOC'),
+            array('key' => 'pakan', 'label' => 'PAKAN'),
+            array('key' => 'ovk', 'label' => 'OVK'),
+            array('key' => 'oa', 'label' => 'OA'),
+            array('key' => 'bl', 'label' => 'BL'),
+            array('key' => 'btl', 'label' => 'BTL'),
+            array('key' => 'rhpp', 'label' => 'RHPP'),
+            array('key' => 'total', 'label' => 'TOTAL'),
+        );
 
+        $identitas = array(
+            array('field' => 'unit', 'label' => 'UNIT', 'type' => 'string'),
+            array('field' => 'noreg', 'label' => 'NOREG', 'type' => 'string'),
+            array('field' => 'nama', 'label' => 'PLASMA', 'type' => 'string'),
+            array('field' => 'jenis_mitra', 'label' => 'JENIS MITRA', 'type' => 'string'),
+            array('field' => 'tgl_chick_in', 'label' => 'TGL CI', 'type' => 'date'),
+            array('field' => 'tgl_tutup_siklus', 'label' => 'TGL TUTUP SIKLUS', 'type' => 'date'),
+            array('field' => 'populasi', 'label' => 'POPULASI', 'type' => 'integer'),
+        );
+
+        // Buku Balik Cad RHPP msh placeholder "-" di view (blm diimplementasi, lihat komentar "menyusul"
+        // di list.php) - disamakan di sini, BUKAN dihitung dari pdpt_peternak spt versi lama.
+        $kolom_tengah = array(
+            array('field' => null, 'label' => 'BUKU BALIK CAD RHPP', 'type' => 'string', 'static' => '-'),
+            array('field' => 'sisa_stok', 'label' => 'STOCK TERSEDIA', 'type' => 'integer'),
+            array('field' => 'terjual', 'label' => 'TERJUAL', 'type' => 'integer'),
+            array('field' => 'persentase_dijual', 'label' => 'PERSENTASE (%)', 'type' => 'decimal2'),
+            array('field' => 'start_date_proporsi', 'label' => 'START DATE PROPORSI', 'type' => 'date'),
+            array('field' => 'end_date_proporsi', 'label' => 'END DATE PROPORSI', 'type' => 'date'),
+            array('field' => 'hari', 'label' => 'HARI', 'type' => 'decimal2'),
+            array('field' => 'proporsi', 'label' => 'PROPORSI', 'type' => 'decimal2'),
+        );
+
+        $grup_awal = array(
+            array('prefix' => 'sa_awal', 'label' => 'SALDO AWAL'),
+            array('prefix' => 'produksi', 'label' => 'PRODUKSI'),
+            array('prefix' => 'tersedia', 'label' => 'TERSEDIA'),
+        );
+        $grup_akhir = array(
+            array('prefix' => 'dijual', 'label' => 'DIJUAL'),
+            array('prefix' => 'saldo_akhir', 'label' => 'SALDO AKHIR'),
+        );
+
+        $columns = array();
+        foreach ($identitas as $c) {
+            $columns[] = array('field' => $c['field'], 'label' => $c['label'], 'type' => $c['type'], 'group' => null);
+        }
+        foreach ($grup_awal as $g) {
+            foreach ($sub_kategori as $s) {
+                $columns[] = array('field' => $g['prefix'].'_'.$s['key'], 'label' => $s['label'], 'type' => 'decimal2', 'group' => $g['label']);
+            }
+        }
+        foreach ($kolom_tengah as $c) {
+            $columns[] = array('field' => $c['field'], 'label' => $c['label'], 'type' => $c['type'], 'group' => null, 'static' => isset($c['static']) ? $c['static'] : null);
+        }
+        foreach ($grup_akhir as $g) {
+            foreach ($sub_kategori as $s) {
+                $columns[] = array('field' => $g['prefix'].'_'.$s['key'], 'label' => $s['label'], 'type' => 'decimal2', 'group' => $g['label']);
+            }
+        }
+
+        $arr_header = array();
+        foreach ($columns as $i => $c) {
+            $arr_header[] = toAlpha($i + 1);
+        }
+
+        $arr_column = null;
         $idx = 0;
         $arr_column[ $idx ] = array(
             'A' => array('value' => 'LEMBAR KERJA', 'data_type' => 'string', 'text_style' => 'bold')
         );
         $idx++;
         $arr_column[ $idx ] = array(
-            'A' => array('value' => 'PERIODE '.str_replace('-', '/', $start_date).' - '.str_replace('-', '/', $end_date), 'data_type' => 'string', 'colspan' => array('A','F'), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
+            'A' => array('value' => 'PERIODE '.str_replace('-', '/', $start_date).' - '.str_replace('-', '/', $end_date), 'data_type' => 'string', 'colspan' => array('A', toAlpha(count($identitas))), 'align' => 'left', 'text_style' => 'bold', 'border' => 'none'),
         );
         $idx++;
-        $arr_column[ $idx ] = array(
-            'A' => array('value' => 'UNIT', 'data_type' => 'string', 'rowspan' => array('A3','A4'), 'align' => 'center', 'text_style' => 'bold'),
-            'B' => array('value' => 'NOREG', 'data_type' => 'string', 'rowspan' => array('B3','B4'), 'align' => 'center', 'text_style' => 'bold'),
-            'C' => array('value' => 'NAMA', 'data_type' => 'string', 'rowspan' => array('C3','C4'), 'align' => 'center', 'text_style' => 'bold'),
-            'E' => array('value' => 'CHICK IN', 'data_type' => 'string', 'colspan' => array('D','E'), 'align' => 'center', 'text_style' => 'bold'),
-            'L' => array('value' => 'PAKAN', 'data_type' => 'string', 'colspan' => array('F','L'), 'align' => 'center', 'text_style' => 'bold'),
-            'R' => array('value' => 'OVK', 'data_type' => 'string', 'colspan' => array('M','R'), 'align' => 'center', 'text_style' => 'bold'),
-            'X' => array('value' => 'DOC', 'data_type' => 'string', 'colspan' => array('S','X'), 'align' => 'center', 'text_style' => 'bold'),
-            'AD' => array('value' => 'OA', 'data_type' => 'string', 'colspan' => array('Y','AE'), 'align' => 'center', 'text_style' => 'bold'),
-            'AF' => array('value' => 'RHPP', 'data_type' => 'string','rowspan' => array('AF3','AF4'), 'align' => 'center', 'text_style' => 'bold'),
-            'AG' => array('value' => 'TOTAL', 'data_type' => 'string','rowspan' => array('AG3','AG4'), 'align' => 'center', 'text_style' => 'bold'),
-        );
+
+        // Row header 1 (kolom identitas & kolom tengah rowspan 2 baris; kolom grup colspan 8 di baris ini saja)
+        $row_header1 = array();
+        foreach ($columns as $i => $c) {
+            $letter = $arr_header[ $i ];
+            if ( $c['group'] === null ) {
+                $row_header1[ $letter ] = array('value' => $c['label'], 'data_type' => 'string', 'rowspan' => array($letter.'3', $letter.'4'), 'align' => 'center', 'text_style' => 'bold');
+            }
+        }
+        // Kolom grup: cari huruf awal & akhir tiap grup (8 sub-kategori berurutan) utk colspan-nya
+        $group_ranges = array();
+        foreach ($columns as $i => $c) {
+            if ( $c['group'] !== null ) {
+                if ( !isset($group_ranges[ $c['group'] ]) ) {
+                    $group_ranges[ $c['group'] ] = array('start' => $arr_header[ $i ], 'end' => $arr_header[ $i ]);
+                } else {
+                    $group_ranges[ $c['group'] ]['end'] = $arr_header[ $i ];
+                }
+            }
+        }
+        foreach ($group_ranges as $label => $range) {
+            $row_header1[ $range['start'] ] = array('value' => $label, 'data_type' => 'string', 'colspan' => array($range['start'], $range['end']), 'align' => 'center', 'text_style' => 'bold');
+        }
+        $arr_column[ $idx ] = $row_header1;
         $idx++;
-        $arr_column[ $idx ] = array(
-            'D' => array('value' => 'TGL', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'E' => array('value' => 'POPULASI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'F' => array('value' => 'SALDO AWAL', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'G' => array('value' => 'BELI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'H' => array('value' => 'MUTASI (+)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'I' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'J' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'K' => array('value' => 'PEMAKAIAN', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'L' => array('value' => 'SISA', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'M' => array('value' => 'SALDO AWAL', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'N' => array('value' => 'BELI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'O' => array('value' => 'MUTASI (+)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'P' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'Q' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'R' => array('value' => 'PEMAKAIAN', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'S' => array('value' => 'SALDO AWAL', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'T' => array('value' => 'BELI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'U' => array('value' => 'MUTASI (+)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'V' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'W' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'X' => array('value' => 'PEMAKAIAN', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'Y' => array('value' => 'SALDO AWAL', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'Z' => array('value' => 'BELI', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'AA' => array('value' => 'MUTASI (+)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'AB' => array('value' => 'MUTASI (-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'AC' => array('value' => 'KOREKSI (+/-)', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'AD' => array('value' => 'NET OA', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-            'AE' => array('value' => 'SALDO AKHIR', 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold'),
-        );
+
+        // Row header 2 (sub-label DOC/Pakan/OVK/OA/BL/BTL/RHPP/Total, hanya utk kolom yg masuk grup)
+        $row_header2 = array();
+        foreach ($columns as $i => $c) {
+            if ( $c['group'] !== null ) {
+                $row_header2[ $arr_header[ $i ] ] = array('value' => $c['label'], 'data_type' => 'string', 'align' => 'center', 'text_style' => 'bold');
+            }
+        }
+        $arr_column[ $idx ] = $row_header2;
         $idx++;
 
         $start_row_header = $idx;
 
-        $arr_header = array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF', 'AG');
         if ( !empty($data) ) {
-            foreach ($data as $key => $value) {
-                $arr_column[ $idx ] = array(
-                    'A' => array('value' => ($value['unit']), 'data_type' => 'string'),
-                    'B' => array('value' => ($value['noreg']), 'data_type' => 'string'),
-                    'C' => array('value' => (strtoupper($value['nama'])), 'data_type' => 'string'),
-                    'D' => array('value' => ($value['tgl_chick_in']), 'data_type' => 'date'),
-                    'E' => array('value' => ($value['populasi']), 'data_type' => 'integer'),
-                    'F' => array('value' => ($value['sa_pkn']), 'data_type' => 'decimal2'),
-                    'G' => array('value' => ($value['beli_pkn']), 'data_type' => 'decimal2'),
-                    'H' => array('value' => ($value['mutasi_msk_pkn']), 'data_type' => 'decimal2'),
-                    'I' => array('value' => ($value['mutasi_klwr_pkn']), 'data_type' => 'decimal2'),
-                    'J' => array('value' => ($value['koreksi_pkn']), 'data_type' => 'decimal2'),
-                    'K' => array('value' => ($value['pemakaian_pkn']), 'data_type' => 'decimal2'),
-                    'L' => array('value' => ($value['sisa_pkn']), 'data_type' => 'decimal2'),
-                    'M' => array('value' => ($value['sa_ovk']), 'data_type' => 'decimal2'),
-                    'N' => array('value' => ($value['beli_ovk']), 'data_type' => 'decimal2'),
-                    'O' => array('value' => ($value['mutasi_msk_ovk']), 'data_type' => 'decimal2'),
-                    'P' => array('value' => ($value['mutasi_klwr_ovk']), 'data_type' => 'decimal2'),
-                    'Q' => array('value' => (0), 'data_type' => 'decimal2'),
-                    'R' => array('value' => ($value['pemakaian_ovk']), 'data_type' => 'decimal2'),
-                    'S' => array('value' => ($value['sa_doc']), 'data_type' => 'decimal2'),
-                    'T' => array('value' => ($value['beli_doc']), 'data_type' => 'decimal2'),
-                    'U' => array('value' => ($value['mutasi_msk_doc']), 'data_type' => 'decimal2'),
-                    'V' => array('value' => ($value['mutasi_klwr_doc']), 'data_type' => 'decimal2'),
-                    'W' => array('value' => ($value['koreksi_doc']), 'data_type' => 'decimal2'),
-                    'X' => array('value' => ($value['pemakaian_doc']), 'data_type' => 'decimal2'),
-                    'Y' => array('value' => ($value['sa_oa']), 'data_type' => 'decimal2'),
-                    'Z' => array('value' => ($value['beli_oa']), 'data_type' => 'decimal2'),
-                    'AA' => array('value' => ($value['mutasi_msk_oa']), 'data_type' => 'decimal2'),
-                    'AB' => array('value' => ($value['mutasi_klwr_oa']), 'data_type' => 'decimal2'),
-                    'AC' => array('value' => ($value['koreksi_oa']), 'data_type' => 'decimal2'),
-                    'AD' => array('value' => ($value['net_oa']), 'data_type' => 'decimal2'),
-                    'AE' => array('value' => ($value['saldo_akhir_oa']), 'data_type' => 'decimal2'),
-                    'AF' => array('value' => ($value['pdpt_peternak']), 'data_type' => 'decimal2'),
-                    'AG' => array('value' => ($value['total']), 'data_type' => 'decimal2'),
-                );
-
+            foreach ($data as $value) {
+                $row = array();
+                foreach ($columns as $i => $c) {
+                    $letter = $arr_header[ $i ];
+                    if ( array_key_exists('static', $c) && $c['static'] !== null ) {
+                        $row[ $letter ] = array('value' => $c['static'], 'data_type' => 'string');
+                        continue;
+                    }
+                    $cell_value = $c['field'] === 'nama' ? strtoupper($value[ $c['field'] ]) : $value[ $c['field'] ];
+                    $row[ $letter ] = array('value' => $cell_value, 'data_type' => $c['type']);
+                }
+                $arr_column[ $idx ] = $row;
                 $idx++;
             }
         }
