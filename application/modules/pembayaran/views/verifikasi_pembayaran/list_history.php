@@ -8,9 +8,12 @@
             <td class="text-left"><?php echo strtoupper($value['ket_realisasi']); ?></td>
             <td class="text-right"><?php echo strtoupper(angkaDecimal($value['jml_transfer'])); ?></td>
             <td>
-                <?php if ( !empty($value['filename']) ) { ?>
-                    <?php $filename = explode(', ', $value['filename']); ?>
-                    <?php foreach ($filename as $k_fm => $fm) { ?>
+                <?php if ( !empty($value['path']) ) { ?>
+                    <?php 
+                    // $path = str_replace('C:\xampp_php7\htdocs\gmp_erp\uploads/', '', $value['path']); 
+                    $path = explode(', ', $value['path']); 
+                    ?>
+                    <?php foreach ($path as $k_fm => $fm) { ?>
                         <a href="uploads/<?php echo $fm; ?>" target="_blank">
                             <?php echo $fm; ?>
                         </a>
