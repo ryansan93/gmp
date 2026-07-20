@@ -118,8 +118,9 @@
             <td class="text-right page3" title="TERSEDIA BTL"><?php echo ($value['tersedia_btl'] >= 0) ? angkaDecimal($value['tersedia_btl']) : '('.angkaDecimal(abs($value['tersedia_btl'])).')'; ?></td>
             <td class="text-right page3" title="TERSEDIA RHPP"><?php echo ($value['tersedia_rhpp'] >= 0) ? angkaDecimal($value['tersedia_rhpp']) : '('.angkaDecimal(abs($value['tersedia_rhpp'])).')'; ?></td>
             <td class="text-right page3" title="TERSEDIA TOTAL"><?php echo ($value['tersedia_total'] >= 0) ? angkaDecimal($value['tersedia_total']) : '('.angkaDecimal(abs($value['tersedia_total'])).')'; ?></td>
-            <!-- BUKU BALIK CAD RHPP (menyusul) -->
-            <td class="text-right page4">-</td>
+            <!-- BUKU BALIK CAD RHPP = populasi x 5000, muncul kalau siklus sudah tutup per akhir
+            periode laporan (nilainya sendiri sudah null dari query kalau belum, lihat getData()) -->
+            <td class="text-right page4" title="BUKU BALIK CAD RHPP"><?php echo ($value['buku_balik_cad_rhpp'] !== null) ? angkaDecimal($value['buku_balik_cad_rhpp']) : '-'; ?></td>
             <!-- STOCK TERSEDIA = sisa_stok (saldo_awal_stok - kematian periode berjalan) -->
             <td class="text-right page4" title="STOCK TERSEDIA"><?php echo ($value['sisa_stok'] >= 0) ? angkaDecimal($value['sisa_stok']) : '('.angkaDecimal(abs($value['sisa_stok'])).')'; ?></td>
             <!-- TERJUAL = ekor panen di periode berjalan -->

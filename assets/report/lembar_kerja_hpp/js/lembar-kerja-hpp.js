@@ -4,6 +4,7 @@ var lkh = {
 	}, // end - startUp
 
 	settingUp: function () {
+		$('select.bulan').select2();
 		$('select.unit').select2();
 		$('select.tutup_siklus').select2();
 

@@ -100,13 +100,18 @@ class LembarKerjaHpp extends Public_Controller {
             $sql_unit = " and w.kode = '".$unit."'";
         }
 
-        // Filter Tutup Siklus: all (default) / sudah (tsk.tgl_tutup terisi) / belum (tsk.tgl_tutup masih null)
+        // Filter Tutup Siklus: all (default) / sudah / belum - status PER AKHIR PERIODE laporan
+        // (end_date), BUKAN status hari ini. Dulu cuma cek "tgl_tutup is not null" (real-time,
+        // reflect status SEKARANG) - salah utk laporan periode LAMPAU: noreg yg py transaksi di
+        // periode laporan tapi baru tutup siklus BELAKANGAN (bulan setelah end_date) ikut kehitung
+        // "sudah tutup" padahal per akhir periode itu dia msh aktif. Fix: batasi tgl_tutup <=
+        // end_date utk "sudah" (bukan cuma not null).
         $tutup_siklus = isset($params['tutup_siklus']) ? $params['tutup_siklus'] : 'all';
         $sql_tutup_siklus = null;
         if ( $tutup_siklus == 'sudah' ) {
-            $sql_tutup_siklus = " and tsk.tgl_tutup is not null";
+            $sql_tutup_siklus = " and tsk.tgl_tutup is not null and tsk.tgl_tutup <= '".$end_date."'";
         } else if ( $tutup_siklus == 'belum' ) {
-            $sql_tutup_siklus = " and tsk.tgl_tutup is null";
+            $sql_tutup_siklus = " and (tsk.tgl_tutup is null or tsk.tgl_tutup > '".$end_date."')";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -1382,6 +1387,15 @@ class LembarKerjaHpp extends Public_Controller {
         $persen_dijual = "
             case
                 when data.ekor_panen_periode > ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) - (data.ekor_mati - data.ekor_mati_awal)) then 1
+                -- Kasus khusus: stok tersedia (penyebut) = 0 DAN terjual periode ini = 0 - tanpa aturan
+                -- ini, jatuh ke 'else 0' (0%) krn penyebut nol tidak bisa dibagi. Tapi kalau siklusnya
+                -- SUDAH TUTUP per akhir periode ini (point-in-time, sama pola dgn fix2 sblmnya), itu
+                -- artinya noreg ini sudah tuntas 100% (panen abis sblm periode ini, tidak ada sisa) -
+                -- bukan 0%. Arahan user.
+                when data.ekor_panen_periode = 0
+                    and ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) - (data.ekor_mati - data.ekor_mati_awal)) = 0
+                    and data.tgl_tutup_siklus is not null and data.tgl_tutup_siklus <= '".$end_date."'
+                then 1
                 when ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) - (data.ekor_mati - data.ekor_mati_awal)) <> 0
                 then cast(data.ekor_panen_periode as float) / ((data.populasi - data.ekor_mati_awal - data.ekor_panen_awal) - (data.ekor_mati - data.ekor_mati_awal))
                 else 0
@@ -1853,7 +1867,9 @@ class LembarKerjaHpp extends Public_Controller {
             -- 7. RHPP
             -- ============================================================
             rhpp_data as (
-                select r.noreg, r.pdpt_peternak_belum_pajak
+                -- pdpt_peternak_belum_pajak di-floor ke 0 kalau minus (rugi) - arahan user, biar
+                -- Produksi RHPP gak nampilin kerugian mentah dari settlement.
+                select r.noreg, case when r.pdpt_peternak_belum_pajak < 0 then 0 else r.pdpt_peternak_belum_pajak end as pdpt_peternak_belum_pajak
                 from rhpp r
                 inner join tutup_siklus ts on r.id_ts = ts.id
                 where ts.tgl_tutup between '".$start_date."' and '".$end_date."'
@@ -1862,29 +1878,39 @@ class LembarKerjaHpp extends Public_Controller {
 
                 union all
 
-                select rgn.noreg, rg.pdpt_peternak_belum_pajak
+                select rgn.noreg, case when rg.pdpt_peternak_belum_pajak < 0 then 0 else rg.pdpt_peternak_belum_pajak end as pdpt_peternak_belum_pajak
                 from rhpp_group rg
                 inner join rhpp_group_header rgh on rg.id_header = rgh.id
+                -- Cari noreg dgn tanggal siklus terakhir (lhk_last) per id_header - REWRITE pakai
+                -- row_number() (dulu: min(noreg) + inner join ke max(tanggal), TERBUKTI via actual
+                -- execution plan dieksekusi SQL Server sbg correlated nested-loop per rg.id, salah
+                -- satu penyebab utama query lambat/blowup baris. row_number() versi set-based, HASIL
+                -- IDENTIK: partition per id_header, urut tanggal desc lalu noreg asc (tie-break sama
+                -- persis spt min(noreg) di antara baris ber-tanggal max), rn=1 = 1 baris terpilih.
+                -- Filter tanggal is not null menjaga perilaku lama: id_header yg SEMUA baris rgn-nya
+                -- tanpa match lhk_last (tanggal null semua) ikut TIDAK match sama sekali (0 baris),
+                -- persis spt inner join lama ke max(tanggal)=null yg tak pernah match.
                 inner join (
-                    select rgn.id_header, min(rgn.noreg) as noreg
+                    select id_header, noreg
                     from (
-                        select rgn.*, lhk.tanggal
+                        select rgn.id_header, rgn.noreg,
+                            row_number() over (
+                                partition by rgn.id_header
+                                order by lhk.tanggal desc, rgn.noreg asc
+                            ) as rn
                         from rhpp_group_noreg rgn
                         left join lhk_last lhk on lhk.noreg = rgn.noreg
-                    ) rgn
-                    inner join (
-                        select rgn.id_header, max(lhk.tanggal) as tgl_akhir_siklus
-                        from rhpp_group_noreg rgn
-                        left join lhk_last lhk on lhk.noreg = rgn.noreg
-                        group by rgn.id_header
-                    ) rgn_max on rgn.id_header = rgn_max.id_header and rgn.tanggal = rgn_max.tgl_akhir_siklus
-                    group by rgn.id_header
+                        where lhk.tanggal is not null
+                    ) x
+                    where rn = 1
                 ) rgn on rg.id = rgn.id_header
                 where rg.jenis = 'rhpp_plasma' and rgh.tgl_submit between '".$start_date."' and '".$end_date."'
             ),
             -- Sama seperti rhpp_data, tapi sebelum start_date (Saldo Awal)
             rhpp_data_awal as (
-                select r.noreg, r.pdpt_peternak_belum_pajak
+                -- pdpt_peternak_belum_pajak di-floor ke 0 kalau minus (rugi) - arahan user, biar
+                -- Produksi RHPP gak nampilin kerugian mentah dari settlement.
+                select r.noreg, case when r.pdpt_peternak_belum_pajak < 0 then 0 else r.pdpt_peternak_belum_pajak end as pdpt_peternak_belum_pajak
                 from rhpp r
                 inner join tutup_siklus ts on r.id_ts = ts.id
                 where ts.tgl_tutup < '".$start_date."'
@@ -1893,23 +1919,23 @@ class LembarKerjaHpp extends Public_Controller {
 
                 union all
 
-                select rgn.noreg, rg.pdpt_peternak_belum_pajak
+                select rgn.noreg, case when rg.pdpt_peternak_belum_pajak < 0 then 0 else rg.pdpt_peternak_belum_pajak end as pdpt_peternak_belum_pajak
                 from rhpp_group rg
                 inner join rhpp_group_header rgh on rg.id_header = rgh.id
+                -- Sama spt di rhpp_data - rewrite row_number() (lihat komentar di sana)
                 inner join (
-                    select rgn.id_header, min(rgn.noreg) as noreg
+                    select id_header, noreg
                     from (
-                        select rgn.*, lhk.tanggal
+                        select rgn.id_header, rgn.noreg,
+                            row_number() over (
+                                partition by rgn.id_header
+                                order by lhk.tanggal desc, rgn.noreg asc
+                            ) as rn
                         from rhpp_group_noreg rgn
                         left join lhk_last lhk on lhk.noreg = rgn.noreg
-                    ) rgn
-                    inner join (
-                        select rgn.id_header, max(lhk.tanggal) as tgl_akhir_siklus
-                        from rhpp_group_noreg rgn
-                        left join lhk_last lhk on lhk.noreg = rgn.noreg
-                        group by rgn.id_header
-                    ) rgn_max on rgn.id_header = rgn_max.id_header and rgn.tanggal = rgn_max.tgl_akhir_siklus
-                    group by rgn.id_header
+                        where lhk.tanggal is not null
+                    ) x
+                    where rn = 1
                 ) rgn on rg.id = rgn.id_header
                 where rg.jenis = 'rhpp_plasma' and rgh.tgl_submit < '".$start_date."'
             ),
@@ -2218,6 +2244,14 @@ class LembarKerjaHpp extends Public_Controller {
                 calc.tgl_chick_in,
                 calc.tgl_tutup_siklus,
                 calc.populasi,
+                -- BUKU BALIK CAD RHPP = populasi x 5000 (biaya RHPP sementara yg dibukukan per-ekor
+                -- selama siklus berjalan), muncul HANYA kalau siklus sudah tutup PER AKHIR PERIODE
+                -- LAPORAN (tgl_tutup_siklus <= end_date - bukan cuma is-not-null/status hari ini,
+                -- sama alasannya dgn fix filter dropdown Tutup Siklus: noreg yg baru tutup siklus
+                -- BELAKANGAN, setelah end_date, blm dianggap tutup per periode laporan ini). Nilai
+                -- apa adanya (positif, TIDAK dibalik tandanya) sesuai arahan user. Null kalau belum
+                -- tutup -> ditampilkan strip di view/export (pola sama spt start_date_proporsi dkk).
+                case when calc.tgl_tutup_siklus is not null and calc.tgl_tutup_siklus <= '".$end_date."' then calc.populasi * 5000 else null end as buku_balik_cad_rhpp,
                 -- SALDO AWAL (grup Saldo Awal di view) = rumus Saldo Akhir (Tersedia - Dijual),
                 -- tapi datanya dihitung sebelum start_date (kumulatif dari awal).
                 -- Sudah dihitung sekali di lapisan base (lihat bawah), di sini tinggal pakai.
@@ -2347,7 +2381,23 @@ class LembarKerjaHpp extends Public_Controller {
                     round(base.sa_awal_oa + base.pemakaian_oa, 0) as tersedia_oa,
                     round(base.sa_awal_bl + base.nilai_bl, 0) as tersedia_bl,
                     round(base.sa_awal_btl + base.nilai_btl, 0) as tersedia_btl,
-                    round(base.sa_awal_rhpp + base.produksi_rhpp_calc, 0) as tersedia_rhpp
+                    -- Tersedia RHPP = Saldo Awal + Produksi (RHPP asli, apa adanya), DIKURANGI
+                    -- Cadangan RHPP (populasi x 5000) KALAU siklus tutup di periode INI (pola
+                    -- case yg sama persis dgn buku_balik_cad_rhpp di final select) - koreksi
+                    -- selisih cadangan sementara vs RHPP asli begitu RHPP-nya sudah jadi. Produksi
+                    -- RHPP sendiri (kolom terpisah) TETAP apa adanya, TIDAK ikut dikurangi - cuma
+                    -- Tersedia yg kena, sesuai arahan user. Pengecualian: kalau produksi_rhpp_calc
+                    -- periode ini = 0 (artinya RHPP asli MINUS/rugi, sudah di-floor ke 0 - lihat
+                    -- rhpp_data/rhpp_data_awal), pengurangan cadangan DI-SKIP sama sekali (Tersedia
+                    -- = Saldo Awal + 0 - 0, TIDAK ikut dikurangi cadangan) - arahan user: kalau
+                    -- RHPP-nya rugi, jangan sampai Tersedia malah tambah minus krn cadangan.
+                    round(base.sa_awal_rhpp + base.produksi_rhpp_calc
+                        - case
+                            when base.produksi_rhpp_calc = 0 then 0
+                            when base.tgl_tutup_siklus is not null and base.tgl_tutup_siklus <= '".$end_date."'
+                                then base.populasi * 5000
+                            else 0
+                        end, 0) as tersedia_rhpp
                 from
                 (
                 -- Lapisan base: hitung SEKALI ekspresi2 berat yg dipakai berulang di kolom2 turunan -
@@ -2512,10 +2562,45 @@ class LembarKerjaHpp extends Public_Controller {
             ) calc
             order by
                 calc.unit asc,
-                calc.tgl_chick_in asc;
+                calc.tgl_chick_in asc
+            -- FORCE ORDER: query ini py ~63 CTE - tanpa hint ini, SQL Server query optimizer
+            -- bisa habiskan puluhan detik s/d menit CUMA utk COMPILE (cari urutan join optimal),
+            -- SEBELUM data sungguhan mulai diproses (dibuktikan via sys.dm_exec_requests: cpu_time
+            -- ~= total_elapsed_time & logical_reads MANDEG selama puluhan detik pertama = compile,
+            -- bukan network/fetch spt dugaan sblmnya). FORCE ORDER pakai urutan JOIN apa adanya
+            -- (skip pencarian reorder), verified: hasil data 100% identik, waktu turun ~10-15x
+            -- (KDR sudah-tutup-siklus: 135dtk->5,6dtk; unit=ALL: turun ke ~9dtk).
+            option (force order);
         ";
         // cetak_r( $sql, 1 );
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // Koneksi ke DB live sering kena error network transien di tengah query berat (khas:
+        // "TCP Provider: Timeout error [258]", jg "Communication link failure" / "semaphore timeout") -
+        // query yg sama dijalankan ulang biasanya sukses. Auto-retry maks 3x khusus utk error transien
+        // itu; error lain (syntax, dll) tetap langsung dilempar. Query ini murni SELECT, aman di-retry.
+        $max_attempts = 3;
+        $transient_markers = array('Timeout error [258]', 'Communication link failure', 'semaphore timeout', 'TCP Provider');
+        for ($attempt = 1; $attempt <= $max_attempts; $attempt++) {
+            try {
+                $d_conf = $m_conf->hydrateRaw( $sql );
+                break;
+            } catch (\Exception $e) {
+                $is_transient = false;
+                foreach ($transient_markers as $marker) {
+                    if ( strpos($e->getMessage(), $marker) !== false ) {
+                        $is_transient = true;
+                        break;
+                    }
+                }
+
+                if ( !$is_transient || $attempt >= $max_attempts ) {
+                    throw $e;
+                }
+
+                // Koneksi lama kemungkinan sudah rusak - buang supaya attempt berikutnya buka koneksi baru
+                $m_conf->getConnection()->disconnect();
+                sleep(2);
+            }
+        }
 
         $data = null;
         if ($d_conf->count() > 0 ) {
@@ -2728,10 +2813,12 @@ class LembarKerjaHpp extends Public_Controller {
             array('field' => 'populasi', 'label' => 'POPULASI', 'type' => 'integer'),
         );
 
-        // Buku Balik Cad RHPP msh placeholder "-" di view (blm diimplementasi, lihat komentar "menyusul"
-        // di list.php) - disamakan di sini, BUKAN dihitung dari pdpt_peternak spt versi lama.
+        // Buku Balik Cad RHPP = populasi x 5000, muncul kalau siklus sudah tutup (per noreg) - null
+        // dari query kalau belum tutup. Excel render null 'integer' sbg cell kosong (pola sama spt
+        // start_date_proporsi/end_date_proporsi yg jg null-able di export ini, bukan literal "-" -
+        // beda dgn tampilan HTML view yg eksplisit convert null ke teks "-").
         $kolom_tengah = array(
-            array('field' => null, 'label' => 'BUKU BALIK CAD RHPP', 'type' => 'string', 'static' => '-'),
+            array('field' => 'buku_balik_cad_rhpp', 'label' => 'BUKU BALIK CAD RHPP', 'type' => 'integer'),
             array('field' => 'sisa_stok', 'label' => 'STOCK TERSEDIA', 'type' => 'integer'),
             array('field' => 'terjual', 'label' => 'TERJUAL', 'type' => 'integer'),
             array('field' => 'persentase_dijual', 'label' => 'PERSENTASE (%)', 'type' => 'decimal2'),
