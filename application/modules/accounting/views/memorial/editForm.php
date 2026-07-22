@@ -121,6 +121,10 @@
 
 <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 
+<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
+	<button type="button" class="btn btn-info pull-right" onclick="mm.importForm()"><i class="fa fa-upload"></i> Import Excel</button>
+</div>
+
 <div class="col-xs-12 no-padding">
 	<div class="col-xs-12 no-padding" style="overflow-x: auto;">
 		<small>

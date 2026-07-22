@@ -220,7 +220,6 @@ var mm = {
         $(tbody).append( $(tr_clone) );
 
         mm.getDetJurnalTrans();
-        mm.getTujuanCoa();
 
         // $.each($(tbody).find('select'), function(a) {
         //     if ( $(this).hasClass('no_coa') ) {
@@ -973,6 +972,177 @@ var mm = {
             },
         });
     }, // end - exportPdf
+
+    openModal: function(html, widthPct) {
+        $('.modal').modal('hide');
+
+        var _options = {
+            className: 'veryWidth',
+            message: html,
+            size: 'large',
+        };
+        bootbox.dialog(_options).bind('shown.bs.modal', function(){
+            var modal_dialog = $(this).find('.modal-dialog');
+            var modal_header = $(this).find('.modal-header');
+
+            $(modal_dialog).css({'max-width' : widthPct+'%'});
+            $(modal_dialog).css({'width' : widthPct+'%'});
+            $(modal_header).css({'padding-top' : '0px'});
+
+            $('.modal').removeAttr('tabindex');
+        });
+    }, // end - openModal
+
+    importForm: function() {
+        $.get('accounting/Memorial/importForm', {}, function(html){
+            mm.openModal(html, 40);
+        }, 'html');
+    }, // end - importForm
+
+    showNameFile: function(elm) {
+        var _label = $(elm).closest('label');
+        var _a = _label.prev('a[name=dokumen]');
+        _a.removeClass('hide');
+
+        var _allowtypes = ['xlsx'];
+        var _type = $(elm).get(0).files[0]['name'].split('.').pop();
+        var _namafile = $(elm).val();
+        var _temp_url = URL.createObjectURL($(elm).get(0).files[0]);
+        _namafile = _namafile.substring(_namafile.lastIndexOf("\\") + 1, _namafile.length);
+
+        if ( in_array(_type, _allowtypes) ) {
+            _a.attr('title', _namafile);
+            _a.attr('href', _temp_url);
+            _a.text( _namafile );
+            $(elm).attr('data-filename', _namafile);
+        } else {
+            $(elm).val('');
+            _a.addClass('hide');
+            $(elm).attr('data-filename', '');
+            bootbox.alert('Format file tidak sesuai. Mohon attach ulang.');
+        }
+    }, // end - showNameFile
+
+    importDetail: function() {
+        var file_input = $('.modal .file_lampiran').get(0);
+        var file_tmp = ( file_input && file_input.files && file_input.files.length > 0 ) ? file_input.files[0] : null;
+
+        if ( !file_tmp ) {
+            bootbox.alert('Harap upload file terlebih dahulu.');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('file', file_tmp);
+
+        showLoading('Membaca data excel . . .');
+        $.ajax({
+            url: 'accounting/Memorial/importDetail',
+            dataType: 'json',
+            type: 'post',
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function(data) {
+                hideLoading();
+                if ( data.status == 1 ) {
+                    mm.applyImportedHeader( data.content.header );
+                    mm.applyImportedDetail( data.content.header, data.content.rows );
+                } else {
+                    bootbox.alert(data.message);
+                }
+            },
+            error: function() {
+                hideLoading();
+                bootbox.alert('Gagal memproses file, segera hubungi tim IT.');
+            },
+        });
+    }, // end - importDetail
+
+    applyImportedHeader: function(header) {
+        var dcontent = $('#action');
+
+        if ( !empty(header.tgl_mm) ) {
+            $(dcontent).find('#TglMm').data('DateTimePicker').date( moment(new Date(header.tgl_mm)) );
+        }
+
+        if ( !empty(header.no_pelanggan) ) {
+            $(dcontent).find('select.no_pelanggan').select2().val( header.no_pelanggan );
+            mm.getNamaPelanggan();
+        } else if ( !empty(header.nama_pelanggan) ) {
+            $(dcontent).find('select.no_pelanggan').select2().val('');
+            $(dcontent).find('input.pelanggan').removeAttr('disabled').val( header.nama_pelanggan.toUpperCase() );
+        }
+
+        if ( !empty(header.no_supplier) ) {
+            $(dcontent).find('select.no_supplier').select2().val( header.no_supplier );
+            mm.getNamaSupplier();
+        } else if ( !empty(header.nama_supplier) ) {
+            $(dcontent).find('select.no_supplier').select2().val('');
+            $(dcontent).find('input.supplier').removeAttr('disabled').val( header.nama_supplier.toUpperCase() );
+        }
+
+        mm.cekPelangganSupplier();
+
+        if ( !empty(header.keterangan) ) {
+            $(dcontent).find('textarea.keterangan').val( header.keterangan.toUpperCase() );
+        }
+    }, // end - applyImportedHeader
+
+    applyImportedDetail: function(header, rows) {
+        var dcontent = $('#action');
+        var tbody = $(dcontent).find('.tbl_detail tbody');
+
+        var valid_rows = [];
+        var errors = [];
+
+        if ( !empty(header.errors) && header.errors.length > 0 ) {
+            errors.push('Header: '+header.errors.join('; '));
+        }
+
+        $.map( rows, function(r) {
+            if ( !empty(r.errors) && r.errors.length > 0 ) {
+                errors.push('Baris '+r.row_number+': '+r.errors.join('; '));
+            } else {
+                valid_rows.push(r);
+            }
+        });
+
+        $.map( valid_rows, function(r) {
+            var last_tr = $(tbody).find('tr.data').last();
+            // select.unit selalu ada nilai default (opsi pertama), jadi tidak dipakai
+            // untuk deteksi baris kosong -- cukup cek asal/tujuan/nilai yang defaultnya kosong
+            var is_empty_default_row = ( $(tbody).find('tr.data').length == 1 ) &&
+                empty($(last_tr).find('select.tujuan').select2().val()) &&
+                empty($(last_tr).find('select.asal').select2().val()) &&
+                empty($(last_tr).find('input.nilai').val());
+
+            var target_tr = null;
+            if ( is_empty_default_row ) {
+                target_tr = last_tr;
+            } else {
+                mm.addRow( $(last_tr).find('button.btn-primary').get(0) );
+                target_tr = $(tbody).find('tr.data').last();
+            }
+
+            $(target_tr).find('select.unit').select2().val( r.unit ).trigger('change');
+            $(target_tr).find('select.tujuan').select2().val( r.coa_tujuan ).trigger('change');
+            $(target_tr).find('select.asal').select2().val( r.coa_asal ).trigger('change');
+            $(target_tr).find('input.keterangan').val( (r.keterangan || '').toUpperCase() );
+            $(target_tr).find('input.no_invoice').val( r.no_invoice );
+            $(target_tr).find('input.nilai').val( numeral.format(r.nilai) );
+
+            mm.hitGrandTotal( $(target_tr).find('input.nilai') );
+        });
+
+        $('.modal').modal('hide');
+
+        var msg = 'Data header sudah diisi otomatis, dan '+valid_rows.length+' baris detail berhasil ditambahkan ke form.';
+        if ( errors.length > 0 ) {
+            msg += '<br><br><b>'+errors.length+' catatan/kesalahan (perbaiki lalu import ulang bila perlu):</b><br>'+errors.join('<br>');
+        }
+        bootbox.alert(msg);
+    }, // end - applyImportedDetail
 };
 
 mm.start_up();

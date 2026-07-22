@@ -546,6 +546,336 @@ class Memorial extends Public_Controller {
         display_json( $this->result );
     }
 
+    /**************************************************************************************
+     * IMPORT EXCEL (mengisi baris detail pada form add/edit yang sedang dibuka)
+     **************************************************************************************/
+    public function downloadTemplate() {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Import Detail Memorial');
+
+        $header = array('Tanggal (YYYY-MM-DD)', 'No. Pelanggan', 'Nama Pelanggan', 'No. Supplier', 'Nama Supplier', 'Keterangan Header', 'Unit (Kode)', 'COA Tujuan (Debet/NAIK)', 'COA Asal (Kredit/TURUN)', 'Keterangan Detail', 'No. Invoice', 'Nilai');
+        foreach ($header as $i => $h) {
+            $col = toAlpha($i+1);
+            $sheet->setCellValue($col.'1', $h);
+            $sheet->getStyle($col.'1')->getFont()->setBold(true);
+        }
+
+        $contoh = array('2026-06-30', '', '', 'BYD001', 'CONTOH SUPPLIER', 'CONTOH BARIS - HAPUS SEBELUM IMPORT', 'MGT', '21180.200', '', 'CONTOH KETERANGAN DETAIL', 'BYD/11/25/00015', 0.27);
+        foreach ($contoh as $i => $v) {
+            $col = toAlpha($i+1);
+            $sheet->setCellValue($col.'2', $v);
+        }
+
+        foreach (range('A', 'L') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $petunjuk = $spreadsheet->createSheet();
+        $petunjuk->setTitle('Petunjuk');
+        $lines = array(
+            'PETUNJUK PENGISIAN IMPORT DETAIL MEMORIAL',
+            '',
+            '1 baris = 1 baris detail pada tabel Debet/Kredit di form Memorial.',
+            '',
+            'Kolom Tanggal, No/Nama Pelanggan, No/Nama Supplier, dan Keterangan Header',
+            'HANYA PERLU DIISI DI BARIS PERTAMA. Baris berikutnya boleh dikosongkan,',
+            'akan otomatis memakai nilai dari baris pertama (karena dalam satu file',
+            'excel hanya untuk 1 memorial / 1 no. memo).',
+            '',
+            'Tanggal          : format YYYY-MM-DD, contoh 2026-06-30. Wajib diisi di baris pertama.',
+            'No. Pelanggan    : opsional, isi jika memorial terkait pelanggan yang ada di master.',
+            'Nama Pelanggan   : isi jika memorial terkait pelanggan (wajib jika No. Supplier kosong).',
+            'No. Supplier     : opsional, isi jika memorial terkait supplier yang ada di master.',
+            'Nama Supplier    : isi jika memorial terkait supplier (wajib jika Nama Pelanggan kosong).',
+            'Keterangan Header: wajib diisi di baris pertama.',
+            '',
+            'Unit             : kode unit sesuai master wilayah, contoh MGT.',
+            'COA Tujuan       : kode COA yang NAIK / didebet.',
+            'COA Asal         : kode COA yang TURUN / dikredit.',
+            '                   Isi salah satu saja (Tujuan atau Asal), tidak harus dua-duanya.',
+            'Keterangan Detail: wajib diisi.',
+            'No. Invoice      : opsional.',
+            'Nilai            : wajib diisi, harus lebih besar dari 0.',
+            '',
+            'Hapus baris contoh (baris ke-2) di sheet "Import Detail Memorial" sebelum',
+            'meng-upload.',
+            '',
+            'Data hasil import TIDAK langsung tersimpan -- hanya mengisi form yang sedang',
+            'terbuka (header dan baris-baris detail). Data baru benar-benar tersimpan',
+            'setelah anda menekan tombol Simpan / Update.',
+        );
+        foreach ($lines as $i => $line) {
+            $petunjuk->setCellValue('A'.($i+1), $line);
+        }
+        $petunjuk->getColumnDimension('A')->setWidth(100);
+
+        $spreadsheet->setActiveSheetIndex(0);
+
+        $filename = 'TEMPLATE_IMPORT_DETAIL_MEMORIAL.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('export_excel/'.$filename);
+
+        $this->load->helper('download');
+        force_download('export_excel/'.$filename, NULL);
+    }
+
+    public function importForm() {
+        $d_content['akses'] = $this->hakAkses;
+        $html = $this->load->view($this->pathView.'importForm', $d_content, true);
+
+        echo $html;
+    }
+
+    public function importDetail() {
+        $file = isset($_FILES['file']) ? $_FILES['file'] : null;
+
+        try {
+            if ( !empty($file) ) {
+                $upload_path = FCPATH . "//uploads/import_file/";
+                $moved = uploadFile($file, $upload_path);
+
+                if ( $moved ) {
+                    $rows = $this->readImportExcel( $moved['path'] );
+
+                    if ( !empty($rows) && count($rows) > 0 ) {
+                        $header = $this->validateImportHeader( $rows[0] );
+                        $detail = $this->validateImportRows( $rows );
+
+                        $this->result['status'] = 1;
+                        $this->result['content'] = array('header' => $header, 'rows' => $detail);
+                    } else {
+                        $this->result['message'] = 'Data yang anda upload kosong atau formatnya tidak sesuai template.';
+                    }
+                } else {
+                    $this->result['message'] = 'File gagal terupload, segera hubungi tim IT.';
+                }
+            } else {
+                $this->result['message'] = 'Harap upload file terlebih dahulu.';
+            }
+        } catch (Exception $e) {
+            $this->result['message'] = 'GAGAL : '.$e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
+    /**
+     * Bersihkan tanda kutip satu di depan (mis. "'11111.002") -- muncul saat user
+     * mengetik kode di excel dengan awalan ' supaya tidak dikonversi jadi angka.
+     */
+    private function cleanKode( $v ) {
+        $v = trim($v);
+        if ( substr($v, 0, 1) === "'" ) {
+            $v = trim(substr($v, 1));
+        }
+
+        return $v;
+    }
+
+    private function readImportExcel( $path_name ) {
+        $path = 'uploads/import_file/'.$path_name;
+
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $spreadsheet = $reader->load($path, \PhpOffice\PhpSpreadsheet\Reader\IReader::LOAD_WITH_CHARTS);
+        // formatData = false -> ambil nilai mentah (nilai jadi angka murni tanpa format ribuan)
+        $sheet = $spreadsheet->getActiveSheet()->toArray(null, true, false, true);
+
+        $rows = array();
+        $numrow = 0;
+
+        // header (tanggal/pelanggan/supplier/keterangan) cukup diisi di baris pertama,
+        // baris berikutnya yang kosong akan memakai nilai baris sebelumnya (fill-forward)
+        $h_tanggal = null;
+        $h_no_pelanggan = null;
+        $h_nama_pelanggan = null;
+        $h_no_supplier = null;
+        $h_nama_supplier = null;
+        $h_keterangan_header = null;
+
+        foreach ($sheet as $row) {
+            $numrow++;
+            if ( $numrow == 1 ) continue; // baris header kolom, lewati
+
+            if ( is_numeric($row['A']) ) {
+                $tanggal = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row['A'])->format('Y-m-d');
+            } else {
+                $tanggal = trim($row['A']);
+            }
+            $no_pelanggan = $this->cleanKode($row['B']);
+            $nama_pelanggan = trim($row['C']);
+            $no_supplier = $this->cleanKode($row['D']);
+            $nama_supplier = trim($row['E']);
+            $keterangan_header = trim($row['F']);
+            $unit = $this->cleanKode($row['G']);
+            $coa_tujuan = $this->cleanKode($row['H']);
+            $coa_asal = $this->cleanKode($row['I']);
+            $keterangan = trim($row['J']);
+            $no_invoice = $this->cleanKode($row['K']);
+            $nilai = is_string($row['L']) ? trim(str_replace(',', '', $row['L'])) : $row['L'];
+
+            if ( empty($tanggal) && empty($no_pelanggan) && empty($nama_pelanggan) && empty($no_supplier) && empty($nama_supplier) && empty($keterangan_header)
+                && empty($unit) && empty($coa_tujuan) && empty($coa_asal) && empty($keterangan) && empty($nilai) ) {
+                continue; // baris kosong, lewati
+            }
+
+            if ( !empty($tanggal) ) { $h_tanggal = $tanggal; } else { $tanggal = $h_tanggal; }
+            if ( !empty($no_pelanggan) ) { $h_no_pelanggan = $no_pelanggan; } else { $no_pelanggan = $h_no_pelanggan; }
+            if ( !empty($nama_pelanggan) ) { $h_nama_pelanggan = $nama_pelanggan; } else { $nama_pelanggan = $h_nama_pelanggan; }
+            if ( !empty($no_supplier) ) { $h_no_supplier = $no_supplier; } else { $no_supplier = $h_no_supplier; }
+            if ( !empty($nama_supplier) ) { $h_nama_supplier = $nama_supplier; } else { $nama_supplier = $h_nama_supplier; }
+            if ( !empty($keterangan_header) ) { $h_keterangan_header = $keterangan_header; } else { $keterangan_header = $h_keterangan_header; }
+
+            $rows[] = array(
+                'row_number' => $numrow,
+                'tgl_mm' => $tanggal,
+                'no_pelanggan' => $no_pelanggan,
+                'nama_pelanggan' => $nama_pelanggan,
+                'no_supplier' => $no_supplier,
+                'nama_supplier' => $nama_supplier,
+                'keterangan_header' => $keterangan_header,
+                'unit' => strtoupper($unit),
+                'coa_tujuan' => $coa_tujuan,
+                'coa_asal' => $coa_asal,
+                'keterangan' => $keterangan,
+                'no_invoice' => $no_invoice,
+                'nilai' => $nilai,
+            );
+        }
+
+        return $rows;
+    }
+
+    private function validateImportHeader( $r ) {
+        $errors = array();
+
+        /* TANGGAL */
+        if ( empty($r['tgl_mm']) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $r['tgl_mm']) ) {
+            $errors[] = 'Format tanggal tidak valid (gunakan YYYY-MM-DD), isi di baris pertama.';
+        }
+
+        /* PELANGGAN / SUPPLIER */
+        $no_pelanggan = $r['no_pelanggan'];
+        $nama_pelanggan = $r['nama_pelanggan'];
+        $no_supplier = $r['no_supplier'];
+        $nama_supplier = $r['nama_supplier'];
+
+        if ( empty($nama_pelanggan) && empty($nama_supplier) ) {
+            $errors[] = 'Harus isi Nama Pelanggan atau Nama Supplier (baris pertama).';
+        } else if ( !empty($nama_pelanggan) && !empty($nama_supplier) ) {
+            $errors[] = 'Hanya boleh isi salah satu Pelanggan atau Supplier (baris pertama).';
+        } else if ( !empty($nama_pelanggan) && !empty($no_pelanggan) ) {
+            $m_plg = new \Model\Storage\Pelanggan_model();
+            $d_plg = $m_plg->where('nomor', $no_pelanggan)->where('tipe', 'pelanggan')->orderBy('id', 'desc')->first();
+            if ( empty($d_plg) ) {
+                $errors[] = 'No. Pelanggan "'.$no_pelanggan.'" tidak ditemukan.';
+            } else {
+                $nama_pelanggan = $d_plg->nama; // samakan dengan master
+            }
+        } else if ( !empty($nama_supplier) && !empty($no_supplier) ) {
+            $m_supl = new \Model\Storage\Supplier_model();
+            $d_supl = $m_supl->where('nomor', $no_supplier)->where('tipe', 'supplier')->orderBy('id', 'desc')->first();
+            if ( empty($d_supl) ) {
+                $errors[] = 'No. Supplier "'.$no_supplier.'" tidak ditemukan.';
+            } else {
+                $nama_supplier = $d_supl->nama; // samakan dengan master
+            }
+        }
+
+        /* KETERANGAN HEADER */
+        if ( empty($r['keterangan_header']) ) {
+            $errors[] = 'Keterangan Header wajib diisi di baris pertama.';
+        }
+
+        return array(
+            'tgl_mm' => $r['tgl_mm'],
+            'no_pelanggan' => $no_pelanggan,
+            'nama_pelanggan' => $nama_pelanggan,
+            'no_supplier' => $no_supplier,
+            'nama_supplier' => $nama_supplier,
+            'keterangan' => $r['keterangan_header'],
+            'errors' => $errors,
+        );
+    }
+
+    private function validateImportRows( $rows ) {
+        $data = array();
+        foreach ($rows as $r) {
+            $errors = array();
+
+            /* UNIT */
+            $unit_nama = null;
+            if ( empty($r['unit']) ) {
+                $errors[] = 'Unit wajib diisi.';
+            } else {
+                $m_wilayah = new \Model\Storage\Wilayah_model();
+                $d_unit = $m_wilayah->where('kode', $r['unit'])->whereNotNull('kode')->orderBy('id', 'desc')->first();
+                if ( empty($d_unit) ) {
+                    $errors[] = 'Unit "'.$r['unit'].'" tidak ditemukan.';
+                } else {
+                    $unit_nama = $d_unit->nama;
+                }
+            }
+
+            /* COA -- cukup salah satu (asal atau tujuan) yang wajib diisi, sama seperti input manual */
+            $coa_tujuan_nama = null;
+            if ( !empty($r['coa_tujuan']) ) {
+                $m_coa = new \Model\Storage\Coa_model();
+                $d_coa = $m_coa->where('coa', $r['coa_tujuan'])->where('status', 1)->first();
+                if ( empty($d_coa) ) {
+                    $errors[] = 'COA Tujuan "'.$r['coa_tujuan'].'" tidak ditemukan.';
+                } else {
+                    $coa_tujuan_nama = $d_coa->nama_coa;
+                }
+            }
+
+            $coa_asal_nama = null;
+            if ( !empty($r['coa_asal']) ) {
+                $m_coa = new \Model\Storage\Coa_model();
+                $d_coa = $m_coa->where('coa', $r['coa_asal'])->where('status', 1)->first();
+                if ( empty($d_coa) ) {
+                    $errors[] = 'COA Asal "'.$r['coa_asal'].'" tidak ditemukan.';
+                } else {
+                    $coa_asal_nama = $d_coa->nama_coa;
+                }
+            }
+
+            if ( empty($r['coa_tujuan']) && empty($r['coa_asal']) ) {
+                $errors[] = 'Harus isi salah satu COA Tujuan (Debet) atau COA Asal (Kredit).';
+            }
+
+            /* KETERANGAN */
+            if ( empty($r['keterangan']) ) {
+                $errors[] = 'Keterangan wajib diisi.';
+            }
+
+            /* NILAI */
+            $nilai = is_numeric($r['nilai']) ? floatval($r['nilai']) : null;
+            if ( empty($nilai) || $nilai <= 0 ) {
+                $errors[] = 'Nilai wajib diisi dan harus lebih besar dari 0.';
+            }
+
+            $data[] = array(
+                'row_number' => $r['row_number'],
+                'unit' => $r['unit'],
+                'unit_nama' => $unit_nama,
+                'coa_tujuan' => $r['coa_tujuan'],
+                'coa_tujuan_nama' => $coa_tujuan_nama,
+                'coa_asal' => $r['coa_asal'],
+                'coa_asal_nama' => $coa_asal_nama,
+                'keterangan' => $r['keterangan'],
+                'no_invoice' => $r['no_invoice'],
+                'nilai' => $nilai,
+                'errors' => $errors,
+            );
+        }
+
+        return $data;
+    }
+    /**************************************************************************************
+     * END - IMPORT EXCEL
+     **************************************************************************************/
+
     public function tes()
     {
         // $tanggal = '2025-11-10';
