@@ -279,6 +279,7 @@ class KebutuhanAccurate extends Public_Controller {
                 data.id,
                 data.kode_bakul,
                 data.nik_bakul,
+                data.npwp_bakul,
                 data.nama_bakul,
                 data.alamat_bakul,
                 data.no_faktur,
@@ -311,6 +312,7 @@ class KebutuhanAccurate extends Public_Controller {
                     drs.id,
                     drs.no_pelanggan as kode_bakul,
                     cast(plg.nik as varchar(100)) as nik_bakul,
+                    cast(plg.npwp as varchar(100)) as npwp_bakul,
                     UPPER(plg.nama) as nama_bakul,
                     UPPER(plg.alamat_jalan+' RT.'+cast(plg.alamat_rt as varchar(3))+'/RW.'+cast(plg.alamat_rw as varchar(3))+', KEL.'+plg.alamat_kelurahan+', '+l.nama+', '+REPLACE(REPLACE(l_head.nama, 'Kab ', ''), 'Kota ', '')) as alamat_bakul,
                     '' as no_faktur,
@@ -462,6 +464,7 @@ class KebutuhanAccurate extends Public_Controller {
                 data.id,
                 data.kode_bakul,
                 data.nik_bakul,
+                data.npwp_bakul,
                 data.nama_bakul,
                 data.alamat_bakul,
                 data.no_faktur,
@@ -3177,7 +3180,7 @@ class KebutuhanAccurate extends Public_Controller {
             $filename = "PENJUALAN_LB_";
             $filename = $filename.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xls';
 
-            $arr_header = array('DO', 'Unit', 'Unit - Nama Plasma - Periode', 'Periode', 'No. Invoice', 'Tgl Invoice', 'ID Pelanggan', 'Kode Pelanggan (NIK)', 'Nama Pelanggan', 'Alamat Pelanggan', 'No. Nota Timbang', 'Kode Barang', 'Nama Barang', 'Kuantitas Barang (Kg)', 'Jumlah Ekor', 'Harga Satuan Barang', 'Total Invoice', 'Keterangan di Bagian kolom Deskripsi', 'Noreg');
+            $arr_header = array('DO', 'Unit', 'Unit - Nama Plasma - Periode', 'Periode', 'No. Invoice', 'Tgl Invoice', 'ID Pelanggan', 'Kode Pelanggan (NIK)', 'NPWP Pelanggan', 'Nama Pelanggan', 'Alamat Pelanggan', 'No. Nota Timbang', 'Kode Barang', 'Nama Barang', 'Kuantitas Barang (Kg)', 'Jumlah Ekor', 'Harga Satuan Barang', 'Total Invoice', 'Keterangan di Bagian kolom Deskripsi', 'Noreg');
             $arr_column = null;
             if ( !empty($data) ) {
                 $idx = 0;
@@ -3191,6 +3194,7 @@ class KebutuhanAccurate extends Public_Controller {
                         'Tgl Invoice' => array('value' => $value['tanggal_panen'], 'data_type' => 'date'),
                         'ID Pelanggan' => array('value' => $value['kode_bakul'], 'data_type' => 'string'),
                         'Kode Pelanggan (NIK)' => array('value' => $value['nik_bakul'], 'data_type' => 'nik'),
+                        'NPWP Pelanggan' => array('value' => $value['npwp_bakul'], 'data_type' => 'nik'),
                         'Nama Pelanggan' => array('value' => $value['nama_bakul'], 'data_type' => 'string'),
                         'Alamat Pelanggan' => array('value' => $value['alamat_bakul'], 'data_type' => 'string'),
                         'No. Nota Timbang' => array('value' => $value['no_nota_timbang'], 'data_type' => 'string'),

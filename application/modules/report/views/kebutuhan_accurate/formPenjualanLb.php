@@ -77,7 +77,7 @@
             <table class="table table-bordered tbl_laporan" style="margin-bottom: 0px; max-width: 200%; width: 200%;">
                 <thead>
                     <tr>
-                        <td colspan="10"><b>TOTAL</b></td>
+                        <td colspan="11"><b>TOTAL</b></td>
                         <td class="total text-right" data-target="kuantitas" data-jenis="decimal"><b>0</b></td>
                         <td></td>
                         <td class="total text-right" data-target="jml_ekor" data-jenis="integer"><b>0</b></td>
@@ -87,6 +87,7 @@
                     <tr>
                         <th>Kode Bakul</th>
                         <th>NIK Bakul</th>
+                        <th>NPWP Bakul</th>
                         <th>Nama Bakul</th>
                         <th>Alamat Bakul</th>
                         <th>No. Faktur</th>
@@ -111,7 +112,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="22">Data tidak ditemukan.</td>
+                        <td colspan="23">Data tidak ditemukan.</td>
                     </tr>
                 </tbody>
             </table>

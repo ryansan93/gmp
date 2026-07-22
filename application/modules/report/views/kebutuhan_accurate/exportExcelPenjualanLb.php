@@ -21,6 +21,7 @@
                 <tr>
                     <th>Kode Bakul</th>
                     <th>NIK Bakul</th>
+                    <th>NPWP Bakul</th>
                     <th>Nama Bakul</th>
                     <th>Alamat Bakul</th>
                     <th>No. Faktur</th>
@@ -48,6 +49,7 @@
                         <tr>
                             <td class="str"><?php echo $value['kode_bakul']; ?></td>
                             <td class="str"><?php echo $value['nik_bakul']; ?></td>
+                            <td class="str"><?php echo $value['npwp_bakul']; ?></td>
                             <td class="str"><?php echo $value['nama_bakul']; ?></td>
                             <td class="str"><?php echo $value['alamat_bakul']; ?></td>
                             <td class="str"><?php echo $value['no_faktur']; ?></td>
@@ -71,7 +73,7 @@
                     <?php } ?>
                 <?php } else { ?>
                     <tr>
-                        <td colspan="22">Data tidak ditemukan.</td>
+                        <td colspan="23">Data tidak ditemukan.</td>
                     </tr>
                 <?php } ?>
             </tbody>

@@ -3,6 +3,7 @@
         <tr class="data">
             <td><?php echo $value['kode_bakul']; ?></td>
             <td><?php echo $value['nik_bakul']; ?></td>
+            <td><?php echo $value['npwp_bakul']; ?></td>
             <td><?php echo $value['nama_bakul']; ?></td>
             <td><?php echo $value['alamat_bakul']; ?></td>
             <td><?php echo $value['no_faktur']; ?></td>
@@ -27,6 +28,6 @@
     <?php } ?>
 <?php } else { ?>
     <tr>
-        <td colspan="22">Data tidak ditemukan.</td>
+        <td colspan="23">Data tidak ditemukan.</td>
     </tr>
 <?php } ?>
