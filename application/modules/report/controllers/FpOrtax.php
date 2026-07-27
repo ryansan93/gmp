@@ -383,18 +383,80 @@ class FpOrtax extends Public_Controller {
         $data = $this->getDataFpOrtax( $params );
         $invoices = $this->groupByInvoice( $data );
 
-        foreach ($invoices as &$inv) {
-            $inv['nama_pembeli_final'] = $this->stripPrefixBadanUsaha( $inv['header']['nama_bakul'] );
-            $inv['alamat_final'] = $this->buildAlamatPembeli( $inv['header'] );
+        // Baris dikirim sebagai array nilai per kolom (bukan HTML) supaya browser cuma perlu
+        // merender halaman yang sedang aktif (pagination di JS), bukan seluruh ribuan baris
+        // sekaligus. Total dihitung di sini juga, jadi tidak tergantung baris mana yang lagi
+        // ada di DOM.
+        $faktur = array();
+        $detail = array();
+        $total_jumlah = 0;
+        $total_dpp = 0;
+        $total_dppnl = 0;
+        $total_ppn = 0;
+
+        foreach ($invoices as $inv) {
+            $header = $inv['header'];
+            $identitas = $inv['identitas'];
+
+            $faktur[] = array(
+                $inv['baris'],
+                tglIndonesia($header['tanggal_panen'], '-', ' '),
+                'Normal',
+                '08',
+                '10',
+                '(Ternak dan Unggas Hidup, Karkas, Nonkarkas, Jeroan)',
+                $inv['no_nota'],
+                '10',
+                self::ID_TKU_PENJUAL,
+                $identitas['npwp_nik'],
+                $identitas['jenis_id'],
+                'IDN',
+                $identitas['nomor_dokumen'],
+                $this->stripPrefixBadanUsaha( $header['nama_bakul'] ),
+                $this->buildAlamatPembeli( $header ),
+                '',
+                $identitas['id_tku'],
+            );
+
+            foreach ($inv['details'] as $det) {
+                $harga = (float)$det['harga_per_satuan_kuantitas'];
+                $kuantitas = (float)$det['kuantitas'];
+                $dpp = $harga * $kuantitas;
+                $dpp_nilai_lain = $dpp * 11 / 12;
+                $ppn = round($dpp_nilai_lain * 0.12);
+
+                $total_jumlah += $kuantitas;
+                $total_dpp += $dpp;
+                $total_dppnl += $dpp_nilai_lain;
+                $total_ppn += $ppn;
+
+                $detail[] = array(
+                    $inv['baris'],
+                    'A',
+                    '000000',
+                    'AYAM '.$det['deskripsi_barang'],
+                    'UM.0033',
+                    $harga,
+                    $kuantitas,
+                    0,
+                    $dpp,
+                    $dpp_nilai_lain,
+                    12,
+                    $ppn,
+                    0,
+                    0,
+                );
+            }
         }
-        unset($inv);
 
-        $content['invoices'] = $invoices;
-        $content['npwp_penjual'] = self::NPWP_PENJUAL;
-        $content['id_tku_penjual'] = self::ID_TKU_PENJUAL;
-
-        $this->result['faktur'] = $this->load->view($this->pathView.'list_faktur', $content, TRUE);
-        $this->result['detail'] = $this->load->view($this->pathView.'list_detail', $content, TRUE);
+        $this->result['faktur'] = $faktur;
+        $this->result['detail'] = $detail;
+        $this->result['totals'] = array(
+            'jumlah' => $total_jumlah,
+            'dpp' => $total_dpp,
+            'dppnl' => $total_dppnl,
+            'ppn' => $total_ppn,
+        );
 
         display_json( $this->result );
     }

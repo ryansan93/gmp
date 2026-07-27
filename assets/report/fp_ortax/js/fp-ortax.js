@@ -1,4 +1,11 @@
 var fpOrtax = {
+	pageSize: 100,
+
+	state: {
+		faktur: { rows: [], page: 1 },
+		detail: { rows: [], page: 1 },
+	},
+
 	startUp: function() {
 		fpOrtax.settingUp();
 	}, // end - startUp
@@ -41,22 +48,11 @@ var fpOrtax = {
 
 		form.find('.tutup_siklus').select2();
 
-		form.find('a[data-toggle=tab]').on('shown.bs.tab', function (e) {
-			if ( $(e.target).attr('data-tab') == 'tabDetail' ) {
-				fpOrtax.renderDetailTab( form );
-			}
-		});
+		form.on('click', '.pagination-faktur .btn-prev', function() { fpOrtax.gotoPage('faktur', fpOrtax.state.faktur.page - 1); });
+		form.on('click', '.pagination-faktur .btn-next', function() { fpOrtax.gotoPage('faktur', fpOrtax.state.faktur.page + 1); });
+		form.on('click', '.pagination-detail .btn-prev', function() { fpOrtax.gotoPage('detail', fpOrtax.state.detail.page - 1); });
+		form.on('click', '.pagination-detail .btn-next', function() { fpOrtax.gotoPage('detail', fpOrtax.state.detail.page + 1); });
 	}, // end - settingUp
-
-	renderDetailTab: function ( form ) {
-		if ( form.data('detailRendered') || !form.data('detailHtml') ) {
-			return;
-		}
-
-		form.find('table.tbl_detail tbody').html( form.data('detailHtml') );
-		form.data('detailRendered', true);
-		fpOrtax.hitTotal( form );
-	}, // end - renderDetailTab
 
 	getParams: function() {
 		var form = $('form.fp-ortax');
@@ -89,13 +85,6 @@ var fpOrtax = {
 		} else {
 			var params = fpOrtax.getParams();
 
-			// Tabel DetailFaktur bisa berisi puluhan ribu baris; kalau langsung dimasukkan ke DOM
-			// bareng tabel Faktur, pindah tab jadi berat terus-menerus. Jadi cuma disimpan dulu,
-			// baru benar-benar dirender pas tab DetailFaktur pertama kali dibuka.
-			form.find('table.tbl_detail tbody').empty();
-			form.data('detailHtml', null);
-			form.data('detailRendered', false);
-
 			$.ajax({
 	            url: 'report/FpOrtax/getLists',
 	            data: {
@@ -103,45 +92,109 @@ var fpOrtax = {
 	            },
 	            type: 'GET',
 	            dataType: 'JSON',
-	            beforeSend: function() {
-	            	App.showLoaderInContent( form.find('table.tbl_faktur tbody') );
-	            },
+	            beforeSend: function() { showLoading(); },
 	            success: function(data) {
-	                App.hideLoaderInContent( form.find('table.tbl_faktur tbody'), data.faktur );
+	                hideLoading();
 
-	                form.data('detailHtml', data.detail);
+	                fpOrtax.state.faktur.rows = data.faktur;
+	                fpOrtax.state.faktur.page = 1;
+	                fpOrtax.state.detail.rows = data.detail;
+	                fpOrtax.state.detail.page = 1;
 
-	                if ( form.find('a[data-tab=tabDetail]').hasClass('active') ) {
-	                	fpOrtax.renderDetailTab( form );
-	                }
+	                fpOrtax.renderPage('faktur');
+	                fpOrtax.renderPage('detail');
+	                fpOrtax.setTotals(data.totals);
 	            }
 	        });
 		}
 	}, // end - getLists
 
-	hitTotal: function ( form ) {
-		$.map( form.find('table.tbl_laporan thead td.total'), function (td_total) {
-			var target = $(td_total).attr('data-target');
-			var jenis = $(td_total).attr('data-jenis');
+	gotoPage: function(tableKey, page) {
+		var state = fpOrtax.state[tableKey];
+		var totalPages = Math.max(1, Math.ceil(state.rows.length / fpOrtax.pageSize));
 
-			var total = 0;
-			$.map( form.find('table.tbl_laporan tbody td.'+target), function (td) {
-				var nilai = 0;
-				if ( jenis == 'decimal' ) {
-					nilai = parseFloat($(td).attr('data-val'));
-				} else {
-					nilai = parseInt($(td).attr('data-val'));
-				}
-				total += nilai;
-			});
+		page = Math.max(1, Math.min(page, totalPages));
+		state.page = page;
 
-			if ( jenis == 'decimal' ) {
-				$(td_total).find('b').html( numeral.formatDec( total ) );
-			} else {
-				$(td_total).find('b').html( numeral.formatInt( total ) );
-			}
-		});
-	}, // end - hitTotal
+		fpOrtax.renderPage(tableKey);
+	}, // end - gotoPage
+
+	renderPage: function(tableKey) {
+		var state = fpOrtax.state[tableKey];
+		var start = (state.page - 1) * fpOrtax.pageSize;
+		var pageRows = state.rows.slice(start, start + fpOrtax.pageSize);
+		var builder = (tableKey == 'faktur') ? fpOrtax.buildFakturRow : fpOrtax.buildDetailRow;
+		var colspan = (tableKey == 'faktur') ? 17 : 14;
+
+		var html = '';
+		if ( pageRows.length == 0 ) {
+			html = '<tr><td colspan="'+colspan+'">Data tidak ditemukan.</td></tr>';
+		} else {
+			$.map( pageRows, function(row) { html += builder(row); } );
+		}
+
+		$('table.tbl_'+tableKey+' tbody').html( html );
+		fpOrtax.renderPagination( tableKey );
+	}, // end - renderPage
+
+	renderPagination: function(tableKey) {
+		var state = fpOrtax.state[tableKey];
+		var totalRows = state.rows.length;
+		var totalPages = Math.max(1, Math.ceil(totalRows / fpOrtax.pageSize));
+		var bar = $('.pagination-'+tableKey);
+
+		bar.find('.page-info').text('Halaman ' + state.page + ' dari ' + totalPages + ' (total ' + numeral.formatInt(totalRows) + ' baris)');
+		bar.find('.btn-prev').prop('disabled', state.page <= 1);
+		bar.find('.btn-next').prop('disabled', state.page >= totalPages);
+	}, // end - renderPagination
+
+	setTotals: function(totals) {
+		$('table.tbl_detail thead td.total[data-target=jumlah] b').html( numeral.formatDec(totals.jumlah) );
+		$('table.tbl_detail thead td.total[data-target=dpp] b').html( numeral.formatDec(totals.dpp) );
+		$('table.tbl_detail thead td.total[data-target=dppnl] b').html( numeral.formatDec(totals.dppnl) );
+		$('table.tbl_detail thead td.total[data-target=ppn] b').html( numeral.formatDec(totals.ppn) );
+	}, // end - setTotals
+
+	buildFakturRow: function(row) {
+		return '<tr class="data">'
+			+ '<td class="text-center">'+row[0]+'</td>'
+			+ '<td class="text-center">'+row[1]+'</td>'
+			+ '<td>'+row[2]+'</td>'
+			+ '<td class="text-center">'+row[3]+'</td>'
+			+ '<td class="text-center">'+row[4]+'</td>'
+			+ '<td>'+row[5]+'</td>'
+			+ '<td>'+row[6]+'</td>'
+			+ '<td class="text-center">'+row[7]+'</td>'
+			+ '<td>'+row[8]+'</td>'
+			+ '<td>'+row[9]+'</td>'
+			+ '<td class="text-center">'+row[10]+'</td>'
+			+ '<td class="text-center">'+row[11]+'</td>'
+			+ '<td>'+row[12]+'</td>'
+			+ '<td>'+row[13]+'</td>'
+			+ '<td>'+row[14]+'</td>'
+			+ '<td>'+row[15]+'</td>'
+			+ '<td>'+row[16]+'</td>'
+			+ '</tr>';
+	}, // end - buildFakturRow
+
+	buildDetailRow: function(row) {
+		return '<tr class="data">'
+			+ '<td class="text-center">'+row[0]+'</td>'
+			+ '<td class="text-center">'+row[1]+'</td>'
+			+ '<td class="text-center">'+row[2]+'</td>'
+			+ '<td>'+row[3]+'</td>'
+			+ '<td class="text-center">'+row[4]+'</td>'
+			+ '<td class="text-right number_format">'+numeral.formatInt(row[5])+'</td>'
+			+ '<td class="text-right number_format">'+numeral.formatDec(row[6])+'</td>'
+			+ '<td class="text-right number_format">'+numeral.formatInt(row[7])+'</td>'
+			+ '<td class="text-right number_format">'+numeral.formatInt(row[8])+'</td>'
+			+ '<td class="text-right number_format">'+numeral.formatInt(row[9])+'</td>'
+			+ '<td class="text-center">'+row[10]+'</td>'
+			+ '<td class="text-right number_format">'+numeral.formatInt(row[11])+'</td>'
+			+ '<td class="text-center">'+row[12]+'</td>'
+			+ '<td class="text-right number_format">'+numeral.formatInt(row[13])+'</td>'
+			+ '</tr>';
+	}, // end - buildDetailRow
 
     excryptParams: function(elm) {
 		var form = $('form.fp-ortax');

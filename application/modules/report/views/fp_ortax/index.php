@@ -116,6 +116,11 @@
 									</table>
 								</small>
 							</div>
+							<div class="col-xs-12 no-padding pagination-faktur" style="padding-top: 8px;">
+								<button type="button" class="btn btn-sm btn-default btn-prev"><i class="fa fa-chevron-left"></i> Sebelumnya</button>
+								<button type="button" class="btn btn-sm btn-default btn-next">Selanjutnya <i class="fa fa-chevron-right"></i></button>
+								<span class="page-info" style="margin-left: 10px;">Halaman 1 dari 1 (total 0 baris)</span>
+							</div>
 						</div>
 						<div id="tabDetail" class="tab-pane" style="padding-top: 10px;">
 							<div class="col-xs-12 no-padding" style="overflow-x: auto;">
@@ -156,6 +161,11 @@
 										</tbody>
 									</table>
 								</small>
+							</div>
+							<div class="col-xs-12 no-padding pagination-detail" style="padding-top: 8px;">
+								<button type="button" class="btn btn-sm btn-default btn-prev"><i class="fa fa-chevron-left"></i> Sebelumnya</button>
+								<button type="button" class="btn btn-sm btn-default btn-next">Selanjutnya <i class="fa fa-chevron-right"></i></button>
+								<span class="page-info" style="margin-left: 10px;">Halaman 1 dari 1 (total 0 baris)</span>
 							</div>
 						</div>
 					</div>
