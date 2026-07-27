@@ -74,31 +74,77 @@
 				</div>
 				<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 				<div class="col-xs-12 no-padding">
+					<h5><b>Sheet: Faktur</b></h5>
 					<div class="col-xs-12 no-padding" style="overflow-x: auto;">
 						<small>
-							<table class="table table-bordered tbl_laporan" style="margin-bottom: 0px;">
+							<table class="table table-bordered tbl_laporan tbl_faktur" style="margin-bottom: 0px;">
 								<thead>
 									<tr>
-										<td colspan="6"><b>TOTAL</b></td>
-										<td class="total text-right" data-target="dpp" data-jenis="decimal"><b>0</b></td>
-										<td class="total text-right" data-target="ppn" data-jenis="decimal"><b>0</b></td>
-										<td></td>
-									</tr>
-									<tr>
 										<th>Baris</th>
-										<th>No. Faktur (Referensi)</th>
 										<th>Tanggal Faktur</th>
-										<th>Jenis ID / NPWP-NIK Pembeli</th>
+										<th>Jenis Faktur</th>
+										<th>Kode Transaksi</th>
+										<th>Keterangan Tambahan</th>
+										<th>Dokumen Pendukung</th>
+										<th>Referensi</th>
+										<th>Cap Fasilitas</th>
+										<th>ID TKU Penjual</th>
+										<th>NPWP/NIK Pembeli</th>
+										<th>Jenis ID Pembeli</th>
+										<th>Negara Pembeli</th>
+										<th>Nomor Dokumen Pembeli</th>
 										<th>Nama Pembeli</th>
-										<th>Jumlah Item</th>
-										<th>Total DPP</th>
-										<th>Total PPN</th>
 										<th>Alamat Pembeli</th>
+										<th>Email Pembeli</th>
+										<th>ID TKU Pembeli</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr>
-										<td colspan="9">Data tidak ditemukan.</td>
+										<td colspan="17">Data tidak ditemukan.</td>
+									</tr>
+								</tbody>
+							</table>
+						</small>
+					</div>
+				</div>
+				<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+				<div class="col-xs-12 no-padding">
+					<h5><b>Sheet: DetailFaktur</b></h5>
+					<div class="col-xs-12 no-padding" style="overflow-x: auto;">
+						<small>
+							<table class="table table-bordered tbl_laporan tbl_detail" style="margin-bottom: 0px;">
+								<thead>
+									<tr>
+										<td colspan="6"><b>TOTAL</b></td>
+										<td class="total text-right" data-target="jumlah" data-jenis="decimal"><b>0</b></td>
+										<td></td>
+										<td class="total text-right" data-target="dpp" data-jenis="decimal"><b>0</b></td>
+										<td class="total text-right" data-target="dppnl" data-jenis="decimal"><b>0</b></td>
+										<td></td>
+										<td class="total text-right" data-target="ppn" data-jenis="decimal"><b>0</b></td>
+										<td colspan="2"></td>
+									</tr>
+									<tr>
+										<th>Baris</th>
+										<th>Barang/Jasa</th>
+										<th>Kode Barang Jasa</th>
+										<th>Nama Barang/Jasa</th>
+										<th>Nama Satuan Ukur</th>
+										<th>Harga Satuan</th>
+										<th>Jumlah Barang Jasa</th>
+										<th>Total Diskon</th>
+										<th>DPP</th>
+										<th>DPP Nilai Lain</th>
+										<th>Tarif PPN</th>
+										<th>PPN</th>
+										<th>Tarif PPnBM</th>
+										<th>PPnBM</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td colspan="14">Data tidak ditemukan.</td>
 									</tr>
 								</tbody>
 							</table>

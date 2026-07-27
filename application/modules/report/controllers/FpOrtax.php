@@ -383,10 +383,20 @@ class FpOrtax extends Public_Controller {
         $data = $this->getDataFpOrtax( $params );
         $invoices = $this->groupByInvoice( $data );
 
-        $content['invoices'] = $invoices;
-        $html = $this->load->view($this->pathView.'list', $content, TRUE);
+        foreach ($invoices as &$inv) {
+            $inv['nama_pembeli_final'] = $this->stripPrefixBadanUsaha( $inv['header']['nama_bakul'] );
+            $inv['alamat_final'] = $this->buildAlamatPembeli( $inv['header'] );
+        }
+        unset($inv);
 
-        echo $html;
+        $content['invoices'] = $invoices;
+        $content['npwp_penjual'] = self::NPWP_PENJUAL;
+        $content['id_tku_penjual'] = self::ID_TKU_PENJUAL;
+
+        $this->result['faktur'] = $this->load->view($this->pathView.'list_faktur', $content, TRUE);
+        $this->result['detail'] = $this->load->view($this->pathView.'list_detail', $content, TRUE);
+
+        display_json( $this->result );
     }
 
     public function excryptParams()

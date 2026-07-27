@@ -81,13 +81,17 @@ var fpOrtax = {
 	                'params': params
 	            },
 	            type: 'GET',
-	            dataType: 'HTML',
-	            beforeSend: function() { App.showLoaderInContent( form.find('table.tbl_laporan tbody') ); },
-	            success: function(html) {
-	                App.hideLoaderInContent( form.find('table.tbl_laporan tbody'), html );
+	            dataType: 'JSON',
+	            beforeSend: function() {
+	            	App.showLoaderInContent( form.find('table.tbl_faktur tbody') );
+	            	App.showLoaderInContent( form.find('table.tbl_detail tbody') );
+	            },
+	            success: function(data) {
+	                App.hideLoaderInContent( form.find('table.tbl_faktur tbody'), data.faktur );
+	                App.hideLoaderInContent( form.find('table.tbl_detail tbody'), data.detail );
 
 					myIntervalFpOrtax = setInterval(function () {
-						if ( form.find('table.tbl_laporan tbody tr.data').length > 0 ) {
+						if ( form.find('table.tbl_detail tbody tr.data').length > 0 ) {
 							fpOrtax.hitTotal( form );
 						}
 					}, 250);
