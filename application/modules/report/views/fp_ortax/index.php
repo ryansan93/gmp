@@ -83,7 +83,7 @@
 						</li>
 					</ul>
 					<div class="tab-content">
-						<div id="tabFaktur" class="tab-pane fade show active" style="padding-top: 10px;">
+						<div id="tabFaktur" class="tab-pane show active" style="padding-top: 10px;">
 							<div class="col-xs-12 no-padding" style="overflow-x: auto;">
 								<small>
 									<table class="table table-bordered tbl_laporan tbl_faktur" style="margin-bottom: 0px;">
@@ -117,7 +117,7 @@
 								</small>
 							</div>
 						</div>
-						<div id="tabDetail" class="tab-pane fade" style="padding-top: 10px;">
+						<div id="tabDetail" class="tab-pane" style="padding-top: 10px;">
 							<div class="col-xs-12 no-padding" style="overflow-x: auto;">
 								<small>
 									<table class="table table-bordered tbl_laporan tbl_detail" style="margin-bottom: 0px;">

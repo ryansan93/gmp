@@ -1,5 +1,3 @@
-var myIntervalFpOrtax;
-
 var fpOrtax = {
 	startUp: function() {
 		fpOrtax.settingUp();
@@ -42,7 +40,23 @@ var fpOrtax = {
 		});
 
 		form.find('.tutup_siklus').select2();
+
+		form.find('a[data-toggle=tab]').on('shown.bs.tab', function (e) {
+			if ( $(e.target).attr('data-tab') == 'tabDetail' ) {
+				fpOrtax.renderDetailTab( form );
+			}
+		});
 	}, // end - settingUp
+
+	renderDetailTab: function ( form ) {
+		if ( form.data('detailRendered') || !form.data('detailHtml') ) {
+			return;
+		}
+
+		form.find('table.tbl_detail tbody').html( form.data('detailHtml') );
+		form.data('detailRendered', true);
+		fpOrtax.hitTotal( form );
+	}, // end - renderDetailTab
 
 	getParams: function() {
 		var form = $('form.fp-ortax');
@@ -75,6 +89,13 @@ var fpOrtax = {
 		} else {
 			var params = fpOrtax.getParams();
 
+			// Tabel DetailFaktur bisa berisi puluhan ribu baris; kalau langsung dimasukkan ke DOM
+			// bareng tabel Faktur, pindah tab jadi berat terus-menerus. Jadi cuma disimpan dulu,
+			// baru benar-benar dirender pas tab DetailFaktur pertama kali dibuka.
+			form.find('table.tbl_detail tbody').empty();
+			form.data('detailHtml', null);
+			form.data('detailRendered', false);
+
 			$.ajax({
 	            url: 'report/FpOrtax/getLists',
 	            data: {
@@ -84,25 +105,21 @@ var fpOrtax = {
 	            dataType: 'JSON',
 	            beforeSend: function() {
 	            	App.showLoaderInContent( form.find('table.tbl_faktur tbody') );
-	            	App.showLoaderInContent( form.find('table.tbl_detail tbody') );
 	            },
 	            success: function(data) {
 	                App.hideLoaderInContent( form.find('table.tbl_faktur tbody'), data.faktur );
-	                App.hideLoaderInContent( form.find('table.tbl_detail tbody'), data.detail );
 
-					myIntervalFpOrtax = setInterval(function () {
-						if ( form.find('table.tbl_detail tbody tr.data').length > 0 ) {
-							fpOrtax.hitTotal( form );
-						}
-					}, 250);
+	                form.data('detailHtml', data.detail);
+
+	                if ( form.find('a[data-tab=tabDetail]').hasClass('active') ) {
+	                	fpOrtax.renderDetailTab( form );
+	                }
 	            }
 	        });
 		}
 	}, // end - getLists
 
 	hitTotal: function ( form ) {
-		clearInterval(myIntervalFpOrtax);
-
 		$.map( form.find('table.tbl_laporan thead td.total'), function (td_total) {
 			var target = $(td_total).attr('data-target');
 			var jenis = $(td_total).attr('data-jenis');
