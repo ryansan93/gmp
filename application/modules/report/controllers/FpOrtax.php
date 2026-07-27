@@ -429,12 +429,20 @@ class FpOrtax extends Public_Controller {
 
         $sheetFaktur->setCellValue('A1', 'NPWP Penjual');
         $sheetFaktur->setCellValueExplicit('C1', self::NPWP_PENJUAL, DataType::TYPE_STRING);
+        $sheetFaktur->getStyle('A1')->applyFromArray(array('font' => array('bold' => true)));
 
         $headerFaktur = array('Baris', 'Tanggal Faktur', 'Jenis Faktur', 'Kode Transaksi', 'Keterangan Tambahan', 'Dokumen Pendukung', 'Referensi', 'Cap Fasilitas', 'ID TKU Penjual', 'NPWP/NIK Pembeli', 'Jenis ID Pembeli', 'Negara Pembeli', 'Nomor Dokumen Pembeli', 'Nama Pembeli', 'Alamat Pembeli', 'Email Pembeli', 'ID TKU Pembeli');
+        // Kolom yang di file asli diformat sebagai teks ('@') walau isinya kode angka,
+        // supaya leading zero (mis. kode '08', '10') tidak hilang saat dibuka di Excel.
+        $textFormatColsFaktur = array('D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M');
+
         for ($i=0; $i < count($headerFaktur); $i++) {
             $huruf = toAlpha($i+1);
             $sheetFaktur->setCellValue($huruf.'3', $headerFaktur[$i]);
-            $sheetFaktur->getStyle($huruf.'3')->applyFromArray(array('font' => array('bold' => true)));
+            $sheetFaktur->getStyle($huruf.'3')->applyFromArray(array(
+                'font' => array('bold' => true),
+                'borders' => array('top' => array('borderStyle' => Border::BORDER_THIN)),
+            ));
         }
 
         $baris = 4;
@@ -446,7 +454,6 @@ class FpOrtax extends Public_Controller {
 
             $dt = Date::PHPToExcel(DateTime::createFromFormat('!Y-m-d', substr($header['tanggal_panen'], 0, 10)));
             $sheetFaktur->setCellValue('B'.$baris, $dt);
-            $sheetFaktur->getStyle('B'.$baris)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
 
             $sheetFaktur->setCellValue('C'.$baris, 'Normal');
             $sheetFaktur->setCellValueExplicit('D'.$baris, '08', DataType::TYPE_STRING);
@@ -461,21 +468,26 @@ class FpOrtax extends Public_Controller {
             $sheetFaktur->setCellValueExplicit('M'.$baris, $identitas['nomor_dokumen'], DataType::TYPE_STRING);
             $sheetFaktur->setCellValue('N'.$baris, $this->stripPrefixBadanUsaha($header['nama_bakul']));
             $sheetFaktur->setCellValue('O'.$baris, $this->buildAlamatPembeli($header));
-            $sheetFaktur->setCellValue('P'.$baris, '');
+            // Email Pembeli sengaja dibiarkan kosong/null (bukan string kosong) supaya persis sama dengan sample.
             $sheetFaktur->setCellValueExplicit('Q'.$baris, $identitas['id_tku'], DataType::TYPE_STRING);
 
             $baris++;
         }
 
-        $styleArray = array(
-            'borders' => array(
-                'bottom' => array('borderStyle' => Border::BORDER_THIN, 'color' => array('argb' => '000000')),
-                'top' => array('borderStyle' => Border::BORDER_THIN, 'color' => array('argb' => '000000')),
-                'right' => array('borderStyle' => Border::BORDER_THIN, 'color' => array('argb' => '000000')),
-                'left' => array('borderStyle' => Border::BORDER_THIN, 'color' => array('argb' => '000000')),
-            ),
-        );
-        $sheetFaktur->getStyle('A3:'.toAlpha(count($headerFaktur)).($baris-1))->applyFromArray($styleArray, false);
+        $lastRowFaktur = $baris - 1;
+        $sheetFaktur->setAutoFilter('A3:Q'.$lastRowFaktur);
+
+        // Format per-kolom diterapkan sekaligus atas satu range (bukan per-cell dalam loop)
+        // karena getStyle() per-cell jauh lebih lambat pada ribuan baris.
+        $sheetFaktur->getStyle('B4:B'.$lastRowFaktur)->getNumberFormat()->setFormatCode('dd/mm/yyyy;@');
+        foreach ($textFormatColsFaktur as $col) {
+            $sheetFaktur->getStyle($col.'4:'.$col.$lastRowFaktur)->getNumberFormat()->setFormatCode('@');
+        }
+
+        $colWidthsFaktur = array('B'=>16.18,'C'=>11,'D'=>4,'E'=>10.82,'F'=>15.45,'G'=>12.54,'H'=>11.73,'I'=>24.27,'J'=>21.18,'K'=>15.27,'L'=>6,'M'=>24.45,'N'=>27.45,'O'=>12,'P'=>4.54,'Q'=>24.27);
+        foreach ($colWidthsFaktur as $col => $width) {
+            $sheetFaktur->getColumnDimension($col)->setWidth($width);
+        }
 
         /* ===== Sheet DetailFaktur ===== */
         $sheetDetail = $spreadsheet->createSheet();
@@ -516,9 +528,25 @@ class FpOrtax extends Public_Controller {
             }
         }
 
-        $sheetDetail->getStyle('A1:'.toAlpha(count($headerDetail)).($barisDetail-1))->applyFromArray($styleArray, false);
+        $lastRowDetail = $barisDetail - 1;
+        $sheetDetail->setAutoFilter('A1:N'.$lastRowDetail);
 
-        $spreadsheet->setActiveSheetIndex(0);
+        // Di file asli kolom numerik F-L diformat teks ('@') & M-N pakai '#,##0'.
+        // Diterapkan sekaligus per-range (bukan per-cell) karena jauh lebih cepat pada ribuan baris.
+        foreach (array('F','G','H','I','J','K','L') as $col) {
+            $sheetDetail->getStyle($col.'2:'.$col.$lastRowDetail)->getNumberFormat()->setFormatCode('@');
+        }
+        foreach (array('M','N') as $col) {
+            $sheetDetail->getStyle($col.'2:'.$col.$lastRowDetail)->getNumberFormat()->setFormatCode('#,##0');
+        }
+
+        $colWidthsDetail = array('C'=>16.82,'D'=>17.27,'E'=>17.45,'F'=>12.45,'G'=>16,'H'=>11.82,'I'=>19.54,'J'=>13.27,'L'=>11.82,'M'=>11.73);
+        foreach ($colWidthsDetail as $col => $width) {
+            $sheetDetail->getColumnDimension($col)->setWidth($width);
+        }
+
+        // File asli aktif dibuka di sheet DetailFaktur, bukan Faktur.
+        $spreadsheet->setActiveSheetIndex(1);
 
         $writer = new Xlsx($spreadsheet);
         $writer->save('export_excel/'.$file_name);
