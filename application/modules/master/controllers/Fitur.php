@@ -38,7 +38,9 @@ class Fitur extends Public_Controller
 		$akses = hakAkses($this->url);
 
 		$m_ftr = new \Model\Storage\Fitur_model();
-		$d_ftr = $m_ftr->where('status', 1)->with(['detail_fitur'])->get()->toArray();
+		$d_ftr = $m_ftr->where('status', 1)->whereNull('induk')->with(['detail_fitur', 'sub_fitur' => function($q) {
+			$q->where('status', 1)->with('detail_fitur');
+		}])->get()->toArray();
 
 		$content['akses'] = $akses;
 		$content['list'] = $d_ftr;
@@ -47,9 +49,20 @@ class Fitur extends Public_Controller
 		echo $html;
 	}
 
+	public function getParents($exclude_id_fitur = null)
+	{
+		$m_ftr = new \Model\Storage\Fitur_model();
+		$q = $m_ftr->where('status', 1)->whereNull('induk');
+		if ( !empty($exclude_id_fitur) ) {
+			$q = $q->where('id_fitur', '<>', $exclude_id_fitur);
+		}
+		return $q->orderBy('nama_fitur')->get()->toArray();
+	}
+
 	public function add_form()
 	{
 		$data['data'] = null;
+		$data['parents'] = $this->getParents();
 		$this->load->view('master/fitur/add_form', $data);
 	}
 
@@ -58,9 +71,13 @@ class Fitur extends Public_Controller
 		$id_fitur = $this->input->get('id_fitur');
 
 		$m_ftr = new \Model\Storage\Fitur_model();
-		$d_ftr = $m_ftr->where('id_fitur', trim($id_fitur))->with(['detail_fitur'])->first();
+		$d_ftr = $m_ftr->where('id_fitur', trim($id_fitur))->with(['detail_fitur', 'sub_fitur'])->first();
 
 		$data['data'] = $d_ftr;
+		// Kategori yang sudah punya sub-kategori sendiri tidak boleh dijadikan sub-kategori
+		// (dari kategori lain), supaya nesting-nya tetap dibatasi maksimal 2 tingkat (fitur + sub).
+		$data['can_be_sub'] = empty($d_ftr['sub_fitur']);
+		$data['parents'] = $data['can_be_sub'] ? $this->getParents(trim($id_fitur)) : array();
 		$this->load->view('master/fitur/edit_form', $data);
 	}
 
@@ -69,14 +86,20 @@ class Fitur extends Public_Controller
 		$params = $this->input->post('params');
 
 		try {
+			$induk_fitur = !empty($params['induk_fitur']) ? trim($params['induk_fitur']) : null;
+			$induk_valid = empty($induk_fitur) || $this->cek_induk_valid($induk_fitur);
+
 			$cek_parent = $this->cek_parent($params['nama_parent']);
-			if ( !$cek_parent ) {
+			if ( !$induk_valid ) {
+				$this->result['message'] = 'Induk kategori yang dipilih tidak valid.';
+			} else if ( !$cek_parent ) {
 				$m_ftr = new \Model\Storage\Fitur_model();
 
 				$id_fitur = $m_ftr->getNextId();
 
 				$m_ftr->id_fitur = $id_fitur;
 				$m_ftr->nama_fitur = $params['nama_parent'];
+				$m_ftr->induk = $induk_fitur;
 				$m_ftr->save();
 
 				foreach ($params['detail_fitur'] as $key => $val) {
@@ -108,21 +131,31 @@ class Fitur extends Public_Controller
 		$params = $this->input->post('params');
 
 		try {
-			$cek_parent = $this->cek_parent($params['nama_parent'], $params['id_parent']);
-			if ( isset($cek_parent) ) {
-				if ( $cek_parent['id_fitur'] == $params['id_parent'] ) {
-					$this->exec_edit($params);
+			$induk_fitur = !empty($params['induk_fitur']) ? trim($params['induk_fitur']) : null;
+
+			if ( !empty($induk_fitur) && $induk_fitur == $params['id_parent'] ) {
+				$this->result['message'] = 'Kategori tidak boleh jadi induk dari dirinya sendiri.';
+			} else if ( !empty($induk_fitur) && !$this->cek_induk_valid($induk_fitur) ) {
+				$this->result['message'] = 'Induk kategori yang dipilih tidak valid.';
+			} else if ( !empty($induk_fitur) && $this->cek_punya_sub($params['id_parent']) ) {
+				$this->result['message'] = 'Kategori ini sudah punya sub-kategori sendiri, tidak bisa dijadikan sub-kategori dari kategori lain.';
+			} else {
+				$cek_parent = $this->cek_parent($params['nama_parent'], $params['id_parent']);
+				if ( isset($cek_parent) ) {
+					if ( $cek_parent['id_fitur'] == $params['id_parent'] ) {
+						$this->exec_edit($params, $induk_fitur);
+
+					    $this->result['status'] = 1;
+						$this->result['message'] = 'Data berhasil di edit';
+					} else {
+						$this->result['message'] = 'Nama judul menu yang anda masukkan sudah ada.';
+					}
+				} else {
+					$this->exec_edit($params, $induk_fitur);
 
 				    $this->result['status'] = 1;
 					$this->result['message'] = 'Data berhasil di edit';
-				} else {
-					$this->result['message'] = 'Nama judul menu yang anda masukkan sudah ada.';	
 				}
-			} else {
-				$this->exec_edit($params);
-
-			    $this->result['status'] = 1;
-				$this->result['message'] = 'Data berhasil di edit';
 			}
 		} catch (\Illuminate\Database\QueryException $e) {
 			$this->result['message'] = "Gagal : " . $e->getMessage();
@@ -131,14 +164,28 @@ class Fitur extends Public_Controller
 		display_json($this->result);
 	}
 
-	public function exec_edit($params)
+	public function cek_induk_valid($id_fitur)
+	{
+		$m_ftr = new \Model\Storage\Fitur_model();
+		$d_ftr = $m_ftr->where('id_fitur', trim($id_fitur))->where('status', 1)->whereNull('induk')->first();
+		return !empty($d_ftr);
+	}
+
+	public function cek_punya_sub($id_fitur)
+	{
+		$m_ftr = new \Model\Storage\Fitur_model();
+		$d_ftr = $m_ftr->where('id_fitur', trim($id_fitur))->with(['sub_fitur'])->first();
+		return $d_ftr && !empty($d_ftr['sub_fitur']);
+	}
+
+	public function exec_edit($params, $induk_fitur = null)
 	{
 		$m_ftr = new \Model\Storage\Fitur_model();
 
 		$id_fitur = $params['id_parent'];
 
 		$m_ftr->where('id_fitur', $id_fitur)->update(
-			array('nama_fitur'=>$params['nama_parent'])
+			array('nama_fitur'=>$params['nama_parent'], 'induk'=>$induk_fitur)
 		);
 
 		// $m_dftr = new \Model\Storage\DetFitur_model();

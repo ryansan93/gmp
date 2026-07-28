@@ -52,11 +52,29 @@
                 <?php echo $v_fitur['header_fitur']; ?>
               </a>
               <ul class="collapse list-unstyled" id="<?php echo $v_fitur['id_header_fitur'] ?>">
-                <?php foreach ($v_fitur['detail'] as $key => $v_mdetail): ?>
-                  <li class="menu">
-                    <a href="<?php echo $v_mdetail['path_detfitur']; ?>" class="list-group-item list-group-item-action bg-light-black menu" data-txt="<?php echo $v_mdetail['nama_detfitur']; ?>"><?php echo $v_mdetail['nama_detfitur']; ?></a>
-                  </li>
-                <?php endforeach ?>
+                <?php if ( !empty($v_fitur['detail']) ): ?>
+                  <?php foreach ($v_fitur['detail'] as $key => $v_mdetail): ?>
+                    <li class="menu">
+                      <a href="<?php echo $v_mdetail['path_detfitur']; ?>" class="list-group-item list-group-item-action bg-light-black menu" data-txt="<?php echo $v_mdetail['nama_detfitur']; ?>"><?php echo $v_mdetail['nama_detfitur']; ?></a>
+                    </li>
+                  <?php endforeach ?>
+                <?php endif ?>
+                <?php if ( !empty($v_fitur['sub']) ): ?>
+                  <?php foreach ($v_fitur['sub'] as $id_sub => $v_sub): ?>
+                    <li class="menu-sub-parent">
+                      <a href="<?php echo '#'.$id_sub ?>" data-toggle="collapse" aria-expanded="false" data-val="0" class="dropdown-toggle list-group-item list-group-item-action bg-light-black menu-sub-toggle">
+                        <i class="fa fa-folder-o menu-sub-icon"></i> <?php echo $v_sub['header_fitur']; ?>
+                      </a>
+                      <ul class="collapse list-unstyled" id="<?php echo $id_sub ?>">
+                        <?php foreach ($v_sub['detail'] as $key => $v_mdetail): ?>
+                          <li class="menu menu-sub-item">
+                            <a href="<?php echo $v_mdetail['path_detfitur']; ?>" class="list-group-item list-group-item-action bg-light-black menu" data-txt="<?php echo $v_mdetail['nama_detfitur']; ?>"><?php echo $v_mdetail['nama_detfitur']; ?></a>
+                          </li>
+                        <?php endforeach ?>
+                      </ul>
+                    </li>
+                  <?php endforeach ?>
+                <?php endif ?>
               </ul>
             </li>
           <?php endforeach ?>
@@ -83,45 +101,44 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <?php 
             $notif = null;
-            $arr_fitur = $this->session->userdata()['Fitur']; 
-            foreach ($arr_fitur as $key => $v_fitur) {
-              foreach ($v_fitur['detail'] as $key => $v_mdetail) {
+            $scan_notif_detail = function($detail_list) use (&$notif) {
+              foreach ($detail_list as $v_mdetail) {
                 $akses = hakAkses('/'.$v_mdetail['path_detfitur']);
                 if ( $akses['a_ack'] == 1 ) {
                   $status = getStatus('submit');
-
-                  $isi = Modules::run( $v_mdetail['path_detfitur'].'/model', $status);
-
-                  if ( !empty($isi) ) {
-                    $data = Modules::run( $v_mdetail['path_detfitur'].'/model', $status);
-
-                    if ( !empty($data) ) {
-                      if ( is_array($data) ) {
-                        $data = (!empty($data) && count($data) > 0) ? $data : null;
-                      }
-
-                      $notif[$v_mdetail['path_detfitur']]['data'] = $data;
-                      $notif[$v_mdetail['path_detfitur']]['path'] = $v_mdetail['path_detfitur'];
-                      $notif[$v_mdetail['path_detfitur']]['nama_fitur'] = $v_mdetail['nama_detfitur'];
-                    }
-                  }
                 } else if ( $akses['a_approve'] == 1 ) {
                   $status = getStatus('ack');
+                } else {
+                  continue;
+                }
 
-                  $isi = Modules::run( $v_mdetail['path_detfitur'].'/model', $status);
+                $isi = Modules::run( $v_mdetail['path_detfitur'].'/model', $status);
 
-                  if ( !empty($isi) ) {
-                    $data = Modules::run( $v_mdetail['path_detfitur'].'/model', $status);
+                if ( !empty($isi) ) {
+                  $data = Modules::run( $v_mdetail['path_detfitur'].'/model', $status);
 
-                    if ( !empty($data) ) {
-                      if ( is_array($data) ) {
-                        $data = (!empty($data) && count($data) > 0) ? $data : null;
-                      }
-
-                      $notif[$v_mdetail['path_detfitur']]['data'] = $data;
-                      $notif[$v_mdetail['path_detfitur']]['path'] = $v_mdetail['path_detfitur'];
-                      $notif[$v_mdetail['path_detfitur']]['nama_fitur'] = $v_mdetail['nama_detfitur'];
+                  if ( !empty($data) ) {
+                    if ( is_array($data) ) {
+                      $data = (!empty($data) && count($data) > 0) ? $data : null;
                     }
+
+                    $notif[$v_mdetail['path_detfitur']]['data'] = $data;
+                    $notif[$v_mdetail['path_detfitur']]['path'] = $v_mdetail['path_detfitur'];
+                    $notif[$v_mdetail['path_detfitur']]['nama_fitur'] = $v_mdetail['nama_detfitur'];
+                  }
+                }
+              }
+            };
+
+            $arr_fitur = $this->session->userdata()['Fitur'];
+            foreach ($arr_fitur as $key => $v_fitur) {
+              if ( !empty($v_fitur['detail']) ) {
+                $scan_notif_detail($v_fitur['detail']);
+              }
+              if ( !empty($v_fitur['sub']) ) {
+                foreach ($v_fitur['sub'] as $v_sub) {
+                  if ( !empty($v_sub['detail']) ) {
+                    $scan_notif_detail($v_sub['detail']);
                   }
                 }
               }

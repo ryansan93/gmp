@@ -113,6 +113,7 @@ var fitur = {
 
 					var data = {
 						'nama_parent' : nama_parent,
+						'induk_fitur' : $('select#induk_fitur').val(),
 						'detail_fitur' : detail_fitur
 					};
 
@@ -178,6 +179,7 @@ var fitur = {
 					var data = {
 						'id_parent' : id_parent,
 						'nama_parent' : nama_parent,
+						'induk_fitur' : $('select#induk_fitur').val(),
 						'detail_fitur' : detail_fitur
 					};
 

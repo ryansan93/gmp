@@ -42,11 +42,27 @@ class Login extends MY_Controller
 					foreach ($group['detail_group'] as $key => $v_group) {
 						$detail = $v_group['detail_fitur'];
 						if ( !empty($detail) ) {
-							if ( $v_group['detail_fitur']['fitur']['status'] == 1 ) {
-								$fitur[$v_group['detail_fitur']['fitur']['id_fitur']]['header_fitur'] = $v_group['detail_fitur']['fitur']['nama_fitur'];
-								$fitur[$v_group['detail_fitur']['fitur']['id_fitur']]['id_header_fitur'] = $v_group['detail_fitur']['fitur']['id_fitur'];
-								$fitur[$v_group['detail_fitur']['fitur']['id_fitur']]['urut'] = $v_group['detail_fitur']['fitur']['urut'];
-								$fitur[$v_group['detail_fitur']['fitur']['id_fitur']]['detail'][] = $v_group['detail_fitur'];
+							$ftr = $v_group['detail_fitur']['fitur'];
+							if ( $ftr['status'] == 1 ) {
+								if ( !empty($ftr['induk']) ) {
+									// fitur ini sub-kategori (mis. "Coretax" di bawah "Laporan Accounting") -
+									// taruh detail-nya di bawah kategori induknya, bukan jadi header sendiri.
+									$induk = $ftr['induk_fitur'];
+									$top_id = $induk['id_fitur'];
+
+									$fitur[$top_id]['header_fitur'] = $induk['nama_fitur'];
+									$fitur[$top_id]['id_header_fitur'] = $top_id;
+									$fitur[$top_id]['urut'] = $induk['urut'];
+
+									$fitur[$top_id]['sub'][$ftr['id_fitur']]['header_fitur'] = $ftr['nama_fitur'];
+									$fitur[$top_id]['sub'][$ftr['id_fitur']]['id_sub_fitur'] = $ftr['id_fitur'];
+									$fitur[$top_id]['sub'][$ftr['id_fitur']]['detail'][] = $v_group['detail_fitur'];
+								} else {
+									$fitur[$ftr['id_fitur']]['header_fitur'] = $ftr['nama_fitur'];
+									$fitur[$ftr['id_fitur']]['id_header_fitur'] = $ftr['id_fitur'];
+									$fitur[$ftr['id_fitur']]['urut'] = $ftr['urut'];
+									$fitur[$ftr['id_fitur']]['detail'][] = $v_group['detail_fitur'];
+								}
 							}
 						}
 					}
@@ -62,42 +78,70 @@ class Login extends MY_Controller
 
 				// MAPPING HAK AKSES PER FITUR PER GROUP
 				foreach ($fitur as $k_fitur => $v_fitur) {
-					foreach ($v_fitur['detail'] as $k_dfitur => $v_dfitur) {
-						foreach ($group['detail_group'] as $key => $v_group) {
-							if ( $v_group['id_detfitur'] == $v_dfitur['id_detfitur'] ) {
-								// cetak_r( $user['detail_user']['id_group'].' | '.$v_dfitur['id_detfitur'] );
-								$ak = null;
-								$_ak = null;
-								if ( empty($ak) ) {
+					if ( !empty($v_fitur['detail']) ) {
+						foreach ($v_fitur['detail'] as $k_dfitur => $v_dfitur) {
+							foreach ($group['detail_group'] as $key => $v_group) {
+								if ( $v_group['id_detfitur'] == $v_dfitur['id_detfitur'] ) {
+									$_ak = null;
 									$m_ak = new \Model\Storage\AksesKhusus_model();
-									// $ak = $m_ak->where('id_group', $user['detail_user']['id_group'])->where('id_detfitur', $v_dfitur['id_detfitur'])->get();
 									$ak = $m_ak->select('akses_khusus')->where('id_group', $user['detail_user']['id_group'])->get();
-
 									if ( $ak->count() > 0 ) {
 										$ak = $ak->toArray();
 										foreach ($ak as $k_ak => $v_ak) {
 											$_ak[] = $v_ak['akses_khusus'];
 										}
-									} else {
-										$ak = null;
+									}
+
+									$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_view'] = $v_group['a_view'];
+									$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_submit'] = $v_group['a_submit'];
+									$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_edit'] = $v_group['a_edit'];
+									$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_delete'] = $v_group['a_delete'];
+									$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_ack'] = $v_group['a_ack'];
+									$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_approve'] = $v_group['a_approve'];
+									$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_khusus'] = $_ak;
+								}
+							}
+						}
+					}
+
+					if ( !empty($v_fitur['sub']) ) {
+						foreach ($v_fitur['sub'] as $k_sub => $v_sub) {
+							foreach ($v_sub['detail'] as $k_dfitur => $v_dfitur) {
+								foreach ($group['detail_group'] as $key => $v_group) {
+									if ( $v_group['id_detfitur'] == $v_dfitur['id_detfitur'] ) {
+										$_ak = null;
+										$m_ak = new \Model\Storage\AksesKhusus_model();
+										$ak = $m_ak->select('akses_khusus')->where('id_group', $user['detail_user']['id_group'])->get();
+										if ( $ak->count() > 0 ) {
+											$ak = $ak->toArray();
+											foreach ($ak as $k_ak => $v_ak) {
+												$_ak[] = $v_ak['akses_khusus'];
+											}
+										}
+
+										$fitur[$k_fitur]['sub'][$k_sub]['detail'][$k_dfitur]['akses']['a_view'] = $v_group['a_view'];
+										$fitur[$k_fitur]['sub'][$k_sub]['detail'][$k_dfitur]['akses']['a_submit'] = $v_group['a_submit'];
+										$fitur[$k_fitur]['sub'][$k_sub]['detail'][$k_dfitur]['akses']['a_edit'] = $v_group['a_edit'];
+										$fitur[$k_fitur]['sub'][$k_sub]['detail'][$k_dfitur]['akses']['a_delete'] = $v_group['a_delete'];
+										$fitur[$k_fitur]['sub'][$k_sub]['detail'][$k_dfitur]['akses']['a_ack'] = $v_group['a_ack'];
+										$fitur[$k_fitur]['sub'][$k_sub]['detail'][$k_dfitur]['akses']['a_approve'] = $v_group['a_approve'];
+										$fitur[$k_fitur]['sub'][$k_sub]['detail'][$k_dfitur]['akses']['a_khusus'] = $_ak;
 									}
 								}
-
-								$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_view'] = $v_group['a_view'];
-								$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_submit'] = $v_group['a_submit'];
-								$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_edit'] = $v_group['a_edit'];
-								$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_delete'] = $v_group['a_delete'];
-								$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_ack'] = $v_group['a_ack'];
-								$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_approve'] = $v_group['a_approve'];
-								$fitur[$k_fitur]['detail'][$k_dfitur]['akses']['a_khusus'] = $_ak;
 							}
 						}
 					}
 				}
 
 				foreach ($fitur as $key => $val) {
-					$sort_fitur = $this->msort($val['detail'], 'nama_detfitur');
-					$fitur[$val['id_header_fitur']]['detail'] = $sort_fitur;
+					if ( !empty($val['detail']) ) {
+						$fitur[$val['id_header_fitur']]['detail'] = $this->msort($val['detail'], 'nama_detfitur');
+					}
+					if ( !empty($val['sub']) ) {
+						foreach ($val['sub'] as $k_sub => $v_sub) {
+							$fitur[$val['id_header_fitur']]['sub'][$k_sub]['detail'] = $this->msort($v_sub['detail'], 'nama_detfitur');
+						}
+					}
 				}
 
 				$data_fitur = $this->msort($fitur, 'urut');

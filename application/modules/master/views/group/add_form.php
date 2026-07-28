@@ -16,7 +16,7 @@
 					</div>
 
 					<div class="col-lg-3">
-						<button id="btn-add" type="button" class="pull-left btn btn-primary cursor-p" title="SAVE" onclick="group.save(this)"> 
+						<button id="btn-add" type="button" class="pull-left btn btn-primary cursor-p" title="SAVE" onclick="group.save(this)">
 							<i class="fa fa-save" aria-hidden="true"></i> SAVE
 						</button>
 					</div>
@@ -82,6 +82,44 @@
 												</td>
 											</tr>
 										<?php endforeach ?>
+										<?php if ( !empty($val['sub_fitur']) ): ?>
+											<?php foreach ($val['sub_fitur'] as $s_key => $s_val): ?>
+												<?php foreach ($s_val['detail_fitur'] as $d_key => $d_val): ?>
+													<tr class="search">
+														<td class="parent_fitur">
+															<?php echo $val['nama_fitur'] . ' &gt; ' . $s_val['nama_fitur'] ?>
+														</td>
+														<td class="nama_fitur">
+															<?php echo $d_val['nama_detfitur'] ?>
+														</td>
+														<td class="path_fitur">
+															<?php echo $d_val['path_detfitur'] ?>
+														</td>
+														<td class="text-center">
+															<input type="checkbox" class="check-view" onclick="group.mark_view(this)">
+														</td>
+														<td class="text-center">
+															<input type="checkbox" class="check-submit">
+														</td>
+														<td class="text-center">
+															<input type="checkbox" class="check-update">
+														</td>
+														<td class="text-center">
+															<input type="checkbox" class="check-delete">
+														</td>
+														<td class="text-center">
+															<input type="checkbox" class="check-ack">
+														</td>
+														<td class="text-center">
+															<input type="checkbox" class="check-approve">
+														</td>
+														<td class="text-center">
+															<input data-idftr="<?php echo $d_val['id_detfitur']; ?>" type="checkbox" class="check-fitur" data-parent="check-fitur-all" onclick="group.mark_view(this)">
+														</td>
+													</tr>
+												<?php endforeach ?>
+											<?php endforeach ?>
+										<?php endif ?>
 									<?php endforeach ?>
 								</tbody>
 							</table>

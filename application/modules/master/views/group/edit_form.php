@@ -16,7 +16,7 @@
 					</div>
 
 					<div class="col-lg-3">
-						<button id="btn-edit" type="button" class="pull-left btn btn-primary cursor-p" title="EDIT" onclick="group.edit(this)"> 
+						<button id="btn-edit" type="button" class="pull-left btn btn-primary cursor-p" title="EDIT" onclick="group.edit(this)">
 							<i class="fa fa-pencil-square-o" aria-hidden="true"></i> EDIT
 						</button>
 					</div>
@@ -35,13 +35,18 @@
 									<th rowspan="2">Path Fitur</th>
 									<th colspan="6" class="text-center">Akses</th>
 									<th rowspan="2" class="col-sm-1 text-center">
-										<?php 
+										<?php
 											$checked_all = null;
 											$len_grp = count($data_group['detail_group']);
 											$len_ftr = 0;
 
 											foreach ($data_fitur as $key => $val){
 												$len_ftr += count($val['detail_fitur']);
+												if ( !empty($val['sub_fitur']) ) {
+													foreach ($val['sub_fitur'] as $s_val) {
+														$len_ftr += count($s_val['detail_fitur']);
+													}
+												}
 											}
 
 											if ( $len_grp == $len_ftr ) {
@@ -116,6 +121,64 @@
 											</td>
 										</tr>
 									<?php endforeach ?>
+									<?php if ( !empty($val['sub_fitur']) ): ?>
+										<?php foreach ($val['sub_fitur'] as $s_key => $s_val): ?>
+											<?php foreach ($s_val['detail_fitur'] as $d_key => $d_val): ?>
+												<?php
+													$checked = null;
+													$checked_view = null;
+													$checked_submit = null;
+													$checked_edit = null;
+													$checked_delete = null;
+													$checked_ack = null;
+													$checked_approve = null;
+													foreach ($data_group['detail_group'] as $key => $dg_val) {
+														if ( $d_val['id_detfitur'] == $dg_val['id_detfitur'] ) {
+															$checked = 'checked';
+															$checked_view = ($dg_val['a_view'] == 1) ? 'checked' : null;
+															$checked_submit = ($dg_val['a_submit'] == 1) ? 'checked' : null;
+															$checked_edit = ($dg_val['a_edit'] == 1) ? 'checked' : null;
+															$checked_delete = ($dg_val['a_delete'] == 1) ? 'checked' : null;
+															$checked_ack = ($dg_val['a_ack'] == 1) ? 'checked' : null;
+															$checked_approve = ($dg_val['a_approve'] == 1) ? 'checked' : null;
+														}
+													}
+												?>
+												<tr class="search">
+													<td class="parent_fitur">
+														<?php echo $val['nama_fitur'] . ' &gt; ' . $s_val['nama_fitur'] ?>
+													</td>
+													<td class="nama_fitur">
+														<?php echo $d_val['nama_detfitur'] ?>
+													</td>
+													<td class="path_fitur">
+														<?php echo $d_val['path_detfitur'] ?>
+													</td>
+													<td class="text-center">
+														<input type="checkbox" class="check-view" <?php echo $checked_view; ?> onclick="group.mark_view(this)">
+													</td>
+													<td class="text-center">
+														<input type="checkbox" class="check-submit" <?php echo $checked_submit; ?> >
+													</td>
+													<td class="text-center">
+														<input type="checkbox" class="check-update" <?php echo $checked_edit; ?> >
+													</td>
+													<td class="text-center">
+														<input type="checkbox" class="check-delete" <?php echo $checked_delete; ?>>
+													</td>
+													<td class="text-center">
+														<input type="checkbox" class="check-ack" <?php echo $checked_ack; ?>>
+													</td>
+													<td class="text-center">
+														<input type="checkbox" class="check-approve" <?php echo $checked_approve; ?>>
+													</td>
+													<td class="text-center">
+														<input <?php echo $checked?> data-idftr="<?php echo $d_val['id_detfitur']; ?>" type="checkbox" class="check-fitur" data-parent="check-fitur-all" onclick="group.mark_view(this)">
+													</td>
+												</tr>
+											<?php endforeach ?>
+										<?php endforeach ?>
+									<?php endif ?>
 								<?php endforeach ?>
 							</tbody>
 						</table>

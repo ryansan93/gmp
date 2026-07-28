@@ -19,6 +19,20 @@
 						</button>
 					</div>
 				</div>
+				<div class="form-group d-flex align-items-center">
+					<div class="col-lg-2">Induk Kategori</div>
+					<div class="col-lg-4">
+						<select id="induk_fitur" class="form-control">
+							<option value="">- Tidak ada (jadi kategori baru) -</option>
+							<?php foreach ($parents as $p): ?>
+								<option value="<?php echo $p['id_fitur']; ?>"><?php echo $p['nama_fitur']; ?></option>
+							<?php endforeach ?>
+						</select>
+					</div>
+					<div class="col-lg-6">
+						<small class="text-muted">Pilih induk kalau ini mau jadi sub-kategori (mis. "Coretax" di bawah "Laporan Accounting").</small>
+					</div>
+				</div>
 				<div class="form-group">
 					<div class="col-lg-12">
 						<table class="table table-bordered detail" id="dataTable" width="100%" cellspacing="0">

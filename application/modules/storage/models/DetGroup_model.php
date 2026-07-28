@@ -11,7 +11,7 @@ class DetGroup_model extends Conf {
     public function detail_fitur()
 	{
 		return $this->hasOne('\Model\Storage\DetFitur_model', 'id_detfitur', 'id_detfitur')
-					->with(['fitur'])
+					->with(['fitur.induk_fitur'])
 					->orderBy('id_detfitur', 'ASC');
 	}
 }

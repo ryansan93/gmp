@@ -574,12 +574,29 @@ if (! function_exists ( 'hakAkses' )) {
     function hakAkses($url) {
         $CI = & get_instance();
         $fitur = $CI->session->userdata('Fitur');
+        $target = trim(substr($url, 1));
         $akses = null;
         foreach ($fitur as $v_fitur) {
-            foreach ($v_fitur['detail'] as $v_dfitur) {
-                if( trim($v_dfitur['path_detfitur']) == trim(substr($url, 1)) ){
-                    $akses = $v_dfitur['akses'];
-                    break;
+            if ( !empty($v_fitur['detail']) ) {
+                foreach ($v_fitur['detail'] as $v_dfitur) {
+                    if( trim($v_dfitur['path_detfitur']) == $target ){
+                        $akses = $v_dfitur['akses'];
+                        break;
+                    }
+                }
+            }
+
+            if ( !empty($v_fitur['sub']) ) {
+                foreach ($v_fitur['sub'] as $v_sub) {
+                    if ( empty($v_sub['detail']) ) {
+                        continue;
+                    }
+                    foreach ($v_sub['detail'] as $v_dfitur) {
+                        if( trim($v_dfitur['path_detfitur']) == $target ){
+                            $akses = $v_dfitur['akses'];
+                            break;
+                        }
+                    }
                 }
             }
         }

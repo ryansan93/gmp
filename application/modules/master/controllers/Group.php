@@ -48,12 +48,17 @@ class Group extends Public_Controller
 		echo $html;
 	}
 
-	public function add_form()
+	public function getDataFitur()
 	{
 		$m_ftr = new \Model\Storage\Fitur_model();
-		$d_ftr = $m_ftr->where('status', 1)->with(['detail_fitur'])->get()->toArray();
+		return $m_ftr->where('status', 1)->whereNull('induk')->with(['detail_fitur', 'sub_fitur' => function($q) {
+			$q->where('status', 1)->with('detail_fitur');
+		}])->get()->toArray();
+	}
 
-		$data['data_fitur'] = $d_ftr;
+	public function add_form()
+	{
+		$data['data_fitur'] = $this->getDataFitur();
 		$this->load->view('master/group/add_form', $data);
 	}
 
@@ -64,11 +69,8 @@ class Group extends Public_Controller
 		$m_grp = new \Model\Storage\Group_model();
 		$d_grp = $m_grp->where('id_group', trim($id_group))->with(['detail_group'])->first();
 
-		$m_ftr = new \Model\Storage\Fitur_model();
-		$d_ftr = $m_ftr->where('status', 1)->with(['detail_fitur'])->get()->toArray();
-
 		$data['data_group'] = $d_grp;
-		$data['data_fitur'] = $d_ftr;
+		$data['data_fitur'] = $this->getDataFitur();
 
 		$this->load->view('master/group/edit_form', $data);
 	}

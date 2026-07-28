@@ -793,6 +793,34 @@ tr.kena-batas-timeline{
     from { transform: scale(1) rotate(0deg);}
     to { transform: scale(1) rotate(360deg);}
 }
+/* SIDEBAR SUB-KATEGORI (level ke-3: Kategori > Sub Kategori > Item) */
+div#sidebar-wrapper li.menu-sub-parent > a.menu-sub-toggle {
+  padding-left: 2rem;
+  font-size: 0.9rem;
+  background-color: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid rgba(255, 255, 255, 0.18);
+}
+
+div#sidebar-wrapper li.menu-sub-parent > a.menu-sub-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+div#sidebar-wrapper li.menu-sub-parent > a.menu-sub-toggle::after {
+  right: 1.25rem;
+}
+
+div#sidebar-wrapper .menu-sub-icon {
+  color: #73818f;
+  margin-right: .35rem;
+  font-size: 0.85rem;
+}
+
+div#sidebar-wrapper li.menu-sub-item > a.list-group-item {
+  padding-left: 3.25rem;
+  font-size: 0.86rem;
+  border-left: 3px solid rgba(255, 255, 255, 0.18);
+}
+
 @keyframes spin {
     from { transform: scale(1) rotate(0deg);}
     to { transform: scale(1) rotate(360deg);}

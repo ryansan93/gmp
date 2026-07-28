@@ -12,4 +12,14 @@ class Fitur_model extends Conf {
 	{
 		return $this->hasMany('\Model\Storage\DetFitur_model', 'id_fitur', 'id_fitur');
 	}
+
+    public function sub_fitur()
+	{
+		return $this->hasMany('\Model\Storage\Fitur_model', 'induk', 'id_fitur');
+	}
+
+    public function induk_fitur()
+	{
+		return $this->hasOne('\Model\Storage\Fitur_model', 'id_fitur', 'induk');
+	}
 }
