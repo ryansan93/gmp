@@ -351,7 +351,8 @@ var pp = {
 		$.ajax({
 			url: 'transaksi/PengirimanPenerimaanPakan/get_peternak',
 			data: {
-				'params': periode
+				'params': periode,
+				'noreg': noreg
 			},
 			type: 'POST',
 			dataType: 'JSON',
@@ -360,27 +361,31 @@ var pp = {
 			},
 			success: function(data) {
 				var option = '<option value="">-- Pilih Peternak --</option>';
+				var disable_select = false;
+
 				if ( data.status == 1 ) {
-					var idx = 1;
 					for (var i = 0; i < data.content.length; i++) {
 						var selected = '';
-						if ( !empty(noreg) ) {
-							if ( noreg == data.content[i].noreg ) {
-								selected = 'selected';
+						if ( !empty(noreg) && noreg == data.content[i].noreg ) {
+							selected = 'selected';
+							if ( data.content[i].tutup_siklus == 1 ) {
+								disable_select = true;
 							}
 						}
-						option += '<option value="'+data.content[i].noreg+'" '+selected+'>'+data.content[i].kode_unit.toUpperCase()+' | '+data.content[i].tgl_terima+' | '+data.content[i].nama.toUpperCase()+' ('+data.content[i].noreg.toUpperCase()+')</option>';
 
-						idx++;
-						if ( idx == data.content.length ) {
-							hideLoading();
+						var label = data.content[i].kode_unit.toUpperCase()+' | '+data.content[i].tgl_terima+' | '+data.content[i].nama.toUpperCase()+' ('+data.content[i].noreg.toUpperCase()+')';
+						if ( data.content[i].tutup_siklus == 1 ) {
+							label += ' [TUTUP SIKLUS]';
 						}
-					}
-				} else {
-					hideLoading();
-				};
-				$(div).find('select').html(option);
 
+						option += '<option value="'+data.content[i].noreg+'" '+selected+'>'+label+'</option>';
+					}
+				}
+
+				$(div).find('select').html(option);
+				$(div).find('select').prop('disabled', disable_select);
+
+				hideLoading();
 			},
 	    });
 	}, // end - get_peternak

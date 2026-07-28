@@ -705,10 +705,22 @@ class PengirimanPenerimaanPakan extends Public_Controller {
     public function get_peternak()
     {
         $params = $this->input->post('params');
+        $noreg = trim((string)$this->input->post('noreg'));
+        if ( !preg_match('/^[A-Za-z0-9]*$/', $noreg) ) {
+            $noreg = '';
+        }
 
         $timestamp = strtotime(substr($params, 0, 10));
         $first_date_of_month = date('Y-m-01', $timestamp);
         $last_date_of_month  = date('Y-m-t', $timestamp); // A leap year!
+
+        // Kalau lagi edit data dengan noreg yang sudah tutup siklus, noreg itu tetap harus
+        // muncul di list (supaya pilihan yang sudah tersimpan tetap kelihatan), walau
+        // biasanya di-exclude oleh filter "ts.id is null" di bawah.
+        $sql_tutup_siklus = "ts.id is null";
+        if ( !empty($noreg) ) {
+            $sql_tutup_siklus = "(ts.id is null or rs.noreg = '".$noreg."')";
+        }
 
         $_data = array();
 
@@ -719,10 +731,11 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 data.alamat_jalan+data.rt+data.rw+data.kelurahan+data.kecamatan as alamat
             from
             (
-                select 
+                select
                     rs.noreg,
                     CONVERT(varchar(10), d_noreg.tgl_docin, 103) as tgl_terima,
                     w.kode as kode_unit,
+                    case when ts.id is not null then 1 else 0 end as tutup_siklus,
                     case
                         when m.alamat_rt is not null and m.alamat_rt <> '' then
                             ' ,RT.'+cast(m.alamat_rt as varchar(5))
@@ -834,11 +847,11 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     on
                         m.alamat_kecamatan = l_kec.id
                 left join
-                    tutup_siklus ts 
+                    tutup_siklus ts
                     on
                         rs.noreg = ts.noreg
                 where
-                    ts.id is null
+                    ".$sql_tutup_siklus."
             ) data
             order by
                 data.kode_unit asc,
