@@ -1450,7 +1450,7 @@ class VerifikasiPembayaran extends Public_Controller
                         $m_attach->insert([
                             'realisasi_id' => $data['id'],
                             'file_name'    => ubahNama($file['name']),
-                            'path'         => $targetFile,
+                            'path'         => ubahNama($file['name']),
                             'created_at'   => date("Y-m-d H:i:s"),
                             'name_file_old'=> $name_exits ? ubahNama($file['name']) : $file['name'],
                             'tbl_name' => $data['tbl_name'],
