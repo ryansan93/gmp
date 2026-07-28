@@ -1440,19 +1440,23 @@ class VerifikasiPembayaran extends Public_Controller
                     $ext            = pathinfo($file['name'], PATHINFO_EXTENSION);
                     // $encryptedName  = md5(uniqid() . $file['name'] . time()) . '.' . $ext;
                     // $targetFile     = $uploadDir . $encryptedName;
-                    $targetFile     = $uploadDir . ubahNama($file['name']);
+
+                    $filename = $file['name'];
+                    if (in_array(strtolower($file['name']), $existing_names)) {
+                        $name_exits = true;
+                        $filename = ubahNama($file['name']);
+                    }
+
+                    $targetFile     = $uploadDir . $filename;
 
                     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
-                        if (in_array(strtolower($file['name']), $existing_names)) {
-                            $name_exits = true;
-                        }
                         $m_attach       = new \Model\Storage\AttachmentRealisasiPembayaran_model();
                         $m_attach->insert([
                             'realisasi_id' => $data['id'],
-                            'file_name'    => ubahNama($file['name']),
-                            'path'         => ubahNama($file['name']),
+                            'file_name'    => $filename,
+                            'path'         => $filename,
                             'created_at'   => date("Y-m-d H:i:s"),
-                            'name_file_old'=> $name_exits ? ubahNama($file['name']) : $file['name'],
+                            'name_file_old'=> $filename,
                             'tbl_name' => $data['tbl_name'],
                         ]);
                     
