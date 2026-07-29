@@ -6,8 +6,7 @@ var stok = {
     setSelect2Plasma: function(elm) {
         $(elm).select2({
             ajax: {
-                // delay: 500,
-                // quietMillis: 150,
+                delay: 400,
                 url: 'report/KartuStokSiklus/getPlasma',
                 dataType: 'json',
                 type: 'GET',
@@ -36,7 +35,7 @@ var stok = {
             },
             cache: true,
             placeholder: 'Search for a Plasma ...',
-            // minimumInputLength: 2,
+            minimumInputLength: 2,
             escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
             templateResult: function (data) {
                 var markup = "<option value='"+data.id+"'>"+data.text+"</option>";

@@ -98,7 +98,7 @@ class KartuStokSiklus extends Public_Controller {
 
         $sql_search = "";
         if ( !empty($search) && !empty($type) ) {
-            $sql_search = "where data.text like '%".$search."%'";
+            $sql_search = "where data.text like '%".str_replace("'", "''", $search)."%'";
         }
 
         $m_conf = new \Model\Storage\Conf();
