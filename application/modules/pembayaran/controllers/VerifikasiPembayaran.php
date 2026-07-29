@@ -1032,7 +1032,17 @@ class VerifikasiPembayaran extends Public_Controller
             foreach ($groupedFiles as $file) {
                 if ($file['error'] === 0) {
                     $ext        = pathinfo($file['name'], PATHINFO_EXTENSION);
-                    $targetFile = ubahNama($file['name']);
+                    
+                    $filename = $file['name'];
+                    $targetFile  = $uploadDir . $filename;
+                    // if (in_array(strtolower($filename), $existing_names)) {
+                    if (file_exists($targetFile)) {
+                        $name_exits = true;
+                        $filename = ubahNama($file['name']);
+                        $targetFile  = $uploadDir . $filename;
+                    }
+
+                    // $targetFile = ubahNama($file['name']);
 
                     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
 
@@ -1437,17 +1447,20 @@ class VerifikasiPembayaran extends Public_Controller
     
             foreach ($groupedFiles as $file) {
                 if ($file['error'] === 0) {
-                    $ext            = pathinfo($file['name'], PATHINFO_EXTENSION);
+                    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
                     // $encryptedName  = md5(uniqid() . $file['name'] . time()) . '.' . $ext;
                     // $targetFile     = $uploadDir . $encryptedName;
 
                     $filename = $file['name'];
-                    if (in_array(strtolower($file['name']), $existing_names)) {
+                    $targetFile  = $uploadDir . $filename;
+                    // if (in_array(strtolower($filename), $existing_names)) {
+                    if (file_exists($targetFile)) {
                         $name_exits = true;
                         $filename = ubahNama($file['name']);
+                        $targetFile  = $uploadDir . $filename;
                     }
 
-                    $targetFile     = $uploadDir . $filename;
+                    $targetFile  = $uploadDir . $filename;
 
                     if (move_uploaded_file($file['tmp_name'], $targetFile)) {
                         $m_attach       = new \Model\Storage\AttachmentRealisasiPembayaran_model();
@@ -1461,10 +1474,10 @@ class VerifikasiPembayaran extends Public_Controller
                         ]);
                     
                     } else {
-                        echo "Gagal upload file '{$file['name']}'<br>";
+                        echo "Gagal upload file '{$filename}'<br>";
                     }
                 } else {
-                    echo "File '{$file['name']}' memiliki error saat upload<br>";
+                    echo "File '{$filename}' memiliki error saat upload<br>";
                 }
             }
         }
