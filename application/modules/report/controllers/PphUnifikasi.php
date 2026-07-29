@@ -24,7 +24,7 @@ class PphUnifikasi extends Public_Controller {
     public function index($segment=0)
     {
         $akses = hakAkses($this->url);
-        // if ( $akses['a_view'] == 1 ) {
+        if ( $akses['a_view'] == 1 ) {
             $this->add_external_js(array(
                 'assets/select2/js/select2.min.js',
                 "assets/report/pph_unifikasi/js/pph-unifikasi.js",
@@ -43,9 +43,9 @@ class PphUnifikasi extends Public_Controller {
 
             $data['view'] = $this->load->view($this->pathView.'index', $content, TRUE);
             $this->load->view($this->template, $data);
-        // } else {
-        //     showErrorAkses();
-        // }
+        } else {
+            showErrorAkses();
+        }
     }
 
     public function getPerusahaan() {
