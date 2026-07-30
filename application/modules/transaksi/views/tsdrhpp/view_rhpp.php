@@ -949,24 +949,24 @@
 							            			</tr>
 							            			<tr>
 							            				<td class="col-sm-8 text-left" style="padding-bottom: 0px;"><b>Pendapatan Peternak Setelah Kena Pajak</b></td>
-							            				<td class="col-sm-4 text-right pendapatan_peternak_setelah_pajak" data-val="<?php echo (($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak); ?>" style="padding-bottom: 0px;">
+							            				<td class="col-sm-4 text-right pendapatan_peternak_setelah_pajak" data-val="<?php echo round(($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak); ?>" style="padding-bottom: 0px;">
 							            					<b>
 							            						<?php if ( (($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) > 0 ): ?>
-							            							<?php echo angkaRibuan( ($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak ); ?>
+							            							<?php echo angkaRibuan( round(($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) ); ?>
 							            						<?php else: ?>
-							            							<?php echo '('.angkaRibuan( abs(($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) ).')'; ?>
+							            							<?php echo '('.angkaRibuan( round(abs(($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) )).')'; ?>
 							            						<?php endif ?>
 							            					</b>
 							            				</td>
 							            			</tr>
 													<tr>
 							            				<td class="col-sm-8 text-left" style="padding-bottom: 0px;"><b>Pendapatan Peternak Setelah Potong Hutang</b></td>
-							            				<td class="col-sm-4 text-right pendapatan_peternak_setelah_potong_hutang" data-val="<?php echo ((($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) - $tot_bayar_hutang); ?>" style="padding-bottom: 0px;">
+							            				<td class="col-sm-4 text-right pendapatan_peternak_setelah_potong_hutang" data-val="<?php echo round((($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) - $tot_bayar_hutang); ?>" style="padding-bottom: 0px;">
 							            					<b>
 							            						<?php if ( ((($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak - $tot_bayar_hutang)) > 0 ): ?>
-							            							<?php echo angkaRibuan( (($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) - $tot_bayar_hutang ); ?>
+							            							<?php echo angkaRibuan( round((($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) - $tot_bayar_hutang) ); ?>
 							            						<?php else: ?>
-							            							<?php echo '('.angkaRibuan( abs((($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) - $tot_bayar_hutang) ).')'; ?>
+							            							<?php echo '('.angkaRibuan( round(abs((($total_pemasukan - $total_pengeluaran) - $nilai_potongan_pajak) - $tot_bayar_hutang)) ).')'; ?>
 							            						<?php endif ?>
 							            					</b>
 							            				</td>

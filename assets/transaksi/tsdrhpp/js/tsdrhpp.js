@@ -424,7 +424,7 @@ var tsdrhpp = {
 
     	var tot_pemasukan_inti = $(div_rhpp_inti).find('td.total_pemasukan').attr('data-val');
 
-        var pendapatan_peternak = (tot_pemasukan_plasma + tot_bonus_plasma) - (tot_pengeluaran_plasma + tot_potongan_plasma);
+        var pendapatan_peternak = Math.round((tot_pemasukan_plasma + tot_bonus_plasma) - (tot_pengeluaran_plasma + tot_potongan_plasma));
 
         var pendapatan_peternak_form_inti = pendapatan_peternak;
         var tot_pembelian_sapronak = parseFloat($(div_rhpp_inti).find('td.tot_pembelian_sapronak').attr('data-val'));
@@ -471,10 +471,16 @@ var tsdrhpp = {
     		prs_potongan = numeral.unformat($(elm).find('option:selected').text());
     		var pendapatan_peternak = $(div_rhpp_plasma).find('td.pendapatan_peternak').attr('data-val');
     		var pendapatan_inti = $(div_rhpp_plasma).find('td.pendapatan_peternak').attr('data-val');
-    		if ( prs_potongan > 0 ) {
-    			potongan_pajak_plasma = pendapatan_peternak*(prs_potongan/100);
-    			potongan_pajak_inti = pendapatan_inti*(prs_potongan/100);
+			if ( prs_potongan > 0 && pendapatan_peternak > 0 ) {
+    			potongan_pajak_plasma = Math.round(pendapatan_peternak*(prs_potongan/100));
     		}
+    		if ( prs_potongan > 0 && pendapatan_inti > 0 ) {
+    			potongan_pajak_inti = Math.round(pendapatan_inti*(prs_potongan/100));
+    		}
+    		// if ( prs_potongan > 0 ) {
+    		// 	potongan_pajak_plasma = pendapatan_peternak*(prs_potongan/100);
+    		// 	potongan_pajak_inti = pendapatan_inti*(prs_potongan/100);
+    		// }
     	}
 
     	$(div_rhpp_plasma).find('span.prs_pajak').text( numeral.formatDec(prs_potongan)+'%' );
