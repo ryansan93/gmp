@@ -44,8 +44,8 @@ var fitur = {
 
 	edit_form: function(elm) {
 		var btn_edit = $(elm);
-		var tr = $(btn_edit).closest('tr');
-		var id_fitur = $(tr).find('td.id_fitur').html();
+		var container = $(btn_edit).closest('tr, div.clearfix');
+		var id_fitur = $(container).find('.id_fitur').first().text().trim();
 
 		$.get('master/Fitur/edit_form',{
 			id_fitur: id_fitur,
@@ -216,9 +216,9 @@ var fitur = {
 
 	delete: function(elm) {
 		var btn_delete = $(elm);
-		var tr = $(btn_delete).closest('tr');
+		var container = $(btn_delete).closest('tr, div.clearfix');
 
-		var id_fitur = $(tr).find('td.id_fitur').html();
+		var id_fitur = $(container).find('.id_fitur').first().text().trim();
 
 		bootbox.confirm('Apakah anda yakin ingin menghapus data ?', function(result){
 			if ( result ) {

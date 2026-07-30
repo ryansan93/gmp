@@ -343,6 +343,7 @@ class PphUnifikasi extends Public_Controller {
             select
                 dj.tanggal as tgl_bayar,
                 kpop.ekspedisi as nama,
+                kpop.invoice,
                 eks.nik,
                 eks.npwp,
                 case
@@ -541,17 +542,23 @@ class PphUnifikasi extends Public_Controller {
 
         $oa = $this->getDataOa($params);
         if ( !empty($oa) ) {
-            $nomor_dokumen = 'Tag OA '.$periode['yymm'];
             foreach ($oa as $o) {
+                // NOMOR_DOKUMEN per baris = kolom invoice di konfirmasi_pembayaran_oa_pakan (bukan lagi label generik "Tag OA <YYMM>").
+                $nomor_dokumen = !empty($o['invoice']) ? trim($o['invoice']) : 'Tag OA '.$periode['yymm'];
                 $rows[] = $this->buildRow($periode, $o['tgl_bayar'], $o['npwp'], $o['nik'], $o['nama'], $o['bruto'], $o['prs_potongan_pajak'], $o['skb'], '24-104-56', $nomor_dokumen);
             }
         }
 
         $rhpp = $this->getDataRhpp($params);
         if ( !empty($rhpp) ) {
-            $nomor_dokumen = 'RHPP '.$periode['yymm'];
+            // RHPP tidak punya nomor dokumen per-baris di sumbernya (beda dari OA yg ada kolom
+            // invoice) -- dikasih sequence number spy tiap baris unik, tidak dobel persis sama
+            // spt di file sample lama (semua baris RHPP dulu sharing 1 label yg identik).
+            $seq = 1;
             foreach ($rhpp as $r) {
+                $nomor_dokumen = 'RHPP '.$periode['yymm'].'-'.$seq;
                 $rows[] = $this->buildRow($periode, $r['tgl_rhpp'], $r['npwp'], $r['ktp'], $r['nama'], $r['bruto'], $r['prs_potongan_pajak'], $r['skb'], '24-104-31', $nomor_dokumen);
+                $seq++;
             }
         }
 

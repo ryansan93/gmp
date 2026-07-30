@@ -40,7 +40,22 @@
 			<?php endif ?>
 			<?php if ( !empty($val['sub_fitur']) ): ?>
 				<?php foreach ($val['sub_fitur'] as $s_key => $s_val): ?>
-					<div style="padding: 8px 0 4px 0;"><b><i class="fa fa-level-up fa-rotate-90"></i> <?php echo $s_val['nama_fitur']; ?></b> <small class="text-muted">(<?php echo $s_val['id_fitur']; ?>)</small></div>
+					<div style="padding: 8px 0 4px 0;" class="clearfix">
+						<span class="id_fitur hide"><?php echo $s_val['id_fitur']; ?></span>
+						<b><i class="fa fa-level-up fa-rotate-90"></i> <?php echo $s_val['nama_fitur']; ?></b> <small class="text-muted">(<?php echo $s_val['id_fitur']; ?>)</small>
+						<span class="pull-right">
+							<?php if ( $akses['a_edit'] == 1 ): ?>
+								<button id="btn-edit" type="button" class="btn btn-sm btn-primary cursor-p" title="EDIT" onclick="fitur.edit_form(this)">
+									<i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+								</button>
+							<?php endif ?>
+							<?php if ( $akses['a_delete'] == 1 ): ?>
+								<button id="btn-delete" type="button" class="btn btn-sm btn-danger cursor-p" title="DELETE" onclick="fitur.delete(this)">
+									<i class="fa fa-trash" aria-hidden="true"></i>
+								</button>
+							<?php endif ?>
+						</span>
+					</div>
 					<table class="table table-bordered table-hover" width="100%" cellspacing="0">
 						<thead>
 							<tr>

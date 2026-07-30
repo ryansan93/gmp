@@ -76,7 +76,9 @@ class Fitur extends Public_Controller
 		$data['data'] = $d_ftr;
 		// Kategori yang sudah punya sub-kategori sendiri tidak boleh dijadikan sub-kategori
 		// (dari kategori lain), supaya nesting-nya tetap dibatasi maksimal 2 tingkat (fitur + sub).
-		$data['can_be_sub'] = empty($d_ftr['sub_fitur']);
+		// sub_fitur selalu berupa Collection (bukan array/null), jadi empty() di sini SELALU false
+		// walau Collection-nya kosong -- harus dicek pakai count()/isEmpty().
+		$data['can_be_sub'] = $d_ftr['sub_fitur']->isEmpty();
 		$data['parents'] = $data['can_be_sub'] ? $this->getParents(trim($id_fitur)) : array();
 		$this->load->view('master/fitur/edit_form', $data);
 	}
@@ -175,7 +177,7 @@ class Fitur extends Public_Controller
 	{
 		$m_ftr = new \Model\Storage\Fitur_model();
 		$d_ftr = $m_ftr->where('id_fitur', trim($id_fitur))->with(['sub_fitur'])->first();
-		return $d_ftr && !empty($d_ftr['sub_fitur']);
+		return $d_ftr && !$d_ftr['sub_fitur']->isEmpty();
 	}
 
 	public function exec_edit($params, $induk_fitur = null)
