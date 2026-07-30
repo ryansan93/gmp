@@ -508,7 +508,7 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
                                 'populasi' => $populasi,
                                 'populasi_real' => $populasi_real,
                                 'invoice' => $d_rg->invoice,
-                                'total' => $d_rg->pdpt_peternak_sudah_pajak
+                                'total' => $d_rg->pdpt_peternak_sudah_pajak - $nominal_piutang
                                 // 'total' => ($d_rg->pdpt_peternak_belum_pajak - (($d_rg->prs_potongan_pajak / 100) * $d_rg->pdpt_peternak_belum_pajak)) - $nominal_piutang
                             );
                         }
@@ -542,7 +542,7 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
                                 'populasi' => angkaRibuan($d_r->populasi),
                                 'populasi_real' => $d_r->populasi,
                                 'invoice' => $d_r->invoice,
-                                'total' => $d_r->pdpt_peternak_sudah_pajak
+                                'total' => $d_r->pdpt_peternak_sudah_pajak - $nominal_piutang
                                 // 'total' => ($d_r->pdpt_peternak_belum_pajak - (($d_r->prs_potongan_pajak / 100) * $d_r->pdpt_peternak_belum_pajak)) - $nominal_piutang
                             );
                         }
