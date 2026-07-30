@@ -20,18 +20,6 @@ var pphUnifikasi = {
 
 		form.find('.bulan').select2({placeholder: 'Pilih Bulan'});
 
-		form.find('.perusahaan').select2({placeholder: 'Pilih Perusahaan'}).on("select2:select", function (e) {
-			var perusahaan = form.find('.perusahaan').select2().val();
-
-			for (var i = 0; i < perusahaan.length; i++) {
-				if ( perusahaan[i] == 'all' ) {
-					form.find('.perusahaan').select2().val('all').trigger('change');
-
-					i = perusahaan.length;
-				}
-			}
-		});
-
 		form.find('.unit').select2({placeholder: 'Pilih Unit'}).on("select2:select", function (e) {
 			var unit = form.find('.unit').select2().val();
 
@@ -54,7 +42,6 @@ var pphUnifikasi = {
 		return {
 			'bulan': form.find('.bulan').select2().val(),
 			'tahun': dateSQL(form.find('#Tahun').data('DateTimePicker').date()).substring(0, 4),
-			'perusahaan': form.find('.perusahaan').select2('val'),
 			'unit': form.find('.unit').select2('val'),
 		};
 	}, // end - getParams

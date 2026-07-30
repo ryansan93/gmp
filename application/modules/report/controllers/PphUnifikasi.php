@@ -37,7 +37,6 @@ class PphUnifikasi extends Public_Controller {
             $data = $this->includes;
 
             $content['akses'] = $akses;
-            $content['perusahaan'] = $this->getPerusahaan();
             $content['unit'] = $this->getUnit();
             $content['title_menu'] = 'PPH Unifikasi';
 
@@ -46,27 +45,6 @@ class PphUnifikasi extends Public_Controller {
         } else {
             showErrorAkses();
         }
-    }
-
-    public function getPerusahaan() {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select p1.* from perusahaan p1
-            right join
-                (select max(id) as id, kode from perusahaan group by kode) p2
-                on
-                    p1.id = p2.id
-            order by
-                p1.perusahaan asc
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
-
-        $data = null;
-        if ( $d_conf->count() > 0 ) {
-            $data = $d_conf->toArray();
-        }
-
-        return $data;
     }
 
     public function getUnit() {
@@ -184,9 +162,10 @@ class PphUnifikasi extends Public_Controller {
      * di luar cakupan Unifikasi Badan) di SISI KREDIT (coa_asal -- inilah sisi yg terjadi
      * saat PPh benar2 DIPOTONG dari pihak ketiga; sisi debet/coa_tujuan adalah jurnal SETOR
      * ke kas negara, sudah dikonfirmasi user bukan yg dimaksud).
+     *
+     * Tidak ada filter perusahaan (cuma 1 perusahaan aktif, jadi tidak perlu).
      */
     public function sqlFilterDasarJurnal($periode, $params, $alias = 'dj') {
-        $perusahaan = $params['perusahaan'];
         $unit = $params['unit'];
 
         $sql = "
@@ -196,9 +175,6 @@ class PphUnifikasi extends Public_Controller {
             ".$alias.".nominal <> 0
         ";
 
-        if ( !in_array('all', $perusahaan) ) {
-            $sql .= " and ".$alias.".perusahaan in ('".implode("', '", $perusahaan)."')";
-        }
         if ( !in_array('all', $unit) ) {
             $sql .= " and ".$alias.".unit in ('".implode("', '", $unit)."')";
         }

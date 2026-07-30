@@ -3,7 +3,7 @@
 		<form role="form" class="form-horizontal pph-unifikasi">
 			<div class="panel-body" style="padding-top: 10px;">
 				<div class="col-xs-12 no-padding">
-					<div class="col-xs-3 no-padding" style="padding-right: 5px; margin-bottom: 10px;">
+					<div class="col-xs-4 no-padding" style="padding-right: 5px; margin-bottom: 10px;">
 						<div class="col-xs-12 no-padding">
 							<label>BULAN</label>
 						</div>
@@ -29,7 +29,7 @@
 							</select>
 						</div>
 					</div>
-					<div class="col-xs-3 no-padding" style="padding-left: 5px; padding-right: 5px; margin-bottom: 10px;">
+					<div class="col-xs-4 no-padding" style="padding-left: 5px; padding-right: 5px; margin-bottom: 10px;">
 						<div class="col-xs-12 no-padding">
 							<label>TAHUN</label>
 						</div>
@@ -42,20 +42,7 @@
 							</div>
 						</div>
 					</div>
-					<div class="col-xs-3 no-padding" style="padding-left: 5px; padding-right: 5px; margin-bottom: 10px;">
-						<div class="col-xs-12 no-padding">
-							<label>PERUSAHAAN</label>
-						</div>
-						<div class="col-xs-12 no-padding">
-							<select class="form-control perusahaan" multiple="multiple" data-required="1">
-								<option value="all">ALL</option>
-								<?php foreach ($perusahaan as $k_perusahaan => $v_perusahaan): ?>
-									<option value="<?php echo $v_perusahaan['kode']; ?>"><?php echo strtoupper($v_perusahaan['perusahaan']); ?></option>
-								<?php endforeach ?>
-							</select>
-						</div>
-					</div>
-					<div class="col-xs-3 no-padding" style="padding-left: 5px; margin-bottom: 10px;">
+					<div class="col-xs-4 no-padding" style="padding-left: 5px; margin-bottom: 10px;">
 						<div class="col-xs-12 no-padding">
 							<label>UNIT</label>
 						</div>
