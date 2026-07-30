@@ -443,6 +443,7 @@ class PphUnifikasi extends Public_Controller {
                 region asc,
                 supplier.nama asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw($sql);
 
         $data = null;
@@ -473,7 +474,7 @@ class PphUnifikasi extends Public_Controller {
                 dj.tanggal,
                 dj.coa_asal,
                 cast(dj.keterangan as varchar(200)) as keterangan,
-                dj.nominal as bruto
+                (dj.nominal / 0.1) as bruto
             from det_jurnal dj
             where
                 ".$this->sqlFilterDasarJurnal($periode, $params)." and
@@ -486,6 +487,7 @@ class PphUnifikasi extends Public_Controller {
             order by
                 dj.tanggal asc
         ";
+        // cetak_r( $sql, 1 );
         $d_conf = $m_conf->hydrateRaw($sql);
 
         $data = null;
