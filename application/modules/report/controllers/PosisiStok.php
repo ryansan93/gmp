@@ -253,7 +253,7 @@ class PosisiStok extends Public_Controller {
             ),
             fifo as (
                 select
-                    s.kode_gudang, s.kode_barang, s.kode_trans, s.hrg_beli, s.jumlah,
+                    s.kode_gudang, s.kode_barang, s.kode_trans, s.hrg_beli, s.jumlah, s.tanggal,
                     sum(s.jumlah) over (partition by s.kode_gudang, s.kode_barang order by s.tanggal, s.kode_trans rows unbounded preceding) as running_after,
                     isnull(d.total_keluar, 0) as total_demand
                 from supply s
@@ -279,7 +279,11 @@ class PosisiStok extends Public_Controller {
                         when running_after <= total_demand then 0
                         when (running_after - jumlah) >= total_demand then jumlah
                         else running_after - total_demand
-                    end as sisa
+                    end as sisa,
+                    -- order/layer TERAKHIR (tanggal terbaru) per gudang+barang -- dipakai supaya
+                    -- tetap tampil (sisa 0) kalau itu order terakhir yg sudah full terdistribusi,
+                    -- bukan hilang total dari laporan.
+                    row_number() over (partition by kode_gudang, kode_barang order by tanggal desc, kode_trans desc) as rn_terakhir
                 from fifo
             ) sa
             left join
@@ -301,7 +305,7 @@ class PosisiStok extends Public_Controller {
                 on
                     sa.kode_barang = brg.kode
             where
-                sa.sisa <> 0
+                sa.sisa <> 0 or sa.rn_terakhir = 1
             order by
                 sa.kode_gudang asc,
                 brg.nama asc,

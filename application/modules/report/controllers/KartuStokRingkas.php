@@ -227,6 +227,43 @@ class KartuStokRingkas extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
+            ;with existing_kb as (
+                -- kode_gudang+kode_barang yg SUDAH punya baris (saldo awal/masuk/keluar) di
+                -- periode ini -- dipakai NOT EXISTS oleh cabang ORDER TERAKHIR (fallback) di
+                -- bawah, supaya fallback cuma nambah gudang+barang yg BENAR2 kosong bulan ini.
+                select distinct kode_gudang, kode_barang
+                from
+                (
+                    select ds.kode_gudang, ds.kode_barang
+                    from det_stok ds
+                    left join stok s on ds.id_header = s.id
+                    where
+                        s.periode = '".$_start_date."' and
+                        ds.tgl_trans < '".$_start_date."' and
+                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+
+                    union
+
+                    select ds.kode_gudang, ds.kode_barang
+                    from det_stok ds
+                    left join stok s on ds.id_header = s.id
+                    where
+                        s.periode between '".$_start_date."' and '".$_end_date."' and
+                        ds.tgl_trans between '".$_start_date."' and '".$_end_date."' and
+                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+
+                    union
+
+                    select klwr.kode_gudang, klwr.kode_barang
+                    from ( ".$sql_jenis_trans_keluar." ) klwr
+                    where
+                        (klwr.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (klwr.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
+                        klwr.tanggal between '".$_start_date."' and '".$_end_date."'
+                ) k
+            )
             select
                 -- data.*,
                 data.kode_gudang,
@@ -465,6 +502,46 @@ class KartuStokRingkas extends Public_Controller {
                     x.jenis_barang,
                     x.hrg_beli
                 /* END - KELUAR */
+
+                union all
+
+                /* ORDER TERAKHIR (fallback) -- gudang+barang yg SUDAH HABIS terdistribusi
+                   SEBELUM periode ini (jadi tidak muncul di SALDO AWAL/MASUK/KELUAR bulan
+                   ini krn det_stok tidak membawa layer yg sudah 0 ke periode berikutnya).
+                   Tetap tampilkan 1 baris (order/layer TERAKHIR, saldo 0) supaya gudang+
+                   barang itu tidak hilang total dari laporan. */
+                select
+                    lst.kode_gudang,
+                    lst.kode_barang,
+                    lst.jenis_barang,
+                    lst.hrg_beli,
+                    0 as jml_saldo_awal,
+                    0 as saldo_awal,
+                    0 as jml_debet,
+                    0 as debet,
+                    0 as jml_kredit,
+                    0 as kredit
+                from
+                (
+                    select
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.hrg_beli,
+                        row_number() over (partition by ds.kode_gudang, ds.kode_barang order by ds.tgl_trans desc, ds.kode_trans desc) as rn
+                    from det_stok ds
+                    where
+                        ds.tgl_trans < '".$_start_date."' and
+                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
+                        not exists (
+                            select 1 from existing_kb ek
+                            where ek.kode_gudang = ds.kode_gudang and ek.kode_barang = ds.kode_barang
+                        )
+                ) lst
+                where
+                    lst.rn = 1
+                /* END - ORDER TERAKHIR (fallback) */
             ) data
             left join
                 (
