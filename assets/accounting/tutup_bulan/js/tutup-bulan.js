@@ -94,9 +94,94 @@ var tb = {
 				$(this).find('button.close').click(function() {
 					$('div.modal.show').css({'overflow': 'auto'});
 				});
+
+				$(this).find('button.btn-export-unit-image').click(function() {
+					tb.exportUnitImage( $(this) );
+				});
+
+				$(this).find('button.btn-wa-unit-image').click(function() {
+					tb.sendUnitImageWA( $(this) );
+				});
 			});
 		},'html');
 	}, // end - formDataLhkAkhirBulan
+
+	renderUnitCanvas: function( btn ) {
+		var block = $(btn).closest('.unit-lhk-block');
+
+		$(btn).addClass('hide');
+
+		return html2canvas( block[0], { backgroundColor: '#ffffff', scale: 2 } ).then(function(canvas) {
+			$(btn).removeClass('hide');
+			return canvas;
+		}).catch(function(err) {
+			$(btn).removeClass('hide');
+			throw err;
+		});
+	}, // end - renderUnitCanvas
+
+	exportUnitImage: function( btn ) {
+		var unit = $(btn).data('unit');
+
+		$(btn).prop('disabled', true);
+
+		tb.renderUnitCanvas( btn ).then(function(canvas) {
+			$(btn).prop('disabled', false);
+
+			var link = document.createElement('a');
+			link.download = 'LHK Belum Input - ' + unit + '.png';
+			link.href = canvas.toDataURL('image/png');
+			link.click();
+		}).catch(function() {
+			$(btn).prop('disabled', false);
+			bootbox.alert('Gagal membuat gambar.');
+		});
+	}, // end - exportUnitImage
+
+	sendUnitImageWA: function( btn ) {
+		var unit = $(btn).data('unit');
+
+		$(btn).prop('disabled', true);
+
+		tb.renderUnitCanvas( btn ).then(function(canvas) {
+			canvas.toBlob(function(blob) {
+				var file = new File([blob], 'LHK Belum Input - ' + unit + '.png', { type: 'image/png' });
+
+				if ( navigator.canShare && navigator.canShare({ files: [file] }) ) {
+					navigator.share({
+						files: [file],
+						title: 'LHK Belum Input - ' + unit,
+						text: 'LHK Belum Input - ' + unit
+					}).catch(function(err) {
+						// user membatalkan share -- bukan error, diamkan saja
+						if ( err && err.name !== 'AbortError' ) {
+							bootbox.alert('Gagal mengirim gambar : ' + err.message);
+						}
+					}).finally(function() {
+						$(btn).prop('disabled', false);
+					});
+				} else {
+					// Browser/perangkat tidak dukung share file langsung (umum terjadi di desktop).
+					// WhatsApp Web/wa.me cuma bisa terima teks lewat URL, tidak bisa lampiran gambar
+					// otomatis -- jadi gambar didownload dulu, WA Web dibuka dgn teks siap pakai,
+					// user tinggal lampirkan manual gambar yg baru didownload itu.
+					var link = document.createElement('a');
+					link.download = 'LHK Belum Input - ' + unit + '.png';
+					link.href = canvas.toDataURL('image/png');
+					link.click();
+
+					var text = encodeURIComponent('LHK Belum Input - ' + unit);
+					window.open('https://api.whatsapp.com/send?text=' + text, '_blank');
+
+					$(btn).prop('disabled', false);
+					bootbox.alert('Gambar sudah terdownload & WhatsApp Web dibuka di tab baru. Pilih kontak/grup tujuan, lalu lampirkan gambar yang baru terdownload.');
+				}
+			}, 'image/png');
+		}).catch(function() {
+			$(btn).prop('disabled', false);
+			bootbox.alert('Gagal membuat gambar.');
+		});
+	}, // end - sendUnitImageWA
 
 	tutupBulan: function () {
 		var tahun = $('#tahun').find('input[type="text"]').val();

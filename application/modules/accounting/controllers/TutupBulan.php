@@ -18,6 +18,7 @@ class TutupBulan extends Public_Controller
         if ( $this->hakAkses['a_view'] == 1 ) {
             $this->add_external_js(array(
                 'assets/select2/js/select2.min.js',
+                'assets/html2canvas/js/html2canvas.min.js',
                 'assets/accounting/tutup_bulan/js/tutup-bulan.js'
             ));
             $this->add_external_css(array(
