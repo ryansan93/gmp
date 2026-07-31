@@ -709,13 +709,24 @@ class ReturVoadip extends Public_Controller
             $deskripsi_log = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/update', $d_rv, $deskripsi_log);
 
+            // Kalau id_asal (noreg) berubah saat edit, layer stok siklus milik noreg LAMA
+            // ikut harus dihitung ulang -- kalau tidak, layer lama bisa tertinggal salah/stale
+            // krn hitungStokByTransaksi cuma menghitung ulang noreg yang TERBARU (dari DB
+            // yang sudah ke-update). id_asal_old dikirim balik ke JS supaya diteruskan sbg
+            // noreg2 ke hitungStokByTransaksi.
+            $id_asal_old = null;
+            if ( $d_rv_old->asal == 'peternak' && $d_rv_old->id_asal != $params['id_asal'] ) {
+                $id_asal_old = $d_rv_old->id_asal;
+            }
+
             $this->result['status'] = 1;
             $this->result['content'] = array(
                 'id' => $id_rv,
                 'tanggal' => $tgl_trans,
                 'delete' => 0,
                 'message' => 'Data berhasil di update',
-                'status_jurnal' => 2
+                'status_jurnal' => 2,
+                'id_asal_old' => $id_asal_old
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -767,6 +778,7 @@ class ReturVoadip extends Public_Controller
         $delete = $params['delete'];
         $message = $params['message'];
         $status_jurnal = $params['status_jurnal'];
+        $id_asal_old = !empty($params['id_asal_old']) ? $params['id_asal_old'] : null;
 
         try {
             $noreg1 = null;
@@ -775,8 +787,7 @@ class ReturVoadip extends Public_Controller
             $m_conf = new \Model\Storage\Conf();
             $sql = "
                 select
-					rv.id_asal as noreg1,
-					null as noreg2
+					rv.id_asal as noreg1
 				from retur_voadip rv
 				where
 					rv.id = ".$id."
@@ -787,7 +798,13 @@ class ReturVoadip extends Public_Controller
                 $d_conf = $d_conf->toArray()[0];
 
                 $noreg1 = $d_conf['noreg1'];
-                $noreg2 = $d_conf['noreg2'];
+            }
+
+            // Noreg LAMA (sebelum diedit) -- dikirim dari edit() lewat id_asal_old kalau
+            // noreg berubah. Dihitung ulang juga (noreg2) supaya layer siklus noreg lama
+            // ikut ter-update (bukan cuma noreg baru), lihat [[optimasi-sp-stok-pakan]].
+            if ( !empty($id_asal_old) && $id_asal_old != $noreg1 ) {
+                $noreg2 = $id_asal_old;
             }
 
             $conf = new \Model\Storage\Conf();
