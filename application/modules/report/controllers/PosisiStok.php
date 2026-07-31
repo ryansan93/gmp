@@ -123,11 +123,17 @@ class PosisiStok extends Public_Controller {
         // di KartuStok. Cuma dipakai kalau ada tanggal setelah periode batch terakhir s/d
         // tanggal laporan (biasanya cuma "hari ini").
         $sql_gap_masuk = "
-            select kv.tgl_kirim as tanggal, try_cast(kv.tujuan as int) as kode_gudang, dkv.item as kode_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans
+            -- Pakai tgl_terima (bukan tgl_kirim) -- det_stok/HitungStok baru menambah layer stok
+            -- begitu barang DITERIMA gudang tujuan, bukan saat dikirim. Kalau pakai tgl_kirim,
+            -- kiriman yang kirim & terimanya beda hari bisa jatuh di celah (tidak kehitung di
+            -- 'supply' base -- karena tgl_trans sudah >= eff.p -- ataupun di gap ini -- karena
+            -- tgl_kirim < eff.p) sehingga stok yang sudah diterima hilang dari laporan.
+            select tv.tgl_terima as tanggal, try_cast(kv.tujuan as int) as kode_gudang, dkv.item as kode_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans
             from kirim_".$jenis." kv
             join det_kirim_".$jenis." dkv on dkv.id_header = kv.id
+            join terima_".$jenis." tv on tv.id_kirim_".$jenis." = kv.id
             where kv.jenis_tujuan = 'gudang'
-            group by kv.tgl_kirim, kv.tujuan, dkv.item, kv.no_order
+            group by tv.tgl_terima, kv.tujuan, dkv.item, kv.no_order
 
             union all
 
