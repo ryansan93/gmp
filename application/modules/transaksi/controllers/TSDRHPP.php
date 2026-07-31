@@ -3856,13 +3856,17 @@ class TSDRHPP extends Public_Controller {
 
                             union all
 
-                            select sum(rgp.jumlah_bayar) as nominal, pp.nomor as piutang_kode from rhpp_group_potongan rgp 
+                            select sum(rgp.jumlah_bayar) as nominal, pp.nomor as piutang_kode from rhpp_group_potongan rgp
                             left join
                                 penjualan_peralatan pp
                                 on
                                     rgp.id_trans = pp.id
-                            group by 
+                            group by
                                 pp.nomor
+
+                            union all
+
+                            select sum(nilai) as nominal, no_invoice as piutang_kode from kmitem k where no_invoice like 'JPR%' group by no_invoice
                         ) data
                         group by
                             data.piutang_kode

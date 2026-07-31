@@ -1405,6 +1405,80 @@ class RhppGroup extends Public_Controller {
                 where
                     p.nominal > isnull(bp.nominal, 0) and
                     p.mitra = '".$mitra."'
+
+                union all
+
+                select
+                    pp.tanggal,
+                    pp.nomor as kode,
+                    mtr.perusahaan,
+                    'HUTANG PERALATAN' as keterangan,
+                    (pp.total - isnull(bp.nominal, 0)) as sisa_piutang
+                from penjualan_peralatan pp
+                left join
+                    (
+                        select
+                            sum(data.nominal) as nominal,
+                            data.piutang_kode
+                        from (
+                            select sum(saldo+bayar) as nominal, pp.nomor as piutang_kode from bayar_penjualan_peralatan bpp
+                            left join
+                                penjualan_peralatan pp
+                                on
+                                    bpp.id_penjualan_peralatan = pp.id
+                            group by
+                                pp.nomor
+
+                            union all
+
+                            select sum(nominal) as nominal, piutang_kode from rhpp_piutang group by piutang_kode
+
+                            union all
+
+                            select sum(nominal) as nominal, piutang_kode from rhpp_group_piutang group by piutang_kode
+
+                            union all
+
+                            select sum(rp.jumlah_bayar) as nominal, pp.nomor as piutang_kode from rhpp_potongan rp
+                            left join
+                                penjualan_peralatan pp
+                                on
+                                    rp.id_trans = pp.id
+                            group by
+                                pp.nomor
+
+                            union all
+
+                            select sum(rgp.jumlah_bayar) as nominal, pp.nomor as piutang_kode from rhpp_group_potongan rgp
+                            left join
+                                penjualan_peralatan pp
+                                on
+                                    rgp.id_trans = pp.id
+                            group by
+                                pp.nomor
+
+                            union all
+
+                            select sum(nilai) as nominal, no_invoice as piutang_kode from kmitem k where no_invoice like 'JPR%' group by no_invoice
+                        ) data
+                        group by
+                            data.piutang_kode
+                    ) bp
+                    on
+                        pp.nomor = bp.piutang_kode
+                left join
+                    (
+                        select mtr1.* from mitra mtr1
+                        right join
+                            (select max(id) as id, nomor from mitra group by nomor) mtr2
+                            on
+                                mtr1.id = mtr2.id
+                    ) mtr
+                    on
+                        pp.mitra = mtr.nomor
+                where
+                    pp.total > isnull(bp.nominal, 0) and
+                    pp.mitra = '".$mitra."'
             ) data
             left join
                 (
