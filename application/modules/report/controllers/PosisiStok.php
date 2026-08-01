@@ -176,6 +176,37 @@ class PosisiStok extends Public_Controller {
                 -- jatuh ke periode terakhir yang tersedia daripada kosong sama sekali.
                 select max(periode) as p from stok where periode <= '".$next_date."'
             ),
+            existing_gb as (
+                -- gudang+barang yg SUDAH kecover di 2 sumber supply utama (snapshot det_stok
+                -- ATAU gap masuk) -- dipakai NOT EXISTS oleh cabang fallback 'ORDER TERAKHIR'
+                -- di bawah. PENTING kalau lihat tanggal MASA LALU setelah batch sudah lanjut
+                -- (mis. buka laporan tgl 31 Juli tapi hari ini sudah 1 Agustus & batch utk
+                -- 1 Agustus sudah jalan): eff.p jadi 1 Agustus (> tanggal laporan) shg gap
+                -- masuk (yg butuh eff.p <= tanggal laporan) otomatis KOSONG, DAN layer yg
+                -- sudah 0 sebelum eff.p tidak pernah dibawa det_stok ke snapshot berikutnya
+                -- -- gudang+barang itu jadi lenyap total tanpa fallback ini.
+                select distinct ds.kode_gudang, ds.kode_barang
+                from det_stok ds
+                left join stok s on ds.id_header = s.id
+                cross join eff
+                where
+                    s.periode = eff.p and
+                    ds.tgl_trans < eff.p and
+                    ds.jenis_barang = '".$jenis."' and
+                    (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                    (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+
+                union
+
+                select g.kode_gudang, g.kode_barang
+                from ( ".$sql_gap_masuk." ) g
+                cross join eff
+                where
+                    g.kode_gudang is not null and
+                    g.tanggal >= eff.p and g.tanggal <= '".$_date."' and
+                    (g.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                    (g.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+            ),
             supply as (
                 -- layer dari snapshot det_stok periode terakhir yang tersedia (selalu lebih
                 -- lama drpd transaksi gap manapun -- FIFO alami lewat urutan tanggal)
@@ -237,6 +268,33 @@ class PosisiStok extends Public_Controller {
                     g.tanggal >= eff.p and g.tanggal <= '".$_date."' and
                     (g.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                     (g.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+
+                union all
+
+                -- FALLBACK: gudang+barang yg sudah HABIS SEBELUM eff.p (jadi tidak kebawa
+                -- snapshot det_stok manapun lagi) & TIDAK punya gap masuk yg relevan (mis.
+                -- tanggal laporan sudah lewat, batch sudah lanjut ke hari berikutnya). Cari
+                -- order/layer TERAKHIR dari SELURUH histori det_stok (bukan cuma snapshot
+                -- eff.p), tampilkan dgn jumlah 0 spy gudang+barang itu tidak lenyap total.
+                select
+                    lst.kode_gudang, lst.kode_barang, lst.kode_trans, lst.hrg_beli, lst.tanggal, 0 as jumlah
+                from
+                (
+                    select
+                        ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans as tanggal,
+                        row_number() over (partition by ds.kode_gudang, ds.kode_barang order by ds.tgl_trans desc, ds.kode_trans desc) as rn
+                    from det_stok ds
+                    where
+                        ds.jenis_barang = '".$jenis."' and
+                        ds.tgl_trans <= '".$_date."' and
+                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
+                        not exists (
+                            select 1 from existing_gb eg
+                            where eg.kode_gudang = ds.kode_gudang and eg.kode_barang = ds.kode_barang
+                        )
+                ) lst
+                where lst.rn = 1
             ),
             demand as (
                 -- total keluar di masa gap per gudang+barang -- dipakai (bukan ditampilkan)
