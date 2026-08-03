@@ -514,14 +514,14 @@ class GeneralLedger extends Public_Controller {
         $sql = "
             select
                 data.tanggal,
-                data.keterangan,
+                MIN(data.keterangan) as keterangan,
                 data.kode_trans,
                 data.no_coa,
                 data.unit,
                 data.nama_coa,
-                isnull(data.kredit, 0) as kredit,
-                isnull(data.debet, 0) as debet,
-                data.noreg
+                SUM(isnull(data.kredit, 0)) as kredit,
+                SUM(isnull(data.debet, 0)) as debet,
+                ".(($no_coa == '12020.000') ? "data.noreg" : "MIN(data.noreg) as noreg")."
             from
             (
                 select
@@ -745,6 +745,9 @@ class GeneralLedger extends Public_Controller {
             where
                 data.no_coa = '".$no_coa."' and
                 data.unit = '".$unit."'
+            group by
+                data.tanggal, data.kode_trans, data.no_coa, data.unit, data.nama_coa, data.urut
+                ".(($no_coa == '12020.000') ? ", data.noreg" : "")."
             order by
                 data.tanggal asc,
                 data.urut asc,

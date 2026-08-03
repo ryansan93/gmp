@@ -669,14 +669,14 @@ class GeneralLedgerLengkap extends Public_Controller {
         $sql = "
             select
                 data.tanggal,
-                data.keterangan,
+                MIN(data.keterangan) as keterangan,
                 data.kode_trans,
                 data.no_coa,
                 data.unit,
                 data.nama_coa,
                 data.noreg,
-                isnull(data.kredit, 0) as kredit,
-                isnull(data.debet, 0) as debet
+                SUM(isnull(data.kredit, 0)) as kredit,
+                SUM(isnull(data.debet, 0)) as debet
             from
             (
                 ".$sql_sa."
@@ -830,6 +830,8 @@ class GeneralLedgerLengkap extends Public_Controller {
             where
                 data.no_coa = '".$coa."'
                 ".$sql_unit."
+            group by
+                data.tanggal, data.kode_trans, data.no_coa, data.unit, data.nama_coa, data.noreg, data.urut
             order by
                 data.no_coa asc,
                 data.unit asc,
