@@ -35,6 +35,7 @@ class RekapPotonganPajak extends Public_Controller {
             $content['akses'] = $akses;
             $content['formRhpp'] = $this->formRhpp();
             $content['formOaPakan'] = $this->formOaPakan();
+            $content['formDoc'] = $this->formDoc();
             $content['title_menu'] = 'Rekap Potongan Pajak';
 
             // Load Indexx
@@ -106,6 +107,14 @@ class RekapPotonganPajak extends Public_Controller {
         return $html;
     }
 
+    public function formDoc() {
+        $content['perusahaan'] = $this->getPerusahaan();
+        $content['unit'] = $this->getUnit();
+        $html = $this->load->view($this->pathView.'formDoc', $content, TRUE);
+
+        return $html;
+    }
+
     public function getLists() {
         $params = $this->input->get('params');
 
@@ -120,6 +129,10 @@ class RekapPotonganPajak extends Public_Controller {
             $_data = $this->getDataPotonganPajakOaPakan($params);
             $data = $_data['data'];
             $filename = 'listOaPakan';
+        } else if ( $params['jenis'] == 3 ) {
+            $_data = $this->getDataPotonganPajakDoc($params);
+            $data = $_data['data'];
+            $filename = 'listDoc';
         }
 
         $content['data'] = $data;
@@ -780,6 +793,223 @@ class RekapPotonganPajak extends Public_Controller {
         return $_data;
     }
 
+    public function getDataPotonganPajakDoc($params) {
+        $start_date = $params['start_date'];
+        $end_date = $params['end_date'];
+        $perusahaan = $params['perusahaan'];
+        $unit = $params['unit'];
+
+        $sql_perusahaan = "";
+        if ( !in_array('all', $perusahaan) ) {
+            $sql_perusahaan = "and kpd.perusahaan in ('".implode("', '", $perusahaan)."')";
+        }
+
+        $sql_unit = "";
+        if ( !in_array('all', $unit) ) {
+            $sql_unit = "and kpdd.kode_unit in ('".implode("', '", $unit)."')";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                data.tgl_bayar,
+                data.no_supplier,
+                data.nama_supplier,
+                data.ktp,
+                data.npwp,
+                data.kode_unit,
+                data.nama_unit,
+                data.alamat,
+                data.kab_kota,
+                data.prov,
+                data.no_telp,
+                data.pdpt_belum_pajak,
+                data.prs_potongan_pajak,
+                data.potongan_pajak,
+                data.pdpt_sudah_pajak,
+                data.transfer,
+                data.invoice,
+                data.perusahaan,
+                data.nama_perusahaan,
+                data.skb as no_skb,
+                data.tgl_habis_skb
+            from
+            (
+                select
+                    kpd.tgl_bayar,
+                    plg.nomor as no_supplier,
+                    plg.nama as nama_supplier,
+                    plg.nik as ktp,
+                    REPLACE(REPLACE(plg.npwp, '-', ''), '.', '') as npwp,
+                    kpdd.kode_unit,
+                    REPLACE(REPLACE(w.nama, 'Kota ', ''), 'Kab ', '') as nama_unit,
+                    plg.alamat_jalan+isnull(' RT.'+cast(plg.alamat_rt as varchar(5)), null)+isnull('/RW.'+cast(plg.alamat_rw as varchar(5)), null)+', KEL.'+plg.alamat_kelurahan+', KEC.'+kec.nama as alamat,
+                    REPLACE(REPLACE(kab_kota.nama, 'Kota ', ''), 'Kab ', '') as kab_kota,
+                    prov.nama as prov,
+                    tp.nomor as no_telp,
+                    kpdd.total as pdpt_belum_pajak,
+                    0.25 as prs_potongan_pajak,
+                    case
+                        when kpd.tgl_bayar >= '2026-01-01' then
+                            ((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0)) * (0.25/100)
+                        else
+                            kpdd.total * (0.25/100)
+                    end as potongan_pajak,
+                    case
+                        when kpd.tgl_bayar >= '2026-01-01' then
+                            ((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0)) - (((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0)) * (0.25/100))
+                        else
+                            kpdd.total - (kpdd.total * (0.25/100))
+                    end as pdpt_sudah_pajak,
+                    case
+                        when kpd.tgl_bayar >= '2026-01-01' then
+                            ((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0)) - (((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0)) * (0.25/100))
+                        else
+                            kpdd.total - (kpdd.total * (0.25/100))
+                    end as transfer,
+                    td.no_sj as invoice,
+                    prs.kode as perusahaan,
+                    prs.perusahaan as nama_perusahaan,
+                    plg.skb,
+                    plg.tgl_habis_skb
+                from konfirmasi_pembayaran_doc_det kpdd
+                left join
+                    konfirmasi_pembayaran_doc kpd
+                    on
+                        kpdd.id_header = kpd.id
+                left join
+                    (
+                        select p1.* from pelanggan p1
+                        right join
+                            (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p2
+                            on
+                                p1.id = p2.id
+                    ) plg
+                    on
+                        plg.nomor = kpd.supplier
+                left join
+                    (
+                        select tp1.* from telp_pelanggan tp1
+                        right join
+                            (select max(id) as id, pelanggan from telp_pelanggan group by pelanggan) tp2
+                            on
+                                tp1.id = tp2.id
+                    ) tp
+                    on
+                        tp.pelanggan = plg.id
+                left join
+                    lokasi kec
+                    on
+                        plg.alamat_kecamatan = kec.id
+                left join
+                    lokasi kab_kota
+                    on
+                        kec.induk = kab_kota.id
+                left join
+                    lokasi prov
+                    on
+                        kab_kota.induk = prov.id
+                left join
+                    wilayah w
+                    on
+                        kpdd.kode_unit = w.kode
+                left join
+                    (
+                        select prs1.* from perusahaan prs1
+                        right join
+                            (select max(id) as id, kode from perusahaan group by kode) prs2
+                            on
+                                prs1.id = prs2.id
+                    ) prs
+                    on
+                        prs.kode = kpd.perusahaan
+                left join
+                    (select nomor, sum(pakai) as nilai from cn_post_det group by nomor) _cn
+                    on
+                        _cn.nomor = kpd.nomor
+                left join
+                    (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
+                    on
+                        _dn.nomor = kpd.nomor
+                left join
+                    (
+                        select td1.* from terima_doc td1
+                        right join
+                            (select max(id) as id, no_order from terima_doc group by no_order) td2
+                            on
+                                td1.id = td2.id
+                    ) td
+                    on
+                        td.no_order = kpdd.no_order
+                where
+                    kpd.tgl_bayar between '".$start_date."' and '".$end_date."'
+                    ".$sql_perusahaan."
+                    ".$sql_unit."
+            ) data
+        ";
+        $d_conf = $m_conf->hydrateRaw($sql);
+
+        $data = null;
+
+        $tot_pendapatan = 0;
+        $tot_pot_pajak = 0;
+        $tot_pdpt_stlh_pajak = 0;
+        $tot_transfer = 0;
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                $key_header = $value['nama_perusahaan'].' | '.$value['nama_unit'];
+                $key_detail = $value['tgl_bayar'].' | '.$value['nama_supplier'].' | '.$value['invoice'];
+
+                if ( !isset($data[ $key_header ]) ) {
+                    $data[ $key_header ] = array(
+                        'perusahaan' => $value['nama_perusahaan'],
+                        'unit' => $value['nama_unit'],
+                        'pendapatan' => $value['pdpt_belum_pajak'],
+                        'pot_pajak' => $value['potongan_pajak'],
+                        'pdpt_stlh_pajak' => $value['pdpt_sudah_pajak'],
+                        'transfer' => $value['transfer']
+                    );
+                    $data[ $key_header ]['detail'][ $key_detail ] = $value;
+
+                    $tot_pendapatan += $value['pdpt_belum_pajak'];
+                    $tot_pot_pajak += $value['potongan_pajak'];
+                    $tot_pdpt_stlh_pajak += $value['pdpt_sudah_pajak'];
+                    $tot_transfer += $value['transfer'];
+                } else {
+                    $data[ $key_header ]['pendapatan'] += $value['pdpt_belum_pajak'];
+                    $data[ $key_header ]['pot_pajak'] += $value['potongan_pajak'];
+                    $data[ $key_header ]['pdpt_stlh_pajak'] += $value['pdpt_sudah_pajak'];
+                    $data[ $key_header ]['transfer'] += $value['transfer'];
+
+                    $data[ $key_header ]['detail'][ $key_detail ] = $value;
+
+                    $tot_pendapatan += $value['pdpt_belum_pajak'];
+                    $tot_pot_pajak += $value['potongan_pajak'];
+                    $tot_pdpt_stlh_pajak += $value['pdpt_sudah_pajak'];
+                    $tot_transfer += $value['transfer'];
+                }
+
+                ksort($data[ $key_header ]['detail']);
+            }
+
+            ksort($data);
+        }
+
+        $_data = array(
+            'data' => $data,
+            'total' => array(
+                'tot_pendapatan' => $tot_pendapatan,
+                'tot_pot_pajak' => $tot_pot_pajak,
+                'tot_pdpt_stlh_pajak' => $tot_pdpt_stlh_pajak,
+                'tot_transfer' => $tot_transfer,
+            )
+        );
+
+        return $_data;
+    }
+
     public function excryptParams()
     {
         $params = $this->input->post('params');
@@ -814,6 +1044,12 @@ class RekapPotonganPajak extends Public_Controller {
             $content['total'] = $data['total'];
             $res_view_html = $this->load->view($this->pathView.'exportExcelOaPakan', $content, true);
             $filename = "REKAP_POTONGAN_PAJAK_OA_PAKAN_";
+        } else if ( $params['jenis'] == 3 ) {
+            $data = $this->getDataPotonganPajakDoc( $params );
+            $content['data'] = $data['data'];
+            $content['total'] = $data['total'];
+            $res_view_html = $this->load->view($this->pathView.'exportExcelDoc', $content, true);
+            $filename = "REKAP_POTONGAN_PAJAK_DOC_";
         }
 
         // header("Content-type: application/xls");

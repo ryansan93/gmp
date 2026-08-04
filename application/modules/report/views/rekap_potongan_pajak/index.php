@@ -9,6 +9,9 @@
 					<li class="nav-item">
 						<a class="nav-link" data-toggle="tab" href="#oa_pakan" data-tab="oa_pakan">OA PAKAN</a>
 					</li>
+					<li class="nav-item">
+						<a class="nav-link" data-toggle="tab" href="#doc" data-tab="doc">DOC</a>
+					</li>
 				</ul>
 			</div>
 			<div class="panel-body" style="padding-top: 0px;">
@@ -18,6 +21,9 @@
 					</div>
 					<div id="oa_pakan" class="tab-pane fade">
 						<?php echo $formOaPakan; ?>
+					</div>
+					<div id="doc" class="tab-pane fade">
+						<?php echo $formDoc; ?>
 					</div>
 				</div>
 			</div>
