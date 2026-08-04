@@ -30,6 +30,15 @@ class AttachmentRealisasiPembayaran_model extends Conf
     }
 
 
+    public static function showAllByRealisasi($realisasi_id, $tbl_name)
+    {
+        return self::where('realisasi_id', $realisasi_id)
+            ->where('tbl_name', $tbl_name)
+            ->orderBy('id', 'asc')
+            ->get()
+            ->toArray();
+    }
+
     public static function showLastData($realisasi_id = null, $tbl_name = null)
     {
         $query = self::query();
