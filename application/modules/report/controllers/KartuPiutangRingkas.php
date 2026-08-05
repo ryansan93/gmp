@@ -619,4 +619,176 @@ class KartuPiutangRingkas extends Public_Controller {
 
         echo $html;
     }
+
+    /**
+     * Rekap yang sama dengan getData(), tapi digrupkan per UNIT (bukan per pelanggan) --
+     * unit diambil dari real_sj.id_unit (unit yg panen/jual), ditelusuri dari tiap invoice
+     * (det_real_sj_inv) baik untuk baris debet (invoice) maupun kredit (pembayaran, ditelusuri
+     * balik ke invoice yg dibayar). Dipakai untuk cocokkan ke GL per unit (COA Piutang Bakul).
+     */
+    public function getDataPerUnit() {
+        $params = $this->input->get('params');
+
+        $bulan = $params['bulan'];
+        $tahun = substr($params['tahun'], 0, 4);
+
+        if ( $bulan != 'all' ) {
+            $i = $bulan;
+
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+
+            $date = $tahun.'-'.$angka_bulan.'-01';
+            $start_date = date("Y-m-d", strtotime($date));
+            $end_date = date("Y-m-t", strtotime($date));
+        } else {
+            $i = 1;
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+            $_start_date = $tahun.'-'.$angka_bulan.'-01';
+            $start_date = date("Y-m-d", strtotime($_start_date));
+
+            $i = 12;
+            $angka_bulan = (strlen($i) == 1) ? '0'.$i : $i;
+            $_end_date = $tahun.'-'.$angka_bulan.'-01';
+            $end_date = date("Y-m-t", strtotime($_end_date));
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                isnull(w.kode, '-') as unit,
+                isnull(REPLACE(REPLACE(w.nama, 'Kota ', ''), 'Kab ', ''), 'TANPA UNIT') as nama_unit,
+                isnull(sum(data.saldo_awal), 0) as saldo_awal,
+                isnull(sum(data.debet), 0) as debet,
+                isnull(sum(data.kredit), 0) as kredit,
+                (isnull(sum(data.saldo_awal), 0)+isnull(sum(data.debet), 0))-isnull(sum(data.kredit), 0) as saldo_akhir
+            from
+            (
+                /* SALDO AWAL -- saldo piutang per invoice sebelum start_date */
+                select
+                    rs.id_unit,
+                    sum(isnull(x.debet, 0) - isnull(x.kredit, 0)) as saldo_awal,
+                    0 as debet,
+                    0 as kredit
+                from (
+                    select
+                        drs.id_header,
+                        drsi.total as debet,
+                        0 as kredit
+                    from det_real_sj_inv drsi
+                    left join
+                        (select id_header, no_sj from det_real_sj group by id_header, no_sj) drs
+                        on
+                            drsi.no_sj = drs.no_sj
+                    left join
+                        real_sj rs1
+                        on
+                            drs.id_header = rs1.id
+                    where
+                        rs1.tgl_panen < '".$start_date."'
+
+                    union all
+
+                    select
+                        drs.id_header,
+                        0 as debet,
+                        isnull(dpp.tagihan-dpp.sisa_tagihan, 0) as kredit
+                    from det_pembayaran_pelanggan dpp
+                    left join
+                        pembayaran_pelanggan pp
+                        on
+                            dpp.id_header = pp.id
+                    left join
+                        det_real_sj_inv drsi
+                        on
+                            dpp.no_inv = drsi.no_inv
+                    left join
+                        (select id_header, no_sj from det_real_sj group by id_header, no_sj) drs
+                        on
+                            drsi.no_sj = drs.no_sj
+                    where
+                        pp.tgl_bayar < '".$start_date."'
+                        and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) > 0
+                ) x
+                left join
+                    real_sj rs
+                    on
+                        x.id_header = rs.id
+                group by
+                    rs.id_unit
+                /* END - SALDO AWAL */
+
+                union all
+
+                /* TRANSAKSI DI BULAN ITU -- debet (invoice panen bulan ybs) */
+                select
+                    rs.id_unit,
+                    0 as saldo_awal,
+                    isnull(sum(drsi.total), 0) as debet,
+                    0 as kredit
+                from det_real_sj_inv drsi
+                left join
+                    (select id_header, no_sj from det_real_sj group by id_header, no_sj) drs
+                    on
+                        drsi.no_sj = drs.no_sj
+                left join
+                    real_sj rs
+                    on
+                        drs.id_header = rs.id
+                where
+                    rs.tgl_panen between '".$start_date."' and '".$end_date."'
+                group by
+                    rs.id_unit
+
+                union all
+
+                /* TRANSAKSI DI BULAN ITU -- kredit (pembayaran bulan ybs, unit ditelusuri dari invoice yg dibayar) */
+                select
+                    rs.id_unit,
+                    0 as saldo_awal,
+                    0 as debet,
+                    isnull(sum(dpp.tagihan-dpp.sisa_tagihan), 0) as kredit
+                from det_pembayaran_pelanggan dpp
+                left join
+                    pembayaran_pelanggan pp
+                    on
+                        dpp.id_header = pp.id
+                left join
+                    det_real_sj_inv drsi
+                    on
+                        dpp.no_inv = drsi.no_inv
+                left join
+                    (select id_header, no_sj from det_real_sj group by id_header, no_sj) drs
+                    on
+                        drsi.no_sj = drs.no_sj
+                left join
+                    real_sj rs
+                    on
+                        drs.id_header = rs.id
+                where
+                    pp.tgl_bayar between '".$start_date."' and '".$end_date."'
+                    and isnull(dpp.tagihan-dpp.sisa_tagihan, 0) <> 0
+                group by
+                    rs.id_unit
+            ) data
+            left join
+                wilayah w
+                on
+                    data.id_unit = w.id
+            group by
+                w.kode, REPLACE(REPLACE(w.nama, 'Kota ', ''), 'Kab ', '')
+            order by
+                isnull(w.kode, '-') asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        $content['data'] = $data;
+        $html = $this->load->view($this->pathView.'listPerUnit', $content, TRUE);
+
+        echo $html;
+    }
 }
