@@ -1,4 +1,9 @@
 var db = {
+	state: {
+		page: 1,
+		total_pages: 1,
+	},
+
 	startUp: function() {
 		db.settingUp();
 	}, // end - startUp
@@ -105,7 +110,7 @@ var db = {
         // $('.perusahaan').select2();
 	}, // end - settingUp
 
-	getLists: function() {
+	getLists: function(resetPage) {
 		var err = 0;
 
 		$.map( $('[data-required=1]'), function (ipt) {
@@ -120,6 +125,10 @@ var db = {
 		if ( err > 0 ) {
 			bootbox.alert('Harap lengkapi data terlebih dahulu.');
 		} else {
+			if ( resetPage !== false ) {
+				db.state.page = 1;
+			}
+
 			var params = {
 				'jenis': $('select.jenis').select2('val'),
 				'barang': $('select.barang').select2('val'),
@@ -128,6 +137,7 @@ var db = {
 				'unit': $('select.unit').select2('val'),
 				'perusahaan': $('select.perusahaan').select2('val'),
 				'jenis_transaksi': $('select.jenis_transaksi').select2('val'),
+				'page': db.state.page,
 			};
 
 			$.ajax({
@@ -144,7 +154,10 @@ var db = {
 	                if ( data.status == 1 ) {
 		                $('table.tbl_laporan tbody').html( data.html );
 
-		                db.hitTotal();
+		                db.state.page = data.page;
+		                db.state.total_pages = data.total_pages;
+
+		                db.renderPagination(data.total_rows);
 	                } else {
 	                	bootbox.alert( data.message );
 	                }
@@ -153,21 +166,23 @@ var db = {
 		}
 	}, // end - getLists
 
-	hitTotal: function() {
-		var total_beli = 0;
-		var total_jual = 0;
+	gotoPage: function(page) {
+		if ( page < 1 || page > db.state.total_pages ) {
+			return;
+		}
 
-		$.map( $('table.tbl_laporan tbody').find('tr'), function(tr) {
-			var tot_beli = numeral.unformat( $(tr).find('td.tot_beli').text() );
-			var tot_jual = numeral.unformat( $(tr).find('td.tot_jual').text() );
+		db.state.page = page;
+		db.getLists(false);
+	}, // end - gotoPage
 
-			total_beli += parseFloat( tot_beli );
-			total_jual += parseFloat( tot_jual );
-		});
+	renderPagination: function(total_rows) {
+		var page = db.state.page;
+		var total_pages = db.state.total_pages;
 
-		$('table.tbl_laporan').find('.tot_beli b').text( numeral.formatDec(total_beli) );
-		$('table.tbl_laporan').find('.tot_jual b').text( numeral.formatDec(total_jual) );
-	}, // end - hitTotal
+		$('.pagination-db .page-info').text('Halaman ' + page + ' dari ' + total_pages + ' (total ' + numeral.formatInt(total_rows) + ' baris)');
+		$('.pagination-db .btn-prev').prop('disabled', page <= 1);
+		$('.pagination-db .btn-next').prop('disabled', page >= total_pages);
+	}, // end - renderPagination
 
 	excryptParams: function() {
 		var err = 0;

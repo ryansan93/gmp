@@ -130,7 +130,7 @@ class DistribusiBarang extends Public_Controller {
         return $data;
     }
 
-    public function getData( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis ) {
+    private function buildDistribusiCoreSql( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis ) {
         $sql_jenis = "";
         if ( !empty($jenis) ) {
             $sql_jenis .= "and dss.jenis_barang in ('".$jenis."')";
@@ -151,29 +151,55 @@ class DistribusiBarang extends Public_Controller {
         //     $sql_perusahaan .= "and data.kode_prs in ('".implode("', '", $perusahaan)."')";
         // }
 
+        // GD MUTASI ... adalah gudang khusus utk mutasi internal antar gudang, walau tercatat
+        // dengan jenis_trans mentah 'ORDER' (sama seperti distribusi ke peternak beneran), jadi
+        // secara tampilan/filter dianggap MUTASI, bukan DISTRIBUSI, kalau asal-nya gudang ini.
         $sql_jenis_transaksi = "";
         if ( !empty($jenis_transaksi) && !in_array('all', $jenis_transaksi) ) {
-            $sql_jenis_transaksi .= "and dss.jenis_trans in ('".implode("', '", $jenis_transaksi)."')";
+            $cond_jenis_transaksi = array();
+            if ( in_array('order', $jenis_transaksi) ) {
+                $cond_jenis_transaksi[] = "(dss.jenis_trans = 'order' and isnull(asal.nama, '') not like 'GD MUTASI%')";
+            }
+            if ( in_array('mutasi', $jenis_transaksi) ) {
+                $cond_jenis_transaksi[] = "(dss.jenis_trans = 'mutasi')";
+                $cond_jenis_transaksi[] = "(dss.jenis_trans = 'order' and asal.nama like 'GD MUTASI%')";
+            }
+            foreach ($jenis_transaksi as $jt) {
+                if ( !in_array($jt, array('order', 'mutasi')) ) {
+                    $cond_jenis_transaksi[] = "(dss.jenis_trans = '".$jt."')";
+                }
+            }
+
+            if ( !empty($cond_jenis_transaksi) ) {
+                $sql_jenis_transaksi = "and (".implode(' or ', $cond_jenis_transaksi).")";
+            }
         }
 
-        $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select * from
             (
                 select
                     -- dss.*,
                     -- dss.jenis_trans,
                     case
+                        when dss.jenis_trans like '%order%' and asal.nama like 'GD MUTASI%' then
+                            'mutasi'
                         when dss.jenis_trans like '%order%' then
                             'DISTRIBUSI'
                         else
                             dss.jenis_trans
                     end as jenis_trans,
+                    dss.jenis_barang,
                     dss.tgl_trans,
                     dss.kode_barang,
                     brg.nama as nama_barang,
                     dss.kode_trans,
                     krm.no_sj,
+                    case
+                        when dss.jenis_trans like '%order%' and sup.nomor is not null then
+                            krm.no_sj
+                        else
+                            null
+                    end as no_sj_vendor,
                     dss.jumlah,
                     dss.oa,
                     dss.hrg_beli,
@@ -291,14 +317,20 @@ class DistribusiBarang extends Public_Controller {
                         dss.jenis_barang = krm.jenis
                 left join
                     (
+                        select distinct nomor from pelanggan where tipe = 'supplier'
+                    ) sup
+                    on
+                        krm.asal = sup.nomor
+                left join
+                    (
                         select plg1.nomor, nama, '' as unit, '' as kandang from pelanggan plg1
                         right join
                             (select max(id) as id, nomor from pelanggan group by nomor) plg2
                             on
                                 plg1.id = plg2.id
-    
+
                         union all
-    
+
                         select rs.noreg as nomor, m.nama, w.kode as unit, cast(k.kandang as varchar(5)) as kandang from rdim_submit rs
                         left join
                             (
@@ -322,9 +354,9 @@ class DistribusiBarang extends Public_Controller {
                             wilayah w
                             on
                                 w.id = k.unit
-    
+
                         union all
-    
+
                         select cast(gdg.id as varchar(20)) as nomor, gdg.nama, w.kode as unit, '' as kandang from gudang gdg
                         left join
                             wilayah w
@@ -393,7 +425,18 @@ class DistribusiBarang extends Public_Controller {
                     ".$sql_unit."
                     ".$sql_jenis_transaksi."
                     ".$sql_brg."
-            ) data
+            )
+        ";
+
+        return $sql;
+    }
+
+    public function getData( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis, $page = null, $per_page = null ) {
+        $core = $this->buildDistribusiCoreSql( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis );
+
+        $sql = "
+            select * from
+            ".$core." data
             order by
                 data.tgl_trans asc,
                 data.unit asc,
@@ -401,14 +444,121 @@ class DistribusiBarang extends Public_Controller {
                 data.nama_barang asc,
                 data.urut asc
         ";
+
+        if ( !empty($page) && !empty($per_page) ) {
+            $offset = ($page - 1) * $per_page;
+            $sql .= " offset ".$offset." rows fetch next ".$per_page." rows only";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
         $d_conf = $m_conf->hydrateRaw( $sql );
 
         $data = null;
         if ( $d_conf->count() > 0 ) {
             $data = $d_conf->toArray();
+            $data = $this->fillSjVendorPakan( $data );
         }
 
         return $data;
+    }
+
+    /**
+     * SJ vendor untuk pakan tidak bisa langsung diambil dari 'krm' (asal-nya gudang, bukan
+     * supplier), jadi ditelusuri lewat det_stok_trans: transaksi keluar gudang (kode_trans)
+     * konsumsi stok dari batch masuk gudang (det_stok, via id_header) yang berasal dari SJ opks
+     * (kirim_pakan). Sengaja dipisah dari query utama (bukan JOIN/APPLY di situ) supaya cuma
+     * dihitung untuk baris yang benar-benar tampil, bukan untuk semua baris sebelum di-sort.
+     * Khusus jenis_barang = 'pakan' saja, voadip/doc tidak diubah.
+     */
+    private function fillSjVendorPakan( $data ) {
+        $pairs = array();
+        foreach ($data as $row) {
+            if ( $row['jenis_trans'] == 'DISTRIBUSI' && $row['jenis_barang'] == 'pakan' && empty($row['no_sj_vendor']) ) {
+                $key = $row['kode_trans'].'|'.$row['kode_barang'];
+                $pairs[ $key ] = array('kode_trans' => $row['kode_trans'], 'kode_barang' => $row['kode_barang']);
+            }
+        }
+
+        if ( empty($pairs) ) {
+            return $data;
+        }
+
+        // SQL Server membatasi table value constructor (VALUES ...) maksimal 1000 baris per statement,
+        // jadi dipecah per batch supaya export dengan ribuan kode_trans unik tidak error.
+        $map = array();
+        foreach ( array_chunk($pairs, 500) as $chunk ) {
+            $values = array();
+            foreach ($chunk as $p) {
+                $values[] = "('".str_replace("'", "''", $p['kode_trans'])."', '".str_replace("'", "''", $p['kode_barang'])."')";
+            }
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    dst.kode_trans,
+                    dst.kode_barang,
+                    stuff((
+                        select distinct ', ' + x.no_sj
+                        from det_stok_trans dst2
+                        left join det_stok ds2 on dst2.id_header = ds2.id
+                        left join
+                            (
+                                select no_order, no_sj from kirim_pakan where jenis_kirim = 'opks'
+                            ) x
+                            on ds2.kode_trans = x.no_order
+                        where dst2.kode_trans = dst.kode_trans and dst2.kode_barang = dst.kode_barang and x.no_sj is not null
+                        for xml path('')
+                    ), 1, 2, '') as no_sj_vendor
+                from det_stok_trans dst
+                join (values ".implode(', ', $values).") as pairs(kode_trans, kode_barang)
+                    on dst.kode_trans = pairs.kode_trans and dst.kode_barang = pairs.kode_barang
+                group by dst.kode_trans, dst.kode_barang
+            ";
+            $d_sjv = $m_conf->hydrateRaw( $sql );
+
+            if ( $d_sjv->count() > 0 ) {
+                foreach ($d_sjv->toArray() as $row) {
+                    $map[ $row['kode_trans'].'|'.$row['kode_barang'] ] = $row['no_sj_vendor'];
+                }
+            }
+        }
+
+        foreach ($data as $key => $row) {
+            if ( $row['jenis_trans'] == 'DISTRIBUSI' && $row['jenis_barang'] == 'pakan' && empty($row['no_sj_vendor']) ) {
+                $mapKey = $row['kode_trans'].'|'.$row['kode_barang'];
+                if ( isset($map[ $mapKey ]) ) {
+                    $data[ $key ]['no_sj_vendor'] = $map[ $mapKey ];
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    public function getDataSummary( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis ) {
+        $core = $this->buildDistribusiCoreSql( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis );
+
+        $sql = "
+            select
+                count(*) as total_rows,
+                sum(data.jumlah) as tot_jumlah,
+                sum(data.tot_beli) as tot_beli
+            from
+            ".$core." data
+        ";
+
+        $m_conf = new \Model\Storage\Conf();
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $summary = array('total_rows' => 0, 'tot_jumlah' => 0, 'tot_beli' => 0);
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+            $summary['total_rows'] = (int) $d_conf[0]['total_rows'];
+            $summary['tot_jumlah'] = (float) $d_conf[0]['tot_jumlah'];
+            $summary['tot_beli'] = (float) $d_conf[0]['tot_beli'];
+        }
+
+        return $summary;
     }
 
     public function getDataPakan( $start_date, $end_date, $barang, $unit, $perusahaan )
@@ -1354,23 +1504,23 @@ class DistribusiBarang extends Public_Controller {
             $jenis_transaksi = $params['jenis_transaksi'];
             // $jenis_transaksi = null;
 
-            $data = $this->getData( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis );
+            $page = !empty($params['page']) ? (int) $params['page'] : 1;
+            $per_page = 100;
 
-            // cetak_r( $data, 1 );
-
-            // $data = null;
-            // if ( stristr($jenis, 'pakan') !== FALSE ) {
-            //     $data = $this->getDataPakan( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis );
-            // } else if ( stristr($jenis, 'voadip') !== FALSE ) {
-            //     $data = $this->getDataVoadip( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis );
-            // }
+            $data = $this->getData( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis, $page, $per_page );
+            $summary = $this->getDataSummary( $start_date, $end_date, $barang, $unit, $perusahaan, $jenis_transaksi, $jenis );
 
             $content['data'] = $data;
+            $content['tot_jumlah'] = $summary['tot_jumlah'];
+            $content['tot_beli'] = $summary['tot_beli'];
 
             $html = $this->load->view($this->pathView.'list', $content, TRUE);
 
             $this->result['status'] = 1;
             $this->result['html'] = $html;
+            $this->result['page'] = $page;
+            $this->result['total_rows'] = $summary['total_rows'];
+            $this->result['total_pages'] = ( $summary['total_rows'] > 0 ) ? (int) ceil($summary['total_rows'] / $per_page) : 1;
         } catch (Exception $e) {
             $this->result['message'] = $e->getMessage();
         }
@@ -1474,6 +1624,10 @@ class DistribusiBarang extends Public_Controller {
 
                 $baris++;
             }
+
+            $baris_total = $baris - 1;
+            $spreadsheet->getActiveSheet()->getStyle('A'.$baris_total.':'.toAlpha(count($arr_header)).$baris_total)
+                        ->applyFromArray(['font' => ['bold' => true]]);
         } else {
             $range1 = 'A'.$baris;
             $range2 = toAlpha(count($arr_header)).$baris;
@@ -1535,10 +1689,12 @@ class DistribusiBarang extends Public_Controller {
             
         $filename = 'DISTRIBUSI_'.strtoupper($jenis).'_'.str_replace('-', '', $params['start_date']).'_'.str_replace('-', '', $params['end_date']).'.xlsx';
 
-        $arr_header = array('Transaksi', 'Tanggal', 'Unit', 'Asal', 'Tujuan', 'Noreg', 'Barang', 'No. SJ', 'Jumlah', 'OA', 'OA Mutasi', 'Hrg Beli', 'Total Beli');
+        $arr_header = array('Transaksi', 'Tanggal', 'Unit', 'Asal', 'Tujuan', 'Noreg', 'Barang', 'No. SJ', 'SJ Vendor', 'Jumlah', 'OA', 'OA Mutasi', 'Hrg Beli', 'Total Beli');
         $arr_column = null;
         if ( !empty($data) ) {
             $idx = 0;
+            $tot_jumlah = 0;
+            $tot_beli = 0;
             foreach ($data as $key => $value) {
                 $arr_column[ $idx ] = array(
                     'Transaksi' => array('value' => strtoupper($value['jenis_trans']), 'data_type' => 'string'),
@@ -1549,6 +1705,7 @@ class DistribusiBarang extends Public_Controller {
                     'Noreg' => array('value' => $value['noreg'], 'data_type' => 'string'),
                     'Barang' => array('value' => strtoupper($value['nama_barang']), 'data_type' => 'string'),
                     'No. SJ' => array('value' => strtoupper($value['no_sj']), 'data_type' => 'string'),
+                    'SJ Vendor' => array('value' => strtoupper($value['no_sj_vendor']), 'data_type' => 'string'),
                     'Jumlah' => array('value' => $value['jumlah'], 'data_type' => 'decimal2'),
                     'OA' => array('value' => isset($value['oa']) ? $value['oa'] : 0, 'data_type' => 'decimal2'),
                     'OA Mutasi' => array('value' => isset($value['oa_mutasi']) ? $value['oa_mutasi'] : 0, 'data_type' => 'decimal2'),
@@ -1558,8 +1715,28 @@ class DistribusiBarang extends Public_Controller {
                     // 'Total Jual' => array('value' => $value['tot_jual'], 'data_type' => 'decimal2'),
                 );
 
+                $tot_jumlah += $value['jumlah'];
+                $tot_beli += $value['tot_beli'];
+
                 $idx++;
             }
+
+            $arr_column[ $idx ] = array(
+                'Transaksi' => array('value' => 'GRAND TOTAL', 'data_type' => 'string'),
+                'Tanggal' => array('value' => '', 'data_type' => 'string'),
+                'Unit' => array('value' => '', 'data_type' => 'string'),
+                'Asal' => array('value' => '', 'data_type' => 'string'),
+                'Tujuan' => array('value' => '', 'data_type' => 'string'),
+                'Noreg' => array('value' => '', 'data_type' => 'string'),
+                'Barang' => array('value' => '', 'data_type' => 'string'),
+                'No. SJ' => array('value' => '', 'data_type' => 'string'),
+                'SJ Vendor' => array('value' => '', 'data_type' => 'string'),
+                'Jumlah' => array('value' => $tot_jumlah, 'data_type' => 'decimal2'),
+                'OA' => array('value' => '', 'data_type' => 'string'),
+                'OA Mutasi' => array('value' => '', 'data_type' => 'string'),
+                'Hrg Beli' => array('value' => '', 'data_type' => 'string'),
+                'Total Beli' => array('value' => $tot_beli, 'data_type' => 'decimal2'),
+            );
         }
 
         $this->exportExcelUsingSpreadSheet( $filename, $arr_header, $arr_column );

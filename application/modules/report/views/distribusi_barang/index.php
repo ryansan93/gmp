@@ -116,6 +116,7 @@
 						<th class="text-center" style="width: 10%; vertical-align: middle;">Noreg</th>
 						<th class="text-center" style="width: 10%; vertical-align: middle;">Barang</th>
 						<th class="text-center" style="width: 7%; vertical-align: middle;">No. SJ</th>
+						<th class="text-center" style="width: 7%; vertical-align: middle;">SJ Vendor</th>
 						<th class="text-center" style="width: 5%; vertical-align: middle;">Jumlah</th>
 						<th class="text-center" style="width: 5%; vertical-align: middle;">OA</th>
 						<th class="text-center" style="width: 5%; vertical-align: middle;">OA Mutasi</th>
@@ -128,11 +129,16 @@
 				</thead>
 				<tbody>
 					<tr>
-						<td colspan="12">Data tidak ditemukan.</td>
+						<td colspan="14">Data tidak ditemukan.</td>
 					</tr>
 				</tbody>
 			</table>
 		</small>
+	</div>
+	<div class="col-xs-12 no-padding pagination-db" style="padding-top: 8px;">
+		<button type="button" class="btn btn-sm btn-default btn-prev" disabled onclick="db.gotoPage(db.state.page - 1)"><i class="fa fa-chevron-left"></i> Sebelumnya</button>
+		<button type="button" class="btn btn-sm btn-default btn-next" disabled onclick="db.gotoPage(db.state.page + 1)">Selanjutnya <i class="fa fa-chevron-right"></i></button>
+		<span class="page-info" style="margin-left: 10px;">Halaman 1 dari 1 (total 0 baris)</span>
 	</div>
 	<div class="col-xs-12"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 	<div class="col-xs-12">
