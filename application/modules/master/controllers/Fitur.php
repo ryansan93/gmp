@@ -113,6 +113,7 @@ class Fitur extends Public_Controller
 					$m_dftr->nama_detfitur = $val['nama_fitur'];
 					$m_dftr->path_detfitur = $val['path_fitur'];
 					$m_dftr->id_fitur = $id_fitur;
+					$m_dftr->status = 1;
 					$m_dftr->save();
 				}
 
@@ -210,9 +211,40 @@ class Fitur extends Public_Controller
 				$m_dftr->nama_detfitur = $val['nama_fitur'];
 				$m_dftr->path_detfitur = $val['path_fitur'];
 				$m_dftr->id_fitur = $id_fitur;
+				$m_dftr->status = 1;
 				$m_dftr->save();
 			}
 		}
+	}
+
+	public function toggle_status_detail()
+	{
+		$akses = hakAkses($this->url);
+		$id_detfitur = $this->input->post('id_detfitur');
+
+		try {
+			if ( $akses['a_edit'] != 1 ) {
+				$this->result['message'] = 'Anda tidak memiliki akses untuk mengubah data ini.';
+			} else {
+				$m_dftr = new \Model\Storage\DetFitur_model();
+				$d_dftr = $m_dftr->where('id_detfitur', trim($id_detfitur))->first();
+
+				if ( empty($d_dftr) ) {
+					$this->result['message'] = 'Data tidak ditemukan.';
+				} else {
+					$status_baru = ( $d_dftr['status'] == 1 ) ? 0 : 1;
+					$m_dftr->where('id_detfitur', trim($id_detfitur))->update(array('status' => $status_baru));
+
+					$this->result['status'] = 1;
+					$this->result['status_baru'] = $status_baru;
+					$this->result['message'] = 'Status berhasil diubah';
+				}
+			}
+		} catch (\Illuminate\Database\QueryException $e) {
+			$this->result['message'] = "Gagal : " . $e->getMessage();
+		}
+
+		display_json($this->result);
 	}
 
 	public function delete_data()

@@ -25,6 +25,8 @@
 							<th class="col-sm-2">Kode</th>
 							<th class="col-sm-2">Nama</th>
 							<th>Path Fitur</th>
+							<th class="col-sm-1 text-center">Status</th>
+							<?php if ( $akses['a_edit'] == 1 ): ?><th class="col-sm-1 text-center">Action</th><?php endif ?>
 						</tr>
 					</thead>
 					<tbody>
@@ -33,6 +35,14 @@
 								<td><?php echo $d_val['id_detfitur']; ?></td>
 								<td><?php echo $d_val['nama_detfitur']; ?></td>
 								<td><?php echo $d_val['path_detfitur']; ?></td>
+								<td class="text-center"><?php echo $d_val['status'] == 1 ? 'AKTIF' : 'NON AKTIF'; ?></td>
+								<?php if ( $akses['a_edit'] == 1 ): ?>
+									<td class="text-center">
+										<button type="button" class="btn btn-sm <?php echo $d_val['status'] == 1 ? 'btn-warning' : 'btn-success'; ?> cursor-p" title="<?php echo $d_val['status'] == 1 ? 'NON-AKTIFKAN' : 'AKTIFKAN'; ?>" data-iddet="<?php echo $d_val['id_detfitur']; ?>" onclick="fitur.toggle_status_detail(this)">
+											<i class="fa <?php echo $d_val['status'] == 1 ? 'fa-toggle-on' : 'fa-toggle-off'; ?>" aria-hidden="true"></i>
+										</button>
+									</td>
+								<?php endif ?>
 							</tr>
 						<?php endforeach ?>
 					</tbody>
@@ -62,6 +72,8 @@
 								<th class="col-sm-2">Kode</th>
 								<th class="col-sm-2">Nama</th>
 								<th>Path Fitur</th>
+								<th class="col-sm-1 text-center">Status</th>
+								<?php if ( $akses['a_edit'] == 1 ): ?><th class="col-sm-1 text-center">Action</th><?php endif ?>
 							</tr>
 						</thead>
 						<tbody>
@@ -71,11 +83,19 @@
 										<td><?php echo $d_val['id_detfitur']; ?></td>
 										<td><?php echo $d_val['nama_detfitur']; ?></td>
 										<td><?php echo $d_val['path_detfitur']; ?></td>
+										<td class="text-center"><?php echo $d_val['status'] == 1 ? 'AKTIF' : 'NON AKTIF'; ?></td>
+										<?php if ( $akses['a_edit'] == 1 ): ?>
+											<td class="text-center">
+												<button type="button" class="btn btn-sm <?php echo $d_val['status'] == 1 ? 'btn-warning' : 'btn-success'; ?> cursor-p" title="<?php echo $d_val['status'] == 1 ? 'NON-AKTIFKAN' : 'AKTIFKAN'; ?>" data-iddet="<?php echo $d_val['id_detfitur']; ?>" onclick="fitur.toggle_status_detail(this)">
+													<i class="fa <?php echo $d_val['status'] == 1 ? 'fa-toggle-on' : 'fa-toggle-off'; ?>" aria-hidden="true"></i>
+												</button>
+											</td>
+										<?php endif ?>
 									</tr>
 								<?php endforeach ?>
 							<?php else: ?>
 								<tr>
-									<td colspan="3">Belum ada item.</td>
+									<td colspan="5">Belum ada item.</td>
 								</tr>
 							<?php endif ?>
 						</tbody>

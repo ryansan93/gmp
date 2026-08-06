@@ -249,6 +249,35 @@ var fitur = {
 
 	}, // end - delete
 
+	toggle_status_detail: function(elm) {
+		var btn = $(elm);
+		var id_detfitur = $(btn).data('iddet');
+
+		bootbox.confirm('Apakah anda yakin ingin mengubah status item menu ini ?', function(result){
+			if ( result ) {
+				$.ajax({
+					url : 'master/Fitur/toggle_status_detail',
+					dataType: 'json',
+					type: 'post',
+					data: {
+						'id_detfitur' : id_detfitur
+					},
+					beforeSend : function(){
+						showLoading();
+					},
+					success : function(data){
+						hideLoading();
+						if ( data.status == 1 ) {
+							fitur.getLists();
+						} else {
+							bootbox.alert(data.message);
+						}
+					}
+				});
+			};
+		});
+	}, // end - toggle_status_detail
+
 	showHideDetail: function() {
 		$('tr.head').click(function () {
 			var val = $(this).data('val');

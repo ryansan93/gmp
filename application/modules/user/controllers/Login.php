@@ -41,7 +41,7 @@ class Login extends MY_Controller
 					$group = $group->toArray();
 					foreach ($group['detail_group'] as $key => $v_group) {
 						$detail = $v_group['detail_fitur'];
-						if ( !empty($detail) ) {
+						if ( !empty($detail) && $detail['status'] == 1 ) {
 							$ftr = $v_group['detail_fitur']['fitur'];
 							if ( $ftr['status'] == 1 ) {
 								if ( !empty($ftr['induk']) ) {
