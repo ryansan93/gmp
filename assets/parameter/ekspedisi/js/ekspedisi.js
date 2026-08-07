@@ -368,7 +368,7 @@ var ekspedisi = {
 					};
 					// var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
 					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val();
-					var skb = $(div_ekspedisi).find('input[name=skb_ekspedisi]').val().trim();
+					var skb = !empty($(div_ekspedisi).find('input[name=skb_ekspedisi]').val()) ? $(div_ekspedisi).find('input[name=skb_ekspedisi]').val().trim() : null;
 					var tgl_habis_skb = !empty($(div_ekspedisi).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_ekspedisi).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
 						'kecamatan' : $(div_ekspedisi).find('select[name=kecamatan_usaha_ekspedisi]').val(),
