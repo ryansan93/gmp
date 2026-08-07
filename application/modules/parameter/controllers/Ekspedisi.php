@@ -322,8 +322,8 @@ class Ekspedisi extends Public_Controller {
 			$m_ekspedisi->nik = $params['ktp'];
 			$m_ekspedisi->cp = $params['cp'];
 			$m_ekspedisi->npwp = $params['npwp'];
-			$m_ekspedisi->skb = $params['skb'];
-			$m_ekspedisi->tgl_habis_skb = $params['tgl_habis_skb'];
+			$m_ekspedisi->skb = isset($params['skb']) ? $params['skb'] : null;
+			$m_ekspedisi->tgl_habis_skb = isset($params['tgl_habis_skb']) ? $params['tgl_habis_skb'] : null;
 			$m_ekspedisi->alamat_kecamatan = $params['alamat_ekspedisi']['kecamatan'];
 			$m_ekspedisi->alamat_kelurahan = $params['alamat_ekspedisi']['kelurahan'];
 			$m_ekspedisi->alamat_rt = $params['alamat_ekspedisi']['rt'] ?: null;
