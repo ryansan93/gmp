@@ -367,7 +367,7 @@ var ekspedisi = {
 						'rw' :  $(div_ekspedisi).find('input[name=rw_ekspedisi]').val().trim(),
 					};
 					// var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
-					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val();
+					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val().replace(/\D/g, '');
 					var skb = !empty($(div_ekspedisi).find('input[name=skb_ekspedisi]').val()) ? $(div_ekspedisi).find('input[name=skb_ekspedisi]').val().trim() : null;
 					var tgl_habis_skb = !empty($(div_ekspedisi).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_ekspedisi).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
@@ -481,7 +481,7 @@ var ekspedisi = {
 						'rw' :  $(div_ekspedisi).find('input[name=rw_ekspedisi]').val().trim(),
 					};
 					// var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
-					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val();
+					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val().replace(/\D/g, '');
 					var skb = $(div_ekspedisi).find('input[name=skb_ekspedisi]').val().trim();
 					var tgl_habis_skb = !empty($(div_ekspedisi).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_ekspedisi).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
