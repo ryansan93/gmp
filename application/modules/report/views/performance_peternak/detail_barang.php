@@ -18,7 +18,16 @@
 								<?php echo tglIndonesia($value['tanggal'], '-', ' '); ?>
 								<br><small class="text-muted"><?php echo $value['kode_trans']; ?></small>
 							</td>
-							<td><?php echo strtoupper($value['jenis_trans']); ?></td>
+							<td>
+								<?php echo strtoupper($value['jenis_trans']); ?>
+								<?php if ( !empty($value['asal']) || !empty($value['tujuan']) ): ?>
+									<br><small class="text-muted">
+										<?php echo !empty($value['asal']) ? $value['asal'] : '-'; ?>
+										<i class="fa fa-long-arrow-right"></i>
+										<?php echo !empty($value['tujuan']) ? $value['tujuan'] : '-'; ?>
+									</small>
+								<?php endif ?>
+							</td>
 							<td class="text-right"><?php echo ($value['masuk'] > 0) ? angkaDecimal($value['masuk']) : '-'; ?></td>
 							<td class="text-right"><?php echo ($value['keluar'] > 0) ? angkaDecimal($value['keluar']) : '-'; ?></td>
 							<td class="text-right"><b><?php echo angkaDecimal($value['saldo']); ?></b></td>

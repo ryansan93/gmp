@@ -499,6 +499,7 @@ class PerformancePeternak extends Public_Controller {
                 isnull(bb, 0) as bb,
                 isnull(fcr, 0) as fcr,
                 isnull(adg, 0) as adg,
+                isnull(ip, 0) as ip,
                 isnull(ekor_mati, 0) as ekor_mati,
                 isnull(pakai_pakan, 0) as pakai_pakan
             from lhk
@@ -517,6 +518,7 @@ class PerformancePeternak extends Public_Controller {
                 'bw' => array(),
                 'fcr' => array(),
                 'adg' => array(),
+                'ip' => array(),
                 'fi' => array(),
                 'deplesi' => array(),
                 'ekor_mati' => array(),
@@ -536,6 +538,7 @@ class PerformancePeternak extends Public_Controller {
                 $data['bw'][] = round((float) $row['bb'], 3);
                 $data['fcr'][] = round((float) $row['fcr'], 3);
                 $data['adg'][] = round(((float) $row['adg']) * 1000, 1);
+                $data['ip'][] = round((float) $row['ip'], 1);
                 $data['fi'][] = round($fi, 1);
                 $data['deplesi'][] = round(((float) $row['ekor_mati'] / $_populasi) * 100, 2);
                 $data['ekor_mati'][] = (int) $row['ekor_mati'];
@@ -739,6 +742,10 @@ class PerformancePeternak extends Public_Controller {
     /**
      * Riwayat transaksi 1 barang (pakan/ovk) untuk 1 siklus, versi UNGROUPED dari
      * mappingDataReport (yang di-GROUP BY per barang), diurutkan tanggal + saldo berjalan.
+     * Untuk baris MUTASI/RETUR, ikut resolve asal & tujuan (lewat kirim_pakan/kirim_voadip
+     * utk mutasi, retur_pakan/retur_voadip utk retur) — id_header di det_stok_trans_siklus
+     * mengarah ke det_stok_siklus (bukan ke header transaksi), jadi joinnya lewat kode_trans
+     * (= no_order/no_retur dokumen sumbernya), bukan id_header.
      */
     public function mappingDetailBarang( $_noreg, $_kode_barang, $_end_date )
     {
@@ -758,8 +765,32 @@ class PerformancePeternak extends Public_Controller {
                     end as jenis_trans,
                     dss.kode_trans,
                     dss.jumlah as masuk,
-                    0 as keluar
+                    0 as keluar,
+                    isnull(kp_in.jenis_kirim, kv_in.jenis_kirim) as mut_jenis_kirim,
+                    isnull(kp_in.asal, kv_in.asal) as mut_asal,
+                    isnull(kp_in.jenis_tujuan, kv_in.jenis_tujuan) as mut_jenis_tujuan,
+                    isnull(kp_in.tujuan, kv_in.tujuan) as mut_tujuan,
+                    isnull(rp_in.asal, rv_in.asal) as ret_asal,
+                    isnull(rp_in.id_asal, rv_in.id_asal) as ret_id_asal,
+                    isnull(rp_in.tujuan, rv_in.tujuan) as ret_tujuan,
+                    isnull(rp_in.id_tujuan, rv_in.id_tujuan) as ret_id_tujuan
                 from det_stok_siklus dss
+                left join
+                    kirim_pakan kp_in
+                    on
+                        dss.jenis_trans = 'MUTASI' and kp_in.no_order = dss.kode_trans
+                left join
+                    kirim_voadip kv_in
+                    on
+                        dss.jenis_trans = 'MUTASI' and kv_in.no_order = dss.kode_trans
+                left join
+                    retur_pakan rp_in
+                    on
+                        dss.jenis_trans = 'RETUR' and rp_in.no_retur = dss.kode_trans
+                left join
+                    retur_voadip rv_in
+                    on
+                        dss.jenis_trans = 'RETUR' and rv_in.no_retur = dss.kode_trans
                 where
                     dss.noreg = '".$_noreg."' and
                     dss.kode_barang = '".$_kode_barang."' and
@@ -779,7 +810,15 @@ class PerformancePeternak extends Public_Controller {
                         else dsts.kode_trans
                     end as kode_trans,
                     0 as masuk,
-                    dsts.jumlah as keluar
+                    dsts.jumlah as keluar,
+                    isnull(kp.jenis_kirim, kv.jenis_kirim) as mut_jenis_kirim,
+                    isnull(kp.asal, kv.asal) as mut_asal,
+                    isnull(kp.jenis_tujuan, kv.jenis_tujuan) as mut_jenis_tujuan,
+                    isnull(kp.tujuan, kv.tujuan) as mut_tujuan,
+                    isnull(rp.asal, rv.asal) as ret_asal,
+                    isnull(rp.id_asal, rv.id_asal) as ret_id_asal,
+                    isnull(rp.tujuan, rv.tujuan) as ret_tujuan,
+                    isnull(rp.id_tujuan, rv.id_tujuan) as ret_id_tujuan
                 from det_stok_trans_siklus dsts
                 left join
                     det_stok_siklus dss
@@ -789,6 +828,22 @@ class PerformancePeternak extends Public_Controller {
                     lhk l
                     on
                         cast(l.id as varchar(20)) = dsts.kode_trans
+                left join
+                    kirim_pakan kp
+                    on
+                        dsts.tbl_name = 'terima_pakan' and kp.no_order = dsts.kode_trans
+                left join
+                    kirim_voadip kv
+                    on
+                        dsts.tbl_name = 'terima_voadip' and kv.no_order = dsts.kode_trans
+                left join
+                    retur_pakan rp
+                    on
+                        dsts.tbl_name = 'retur_pakan' and rp.no_retur = dsts.kode_trans
+                left join
+                    retur_voadip rv
+                    on
+                        dsts.tbl_name = 'retur_voadip' and rv.no_retur = dsts.kode_trans
                 where
                     dss.noreg = '".$_noreg."' and
                     dsts.kode_barang = '".$_kode_barang."' and
@@ -807,9 +862,150 @@ class PerformancePeternak extends Public_Controller {
             foreach ($data as $key => $value) {
                 $saldo += $value['masuk'] - $value['keluar'];
                 $data[$key]['saldo'] = $saldo;
+
+                $data[$key]['asal'] = null;
+                $data[$key]['tujuan'] = null;
+
+                if ( $value['jenis_trans'] === 'MUTASI' ) {
+                    $at = $this->resolveMutasiAsalTujuan( $value['mut_jenis_kirim'], $value['mut_asal'], $value['mut_jenis_tujuan'], $value['mut_tujuan'] );
+                    $data[$key]['asal'] = $at['asal'];
+                    $data[$key]['tujuan'] = $at['tujuan'];
+                } else if ( $value['jenis_trans'] === 'RETUR' ) {
+                    $at = $this->resolveReturAsalTujuan( $value['ret_asal'], $value['ret_id_asal'], $value['ret_tujuan'], $value['ret_id_tujuan'] );
+                    $data[$key]['asal'] = $at['asal'];
+                    $data[$key]['tujuan'] = $at['tujuan'];
+                }
             }
 
             $data = array_reverse($data);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Resolve asal & tujuan mutasi (kirim_pakan/kirim_voadip) jadi nama yang enak dibaca.
+     * Sama persis pola resolusinya dgn PengirimanPenerimaanPakan::view() / PengirimanPenerimaanOvk::view():
+     * asal tergantung jenis_kirim (opkp=peternak, opkg=gudang, opks=supplier), tujuan tergantung
+     * jenis_tujuan (peternak/gudang).
+     */
+    private function resolveMutasiAsalTujuan( $_jenis_kirim, $_asal_kode, $_jenis_tujuan, $_tujuan_kode )
+    {
+        $asal = null;
+        $tujuan = null;
+
+        $m_rs = new \Model\Storage\RdimSubmit_model();
+
+        if ( $_jenis_kirim == 'opkp' && !empty($_asal_kode) ) {
+            $d_rs_asal = $m_rs->where('noreg', $_asal_kode)->with(['mitra'])->orderBy('id', 'desc')->first();
+            $asal = ($d_rs_asal && !empty($d_rs_asal->mitra)) ? $d_rs_asal->mitra->dMitra->nama.' ('.$_asal_kode.')' : $_asal_kode;
+        } else if ( $_jenis_kirim == 'opkg' && !empty($_asal_kode) ) {
+            $m_gudang = new \Model\Storage\Gudang_model();
+            $d_gudang = $m_gudang->where('id', $_asal_kode)->orderBy('id', 'desc')->first();
+            $asal = $d_gudang ? $d_gudang->nama : $_asal_kode;
+        } else if ( $_jenis_kirim == 'opks' && !empty($_asal_kode) ) {
+            $m_supplier = new \Model\Storage\Supplier_model();
+            $d_supplier = $m_supplier->where('nomor', $_asal_kode)->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('id', 'desc')->first();
+            $asal = $d_supplier ? $d_supplier->nama : $_asal_kode;
+        }
+
+        if ( $_jenis_tujuan == 'peternak' && !empty($_tujuan_kode) ) {
+            $d_rs_tujuan = $m_rs->where('noreg', $_tujuan_kode)->with(['mitra'])->orderBy('id', 'desc')->first();
+            $tujuan = ($d_rs_tujuan && !empty($d_rs_tujuan->mitra)) ? $d_rs_tujuan->mitra->dMitra->nama.' ('.$_tujuan_kode.')' : $_tujuan_kode;
+        } else if ( $_jenis_tujuan == 'gudang' && !empty($_tujuan_kode) ) {
+            $m_gudang = new \Model\Storage\Gudang_model();
+            $d_gudang_tujuan = $m_gudang->where('id', $_tujuan_kode)->orderBy('id', 'desc')->first();
+            $tujuan = $d_gudang_tujuan ? $d_gudang_tujuan->nama : $_tujuan_kode;
+        }
+
+        return array( 'asal' => $asal, 'tujuan' => $tujuan );
+    }
+
+    /**
+     * Resolve asal & tujuan retur (retur_pakan/retur_voadip) jadi nama yang enak dibaca.
+     * Sama persis pola resolusinya dgn ReturPakan::getAsalTujuan()/ReturVoadip::getAsalTujuan()
+     * (union mitra+gudang+pelanggan/supplier); kalau labelnya 'peternak' id-nya noreg tapi yang
+     * dipakai buat lookup cuma 7 karakter pertama (nim).
+     */
+    private function resolveReturAsalTujuan( $_asal_label, $_id_asal, $_tujuan_label, $_id_tujuan )
+    {
+        $asal = null;
+        $tujuan = null;
+
+        if ( !empty($_asal_label) && !empty($_id_asal) ) {
+            if ( $_asal_label == 'peternak' ) {
+                $d_asal = $this->getAsalTujuanNama( substr($_id_asal, 0, 7) );
+                $asal = $d_asal ? $d_asal['nama'].' ('.$_id_asal.')' : $_id_asal;
+            } else {
+                $d_asal = $this->getAsalTujuanNama( $_id_asal );
+                $asal = $d_asal ? $d_asal['nama'] : $_id_asal;
+            }
+        }
+
+        if ( !empty($_tujuan_label) && !empty($_id_tujuan) ) {
+            if ( $_tujuan_label == 'peternak' ) {
+                $d_tujuan = $this->getAsalTujuanNama( substr($_id_tujuan, 0, 7) );
+                $tujuan = $d_tujuan ? $d_tujuan['nama'].' ('.$_id_tujuan.')' : $_id_tujuan;
+            } else {
+                $d_tujuan = $this->getAsalTujuanNama( $_id_tujuan );
+                $tujuan = $d_tujuan ? $d_tujuan['nama'] : $_id_tujuan;
+            }
+        }
+
+        return array( 'asal' => $asal, 'tujuan' => $tujuan );
+    }
+
+    /**
+     * Sama persis dgn ReturPakan::getAsalTujuan() — union mitra (by nim)/gudang/pelanggan-supplier.
+     */
+    private function getAsalTujuanNama( $_id )
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select supplier.* from (
+                select cast(mm.nim as varchar(15)) as id, m.nama as nama from mitra m
+                right join
+                    (
+                        select max(id) as id, nomor from mitra
+                        group by
+                            nomor
+                    ) as group_mitra
+                    on
+                        m.id = group_mitra.id
+                right join
+                    mitra_mapping mm
+                    on
+                        m.nomor = mm.nomor
+                group by
+                    m.nama, mm.nim
+
+                UNION ALL
+
+                select cast(g.id as varchar(15)) as id, g.nama as nama from gudang g
+
+                UNION ALL
+
+                select cast(p.nomor as varchar(15)) as id, p.nama as nama from pelanggan p
+                right join
+                    (
+                        select max(id) as id, nomor from pelanggan
+                        where
+                            tipe = 'supplier' and
+                            jenis <> 'ekspedisi'
+                        group by
+                            nomor
+                    ) as group_pelanggan
+                    on
+                        p.id = group_pelanggan.id
+            ) as supplier
+            where
+                supplier.id = '".$_id."'
+        ";
+        $d_conf = $m_conf->hydrateRaw($sql);
+
+        $data = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray()[0];
         }
 
         return $data;

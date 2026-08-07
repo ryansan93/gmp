@@ -27,6 +27,27 @@
 			</div>
 			<?php endif ?>
 		</div>
+		<?php if ( !empty($performa) && !empty($performa['umur']) ): ?>
+			<?php $last = count($performa['umur']) - 1; ?>
+			<div class="sk-siklus-stats">
+				<div class="sk-siklus-stat">
+					<div class="sk-siklus-stat-val sk-siklus-stat-fcr"><?php echo $performa['fcr'][$last]; ?></div>
+					<div class="sk-siklus-stat-label">FCR</div>
+				</div>
+				<div class="sk-siklus-stat">
+					<div class="sk-siklus-stat-val sk-siklus-stat-deplesi"><?php echo $performa['deplesi'][$last]; ?>%</div>
+					<div class="sk-siklus-stat-label">DEPLESI</div>
+				</div>
+				<div class="sk-siklus-stat">
+					<div class="sk-siklus-stat-val sk-siklus-stat-adg"><?php echo $performa['adg'][$last]; ?>g</div>
+					<div class="sk-siklus-stat-label">ADG</div>
+				</div>
+				<div class="sk-siklus-stat">
+					<div class="sk-siklus-stat-val sk-siklus-stat-ip"><?php echo $performa['ip'][$last]; ?></div>
+					<div class="sk-siklus-stat-label">IP</div>
+				</div>
+			</div>
+		<?php endif ?>
 	</div>
 <?php endif ?>
 
@@ -62,10 +83,13 @@
 				<span class="sk-ayam-val"><?php echo angkaDecimal($ayam['bw_rata_lhk']); ?> kg</span>
 			</div>
 			<?php endif ?>
+			<?php // di-hide dulu, lihat riwayat commit kalau mau diaktifkan lagi ?>
+			<?php if ( false ): ?>
 			<div class="sk-ayam-row">
 				<span class="sk-ayam-key"><i class="fa fa-cube"></i> Sisa Tonase</span>
 				<span class="sk-ayam-val"><?php echo angkaDecimal($ayam['sisa_tonase']); ?> kg</span>
 			</div>
+			<?php endif ?>
 		</div>
 	</div>
 <?php endif ?>
