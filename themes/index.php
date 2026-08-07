@@ -25,6 +25,7 @@
 
 <body>
 
+  <div id="sidebar-overlay"></div>
   <div class="d-flex" id="wrapper">
 
     <!-- Sidebar -->
@@ -89,10 +90,12 @@
       <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom no-padding">
         <!-- <button class="btn btn-primary" id="menu-toggle">Toggle Menu</button> -->
         <a id="menu-toggle" title="Hide Menu">
-          <i class="fa fa-angle-left cursor-p left"></i> 
-          <i class="fa fa-navicon cursor-p"></i> 
+          <i class="fa fa-angle-left cursor-p left"></i>
+          <i class="fa fa-navicon cursor-p"></i>
           <i class="fa fa-angle-right cursor-p right" hidden="true"></i>
         </a>
+
+        <div class="navbar-title-mobile"><?php echo $title_menu; ?></div>
 
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -340,6 +343,14 @@
       };
     });
 
+    // Tutup sidebar saat overlay diklik (mobile)
+    $("#sidebar-overlay").click(function() {
+      $("#wrapper").removeClass("toggled");
+      $("#wrapper").find('a#menu-toggle').attr('title', 'Hide Menu');
+      $("#wrapper").find('i.left').removeAttr('hidden');
+      $("#wrapper").find('i.right').attr('hidden', true);
+    });
+
     $(".dropdown-toggle").click(function(e) {
       $(this).closest('li').toggleClass("open");
     });
@@ -364,6 +375,15 @@
       var url = 'master/User/profile';
       goToURL(url);
     }
+
+    // Posisikan dropdown notifikasi & user tepat di bawah navbarSupportedContent (mobile)
+    $(document).on('show.bs.dropdown', '#navbarSupportedContent .notify-row .dropdown, #navbarSupportedContent .pull-right .dropdown', function() {
+      if (window.innerWidth < 768) {
+        var $card = $('#navbarSupportedContent');
+        var cardBottom = $card.offset().top + $card.outerHeight();
+        $(this).find('.dropdown-menu').css('top', cardBottom + 4 + 'px');
+      }
+    });
   </script>
 
 </body>

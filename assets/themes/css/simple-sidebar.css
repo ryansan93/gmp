@@ -47,7 +47,24 @@ body {
   margin-left: 0;
 }
 
+/* ── Backdrop overlay (mobile) ── */
+#sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+/* ── Desktop ── */
 @media (min-width: 768px) {
+  .navbar-title-mobile {
+    display: none;
+  }
+
   #sidebar-wrapper {
     margin-left: 0;
   }
@@ -61,5 +78,208 @@ body {
 
   #wrapper.toggled #sidebar-wrapper {
     margin-left: -17rem;
+  }
+
+  #sidebar-overlay {
+    display: none !important;
+  }
+}
+
+/* ── Mobile ── */
+@media (max-width: 767px) {
+  /* Navbar fixed di atas, tinggi ~50px. z-index dikasih !important krn
+     base.css punya ".navbar{ z-index:1; }" sendiri (tanpa !important) yg
+     di-load belakangan (base.css > simple-sidebar.css) — pada specificity
+     sama, yg belakangan menang, jadi z-index 1030 di sini bakal ke-timpa
+     balik ke 1 kalau gak di-!important-kan. */
+  .navbar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030 !important;
+    height: 50px;
+  }
+
+  /* Konten digeser ke bawah supaya tidak tertimpa navbar */
+  #page-content-wrapper {
+    width: 100%;
+    padding-left: 0 !important;
+    padding-top: 50px;
+  }
+
+  /* Sidebar mulai tepat di bawah navbar. height & z-index dikasih !important
+     krn base.css punya "div#sidebar-wrapper{ height:100%; z-index:1; }" yang
+     specificity-nya lebih tinggi (ada prefix tag "div") — tanpa !important,
+     z-index bakal balik ke 1 dan overlay (1040) nutupin+nelen tap di sidebar
+     (persis bug yg sempat kejadian pas awal implementasi ini). */
+  #sidebar-wrapper {
+    position: fixed;
+    top: 50px;
+    left: 0;
+    height: calc(100vh - 50px) !important;
+    z-index: 1050 !important;
+    margin-left: -17rem;
+    overflow-y: auto;
+  }
+
+  /* Backdrop juga mulai di bawah navbar */
+  #sidebar-overlay {
+    top: 50px !important;
+    height: calc(100vh - 50px) !important;
+  }
+
+  #wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+  }
+
+  #wrapper.toggled #sidebar-overlay {
+    display: block;
+  }
+
+  /* list-group di base.css punya position:fixed — override agar mengalir
+     di bawah heading logo secara normal pada mobile */
+  #sidebar-wrapper .list-group {
+    position: relative !important;
+    height: auto !important;
+    max-width: 17rem !important;
+    min-width: 17rem !important;
+    padding-bottom: 4rem;
+  }
+
+  /* ── Navbar collapse: floating card di kanan ── */
+  #navbarSupportedContent.show {
+    position: fixed;
+    top: 56px;
+    right: 10px;
+    left: auto;
+    width: 240px;
+    max-width: calc(100vw - 20px);
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    z-index: 1029;
+    overflow: hidden;
+    padding: 0;
+    display: block !important;
+  }
+
+  /* Sembunyikan title di dalam collapse saat mobile */
+  #navbarSupportedContent .title {
+    display: none !important;
+  }
+
+  /* Title di tengah navbar (antara menu-toggle dan hamburger) */
+  .navbar-title-mobile {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 8px;
+  }
+
+  /* Baris notifikasi — rata kanan di mobile */
+  #navbarSupportedContent .notify-row {
+    width: 100%;
+    margin: 0 !important;
+    display: block !important;
+    float: none !important;
+    text-align: right;
+  }
+
+  #navbarSupportedContent .notify-row .nav-item {
+    width: 100%;
+    list-style: none;
+  }
+
+  #navbarSupportedContent .notify-row .notif {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #333;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  #navbarSupportedContent .notify-row .notif:hover {
+    background: #f8f9fa;
+  }
+
+  #navbarSupportedContent .notify-row .fa-bell-o {
+    font-size: 16px;
+    color: #555;
+    border: none !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+  }
+
+  /* Baris user */
+  #navbarSupportedContent .pull-right {
+    width: 100%;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  #navbarSupportedContent .pull-right .nav-item {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    width: 100%;
+    list-style: none;
+  }
+
+  #navbarSupportedContent .pull-right .nav-item:hover {
+    background: #f8f9fa;
+  }
+
+  #navbarSupportedContent .control-label {
+    display: inline-block !important;
+    font-size: 13px !important;
+    font-weight: 500;
+    color: #333;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 !important;
+  }
+
+  #navbarSupportedContent .pull-right img.img-circle {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50%;
+    border: 2px solid #eee;
+    flex-shrink: 0;
+    object-fit: cover;
+  }
+
+  #navbarSupportedContent .mt-2 {
+    margin-top: 0 !important;
+  }
+
+  /* Dropdown notifikasi & user muncul di bawah navbarSupportedContent */
+  #navbarSupportedContent .notify-row .dropdown-menu,
+  #navbarSupportedContent .pull-right .dropdown-menu {
+    position: fixed !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    min-width: unset !important;
+    max-width: calc(100vw - 20px);
+    max-height: 60vh;
+    overflow-y: auto;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1028;
   }
 }
