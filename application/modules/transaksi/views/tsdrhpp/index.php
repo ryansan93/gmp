@@ -4,7 +4,7 @@
 			<div class="panel-heading">
 				<ul class="nav nav-tabs nav-justified">
 					<li class="nav-item">
-						<a class="nav-link active" data-toggle="tab" href="#tutup_siklus" data-tab="tutup_siklus">Tutup Siklus</a>
+						<a class="nav-link active" data-toggle="tab" href="#tutup_siklus" data-tab="tutup_siklus">Riwayat RHPP</a>
 					</li>
 					<li class="nav-item">
 						<a class="nav-link" data-toggle="tab" href="#rhpp" data-tab="rhpp">RHPP</a>

@@ -34,7 +34,7 @@ class TSDRHPP extends Public_Controller {
             $content['akses'] = $akses;
 
             // Load Indexx
-            $data['title_menu'] = 'Tutup Siklus & RHPP';
+            $data['title_menu'] = 'RHPP';
             $data['view'] = $this->load->view('transaksi/tsdrhpp/index', $content, TRUE);
             $this->load->view($this->template, $data);
         } else {
