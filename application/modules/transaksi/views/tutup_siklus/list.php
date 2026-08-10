@@ -24,7 +24,7 @@
 				?>
 			</td>
 			<td class="text-center">
-				<?php if ( $val['tutup_siklus'] == 1 && empty($val['tgl_panen']) === false ): ?>
+				<?php if ( $val['tutup_siklus'] == 1 && empty($val['tgl_panen']) === false && !empty($akses['a_submit']) ): ?>
 					<button
 						type="button"
 						class="btn btn-primary btn-sm"
@@ -35,7 +35,7 @@
 					>
 						<i class="fa fa-check"></i> Tutup Siklus
 					</button>
-				<?php elseif ( $val['tutup_siklus'] == 2 && $val['status_rhpp'] == 1 ): ?>
+				<?php elseif ( $val['tutup_siklus'] == 2 && $val['status_rhpp'] == 1 && !empty($akses['a_delete']) ): ?>
 					<button
 						type="button"
 						class="btn btn-danger btn-sm"

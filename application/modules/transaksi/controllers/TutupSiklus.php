@@ -46,6 +46,12 @@ class TutupSiklus extends Public_Controller {
 
     public function get_lists()
     {
+        $akses = hakAkses($this->url);
+        if ( $akses['a_view'] != 1 ) {
+            echo '<tr><td colspan="9">Anda tidak memiliki akses untuk melihat data ini.</td></tr>';
+            return;
+        }
+
         $params = $this->input->get('params');
 
         $filter = $params['filter'];
@@ -233,8 +239,6 @@ class TutupSiklus extends Public_Controller {
             $data = $d_conf->toArray();
         }
 
-        $akses = hakAkses($this->url);
-
         $content['akses'] = $akses;
         $content['data'] = $data;
         $html = $this->load->view('transaksi/tutup_siklus/list', $content, TRUE);
@@ -351,6 +355,13 @@ class TutupSiklus extends Public_Controller {
 
     public function cek_lhk()
     {
+        $akses = hakAkses($this->url);
+        if ( $akses['a_view'] != 1 ) {
+            $this->result['message'] = 'Anda tidak memiliki akses untuk melakukan aksi ini.';
+            display_json($this->result);
+            return;
+        }
+
         $params = $this->input->post('params');
 
         try {
@@ -367,6 +378,13 @@ class TutupSiklus extends Public_Controller {
 
     public function simpan()
     {
+        $akses = hakAkses($this->url);
+        if ( $akses['a_submit'] != 1 ) {
+            $this->result['message'] = 'Anda tidak memiliki akses untuk menutup siklus.';
+            display_json($this->result);
+            return;
+        }
+
         $params = $this->input->post('params');
 
         try {
@@ -439,6 +457,13 @@ class TutupSiklus extends Public_Controller {
 
     public function cek_hapus()
     {
+        $akses = hakAkses($this->url);
+        if ( $akses['a_delete'] != 1 ) {
+            $this->result['message'] = 'Anda tidak memiliki akses untuk menghapus data ini.';
+            display_json($this->result);
+            return;
+        }
+
         $params = $this->input->post('params');
 
         try {
@@ -455,6 +480,13 @@ class TutupSiklus extends Public_Controller {
 
     public function delete()
     {
+        $akses = hakAkses($this->url);
+        if ( $akses['a_delete'] != 1 ) {
+            $this->result['message'] = 'Anda tidak memiliki akses untuk menghapus data ini.';
+            display_json($this->result);
+            return;
+        }
+
         $params = $this->input->post('params');
 
         try {
