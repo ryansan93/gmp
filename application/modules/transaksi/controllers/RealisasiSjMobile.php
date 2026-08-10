@@ -855,6 +855,25 @@ class RealisasiSjMobile extends Public_Controller {
         display_json($this->result);
     }
 
+    /**
+     * Cek apakah siklus untuk sebuah noreg sudah ditutup (tabel
+     * tutup_siklus) -- kalau sudah, data panen/SJ tidak boleh
+     * diubah/dihapus lagi dari sini karena panen dianggap final begitu
+     * siklusnya ditutup, walaupun RHPP-nya sendiri belum tentu sudah
+     * dihitung/disimpan.
+     */
+    private function _cekSiklusSudahTutup( $noreg )
+    {
+        $m_ts = new \Model\Storage\TutupSiklus_model();
+        $ts_ada = $m_ts->where('noreg', $noreg)->count() > 0;
+
+        if ( $ts_ada ) {
+            return 'Data realisasi SJ untuk noreg <b>'.$noreg.'</b> tidak bisa diubah/dihapus karena siklus untuk noreg ini sudah ditutup. Hapus data tutup siklusnya terlebih dahulu lewat menu Tutup Siklus kalau data panen memang perlu dikoreksi.';
+        }
+
+        return null;
+    }
+
     public function edit()
     {
         $params = json_decode($this->input->post('data'),TRUE);
@@ -862,8 +881,15 @@ class RealisasiSjMobile extends Public_Controller {
         $mappingFiles = !empty($files) ? $this->mappingFiles($files) : null;
 
         try {
+            $ket_rhpp = $this->_cekSiklusSudahTutup( $params['noreg_old'] );
+            if ( !empty($ket_rhpp) ) {
+                $this->result['message'] = $ket_rhpp;
+                display_json($this->result);
+                return;
+            }
+
             $akses = hakAkses($this->url);
-            
+
             $m_wilayah = new \Model\Storage\Wilayah_model();
             $_d_wilayah = $m_wilayah->where('kode', $params['kode_unit'])->orderBy('id', 'desc')->first();
 
@@ -1060,6 +1086,13 @@ class RealisasiSjMobile extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
+            $ket_rhpp = $this->_cekSiklusSudahTutup( $params['noreg'] );
+            if ( !empty($ket_rhpp) ) {
+                $this->result['message'] = $ket_rhpp;
+                display_json($this->result);
+                return;
+            }
+
             $m_real_sj = new \Model\Storage\RealSJ_model();
             $d_real_sj = $m_real_sj->where('tgl_panen', $params['tgl_panen'])->where('noreg', $params['noreg'])->with(['det_real_sj'])->first();
 
