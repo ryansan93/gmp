@@ -52,7 +52,7 @@ class TSDRHPP extends Public_Controller {
 
         $sql_filter = "";
         if ( $filter != 0 ) {
-            $sql_filter = "where data.tutup_siklus = ".$filter."";
+            $sql_filter = "where data.status_rhpp = ".$filter."";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -65,6 +65,8 @@ class TSDRHPP extends Public_Controller {
                 data.tgl_docin_real,
                 data.tgl_panen,
                 data.tutup_siklus,
+                data.tgl_tutup,
+                data.status_rhpp,
                 data.deskripsi,
                 data.waktu
             from
@@ -74,7 +76,7 @@ class TSDRHPP extends Public_Controller {
                     _noreg.noreg,
                     SUBSTRING(_noreg.noreg, 10, 2) as kandang,
                     rdim.populasi,
-                    CONVERT(varchar(10), _noreg.tgl_docin, 120) as tgl_docin_real, 
+                    CONVERT(varchar(10), _noreg.tgl_docin, 120) as tgl_docin_real,
                     rs.tgl_panen,
                     case
                         when ts.id is not null then
@@ -82,6 +84,13 @@ class TSDRHPP extends Public_Controller {
                         else
                             1
                     end as tutup_siklus,
+                    CONVERT(varchar(10), ts.tgl_tutup, 120) as tgl_tutup,
+                    case
+                        when rhpp.noreg is not null then
+                            2
+                        else
+                            1
+                    end as status_rhpp,
                     case
                         when ts.id is not null then
                             lt.deskripsi
@@ -185,6 +194,12 @@ class TSDRHPP extends Public_Controller {
                         ts.noreg = _noreg.noreg
                 left join
                     (
+                        select distinct noreg from rhpp
+                    ) rhpp
+                    on
+                        rhpp.noreg = _noreg.noreg
+                left join
+                    (
                         select lt1.* from log_tables lt1
                         right join
                             (select max(id) as id, tbl_name, tbl_id from log_tables where tbl_name = 'tutup_siklus' group by tbl_name, tbl_id) lt2
@@ -203,6 +218,8 @@ class TSDRHPP extends Public_Controller {
                 data.tgl_docin_real,
                 data.tgl_panen,
                 data.tutup_siklus,
+                data.tgl_tutup,
+                data.status_rhpp,
                 data.deskripsi,
                 data.waktu
             order by
@@ -412,9 +429,72 @@ class TSDRHPP extends Public_Controller {
         $data = null;
 
         $m_ts = new \Model\Storage\TutupSiklus_model();
-        $d_ts = $m_ts->where('noreg', $_noreg)->with(['potongan_pajak'])->first();
+        $d_ts = $m_ts->where('noreg', $_noreg)->with(['potongan_pajak', 'logs'])->first();
 
         $id_tutup_siklus = !empty($d_ts) ? $d_ts->id : null; $mitra = null; $noreg = null; $populasi = null; $kandang = null; $tgl_docin = null; $tutup_siklus = null; $biaya_materai = null; $potongan_pajak = null; $tgl_tutup = null; $rata_umur_panen = null; $biaya_opr = null;
+
+        $tgl_tutup_log = null;
+        if ( !empty($d_ts) && !empty($d_ts->logs) && $d_ts->logs->count() > 0 ) {
+            $log_ts = $d_ts->logs->first();
+            $tgl_tutup_log = $log_ts->deskripsi . ' pada ' . dateTimeFormat($log_ts->waktu);
+        }
+
+        // Jejak RHPP (kalau ada) untuk noreg ini -- baik yang sedang aktif
+        // maupun yang pernah disimpan lalu dihapus. Ditampilkan sebagai
+        // keterangan saja (seperti log tutup siklus), tidak mempengaruhi
+        // form, dan dipakai di kedua jalur (RHPP sudah tersimpan / belum).
+        $log_rhpp = null;
+        $no_invoice_rhpp = null;
+        $jenis_rhpp_rhpp = null;
+
+        $m_conf_rhpp = new \Model\Storage\Conf();
+        $sql = "
+            select top 1
+                r.invoice,
+                lt.deskripsi,
+                lt.waktu
+            from rhpp r
+            left join
+                (
+                    select lt1.* from log_tables lt1
+                    right join
+                        (select min(id) as id, tbl_name, tbl_id from log_tables where tbl_name = 'rhpp' group by tbl_name, tbl_id) lt2
+                        on
+                            lt1.id = lt2.id
+                ) lt
+                on
+                    lt.tbl_id = cast(r.id as varchar(15))
+            where
+                r.noreg = '".$_noreg."'
+            order by
+                r.id desc
+        ";
+        $d_log_rhpp = $m_conf_rhpp->hydrateRaw( $sql );
+
+        $rhpp_data_ada = $d_log_rhpp->count() > 0;
+
+        if ( $rhpp_data_ada ) {
+            $d_log_rhpp = $d_log_rhpp->toArray()[0];
+
+            $no_invoice_rhpp = $d_log_rhpp['invoice'];
+
+            if ( !empty($d_log_rhpp['deskripsi']) && !empty($d_log_rhpp['waktu']) ) {
+                $log_rhpp = $d_log_rhpp['deskripsi'] . ' pada ' . dateTimeFormat($d_log_rhpp['waktu']);
+            } else if ( !empty($tgl_tutup_log) ) {
+                // RHPP sudah ada di tabel rhpp tapi tidak ada log tersendiri
+                // (dulu tutup siklus & simpan RHPP dicatat dalam 1 log yang
+                // sama) -- pakai log tutup siklus sebagai gantinya.
+                $log_rhpp = $tgl_tutup_log;
+            }
+
+            // Jenis RHPP (GROUP / NON GROUP) ditentukan dari keberadaan
+            // noreg ini di rhpp_group_noreg (penggabungan RHPP), bukan dari
+            // invoice. Hanya ditentukan kalau datanya di tabel rhpp memang
+            // sudah ada -- kalau belum, biarkan null (tampil '-').
+            $m_rgn = new \Model\Storage\Conf();
+            $d_rgn = $m_rgn->hydrateRaw( "select top 1 noreg from rhpp_group_noreg where noreg = '".$_noreg."'" );
+            $jenis_rhpp_rhpp = ( $d_rgn->count() > 0 ) ? 'GROUP' : 'NON GROUP';
+        }
 
         // cetak_r( $id_tutup_siklus, 1 );
 
@@ -443,8 +523,16 @@ class TSDRHPP extends Public_Controller {
 
         $non_group = 1;
         $berita_acara = null;
+        $rhpp_locked = 0;
+        $rhpp_locked_reason = null;
 
-        if ( $d_ts ) {
+        // Siklus bisa saja sudah ditutup (via fitur Tutup Siklus) tapi RHPP-nya
+        // belum pernah disimpan -- di kondisi itu tetap harus masuk ke jalur
+        // "hitung fresh" di bawah (bukan baca data rhpp yang belum ada).
+        $m_rhpp_cek = new \Model\Storage\Rhpp_model();
+        $rhpp_sudah_ada = $m_rhpp_cek->where('noreg', $_noreg)->where('jenis', 'rhpp_inti')->count() > 0;
+
+        if ( $d_ts && $rhpp_sudah_ada ) {
             $m_rhpp = new \Model\Storage\Rhpp_model();
             $d_rhpp_inti = $m_rhpp->where('noreg', $_noreg)->where('jenis', 'rhpp_inti')->with(['doc', 'pakan', 'oa_pakan', 'pindah_pakan', 'oa_pindah_pakan', 'retur_pakan', 'oa_retur_pakan', 'voadip', 'retur_voadip', 'penjualan', 'potongan', 'bonus'])->orderBy('id', 'desc')->first();
             $d_rhpp_plasma = $m_rhpp->where('noreg', $_noreg)->where('jenis', 'rhpp_plasma')->with(['doc', 'pakan', 'oa_pakan', 'pindah_pakan', 'oa_pindah_pakan', 'retur_pakan', 'oa_retur_pakan', 'voadip', 'retur_voadip', 'penjualan', 'potongan', 'bonus', 'piutang'])->orderBy('id', 'desc')->first();
@@ -457,6 +545,70 @@ class TSDRHPP extends Public_Controller {
             }
 
             $berita_acara = (isset($d_rhpp_plasma['berita_acara']) && !empty($d_rhpp_plasma['berita_acara'])) ? $d_rhpp_plasma['berita_acara'] : null;
+
+            // Cek yang sama seperti di delete() -- kalau RHPP sudah
+            // digabung ke RHPP Group atau sudah ada konfirmasi/realisasi
+            // pembayaran, tombol Hapus di form tidak boleh muncul.
+            $m_rg_cek = new \Model\Storage\Conf();
+            $d_rg_cek = $m_rg_cek->hydrateRaw("
+                select top 1 rgh.tgl_submit
+                from rhpp_group_noreg rgn
+                left join
+                    rhpp_group rg
+                    on
+                        rgn.id_header = rg.id
+                left join
+                    rhpp_group_header rgh
+                    on
+                        rg.id_header = rgh.id
+                where
+                    rgn.noreg = '".$_noreg."'
+            ");
+
+            if ( $d_rg_cek->count() > 0 ) {
+                $d_rg_cek = $d_rg_cek->toArray()[0];
+
+                $rhpp_locked = 1;
+                $rhpp_locked_reason = 'RHPP sudah dilakukan penggabungan (RHPP Group) pada tanggal <b>'.strtoupper(tglIndonesia($d_rg_cek['tgl_submit'], '-', ' ')).'</b>.';
+            } else if ( !empty($d_rhpp_plasma) ) {
+                $m_kppd_cek = new \Model\Storage\Conf();
+                $d_kppd_cek = $m_kppd_cek->hydrateRaw("
+                    select top 1 kpp.nomor, kpp.tgl_bayar
+                    from konfirmasi_pembayaran_peternak_det kppd
+                    left join
+                        konfirmasi_pembayaran_peternak kpp
+                        on
+                            kppd.id_header = kpp.id
+                    where
+                        kppd.jenis = 'RHPP' and
+                        kppd.id_trans = ".$d_rhpp_plasma['id']."
+                ");
+
+                if ( $d_kppd_cek->count() > 0 ) {
+                    $d_kppd_cek = $d_kppd_cek->toArray()[0];
+
+                    $rhpp_locked = 1;
+                    $rhpp_locked_reason = 'RHPP sudah diajukan pembayaran dengan nomor pengajuan <b>'.$d_kppd_cek['nomor'].'</b>.';
+
+                    $m_rpd_cek = new \Model\Storage\Conf();
+                    $d_rpd_cek = $m_rpd_cek->hydrateRaw("
+                        select top 1 rp.nomor, rp.tgl_bayar
+                        from realisasi_pembayaran_det rpd
+                        left join
+                            realisasi_pembayaran rp
+                            on
+                                rpd.id_header = rp.id
+                        where
+                            rpd.no_bayar = '".$d_kppd_cek['nomor']."'
+                    ");
+
+                    if ( $d_rpd_cek->count() > 0 ) {
+                        $d_rpd_cek = $d_rpd_cek->toArray()[0];
+
+                        $rhpp_locked_reason = 'RHPP sudah ditransfer dengan nomor pembayaran <b>'.$d_rpd_cek['nomor'].'</b> pada tanggal <b>'.strtoupper(tglIndonesia($d_rpd_cek['tgl_bayar'], '-', ' ')).'</b>.';
+                    }
+                }
+            }
 
             // $id_tutup_siklus = $d_rhpp_inti['id_ts'];
             $no_mitra = $d_rs['mitra']['d_mitra']['nomor'];
@@ -798,10 +950,12 @@ class TSDRHPP extends Public_Controller {
             // cetak_r($_noreg, 1);
 
             if ( $d_ts ) {
-                // $id_tutup_siklus = $d_ts->id;
-
-                $tutup_siklus = 1;
-                $biaya_materai = $d_ts->biaya_materai;
+                // Siklus sudah ditutup lewat fitur Tutup Siklus, tapi RHPP-nya
+                // sendiri belum disimpan -- form RHPP di bawah TETAP harus
+                // editable, jadi $tutup_siklus TIDAK diubah jadi 1 di sini.
+                // $tgl_tutup dipakai supaya tanggal tutup siklus tidak perlu
+                // dipilih ulang di form ini.
+                $biaya_materai = !empty($d_ts->biaya_materai) ? $d_ts->biaya_materai : 0;
                 $potongan_pajak = !empty($d_ts->potongan_pajak) ? $d_ts->potongan_pajak->prs_potongan : 0;
                 $tgl_tutup = $d_ts->tgl_tutup;
             }
@@ -876,6 +1030,12 @@ class TSDRHPP extends Public_Controller {
             'biaya_materai' => $biaya_materai,
             'potongan_pajak' => $potongan_pajak,
             'tgl_tutup' => $tgl_tutup,
+            'tgl_tutup_log' => $tgl_tutup_log,
+            'log_rhpp' => $log_rhpp,
+            'no_invoice_rhpp' => $no_invoice_rhpp,
+            'jenis_rhpp_rhpp' => $jenis_rhpp_rhpp,
+            'rhpp_locked' => $rhpp_locked,
+            'rhpp_locked_reason' => $rhpp_locked_reason,
             'rata_umur_panen' => $rata_umur_panen,
             'data_potongan_pajak' => $data_potongan_pajak,
             'populasi_bonus_insentif_listrik' => $populasi_bonus_insentif_listrik,
@@ -4273,14 +4433,32 @@ class TSDRHPP extends Public_Controller {
                     }
                 }
 
-                $m_ts->noreg = $params['noreg'];
-                $m_ts->tgl_docin = $params['tgl_docin'];
-                $m_ts->tgl_tutup = $params['tgl_tutup_siklus'];
-                $m_ts->biaya_materai = $params['biaya_materai'];
-                $m_ts->id_potongan_pajak = $params['id_potongan_pajak'];
-                $m_ts->save();
+                // Kalau noreg ini sudah pernah ditutup siklusnya lewat fitur
+                // Tutup Siklus (transaksi/TutupSiklus), pakai baris yang sudah
+                // ada supaya tidak dobel insert ke tabel tutup_siklus.
+                $d_ts_exist = $m_ts->where('noreg', $params['noreg'])->first();
 
-                $id = $m_ts->id;
+                if ( !empty($d_ts_exist) ) {
+                    $m_ts->where('id', $d_ts_exist->id)->update(
+                        array(
+                            'tgl_docin' => $params['tgl_docin'],
+                            'tgl_tutup' => $params['tgl_tutup_siklus'],
+                            'biaya_materai' => $params['biaya_materai'],
+                            'id_potongan_pajak' => $params['id_potongan_pajak'],
+                        )
+                    );
+
+                    $id = $d_ts_exist->id;
+                } else {
+                    $m_ts->noreg = $params['noreg'];
+                    $m_ts->tgl_docin = $params['tgl_docin'];
+                    $m_ts->tgl_tutup = $params['tgl_tutup_siklus'];
+                    $m_ts->biaya_materai = $params['biaya_materai'];
+                    $m_ts->id_potongan_pajak = $params['id_potongan_pajak'];
+                    $m_ts->save();
+
+                    $id = $m_ts->id;
+                }
 
                 foreach ($params['data_rhpp'] as $k_rhpp => $v_rhpp) {
                     $m_rhpp = new \Model\Storage\Rhpp_model();
@@ -4321,6 +4499,9 @@ class TSDRHPP extends Public_Controller {
                     $m_rhpp->save();
 
                     $id_rhpp = $m_rhpp->id;
+
+                    $deskripsi_log_rhpp = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                    Modules::run( 'base/event/save', $m_rhpp, $deskripsi_log_rhpp );
 
                     if ( stristr($v_rhpp['jenis'], 'plasma') !== false ) {
                         $id_plasma = $id_rhpp;
@@ -4976,14 +5157,16 @@ class TSDRHPP extends Public_Controller {
                     $m_rhpp->whereIn('id', $id_rhpp)->delete();
                 }
     
-                $m_ts->where('id', $params['id'])->delete();
-    
+                // Baris tutup_siklus SENGAJA tidak ikut dihapus -- siklus
+                // tetap tercatat tutup (lewat fitur Tutup Siklus terpisah),
+                // hanya data RHPP-nya yang dihapus supaya bisa diisi ulang.
+
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal NULL, NULL, NULL, NULL, 'tutup_siklus', ".$params['id'].", ".$params['id'].", 3";
-    
+
                 // $d_conf = $m_conf->hydrateRaw( $sql );
-    
-                $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
+
+                $deskripsi_log = 'RHPP dihapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
                 Modules::run( 'base/event/update', $d_ts, $deskripsi_log);
                 
                 $this->result['status'] = 1;
@@ -6153,23 +6336,48 @@ class TSDRHPP extends Public_Controller {
 
     public function tes()
     {
-        // $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select * from rhpp r
-        //     where
-        //         r.invoice is not null and
-        //         r.jenis = 'rhpp_plasma'
-        // ";
-        // $d_conf = $m_conf->hydrateRaw( $sql );
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                r.id,
+                r.id_ts, 
+                r.pdpt_peternak_belum_pajak, 
+                r.prs_potongan_pajak, 
+                r.potongan_pajak, 
+                r.pdpt_peternak_sudah_pajak as pdpt_peternak_sudah_pajak, 
+                ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as potongan_pajak_new,
+                ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as pdpt_peternak_sudah_pajak_new,
+                r.potongan_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as selisih_pajak,
+                r.pdpt_peternak_sudah_pajak - ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as selisih_pdpt
+        --	update r
+        --	set
+        --		r.pdpt_peternak_sudah_pajak = ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0)
+            from rhpp r 
+            left join
+                (
+                    select id_header, sum(nominal) as nominal
+                    from rhpp_piutang
+                    group by
+                        id_header
+                ) r_piutang
+                on
+                    r.id = r_piutang.id_header
+            where 
+            r.id_ts in (
+                select id from tutup_siklus ts where not exists (select * from rhpp_group_noreg where noreg = ts.noreg) and tgl_tutup between '2026-07-01' and '2026-07-31'
+            ) 
+            and r.jenis = 'rhpp_plasma'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-        //     foreach ($d_conf as $key => $val) {
-        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
-        //     }
-        // }
+            foreach ($d_conf as $key => $val) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
+            }
+        }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 2366, 2366, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 2366, 2366, 2);
     }
 }

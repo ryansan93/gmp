@@ -4,6 +4,14 @@ var tsdrhpp = {
 		// tsdrhpp.get_lists();
 	}, // end - start_up
 
+	getTglTutupSiklus: function() {
+		var picker = $('[name=tutup_siklus]');
+		if ( picker.length && picker.data('DateTimePicker') ) {
+			return dateSQL( picker.data('DateTimePicker').date() );
+		}
+		return $('[name=tutup_siklus_value]').val();
+	}, // end - getTglTutupSiklus
+
     add_row: function(elm) {
         var tr = $(elm).closest('tr');
         var tr_clone = $(tr).clone();
@@ -558,7 +566,7 @@ var tsdrhpp = {
 
 		var params = {
 			'noreg': noreg,
-			'tgl_tutup_siklus': dateSQL( $('[name=tutup_siklus]').data('DateTimePicker').date() ),
+			'tgl_tutup_siklus': tsdrhpp.getTglTutupSiklus(),
 		};
 
 		$.ajax({
@@ -895,7 +903,7 @@ var tsdrhpp = {
 		var params = {
 			'noreg': noreg,
 			'tgl_docin': $('label.tgl_docin').data('tgl'),
-			'tgl_tutup_siklus': dateSQL( $('[name=tutup_siklus]').data('DateTimePicker').date() ),
+			'tgl_tutup_siklus': tsdrhpp.getTglTutupSiklus(),
 			'biaya_materai': numeral.unformat( $('input.biaya_materai').val() ),
 			'id_potongan_pajak': $('select.prs_potongan').val(),
 			'jenis_rhpp': jenis,
@@ -1037,7 +1045,7 @@ var tsdrhpp = {
 	    				'id': $(elm).data('id'),
 	    				'noreg': noreg,
 	    				'tgl_docin': $('label.tgl_docin').data('tgl'),
-	    				'tgl_tutup_siklus': dateSQL( $('[name=tutup_siklus]').data('DateTimePicker').date() ),
+	    				'tgl_tutup_siklus': tsdrhpp.getTglTutupSiklus(),
 	    				'biaya_materai': numeral.unformat( $('input.biaya_materai').val() ),
 	    				'id_potongan_pajak': $('select.prs_potongan').val(),
 	    				'data_rhpp': data_rhpp

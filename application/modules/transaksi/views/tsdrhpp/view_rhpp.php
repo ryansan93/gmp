@@ -26,21 +26,37 @@
             	<?php if ( $data['tutup_siklus'] == 0 ): ?>
 	                <div class="form-group align-items-center">
 	                	<div class="col-sm-12">
-		                	<div class="col-md-2 no-padding" style="width: 11%;">
-		                		<label class="control-label" style="padding-top: 7px;">Tutup Siklus</label>
+	                		<input type="hidden" name="tutup_siklus_value" value="<?php echo $data['tgl_tutup']; ?>" />
+		                	<?php if ( !empty($data['tgl_tutup']) ): ?>
+			                	<div class="col-sm-12">
+			                		<button type="button" class="btn btn-primary btn-block" style="display: block; width: 100%;" onclick="tsdrhpp.cekDataLhk(this)" data-noreg="<?php echo $data['noreg']; ?>"><i class="fa fa-check"></i> SIMPAN RHPP</button>
+			                	</div>
+		                	<?php else: ?>
+			                	<div class="col-sm-12">
+			                		<div class="alert alert-warning text-center" style="display: block; margin-bottom: 0; padding: 15px; border: 1px solid #faebcc; border-radius: 4px; background-color: #fcf8e3; color: #8a6d3b;">
+			                			<i class="fa fa-exclamation-triangle"></i> <b>Siklus belum ditutup.</b> Harap tutup siklus terlebih dahulu lewat menu <b>Tutup Siklus</b> sebelum menyimpan RHPP.
+			                		</div>
+			                	</div>
+		                	<?php endif ?>
+		                	<div class="col-sm-12">
+		                		<hr style="margin-top: 10px; margin-bottom: 10px;">
 		                	</div>
-		                	<div class="col-md-2">
-		                		<div class="input-group date datetimepicker" name="tutup_siklus" id="tutup_siklus">
-							        <input type="text" class="form-control text-center" placeholder="Tutup Siklus" data-required="1" />
-							        <span class="input-group-addon">
-							            <span class="glyphicon glyphicon-calendar"></span>
-							        </span>
-							    </div>
+		                	<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+		                		<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-time"></i> Siklus ditutup: <?php echo !empty($data['tgl_tutup_log']) ? $data['tgl_tutup_log'] : '-'; ?></small>
 		                	</div>
-		                	<div class="col-md-2">
-		                		<button type="button" class="btn btn-primary" onclick="tsdrhpp.cekDataLhk(this)" data-noreg="<?php echo $data['noreg']; ?>"><i class="fa fa-check"></i> TUTUP SIKLUS</button>
+		                	<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+		                		<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-time"></i> RHPP diproses: <?php echo !empty($data['log_rhpp']) ? $data['log_rhpp'] : '-'; ?></small>
+		                	</div>
+		                	<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+		                		<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-file"></i> No Invoice: <?php echo !empty($data['no_invoice_rhpp']) ? $data['no_invoice_rhpp'] : '-'; ?></small>
+		                	</div>
+		                	<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+		                		<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-tags"></i> Jenis RHPP: <?php echo !empty($data['jenis_rhpp_rhpp']) ? $data['jenis_rhpp_rhpp'] : '-'; ?></small>
 		                	</div>
 	                	</div>
+	                </div>
+	                <div class="col-sm-12 no-padding">
+	                	<hr style="margin-top: 5px; margin-bottom: 10px;">
 	                </div>
 	               	<div class="form-group align-items-center <?php echo $hide_plasma; ?>">
 	                	<div class="col-sm-12">
@@ -111,9 +127,30 @@
 	            				<?php endif ?>
 	            			</div>
 	            		</div>
-	            		<div class="col-sm-4">
-			            	<button type="button" class="btn btn-danger pull-right" data-id="<?php echo $data['id']; ?>" data-noreg="<?php echo $data['noreg']; ?>" onclick="tsdrhpp.delete(this)"><i class="fa fa-trash"></i> Hapus</button>
+	            		<div class="col-sm-12">
+		            		<?php if ( empty($data['rhpp_locked']) ): ?>
+			            	<button type="button" class="btn btn-danger btn-block" style="display: block; width: 100%;" data-id="<?php echo $data['id']; ?>" data-noreg="<?php echo $data['noreg']; ?>" onclick="tsdrhpp.delete(this)"><i class="fa fa-trash"></i> Hapus</button>
+		            		<?php else: ?>
+		            			<div class="alert alert-warning text-center" style="display: block; margin-bottom: 0; padding: 15px; border: 1px solid #faebcc; border-radius: 4px; background-color: #fcf8e3; color: #8a6d3b;">
+		            				<i class="fa fa-lock"></i> <b>RHPP tidak bisa dihapus.</b> <?php echo $data['rhpp_locked_reason']; ?>
+		            			</div>
+		            		<?php endif ?>
 							<!-- <button type="button" class="btn btn-success pull-right" data-id="<?php echo $data['id']; ?>" data-noreg="<?php echo $data['noreg']; ?>" onclick="tsdrhpp.changeTabActive(this)" data-href="rhpp" style="margin-right: 5px;"><i class="fa fa-edit"></i> Edit</button> -->
+	            		</div>
+	            		<div class="col-sm-12">
+	            			<hr style="margin-top: 10px; margin-bottom: 10px;">
+	            		</div>
+	            		<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+	            			<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-time"></i> Siklus ditutup: <?php echo !empty($data['tgl_tutup_log']) ? $data['tgl_tutup_log'] : '-'; ?></small>
+	            		</div>
+	            		<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+	            			<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-time"></i> RHPP diproses: <?php echo !empty($data['log_rhpp']) ? $data['log_rhpp'] : '-'; ?></small>
+	            		</div>
+	            		<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+	            			<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-file"></i> No Invoice: <?php echo !empty($data['no_invoice_rhpp']) ? $data['no_invoice_rhpp'] : '-'; ?></small>
+	            		</div>
+	            		<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+	            			<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-tags"></i> Jenis RHPP: <?php echo !empty($data['jenis_rhpp_rhpp']) ? $data['jenis_rhpp_rhpp'] : '-'; ?></small>
 	            		</div>
 					</div>
             	<?php endif ?>

@@ -39,8 +39,8 @@
 								<div class="col-sm-3">
 									<select class="form-control filter" onchange="tsdrhpp.filter(this)">
 										<option value="0">ALL</option>
-										<option value="1">Belum Tutup Siklus</option>
-										<option value="2">Sudah Tutup Siklus</option>
+										<option value="1">Belum RHPP</option>
+										<option value="2">Sudah RHPP</option>
 									</select>
 								</div>
 								<div class="col-sm-1">
@@ -61,21 +61,24 @@
 								</div>
 							</div>
 							<small>
-								<table class="table table-bordered tbl_rhpp" id="dataTable" width="100%" cellspacing="0">
+								<table class="table table-bordered tbl_rhpp" id="dataTable" width="100%" cellspacing="0" style="table-layout: fixed;">
 									<thead>
 										<tr>
-											<th class="col-md-2">Nama Peternak</th>
-											<th class="col-md-1">Noreg</th>
-											<th class="col-md-1">Kandang</th>
-											<th class="col-md-1">Populasi</th>
-											<th class="col-md-1">Chick In</th>
-											<th class="col-md-1">Panen</th>
-											<th class="col-md-4">Status</th>
+											<th style="width: 17%;">Nama Peternak</th>
+											<th style="width: 10%;" class="text-center">Noreg</th>
+											<th style="width: 6%;" class="text-center">Kandang</th>
+											<th style="width: 8%;" class="text-right">Populasi</th>
+											<th style="width: 9%;" class="text-center">Chick In</th>
+											<th style="width: 9%;" class="text-center">Panen</th>
+											<th style="width: 11%;" class="text-center">Status Tutup Siklus</th>
+											<th style="width: 11%;" class="text-center">Tanggal Tutup Siklus</th>
+											<th style="width: 9%;" class="text-center">Status RHPP</th>
+											<th style="width: 10%;" class="text-center">Action</th>
 										</tr>
 									</thead>
 									<tbody>
 										<tr>
-											<td colspan="7">Data tidak ditemukan.</td>
+											<td colspan="10">Data tidak ditemukan.</td>
 										</tr>
 									</tbody>
 								</table>
