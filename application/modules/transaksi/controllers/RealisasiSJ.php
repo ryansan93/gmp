@@ -294,6 +294,25 @@ class RealisasiSJ extends Public_Controller
         display_json($this->result);
     }
 
+    /**
+     * Cek apakah siklus untuk sebuah noreg sudah ditutup (tabel
+     * tutup_siklus) -- kalau sudah, data panen/SJ tidak boleh
+     * diubah/dihapus lagi dari sini karena panen dianggap final begitu
+     * siklusnya ditutup, walaupun RHPP-nya sendiri belum tentu sudah
+     * dihitung/disimpan.
+     */
+    private function _cekSiklusSudahTutup( $noreg )
+    {
+        $m_ts = new \Model\Storage\TutupSiklus_model();
+        $ts_ada = $m_ts->where('noreg', $noreg)->count() > 0;
+
+        if ( $ts_ada ) {
+            return 'Data realisasi SJ untuk noreg <b>'.$noreg.'</b> tidak bisa diubah/dihapus karena siklus untuk noreg ini sudah ditutup. Hapus data tutup siklusnya terlebih dahulu lewat menu Tutup Siklus kalau data panen memang perlu dikoreksi.';
+        }
+
+        return null;
+    }
+
     public function edit()
     {
         $params = $this->input->post('params');
@@ -302,6 +321,14 @@ class RealisasiSJ extends Public_Controller
             // cetak_r( $params, 1 );
 
             $m_real_sj = new \Model\Storage\RealSJ_model();
+
+            $d_real_sj_cek = $m_real_sj->where('id', $params['id_real_sj'])->first();
+            $ket_ts = !empty($d_real_sj_cek) ? $this->_cekSiklusSudahTutup( $d_real_sj_cek->noreg ) : null;
+            if ( !empty($ket_ts) ) {
+                $this->result['message'] = $ket_ts;
+                display_json($this->result);
+                return;
+            }
 
             $m_real_sj->where('id', $params['id_real_sj'])->update(
                 array(
@@ -436,6 +463,13 @@ class RealisasiSJ extends Public_Controller
         try {
             $m_real_sj = new \Model\Storage\RealSJ_model();
             $d_real_sj = $m_real_sj->where('id', $id)->with('det_real_sj')->first();
+
+            $ket_ts = !empty($d_real_sj) ? $this->_cekSiklusSudahTutup( $d_real_sj->noreg ) : null;
+            if ( !empty($ket_ts) ) {
+                $this->result['message'] = $ket_ts;
+                display_json($this->result);
+                return;
+            }
 
             if ( $d_real_sj ) {
                 foreach ($d_real_sj['det_real_sj'] as $k_drs => $v_drs) {
