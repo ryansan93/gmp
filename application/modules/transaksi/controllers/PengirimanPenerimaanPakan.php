@@ -1260,44 +1260,59 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                         $nama_brg = $d_brg->toArray()[0]['nama'];
                     }
 
+                    /*
+                     * NOTE (fix 2026-08-11): sebelumnya cek "jml_terima vs jml_pakai" cuma
+                     * bandingkan total pernah diterima di SJ itu vs total sudah diredistribusi
+                     * via kirim_pakan LAIN yang refer ke SJ sama -- BUTA terhadap pemakaian LHK,
+                     * jadi user bisa lolos memilih SJ yang stoknya sebenarnya sudah habis dimakan
+                     * ayam (lihat noreg 25101370601 / OP/KDR/26/08061). Diganti cek langsung ke
+                     * det_stok_siklus.jml_stok (sumber kebenaran yang sama dipakai hitung_stok_siklus,
+                     * sudah otomatis memperhitungkan LHK/mutasi/retur), dikurangi klaim mutasi LAIN
+                     * yang masih pending (belum tercatat di det_stok_trans_siklus) -- pola yang sama
+                     * dengan reservasi yang baru ditambahkan di SP.
+                     */
                     $m_conf = new \Model\Storage\Conf();
                     $sql = "
-                        select sum(dtp.jumlah) as jumlah from det_terima_pakan dtp
-                        left join
-                            terima_pakan tp
-                            on
-                                dtp.id_header = tp.id
-                        left join
-                            kirim_pakan kp
-                            on
-                                tp.id_kirim_pakan = kp.id
-                        where
-                            kp.no_sj = '".$v_det['no_sj_asal']."' and
-                            dtp.item = '".$v_det['barang']."'
+                        select
+                            isnull((
+                                select top 1 dss.jml_stok
+                                from det_stok_siklus dss
+                                where
+                                    dss.noreg = '".$asal."' and
+                                    dss.jenis_barang = 'pakan' and
+                                    dss.kode_trans = REPLACE('".$v_det['no_sj_asal']."', 'SJ', 'OP') and
+                                    dss.kode_barang = '".$v_det['barang']."'
+                            ), 0) as jml_stok,
+                            isnull((
+                                select sum(dkp.jumlah)
+                                from det_kirim_pakan dkp
+                                left join
+                                    kirim_pakan kp
+                                    on
+                                        dkp.id_header = kp.id
+                                where
+                                    dkp.no_sj_asal = '".$v_det['no_sj_asal']."' and
+                                    dkp.item = '".$v_det['barang']."' and
+                                    dkp.id_header <> '".$id."' and
+                                    not exists (
+                                        select * from det_stok_trans_siklus dsts
+                                        where dsts.kode_trans = kp.no_order and dsts.kode_barang = dkp.item
+                                    )
+                            ), 0) as jml_reserved
                     ";
-                    $d_asal = $m_conf->hydrateRaw( $sql );
+                    $d_stok = $m_conf->hydrateRaw( $sql );
 
-                    $jml_terima = 0;
-                    if ( $d_asal->count() > 0 ) {
-                        $jml_terima = $d_asal->toArray()[0]['jumlah'];
+                    $jml_stok = 0;
+                    $jml_reserved = 0;
+                    if ( $d_stok->count() > 0 ) {
+                        $row_stok = $d_stok->toArray()[0];
+                        $jml_stok = (float) $row_stok['jml_stok'];
+                        $jml_reserved = (float) $row_stok['jml_reserved'];
                     }
 
-                    $m_conf = new \Model\Storage\Conf();
-                    $sql = "
-                        select sum(dkp.jumlah) as jumlah from det_kirim_pakan dkp
-                        where
-                            dkp.no_sj_asal = '".$v_det['no_sj_asal']."' and
-                            dkp.item = '".$v_det['barang']."' and
-                            dkp.id_header <> '".$id."'
-                    ";
-                    $d_pakai = $m_conf->hydrateRaw( $sql );
+                    $jml_tersedia = $jml_stok - $jml_reserved;
 
-                    $jml_pakai = $v_det['jumlah'];
-                    if ( $d_pakai->count() > 0 ) {
-                        $jml_pakai += $d_pakai->toArray()[0]['jumlah'];
-                    }
-
-                    if ( $jml_terima < $jml_pakai ) {
+                    if ( $v_det['jumlah'] > $jml_tersedia ) {
                         $status = 0;
                         if ( empty($message)  ) {
                             $message = 'Data yang anda masukkan tidak sesuai !!!<br><br>';
@@ -1305,8 +1320,8 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
                         $message .= '<b>'.$nama_brg.'</b><br>';
                         $message .= 'SJ ASAL : <b>'.$v_det['no_sj_asal'].'</b><br>';
-                        $message .= 'TERIMA DI KANDANG : '.angkaRibuan($jml_terima).' KG<br>';
-                        $message .= 'PINDAH : '.angkaRibuan($jml_pakai).' KG<br><br>';
+                        $message .= 'SISA STOK (setelah pemakaian LHK & mutasi lain) : '.angkaRibuan($jml_tersedia).' KG<br>';
+                        $message .= 'PINDAH : '.angkaRibuan($v_det['jumlah']).' KG<br><br>';
                     }
                 }
 
@@ -1957,78 +1972,81 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
             $d_terima_pakan = $m_terima_pakan->where('id_kirim_pakan', $params['id'])->with(['detail'])->first();
 
-            $deskripsi_log_terima_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
-
-            $tgl_trans = $d_terima_pakan->tgl_terima;
-
-            /* JIKA PINDAH PAKAN, CEK TANGGAL */
-            if ( $d_kirim_pakan->jenis_kirim == 'opkp' ) {
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "
-                    select min(tp_asal.tgl_terima) as tgl_trans from terima_pakan tp
-                    left join
-                        kirim_pakan kp
-                        on
-                            tp.id_kirim_pakan = kp.id
-                    left join
-                        det_kirim_pakan dkp
-                        on
-                            dkp.id_header = kp.id
-                    left join
-                        kirim_pakan kp_asal
-                        on
-                            dkp.no_sj_asal = kp_asal.no_sj
-                    left join
-                        terima_pakan tp_asal
-                        on
-                            kp_asal.id = tp_asal.id_kirim_pakan
-                    where
-                        tp.id = '".$d_terima_pakan->id."'
-                ";
-                $d_tgl_pp = $m_conf->hydrateRaw( $sql );
+            if ( $d_terima_pakan ) {
+                $deskripsi_log_terima_pakan = 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $d_terima_pakan, $deskripsi_log_terima_pakan);
     
-                if ( $d_tgl_pp->count() > 0 ) {
-                    $d_tgl_pp = $d_tgl_pp->toArray()[0]['tgl_trans'];
+                $tgl_trans = $d_terima_pakan->tgl_terima;
     
-                    if ( $d_tgl_pp < $tgl_trans ) {
-                        $tgl_trans = $d_tgl_pp;
+                /* JIKA PINDAH PAKAN, CEK TANGGAL */
+                if ( $d_kirim_pakan->jenis_kirim == 'opkp' ) {
+                    $m_conf = new \Model\Storage\Conf();
+                    $sql = "
+                        select min(tp_asal.tgl_terima) as tgl_trans from terima_pakan tp
+                        left join
+                            kirim_pakan kp
+                            on
+                                tp.id_kirim_pakan = kp.id
+                        left join
+                            det_kirim_pakan dkp
+                            on
+                                dkp.id_header = kp.id
+                        left join
+                            kirim_pakan kp_asal
+                            on
+                                dkp.no_sj_asal = kp_asal.no_sj
+                        left join
+                            terima_pakan tp_asal
+                            on
+                                kp_asal.id = tp_asal.id_kirim_pakan
+                        where
+                            tp.id = '".$d_terima_pakan->id."'
+                    ";
+                    $d_tgl_pp = $m_conf->hydrateRaw( $sql );
+        
+                    if ( $d_tgl_pp->count() > 0 ) {
+                        $d_tgl_pp = $d_tgl_pp->toArray()[0]['tgl_trans'];
+        
+                        if ( $d_tgl_pp < $tgl_trans ) {
+                            $tgl_trans = $d_tgl_pp;
+                        }
                     }
                 }
-            }
-            /* END - JIKA PINDAH PAKAN, CEK TANGGAL */
-
-            $id = $d_terima_pakan->id;
-            $id_old = $d_terima_pakan->id;
-            $tanggal = $tgl_trans;
-            $status = 3;
-            $status_jurnal = 3;
-            $delete = 1;
-
-            $noreg1_old = $noreg1;
-            $noreg2_old = $noreg2;
-
-            $this->insertKonfirmasi( $id, $delete );
-
-            $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
-
-            $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
-            $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
-
-            if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
-                if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
-                    $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
-                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                /* END - JIKA PINDAH PAKAN, CEK TANGGAL */
+    
+                $id = $d_terima_pakan->id;
+                $id_old = $d_terima_pakan->id;
+                $tanggal = $tgl_trans;
+                $status = 3;
+                $status_jurnal = 3;
+                $delete = 1;
+    
+                $noreg1_old = $noreg1;
+                $noreg2_old = $noreg2;
+    
+                $this->insertKonfirmasi( $id, $delete );
+    
+                $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+    
+                $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
+                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+    
+                if ( !empty($noreg1_old) || !empty($noreg2_old) ) {
+                    if ( $noreg1 <> $noreg1_old || $noreg2 <> $noreg2_old ) {
+                        $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1_old."', '".$noreg2_old."'";
+                        $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                    }
                 }
+    
+                $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
             }
-
-            $return = Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status);
                 
             $this->result['message'] = 'Data Pengiriman Pakan berhasil di hapus.';
             $this->result['status'] = 1;
             $this->result['content'] = array(
-                'id' => $d_terima_pakan->id,
+                // 'id' => $d_terima_pakan->id,
+                'id' => null,
                 'tanggal' => $tgl_trans,
                 'delete' => 1,
                 'message' => 'Data Penerimaan Pakan berhasil di hapus.',
