@@ -275,6 +275,21 @@ var pdm = {
     	}
     }, // end - get_no_order
 
+    buildWarningPopulasi: function(jml_ekor, populasi, aksi) {
+        var selisih = jml_ekor - populasi;
+        var selisih_abs = Math.abs(selisih);
+        var selisih_pct = (selisih_abs / populasi * 100).toFixed(1);
+        var arah = (selisih > 0) ? 'lebih banyak' : 'lebih sedikit';
+
+        return '<div class="text-left">'
+            + '<b>Jumlah ekor yang diterima tidak sama dengan populasi RDIM.</b><br><br>'
+            + 'Diterima &nbsp;&nbsp;&nbsp;&nbsp;: <b>'+numeral.formatInt(jml_ekor)+' ekor</b><br>'
+            + 'Populasi RDIM : <b>'+numeral.formatInt(populasi)+' ekor</b><br>'
+            + 'Selisih &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <b>'+numeral.formatInt(selisih_abs)+' ekor ('+selisih_pct+'%) '+arah+'</b><br><br>'
+            + 'Apakah anda tetap ingin '+aksi+' data ini ?'
+            + '</div>';
+    }, // end - buildWarningPopulasi
+
     hit_jml_box: function(elm) {
         let div = $(elm).closest('div#transaksi');
 
@@ -306,7 +321,15 @@ var pdm = {
 			$(elm).removeAttr('disabled');
             bootbox.alert( 'Harap lengkapi data penerimaan DOC.' );
         } else {
-            bootbox.confirm( 'Apakah anda yakin ingin menyimpan data ?', function(result) {
+            var jml_ekor = numeral.unformat( $(div).find('input.ekor').val() );
+            var populasi = numeral.unformat( $(div).find('#select_noreg option:selected').attr('data-populasi') );
+
+            var confirm_msg = 'Apakah anda yakin ingin menyimpan data ?';
+            if ( !empty(populasi) && jml_ekor != populasi ) {
+                confirm_msg = pdm.buildWarningPopulasi( jml_ekor, populasi, 'menyimpan' );
+            }
+
+            bootbox.confirm( confirm_msg, function(result) {
                 if ( result ) {
                 	// var formData = new FormData();
 
@@ -410,7 +433,15 @@ var pdm = {
         if ( err > 0 ) {
             bootbox.alert( 'Harap lengkapi data penerimaan DOC.' );
         } else {
-            bootbox.confirm( 'Apakah anda yakin ingin meng-ubah data ?', function(result) {
+            var jml_ekor = numeral.unformat( $(div).find('input.ekor').val() );
+            var populasi = numeral.unformat( $(div).find('#select_noreg option:selected').attr('data-populasi') );
+
+            var confirm_msg = 'Apakah anda yakin ingin meng-ubah data ?';
+            if ( !empty(populasi) && jml_ekor != populasi ) {
+                confirm_msg = pdm.buildWarningPopulasi( jml_ekor, populasi, 'meng-ubah' );
+            }
+
+            bootbox.confirm( confirm_msg, function(result) {
                 if ( result ) {
                     // var formData = new FormData();
 

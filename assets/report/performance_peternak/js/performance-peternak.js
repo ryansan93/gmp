@@ -417,7 +417,7 @@ var sk = {
 		});
 	}, // end - getDetailAyam
 
-	getDetailBarang: function(kode_barang, nama_barang) {
+	getDetailBarang: function(kode_barang, nama_barang, jenis_barang) {
 		var noreg = $('select.siklus').val();
 
 		$.ajax({
@@ -427,6 +427,7 @@ var sk = {
 					'noreg': noreg,
 					'kode_barang': kode_barang,
 					'nama_barang': nama_barang,
+					'jenis_barang': jenis_barang,
 				}
 			},
 			type: 'POST',

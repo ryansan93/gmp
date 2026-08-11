@@ -1019,12 +1019,14 @@ class PerformancePeternak extends Public_Controller {
             $noreg = trim($params['noreg']);
             $kode_barang = trim($params['kode_barang']);
             $nama_barang = trim($params['nama_barang']);
+            $jenis_barang = trim(isset($params['jenis_barang']) ? $params['jenis_barang'] : '');
 
             $end_date = date('Y-m-d').' 23:59:59.999';
 
             $data = $this->mappingDetailBarang( $noreg, $kode_barang, $end_date );
 
             $content['nama_barang'] = $nama_barang;
+            $content['is_ovk'] = ($jenis_barang === 'voadip');
             $content['data'] = $data;
             $html = $this->load->view('report/performance_peternak/detail_barang', $content, TRUE);
 

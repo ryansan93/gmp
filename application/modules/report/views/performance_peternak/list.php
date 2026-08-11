@@ -112,7 +112,7 @@
 						$qty_display = ($qty >= 0) ? angkaDecimal($qty) : '('.angkaDecimal(abs($qty)).')';
 						$zak_display = !$is_ovk ? number_format(abs($qty) / 50, 1, ',', '.') : null;
 					?>
-					<div class="sk-item-row sk-clickable" onclick="sk.getDetailBarang('<?php echo addslashes($value['kode_barang']); ?>', '<?php echo addslashes(strtoupper($value['nama_barang'])); ?>')">
+					<div class="sk-item-row sk-clickable" onclick="sk.getDetailBarang('<?php echo addslashes($value['kode_barang']); ?>', '<?php echo addslashes(strtoupper($value['nama_barang'])); ?>', '<?php echo addslashes($value['jenis_barang']); ?>')">
 						<span class="sk-item-nama"><?php echo strtoupper($value['nama_barang']); ?></span>
 						<span class="sk-item-qty-wrap">
 							<span class="sk-item-jumlah <?php echo ($qty < 0) ? 'sk-item-minus' : ''; ?>"><?php echo $qty_display; ?><?php echo !$is_ovk ? ' kg' : ''; ?></span>

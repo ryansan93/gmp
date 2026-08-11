@@ -28,9 +28,24 @@
 									</small>
 								<?php endif ?>
 							</td>
-							<td class="text-right"><?php echo ($value['masuk'] > 0) ? angkaDecimal($value['masuk']) : '-'; ?></td>
-							<td class="text-right"><?php echo ($value['keluar'] > 0) ? angkaDecimal($value['keluar']) : '-'; ?></td>
-							<td class="text-right"><b><?php echo angkaDecimal($value['saldo']); ?></b></td>
+							<td class="text-right">
+								<?php echo ($value['masuk'] > 0) ? angkaDecimal($value['masuk']) : '-'; ?>
+								<?php if ( !$is_ovk && $value['masuk'] > 0 ): ?>
+									<br><small class="text-muted">&asymp; <?php echo number_format($value['masuk'] / 50, 1, ',', '.'); ?> zak</small>
+								<?php endif ?>
+							</td>
+							<td class="text-right">
+								<?php echo ($value['keluar'] > 0) ? angkaDecimal($value['keluar']) : '-'; ?>
+								<?php if ( !$is_ovk && $value['keluar'] > 0 ): ?>
+									<br><small class="text-muted">&asymp; <?php echo number_format($value['keluar'] / 50, 1, ',', '.'); ?> zak</small>
+								<?php endif ?>
+							</td>
+							<td class="text-right">
+								<b><?php echo angkaDecimal($value['saldo']); ?></b>
+								<?php if ( !$is_ovk ): ?>
+									<br><small class="text-muted">&asymp; <?php echo number_format($value['saldo'] / 50, 1, ',', '.'); ?> zak</small>
+								<?php endif ?>
+							</td>
 						</tr>
 					<?php endforeach ?>
 				</tbody>
