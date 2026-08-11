@@ -5,7 +5,7 @@
 			<td class="transaksi" data-val="<?php echo $v_data['transaksi']; ?>"><?php echo $v_data['transaksi']; ?></td>
 			<td class="no_bayar" data-val="<?php echo $v_data['no_bayar']; ?>">
 				<?php if ( isset($v_data['lampiran']) && !empty($v_data['lampiran']) ) { ?>
-					<a href="upload/<?php echo $v_data['lampiran']; ?>" target="_blank">
+					<a href="uploads/<?php echo $v_data['lampiran']; ?>" target="_blank">
 						<?php echo (isset($v_data['no_invoice']) && !empty($v_data['no_invoice'])) ? $v_data['no_invoice'] : $v_data['no_bayar']; ?>
 					</a>
 				<?php } else { ?>
