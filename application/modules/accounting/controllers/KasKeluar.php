@@ -226,6 +226,7 @@ class KasKeluar extends Public_Controller {
             $m_kk->unit = $params['unit'];
             $m_kk->save();
 
+            $total_nilai = 0;
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_kki = new \Model\Storage\KkItem_model();
                 $m_kki->no_kk = $no_kk;
@@ -242,6 +243,7 @@ class KasKeluar extends Public_Controller {
                 $m_kki->nilai = $v_det['nilai'];
                 $m_kki->save();
 
+                /*
                 $id_djt = null;
                 if ( !empty($v_det['det_jurnal_trans']) ) {
                     $m_djt = new \Model\Storage\DetJurnalTrans_model();
@@ -268,7 +270,56 @@ class KasKeluar extends Public_Controller {
                 $m_djurnal->kode_jurnal = $no_kk;
                 // $m_djurnal->pelanggan = 
                 $m_djurnal->save();
+                */
+
+                $id_djt = null;
+                if ( !empty($v_det['det_jurnal_trans']) ) {
+                    $m_djt = new \Model\Storage\DetJurnalTrans_model();
+                    $d_djt = $m_djt->where('kode', $v_det['det_jurnal_trans'])->orderBy('id', 'desc')->first();
+
+                    $id_djt = $d_djt->id;
+                }
+
+                $m_djurnal = new \Model\Storage\DetJurnal_model();
+                $m_djurnal->tanggal = $params['tgl_kk'];
+                $m_djurnal->det_jurnal_trans_id = $id_djt;
+                $m_djurnal->supplier = $params['no_supplier'];
+                $m_djurnal->keterangan = $v_det['keterangan'];
+                $m_djurnal->nominal = $v_det['nilai'];
+                $m_djurnal->asal = null;
+                $m_djurnal->coa_asal = null;
+                $m_djurnal->tujuan = $v_det['coa_tujuan_nama'];
+                $m_djurnal->coa_tujuan = $v_det['coa_tujuan'];
+                $m_djurnal->unit = $params['unit'];
+                $m_djurnal->tbl_name = $m_kk->getTable();
+                $m_djurnal->tbl_id = $no_kk;
+                $m_djurnal->invoice = $v_det['no_invoice'];
+                $m_djurnal->kode_trans = $no_kk;
+                $m_djurnal->kode_jurnal = $no_kk;
+                // $m_djurnal->pelanggan =
+                $m_djurnal->save();
+
+                $total_nilai += $v_det['nilai'];
             }
+
+            $m_djurnal_header = new \Model\Storage\DetJurnal_model();
+            $m_djurnal_header->tanggal = $params['tgl_kk'];
+            $m_djurnal_header->det_jurnal_trans_id = null;
+            $m_djurnal_header->supplier = $params['no_supplier'];
+            $m_djurnal_header->keterangan = $params['keterangan'];
+            $m_djurnal_header->nominal = $total_nilai;
+            $m_djurnal_header->asal = $params['nama_bank'];
+            $m_djurnal_header->coa_asal = $params['coa_bank'];
+            $m_djurnal_header->tujuan = null;
+            $m_djurnal_header->coa_tujuan = null;
+            $m_djurnal_header->unit = $params['unit'];
+            $m_djurnal_header->tbl_name = $m_kk->getTable();
+            $m_djurnal_header->tbl_id = $no_kk;
+            $m_djurnal_header->invoice = null;
+            $m_djurnal_header->kode_trans = $no_kk;
+            $m_djurnal_header->kode_jurnal = $no_kk;
+            // $m_djurnal_header->pelanggan =
+            $m_djurnal_header->save();
 
             $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             Modules::run( 'base/event/save', $m_kk, $deskripsi_log, null, $no_kk );
@@ -314,6 +365,7 @@ class KasKeluar extends Public_Controller {
             $m_kki = new \Model\Storage\KkItem_model();
             $m_kki->where('no_kk', $no_kk)->delete();
 
+            $total_nilai = 0;
             foreach ($params['detail'] as $k_det => $v_det) {
                 $m_kki = new \Model\Storage\KkItem_model();
                 $m_kki->no_kk = $no_kk;
@@ -330,6 +382,7 @@ class KasKeluar extends Public_Controller {
                 $m_kki->nilai = $v_det['nilai'];
                 $m_kki->save();
 
+                /*
                 $id_djt = null;
                 if ( !empty($v_det['det_jurnal_trans']) ) {
                     $m_djt = new \Model\Storage\DetJurnalTrans_model();
@@ -356,7 +409,56 @@ class KasKeluar extends Public_Controller {
                 $m_djurnal->kode_jurnal = $no_kk;
                 // $m_djurnal->pelanggan = 
                 $m_djurnal->save();
+                */
+
+                $id_djt = null;
+                if ( !empty($v_det['det_jurnal_trans']) ) {
+                    $m_djt = new \Model\Storage\DetJurnalTrans_model();
+                    $d_djt = $m_djt->where('kode', $v_det['det_jurnal_trans'])->orderBy('id', 'desc')->first();
+
+                    $id_djt = $d_djt->id;
+                }
+
+                $m_djurnal = new \Model\Storage\DetJurnal_model();
+                $m_djurnal->tanggal = $params['tgl_kk'];
+                $m_djurnal->det_jurnal_trans_id = $id_djt;
+                $m_djurnal->supplier = $params['no_supplier'];
+                $m_djurnal->keterangan = $v_det['keterangan'];
+                $m_djurnal->nominal = $v_det['nilai'];
+                $m_djurnal->asal = null;
+                $m_djurnal->coa_asal = null;
+                $m_djurnal->tujuan = $v_det['coa_tujuan_nama'];
+                $m_djurnal->coa_tujuan = $v_det['coa_tujuan'];
+                $m_djurnal->unit = $params['unit'];
+                $m_djurnal->tbl_name = $m_kk->getTable();
+                $m_djurnal->tbl_id = $no_kk;
+                $m_djurnal->invoice = $v_det['no_invoice'];
+                $m_djurnal->kode_trans = $no_kk;
+                $m_djurnal->kode_jurnal = $no_kk;
+                // $m_djurnal->pelanggan =
+                $m_djurnal->save();
+
+                $total_nilai += $v_det['nilai'];
             }
+
+            $m_djurnal_header = new \Model\Storage\DetJurnal_model();
+            $m_djurnal_header->tanggal = $params['tgl_kk'];
+            $m_djurnal_header->det_jurnal_trans_id = null;
+            $m_djurnal_header->supplier = $params['no_supplier'];
+            $m_djurnal_header->keterangan = $params['keterangan'];
+            $m_djurnal_header->nominal = $total_nilai;
+            $m_djurnal_header->asal = $params['nama_bank'];
+            $m_djurnal_header->coa_asal = $params['coa_bank'];
+            $m_djurnal_header->tujuan = null;
+            $m_djurnal_header->coa_tujuan = null;
+            $m_djurnal_header->unit = $params['unit'];
+            $m_djurnal_header->tbl_name = $m_kk->getTable();
+            $m_djurnal_header->tbl_id = $no_kk;
+            $m_djurnal_header->invoice = null;
+            $m_djurnal_header->kode_trans = $no_kk;
+            $m_djurnal_header->kode_jurnal = $no_kk;
+            // $m_djurnal_header->pelanggan =
+            $m_djurnal_header->save();
 
             $d_kk = $m_kk->where('no_kk', $no_kk)->first();
 
