@@ -1683,7 +1683,7 @@ class LembarKerjaHpp extends Public_Controller {
                         then dss.jumlah * dss.oa else 0 end) as beli_oa,
                     sum(case when dss.jenis_barang = 'pakan' and kp_opkp.no_order is not null
                         then dss.jumlah * dss.oa else 0 end) as mutasi_msk_oa
-                from det_stok_siklus dss
+                from det_stok_siklus dss with (nolock)
                 left join kp_opkg on dss.kode_trans = kp_opkg.no_order and dss.jenis_barang = 'pakan'
                 left join kp_opkp on dss.kode_trans = kp_opkp.no_order and dss.jenis_barang = 'pakan'
                 left join kv_opkg on dss.kode_trans = kv_opkg.no_order and dss.jenis_barang = 'voadip'
@@ -1703,7 +1703,7 @@ class LembarKerjaHpp extends Public_Controller {
                         then dss.jumlah * dss.oa else 0 end) as beli_oa,
                     sum(case when dss.jenis_barang = 'pakan' and kp_opkp_awal.no_order is not null
                         then dss.jumlah * dss.oa else 0 end) as mutasi_msk_oa
-                from det_stok_siklus dss
+                from det_stok_siklus dss with (nolock)
                 left join kp_opkg_awal on dss.kode_trans = kp_opkg_awal.no_order and dss.jenis_barang = 'pakan'
                 left join kp_opkp_awal on dss.kode_trans = kp_opkp_awal.no_order and dss.jenis_barang = 'pakan'
                 left join kv_opkg_awal on dss.kode_trans = kv_opkg_awal.no_order and dss.jenis_barang = 'voadip'
@@ -1732,8 +1732,8 @@ class LembarKerjaHpp extends Public_Controller {
                         then dsts.jumlah * dss.oa else 0 end) as mutasi_klwr_oa,
                     sum(case when dss.jenis_barang = 'pakan' and rp.no_retur is not null
                         then -dsts.jumlah * dss.oa else 0 end) as koreksi_oa
-                from det_stok_trans_siklus dsts
-                inner join det_stok_siklus dss on dsts.id_header = dss.id
+                from det_stok_trans_siklus dsts with (nolock)
+                inner join det_stok_siklus dss with (nolock) on dsts.id_header = dss.id
                 left join kp_opkp on dsts.kode_trans = kp_opkp.no_order
                 left join retur_pakan rp on dsts.kode_trans = rp.no_retur and rp.jenis_retur = 'opkp'
                 where dsts.tgl_trans between '".$start_date."' and '".$end_date."'
@@ -1751,8 +1751,8 @@ class LembarKerjaHpp extends Public_Controller {
                         then dsts.jumlah * dss.oa else 0 end) as mutasi_klwr_oa,
                     sum(case when dss.jenis_barang = 'pakan' and rp.no_retur is not null
                         then -dsts.jumlah * dss.oa else 0 end) as koreksi_oa
-                from det_stok_trans_siklus dsts
-                inner join det_stok_siklus dss on dsts.id_header = dss.id
+                from det_stok_trans_siklus dsts with (nolock)
+                inner join det_stok_siklus dss with (nolock) on dsts.id_header = dss.id
                 left join kp_opkp_awal on dsts.kode_trans = kp_opkp_awal.no_order
                 left join retur_pakan rp on dsts.kode_trans = rp.no_retur and rp.jenis_retur = 'opkp'
                 where dsts.tgl_trans < '".$start_date."'
@@ -1788,7 +1788,7 @@ class LembarKerjaHpp extends Public_Controller {
             -- ============================================================
             doc_ranked as (
                 select *, row_number() over (partition by noreg, jenis_trans order by id desc) as rn
-                from det_stok_siklus
+                from det_stok_siklus with (nolock)
                 where jenis_barang = 'doc' and tgl_trans between '".$start_date."' and '".$end_date."'
             ),
             doc_period as (
@@ -1801,7 +1801,7 @@ class LembarKerjaHpp extends Public_Controller {
             ),
             doc_ranked_before as (
                 select *, row_number() over (partition by noreg, jenis_trans order by id desc) as rn
-                from det_stok_siklus
+                from det_stok_siklus with (nolock)
                 where jenis_barang = 'doc' and tgl_trans < '".$start_date."'
             ),
             doc_saldo as (
@@ -1830,7 +1830,7 @@ class LembarKerjaHpp extends Public_Controller {
                     sum(case when jenis_barang = 'pakan' then jumlah * hrg_beli else 0 end) as pkn_debet,
                     sum(case when jenis_barang = 'voadip' then jumlah * hrg_beli else 0 end) as ovk_debet,
                     sum(case when jenis_barang = 'pakan' then jumlah * oa else 0 end) as oa_debet
-                from det_stok_siklus
+                from det_stok_siklus with (nolock)
                 where tgl_trans < '".$start_date."' and jenis_barang in ('pakan', 'voadip')
                 group by noreg
             ),
@@ -1839,8 +1839,8 @@ class LembarKerjaHpp extends Public_Controller {
                     sum(case when dss.jenis_barang = 'pakan' then dsts.jumlah * dss.hrg_beli else 0 end) as pkn_kredit,
                     sum(case when dss.jenis_barang = 'voadip' then dsts.jumlah * dss.hrg_beli else 0 end) as ovk_kredit,
                     sum(case when dss.jenis_barang = 'pakan' and dsts.tbl_name <> 'lhk' then dsts.jumlah * dss.oa else 0 end) as oa_kredit
-                from det_stok_trans_siklus dsts
-                inner join det_stok_siklus dss on dsts.id_header = dss.id
+                from det_stok_trans_siklus dsts with (nolock)
+                inner join det_stok_siklus dss with (nolock) on dsts.id_header = dss.id
                 where dsts.tgl_trans < '".$start_date."' and dss.jenis_barang in ('pakan', 'voadip')
                 group by dss.noreg
             ),
@@ -1989,7 +1989,7 @@ class LembarKerjaHpp extends Public_Controller {
                     sum(case when dj.coa_tujuan in (".$coa_bl_k6.") then dj.nominal else 0 end) as nilai_bl,
                     sum(case when dj.coa_tujuan in (".$coa_btl_k6.") then dj.nominal else 0 end
                         + case when dj.coa_tujuan in (".$coa_k5.") then dj.nominal else 0 end) as nilai_btl
-                from det_jurnal dj
+                from det_jurnal dj with (nolock)
                 where dj.tanggal between '".$start_date."' and '".$end_date."'
                     and dj.noreg is not null
                 group by dj.noreg
@@ -2000,7 +2000,7 @@ class LembarKerjaHpp extends Public_Controller {
                     sum(case when dj.coa_tujuan in (".$coa_bl_k6.") then dj.nominal else 0 end) as nilai_bl,
                     sum(case when dj.coa_tujuan in (".$coa_btl_k6.") then dj.nominal else 0 end
                         + case when dj.coa_tujuan in (".$coa_k5.") then dj.nominal else 0 end) as nilai_btl
-                from det_jurnal dj
+                from det_jurnal dj with (nolock)
                 where dj.tanggal between '".$bl_awal_start_date."' and '".$bl_awal_end_date."'
                     and dj.noreg is not null
                 group by dj.noreg
@@ -2011,7 +2011,7 @@ class LembarKerjaHpp extends Public_Controller {
                     sum(case when dj.coa_tujuan in (".$coa_bl_k6.") then dj.nominal else 0 end) as nilai_bl,
                     sum(case when dj.coa_tujuan in (".$coa_btl_k6.") then dj.nominal else 0 end
                         + case when dj.coa_tujuan in (".$coa_k5.") then dj.nominal else 0 end) as nilai_btl
-                from det_jurnal dj
+                from det_jurnal dj with (nolock)
                 where dj.tanggal between '".$bl_awal2_start_date."' and '".$bl_awal2_end_date."'
                     and dj.noreg is not null
                 group by dj.noreg
@@ -2206,7 +2206,7 @@ class LembarKerjaHpp extends Public_Controller {
                     sum(case when dj.coa_tujuan in (".$coa_bl_k6.") then dj.nominal else 0 end) as pool_bl,
                     sum(case when dj.coa_tujuan in (".$coa_btl_k6.") then dj.nominal else 0 end) as pool_btl,
                     sum(case when dj.coa_tujuan in (".$coa_k5.") then dj.nominal else 0 end) as pool_k5
-                from det_jurnal dj
+                from det_jurnal dj with (nolock)
                 where dj.tanggal between '".$start_date."' and '".$end_date."'
                     and dj.noreg is null
                 group by dj.unit
@@ -2217,7 +2217,7 @@ class LembarKerjaHpp extends Public_Controller {
                     sum(case when dj.coa_tujuan in (".$coa_bl_k6.") then dj.nominal else 0 end) as pool_bl,
                     sum(case when dj.coa_tujuan in (".$coa_btl_k6.") then dj.nominal else 0 end) as pool_btl,
                     sum(case when dj.coa_tujuan in (".$coa_k5.") then dj.nominal else 0 end) as pool_k5
-                from det_jurnal dj
+                from det_jurnal dj with (nolock)
                 where dj.tanggal between '".$bl_awal_start_date."' and '".$bl_awal_end_date."'
                     and dj.noreg is null
                 group by dj.unit
@@ -2228,7 +2228,7 @@ class LembarKerjaHpp extends Public_Controller {
                     sum(case when dj.coa_tujuan in (".$coa_bl_k6.") then dj.nominal else 0 end) as pool_bl,
                     sum(case when dj.coa_tujuan in (".$coa_btl_k6.") then dj.nominal else 0 end) as pool_btl,
                     sum(case when dj.coa_tujuan in (".$coa_k5.") then dj.nominal else 0 end) as pool_k5
-                from det_jurnal dj
+                from det_jurnal dj with (nolock)
                 where dj.tanggal between '".$bl_awal2_start_date."' and '".$bl_awal2_end_date."'
                     and dj.noreg is null
                 group by dj.unit
@@ -2577,8 +2577,12 @@ class LembarKerjaHpp extends Public_Controller {
         // "TCP Provider: Timeout error [258]", jg "Communication link failure" / "semaphore timeout") -
         // query yg sama dijalankan ulang biasanya sukses. Auto-retry maks 3x khusus utk error transien
         // itu; error lain (syntax, dll) tetap langsung dilempar. Query ini murni SELECT, aman di-retry.
+        // 2026-08-11: ditambah marker deadlock ("deadlocked", "deadlock victim") - query ini baca
+        // tabel panas (det_stok_siklus/det_stok_trans_siklus/det_jurnal) yg sering ditulis modul lain,
+        // jadi sesekali kena deadlock (SQL Server sendiri nyaranin "Rerun the transaction"). Ditambah
+        // WITH (NOLOCK) di ketiga tabel itu supaya lebih jarang kena, retry ini jaring pengaman sisanya.
         $max_attempts = 3;
-        $transient_markers = array('Timeout error [258]', 'Communication link failure', 'semaphore timeout', 'TCP Provider');
+        $transient_markers = array('Timeout error [258]', 'Communication link failure', 'semaphore timeout', 'TCP Provider', 'deadlocked', 'deadlock victim');
         for ($attempt = 1; $attempt <= $max_attempts; $attempt++) {
             try {
                 $d_conf = $m_conf->hydrateRaw( $sql );
