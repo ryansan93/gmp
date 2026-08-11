@@ -40,6 +40,8 @@ class RealisasiSjMobile extends Public_Controller {
                 $isMobile = true;
             }
 
+            // cetak_r( $akses, 1 );
+
             $content['akses'] = $akses;
             $content['isMobile'] = $isMobile;
 
@@ -104,15 +106,58 @@ class RealisasiSjMobile extends Public_Controller {
         $data = null;
         if ( $d_real_sj->count() > 0 ) {
             $d_real_sj = $d_real_sj->toArray();
-            foreach ($d_real_sj as $k_real_sj => $v_real_sj) {
-                $m_rs = new \Model\Storage\RdimSubmit_model();
-                $d_rs = $m_rs->where('noreg', $v_real_sj['noreg'])->with(['mitra'])->orderBy('id', 'desc')->first();
 
-                $nama = $d_rs->mitra->dMitra->nama;
+            /*
+             * NOTE (perf): sebelumnya query RdimSubmit+mitra dieksekusi per baris real_sj
+             * (N+1) - diganti 1 query batch utk semua noreg yang tampil, lalu di-map di PHP.
+             */
+            $noregs = array_values(array_unique(array_column($d_real_sj, 'noreg')));
+
+            $mitraByNoreg = array();
+            if ( !empty($noregs) ) {
+                $m_conf = new \Model\Storage\Conf();
+                $sql = "
+                    select
+                        rs.noreg,
+                        m.nama,
+                        m.nomor
+                    from rdim_submit rs
+                    right join
+                        (select max(id) as id, noreg from rdim_submit where noreg in ('".implode("', '", $noregs)."') group by noreg) rs2
+                        on
+                            rs.id = rs2.id
+                    left join
+                        (
+                            select mm1.* from mitra_mapping mm1
+                            right join
+                                (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                                on
+                                    mm1.id = mm2.id
+                        ) mm
+                        on
+                            mm.nim = rs.nim
+                    left join
+                        mitra m
+                        on
+                            mm.mitra = m.id
+                ";
+                $d_conf = $m_conf->hydrateRaw( $sql );
+
+                if ( $d_conf->count() > 0 ) {
+                    foreach ($d_conf->toArray() as $v_mitra) {
+                        $mitraByNoreg[ $v_mitra['noreg'] ] = $v_mitra;
+                    }
+                }
+            }
+
+            foreach ($d_real_sj as $k_real_sj => $v_real_sj) {
+                $mitra_info = isset($mitraByNoreg[ $v_real_sj['noreg'] ]) ? $mitraByNoreg[ $v_real_sj['noreg'] ] : array('nama' => null, 'nomor' => null);
+                $nama = $mitra_info['nama'];
+
                 if ( !isset($data[ $v_real_sj['noreg'] ]) ) {
                     $data[ $nama.'-'.$v_real_sj['noreg'] ] = array(
                         'noreg' => $v_real_sj['noreg'],
-                        'nomor' => $d_rs->mitra->dMitra->nomor,
+                        'nomor' => $mitra_info['nomor'],
                         'mitra' => $nama,
                         'kandang' => substr($v_real_sj['noreg'], -2),
                         'tgl_panen' => $params['tgl_panen'],
@@ -147,9 +192,9 @@ class RealisasiSjMobile extends Public_Controller {
         $params = $this->input->get('params');
         $edit = $this->input->get('edit');
 
-        $noreg = $params['noreg'];
-        $tgl_panen = $params['tgl_panen'];
-        $nomor = $params['nomor'];
+        $noreg = (isset($params['noreg']) && !empty($params['noreg'])) ? $params['noreg'] : null;
+        $tgl_panen = (isset($params['tgl_panen']) && !empty($params['tgl_panen'])) ? $params['tgl_panen'] : null;
+        $nomor = (isset($params['nomor']) && !empty($params['nomor'])) ? $params['nomor'] : null;
 
         $content = array();
         $html = "url not found";
@@ -193,26 +238,36 @@ class RealisasiSjMobile extends Public_Controller {
             $m_rs = new \Model\Storage\RdimSubmit_model();
             $d_rs = $m_rs->where('noreg', $noreg)->with(['mitra'])->orderBy('id', 'desc')->first();
 
-            $m_rpah = new \Model\Storage\Rpah_model();
-            $d_rpah = $m_rpah->where('tgl_panen', $tgl_panen)->get();
+            /*
+             * NOTE (perf): sebelumnya loop semua rpah SE-NASIONAL pada tgl_panen ini lalu
+             * query det_rpah satu-satu per header (N+1 tanpa index) - diganti 1 query
+             * agregat langsung filter noreg+tgl_panen.
+             */
+            $m_conf_rpah = new \Model\Storage\Conf();
+            $sql_rpah = "
+                select
+                    sum(isnull(drpah.ekor, 0)) as ekor,
+                    sum(isnull(drpah.tonase, 0)) as tonase,
+                    max(rp.bottom_price) as bottom_price
+                from det_rpah drpah
+                left join
+                    rpah rp
+                    on
+                        rp.id = drpah.id_rpah
+                where
+                    rp.tgl_panen = '".$tgl_panen."' and
+                    drpah.noreg = '".$noreg."'
+            ";
+            $d_conf_rpah = $m_conf_rpah->hydrateRaw( $sql_rpah );
 
             $ekor = 0;
             $tonase = 0;
             $harga_dasar = 0;
-            foreach ($d_rpah as $k_rpah => $v_rpah) {
-                $m_drpah = new \Model\Storage\DetRpah_model();
-                $d_drpah = $m_drpah->where('id_rpah', $v_rpah['id'])->where('noreg', $noreg)->get();
-
-                if ( $d_drpah->count() > 0 ) {
-                    $d_drpah = $d_drpah->toArray();
-
-                    foreach ($d_drpah as $k_drpah => $v_drpah) {
-                        $ekor += $v_drpah['ekor'];
-                        $tonase += $v_drpah['tonase'];
-
-                        $harga_dasar = $v_rpah['bottom_price'];
-                    }
-                }
+            if ( $d_conf_rpah->count() > 0 ) {
+                $row_rpah = $d_conf_rpah->toArray()[0];
+                $ekor = (float) $row_rpah['ekor'];
+                $tonase = (float) $row_rpah['tonase'];
+                $harga_dasar = $row_rpah['bottom_price'];
             }
 
             $m_dreal_sj = new \Model\Storage\DetRealSJ_model();
@@ -309,81 +364,95 @@ class RealisasiSjMobile extends Public_Controller {
             $m_rs = new \Model\Storage\RdimSubmit_model();
             $d_rs = $m_rs->where('noreg', $noreg)->with(['mitra'])->orderBy('id', 'desc')->first();
 
-            $m_rpah = new \Model\Storage\Rpah_model();
-            $d_rpah = $m_rpah->where('tgl_panen', $tgl_panen)->orderBy('id', 'desc')->get();
+            /*
+             * NOTE (perf): sebelumnya loop semua rpah SE-NASIONAL pada tgl_panen ini lalu
+             * query det_rpah satu-satu per header (N+1 tanpa index) - diganti 1 query
+             * langsung filter noreg+tgl_panen, baris det_rpah-nya sendiri biasanya sedikit
+             * (per DO dalam 1 siklus) jadi loop per-DO di bawah ini tetap dipertahankan.
+             */
+            $m_conf_rpah = new \Model\Storage\Conf();
+            $sql_rpah = "
+                select
+                    drpah.*,
+                    rp.bottom_price
+                from det_rpah drpah
+                left join
+                    rpah rp
+                    on
+                        rp.id = drpah.id_rpah
+                where
+                    rp.tgl_panen = '".$tgl_panen."' and
+                    drpah.noreg = '".$noreg."'
+            ";
+            $d_conf_rpah = $m_conf_rpah->hydrateRaw( $sql_rpah );
 
             $ekor = 0;
             $tonase = 0;
             $harga_dasar = 0;
-            foreach ($d_rpah as $k_rpah => $v_rpah) {
-                $m_drpah = new \Model\Storage\DetRpah_model();
-                $d_drpah = $m_drpah->where('id_rpah', $v_rpah['id'])->where('noreg', $noreg)->get();
+            if ( $d_conf_rpah->count() > 0 ) {
+                $rows_drpah = $d_conf_rpah->toArray();
 
-                if ( $d_drpah->count() > 0 ) {
-                    $d_drpah = $d_drpah->toArray();
+                foreach ($rows_drpah as $k_drpah => $v_drpah) {
+                    $ekor += $v_drpah['ekor'];
+                    $tonase += $v_drpah['tonase'];
 
-                    foreach ($d_drpah as $k_drpah => $v_drpah) {
-                        $ekor += $v_drpah['ekor'];
-                        $tonase += $v_drpah['tonase'];
+                    $harga_dasar = $v_drpah['bottom_price'];
 
-                        $harga_dasar = $v_rpah['bottom_price'];
+                    $m_dreal_sj = new \Model\Storage\DetRealSJ_model();
+                    $d_dreal_sj = $m_dreal_sj->where('id_header', $d_real_sj->id)->where('no_do', $v_drpah['no_do'])->get();
 
-                        $m_dreal_sj = new \Model\Storage\DetRealSJ_model();
-                        $d_dreal_sj = $m_dreal_sj->where('id_header', $d_real_sj->id)->where('no_do', $v_drpah['no_do'])->get();
+                    if ( $d_dreal_sj->count() > 0 ) {
+                        $d_dreal_sj = $d_dreal_sj->toArray();
+                        foreach ($d_dreal_sj as $k_dreal_sj => $v_dreal_sj) {
+                            $m_drsi = new \Model\Storage\DetRealSjInv_model();
+                            $d_drsi = $m_drsi->where('no_sj', $v_dreal_sj['no_sj'])->first();
 
-                        if ( $d_dreal_sj->count() > 0 ) {
-                            $d_dreal_sj = $d_dreal_sj->toArray();
-                            foreach ($d_dreal_sj as $k_dreal_sj => $v_dreal_sj) {
-                                $m_drsi = new \Model\Storage\DetRealSjInv_model();
-                                $d_drsi = $m_drsi->where('no_sj', $v_dreal_sj['no_sj'])->first();
+                            $edit_data = 1;
+                            if ( $d_drsi ) {
+                                // $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
+                                // $d_dpp = $m_dpp->where('no_inv', $d_drsi->no_inv)->sum('jumlah_bayar');
 
-                                $edit_data = 1;
-                                if ( $d_drsi ) {
-                                    // $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
-                                    // $d_dpp = $m_dpp->where('no_inv', $d_drsi->no_inv)->sum('jumlah_bayar');
+                                $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
+                                $sql = "
+                                    select * from det_pembayaran_pelanggan dpp
+                                    where
+                                        dpp.no_inv = '".$d_drsi->no_inv."' and
+                                        (dpp.tagihan - (dpp.penyesuaian+dpp.sisa_tagihan)) > 0
+                                ";
+                                $d_dpp = $m_dpp->hydrateRaw( $sql );
 
-                                    $m_dpp = new \Model\Storage\DetPembayaranPelanggan_model();
-                                    $sql = "
-                                        select * from det_pembayaran_pelanggan dpp
-                                        where
-                                            dpp.no_inv = '".$d_drsi->no_inv."' and
-                                            (dpp.tagihan - (dpp.penyesuaian+dpp.sisa_tagihan)) > 0
-                                    ";
-                                    $d_dpp = $m_dpp->hydrateRaw( $sql );
-    
-                                    if ( $d_dpp->count() > 0 ) {
-                                        $edit_data = 0;
-                                    }
+                                if ( $d_dpp->count() > 0 ) {
+                                    $edit_data = 0;
                                 }
-
-
-                                $detail[ $v_dreal_sj['no_do'] ]['pelanggan'] = $v_dreal_sj['pelanggan'];
-                                $detail[ $v_dreal_sj['no_do'] ]['no_pelanggan'] = $v_dreal_sj['no_pelanggan'];
-                                $detail[ $v_dreal_sj['no_do'] ]['id_det_rpah'] = $v_drpah['id'];
-                                $detail[ $v_dreal_sj['no_do'] ]['no_do'] = $v_dreal_sj['no_do'];
-                                $detail[ $v_dreal_sj['no_do'] ]['no_sj'] = $v_dreal_sj['no_sj'];
-                                $detail[ $v_dreal_sj['no_do'] ]['lampiran'] = $v_dreal_sj['lampiran'];
-                                $detail[ $v_dreal_sj['no_do'] ]['edit_data'] = $edit_data;
-                                $detail[ $v_dreal_sj['no_do'] ]['realisasi'][ $v_dreal_sj['id'] ] = array(
-                                        'tonase' => $v_dreal_sj['tonase'],
-                                        'ekor' => $v_dreal_sj['ekor'],
-                                        'bb' => $v_dreal_sj['bb'],
-                                        'harga' => $v_dreal_sj['harga'],
-                                        'harga_jadi' => $v_dreal_sj['harga_jadi'],
-                                        'jenis_ayam' => $v_dreal_sj['jenis_ayam'],
-                                        'no_nota' => $v_dreal_sj['no_nota']
-                                    );
                             }
-                        } else {
-                            $detail[ $v_drpah['no_do'] ]['pelanggan'] = $v_drpah['pelanggan'];
-                            $detail[ $v_drpah['no_do'] ]['no_pelanggan'] = $v_drpah['no_pelanggan'];
-                            $detail[ $v_drpah['no_do'] ]['id_det_rpah'] = $v_drpah['id'];
-                            $detail[ $v_drpah['no_do'] ]['no_do'] = $v_drpah['no_do'];
-                            $detail[ $v_drpah['no_do'] ]['no_sj'] = $v_drpah['no_sj'];
-                            $detail[ $v_drpah['no_do'] ]['lampiran'] = null;
-                            $detail[ $v_drpah['no_do'] ]['edit_data'] = 1;
-                            $detail[ $v_drpah['no_do'] ]['realisasi'] = null;
+
+
+                            $detail[ $v_dreal_sj['no_do'] ]['pelanggan'] = $v_dreal_sj['pelanggan'];
+                            $detail[ $v_dreal_sj['no_do'] ]['no_pelanggan'] = $v_dreal_sj['no_pelanggan'];
+                            $detail[ $v_dreal_sj['no_do'] ]['id_det_rpah'] = $v_drpah['id'];
+                            $detail[ $v_dreal_sj['no_do'] ]['no_do'] = $v_dreal_sj['no_do'];
+                            $detail[ $v_dreal_sj['no_do'] ]['no_sj'] = $v_dreal_sj['no_sj'];
+                            $detail[ $v_dreal_sj['no_do'] ]['lampiran'] = $v_dreal_sj['lampiran'];
+                            $detail[ $v_dreal_sj['no_do'] ]['edit_data'] = $edit_data;
+                            $detail[ $v_dreal_sj['no_do'] ]['realisasi'][ $v_dreal_sj['id'] ] = array(
+                                    'tonase' => $v_dreal_sj['tonase'],
+                                    'ekor' => $v_dreal_sj['ekor'],
+                                    'bb' => $v_dreal_sj['bb'],
+                                    'harga' => $v_dreal_sj['harga'],
+                                    'harga_jadi' => $v_dreal_sj['harga_jadi'],
+                                    'jenis_ayam' => $v_dreal_sj['jenis_ayam'],
+                                    'no_nota' => $v_dreal_sj['no_nota']
+                                );
                         }
+                    } else {
+                        $detail[ $v_drpah['no_do'] ]['pelanggan'] = $v_drpah['pelanggan'];
+                        $detail[ $v_drpah['no_do'] ]['no_pelanggan'] = $v_drpah['no_pelanggan'];
+                        $detail[ $v_drpah['no_do'] ]['id_det_rpah'] = $v_drpah['id'];
+                        $detail[ $v_drpah['no_do'] ]['no_do'] = $v_drpah['no_do'];
+                        $detail[ $v_drpah['no_do'] ]['no_sj'] = $v_drpah['no_sj'];
+                        $detail[ $v_drpah['no_do'] ]['lampiran'] = null;
+                        $detail[ $v_drpah['no_do'] ]['edit_data'] = 1;
+                        $detail[ $v_drpah['no_do'] ]['realisasi'] = null;
                     }
                 }
             }

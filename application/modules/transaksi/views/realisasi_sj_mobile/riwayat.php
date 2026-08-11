@@ -33,7 +33,7 @@
 			<i class="fa fa-search" aria-hidden="true"></i> Tampilkan
 		</button>
 	</div>
-	<?php if ( $akses['a_submit'] == 1 && empty($akses['a_khusus']) ): ?>
+	<?php if ( $akses['a_submit'] == 1 )://&& empty($akses['a_khusus']) ): ?>
 		<div class="col-xs-12 no-padding">
 			<button id="btn-add" type="button" data-href="transaksi" class="btn btn-primary cursor-p col-xs-12" title="ADD" onclick="rsm.changeTabActive(this)"> 
 				<i class="fa fa-plus" aria-hidden="true"></i> ADD
