@@ -1270,12 +1270,21 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                      * sudah otomatis memperhitungkan LHK/mutasi/retur), dikurangi klaim mutasi LAIN
                      * yang masih pending (belum tercatat di det_stok_trans_siklus) -- pola yang sama
                      * dengan reservasi yang baru ditambahkan di SP.
+                     *
+                     * NOTE (fix 2026-08-12): 1 kode_trans (No. SJ Asal) bisa punya lebih dari 1
+                     * baris di det_stok_siklus kalau batch itu masuk dengan hrg_beli berbeda2
+                     * (mis. mutasi yg tercatat 2x dgn harga beda -- lihat noreg 25102120503 /
+                     * OP/GSK/26/08020: baris hrg_beli 9050 sisa 100, baris hrg_beli 9250 sisa
+                     * 3550). `top 1` tanpa order by cuma ambil 1 baris acak (sisa 100) dan
+                     * mengabaikan baris lain (sisa 3550), jadi validasi salah nolak padahal
+                     * total sisa riil batch itu 3650. Diganti `sum` supaya semua lot harga
+                     * dalam batch yg sama ikut terhitung.
                      */
                     $m_conf = new \Model\Storage\Conf();
                     $sql = "
                         select
                             isnull((
-                                select top 1 dss.jml_stok
+                                select sum(dss.jml_stok)
                                 from det_stok_siklus dss
                                 where
                                     dss.noreg = '".$asal."' and
