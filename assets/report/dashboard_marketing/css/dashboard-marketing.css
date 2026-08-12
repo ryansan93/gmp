@@ -1,0 +1,283 @@
+.dm-wrap {
+	background: #f4f6f8;
+	padding: 12px;
+}
+
+.select2-container {
+	width: 100% !important;
+}
+
+/* ---- Filter bar ---- */
+.dm-filter-bar {
+	display: flex;
+	align-items: flex-end;
+	gap: 12px;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+	padding: 14px;
+	margin-bottom: 16px;
+}
+
+.dm-filter-item {
+	min-width: 220px;
+}
+
+.dm-filter-btn {
+	min-width: auto;
+}
+
+/* ---- Section ---- */
+.dm-section {
+	margin-bottom: 26px;
+}
+
+.dm-section-title {
+	font-size: 16px;
+	font-weight: 700;
+	color: #333;
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 2px solid #337ab7;
+}
+
+.dm-section-title i {
+	margin-right: 6px;
+	color: #337ab7;
+}
+
+.dm-section-note {
+	font-size: 12px;
+	font-weight: 400;
+	color: #9aa5b1;
+	margin-left: 6px;
+}
+
+/* ---- Stat cards ---- */
+.dm-stat-row {
+	display: flex;
+	gap: 14px;
+	margin-bottom: 14px;
+	flex-wrap: wrap;
+}
+
+.dm-stat-card {
+	flex: 1;
+	min-width: 220px;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+	padding: 16px;
+	border-left: 4px solid #cfd6dd;
+}
+
+.dm-stat-primary {
+	border-left-color: #337ab7;
+}
+
+.dm-stat-success {
+	border-left-color: #5cb85c;
+}
+
+.dm-stat-warning {
+	border-left-color: #f0ad4e;
+}
+
+.dm-stat-danger {
+	border-left-color: #d9534f;
+}
+
+.dm-stat-label {
+	font-size: 12px;
+	font-weight: 700;
+	color: #9aa5b1;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	margin-bottom: 6px;
+}
+
+.dm-stat-value {
+	font-size: 26px;
+	font-weight: 800;
+	color: #222;
+	line-height: 1.2;
+}
+
+.dm-stat-sub {
+	font-size: 12px;
+	color: #9aa5b1;
+	margin-top: 3px;
+}
+
+/* ---- BW distribution ---- */
+.dm-bw-row {
+	display: flex;
+	gap: 14px;
+	flex-wrap: wrap;
+	margin-bottom: 14px;
+}
+
+.dm-bw-card {
+	flex: 1;
+	min-width: 180px;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+	padding: 14px;
+	text-align: center;
+}
+
+.dm-bw-title {
+	font-size: 11px;
+	font-weight: 700;
+	color: #9aa5b1;
+	letter-spacing: 0.5px;
+}
+
+.dm-bw-range {
+	display: block;
+	font-weight: 400;
+	margin-top: 2px;
+}
+
+.dm-bw-val {
+	font-size: 20px;
+	font-weight: 800;
+	margin-top: 8px;
+}
+
+.dm-bw-sub {
+	font-size: 12px;
+	color: #9aa5b1;
+	margin-top: 2px;
+}
+
+.dm-bw-kecil .dm-bw-val { color: #5bc0de; }
+.dm-bw-sedang .dm-bw-val { color: #5cb85c; }
+.dm-bw-besar .dm-bw-val { color: #d9534f; }
+
+/* ---- Card ---- */
+.dm-card {
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+	margin-bottom: 14px;
+	overflow: hidden;
+}
+
+.dm-card-head {
+	padding: 12px 16px;
+	font-size: 13px;
+	font-weight: 700;
+	color: #333;
+	background: #f8f9fa;
+	border-bottom: 1px solid #eee;
+}
+
+.dm-card-note {
+	display: block;
+	font-size: 11px;
+	font-weight: 400;
+	color: #9aa5b1;
+	margin-top: 2px;
+}
+
+.dm-card-body {
+	padding: 16px;
+}
+
+.dm-card-footer-btn {
+	text-align: center;
+	margin-top: 10px;
+}
+
+.dm-chart-wrap {
+	height: 260px;
+	position: relative;
+}
+
+.dm-table-wrap {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.dm-table {
+	width: auto;
+	min-width: 100%;
+	margin-bottom: 0;
+	font-size: 13px;
+}
+
+.dm-table th,
+.dm-table td {
+	white-space: nowrap;
+}
+
+.dm-table th {
+	background: #f8f9fa;
+}
+
+.dm-table tfoot td {
+	background: #f8f9fa;
+	border-top: 2px solid #dde2e7;
+}
+
+.dm-invoice-link {
+	cursor: pointer;
+	color: #337ab7;
+	text-decoration: underline;
+}
+
+.dm-invoice-link:hover {
+	color: #23527c;
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 480px) {
+	.dm-wrap {
+		padding: 8px;
+	}
+
+	.dm-filter-bar {
+		flex-wrap: wrap;
+	}
+
+	.dm-filter-item {
+		min-width: 100%;
+	}
+
+	.dm-stat-value {
+		font-size: 22px;
+	}
+
+	.dm-card-body {
+		padding: 12px;
+	}
+
+	.dm-chart-wrap {
+		height: 220px;
+	}
+
+	.dm-table {
+		font-size: 12px;
+	}
+
+	.dm-table th,
+	.dm-table td {
+		padding: 6px 8px;
+	}
+}
+
+.dm-sortable {
+	cursor: pointer;
+	user-select: none;
+}
+
+.dm-sortable i {
+	margin-left: 4px;
+	color: #9aa5b1;
+}
+
+.dm-sortable.dm-sort-active i {
+	color: #337ab7;
+}

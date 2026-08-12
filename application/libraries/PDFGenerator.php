@@ -26,6 +26,18 @@ class PDFGenerator
         // }
     }
 
+    public function download($html, $filename, $kertas = 'a4', $type = 'portrait')
+    {
+        $dompdf = new Dompdf();
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper($kertas, $type);
+        $dompdf->render();
+
+        ob_end_clean();
+        $dompdf->stream($filename.'.pdf', array("Attachment"=>1));
+    }
+
     public function upload($html, $filename, $kertas = 'a4', $type = 'portrait')
     {
         // include autoloader

@@ -33,19 +33,13 @@
       <div class="sidebar-heading">
         <!-- <img src="https://d3ki9tyy5l5ruj.cloudfront.net/obj/3ac85a538c3fc5bb08d0206ede04ae8aa13c20b2/inapp__logo_color_ondark_horizontal.svg" width="80%" height="80%"> -->
         <!-- <img src="assets/images/logo-mgb.jpg" width="20%" height="20%"> -->
-        GMP ERP
+        <a href="<?php echo base_url(); ?>" title="Dashboard" style="color: inherit; text-decoration: none;">GMP ERP</a>
       </div>
       <div class="divider-heading" style="padding: 0rem 1rem;">
         <div class="dropdown-divider" style="margin-top: 0rem;"></div>
       </div>
       <div class="list-group list-group-flush content mCustomScrollbar" style="max-width: 20rem; width: 17rem;">
         <ul class="list-unstyled components">
-          <li class="active">
-            <a class="list-group-item list-group-item-action bg-light-black menu" data-txt="Dashboard" href="#">
-              <i class="fa fa-dashboard"></i>
-              <span>Dashboard</span>
-            </a>
-          </li>
           <?php $arr_fitur = $this->session->userdata()['Fitur']; ?>
           <?php foreach ($arr_fitur as $key => $v_fitur): ?>
             <li>
