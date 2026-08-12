@@ -35,22 +35,22 @@
 			</div>
 			<div class="dm-bw-row">
 				<div class="dm-bw-card dm-bw-kecil">
-					<div class="dm-bw-title">UKURAN KECIL <span class="dm-bw-range">&lt; 1.3 kg</span></div>
+					<div class="dm-bw-title">UKURAN KECIL <span class="dm-bw-range">1.75 - 1.99 kg</span></div>
 					<div class="dm-bw-val"><span id="dm-bw-kecil-ekor">-</span> ekor</div>
 					<div class="dm-bw-sub"><span id="dm-bw-kecil-tonase">-</span> kg</div>
 					<div class="dm-bw-sub" id="dm-bw-kecil-ton">-</div>
 				</div>
-				<div class="dm-bw-card dm-bw-sedang">
-					<div class="dm-bw-title">UKURAN SEDANG <span class="dm-bw-range">1.4 - 1.8 kg</span></div>
-					<div class="dm-bw-val"><span id="dm-bw-sedang-ekor">-</span> ekor</div>
-					<div class="dm-bw-sub"><span id="dm-bw-sedang-tonase">-</span> kg</div>
-					<div class="dm-bw-sub" id="dm-bw-sedang-ton">-</div>
-				</div>
 				<div class="dm-bw-card dm-bw-besar">
-					<div class="dm-bw-title">UKURAN BESAR <span class="dm-bw-range">&gt; 1.9 kg</span></div>
+					<div class="dm-bw-title">UKURAN BESAR <span class="dm-bw-range">2.00 - 2.50 kg</span></div>
 					<div class="dm-bw-val"><span id="dm-bw-besar-ekor">-</span> ekor</div>
 					<div class="dm-bw-sub"><span id="dm-bw-besar-tonase">-</span> kg</div>
 					<div class="dm-bw-sub" id="dm-bw-besar-ton">-</div>
+				</div>
+				<div class="dm-bw-card dm-bw-jumbo">
+					<div class="dm-bw-title">UKURAN JUMBO <span class="dm-bw-range">&gt;= 2.51 kg</span></div>
+					<div class="dm-bw-val"><span id="dm-bw-jumbo-ekor">-</span> ekor</div>
+					<div class="dm-bw-sub"><span id="dm-bw-jumbo-tonase">-</span> kg</div>
+					<div class="dm-bw-sub" id="dm-bw-jumbo-ton">-</div>
 				</div>
 			</div>
 			<div class="dm-card">

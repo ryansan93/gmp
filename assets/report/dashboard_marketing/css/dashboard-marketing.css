@@ -153,8 +153,8 @@
 }
 
 .dm-bw-kecil .dm-bw-val { color: #5bc0de; }
-.dm-bw-sedang .dm-bw-val { color: #5cb85c; }
-.dm-bw-besar .dm-bw-val { color: #d9534f; }
+.dm-bw-besar .dm-bw-val { color: #5cb85c; }
+.dm-bw-jumbo .dm-bw-val { color: #d9534f; }
 
 /* ---- Card ---- */
 .dm-card {

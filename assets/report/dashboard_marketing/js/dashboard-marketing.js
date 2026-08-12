@@ -68,12 +68,12 @@ var dm = {
 				$('#dm-bw-kecil-ekor').text( numeral.formatInt(c.bw_kecil.ekor) );
 				$('#dm-bw-kecil-tonase').text( numeral.formatDec(c.bw_kecil.tonase) );
 				$('#dm-bw-kecil-ton').text( '≈ '+numeral.formatDec(c.bw_kecil.tonase / 1000)+' ton' );
-				$('#dm-bw-sedang-ekor').text( numeral.formatInt(c.bw_sedang.ekor) );
-				$('#dm-bw-sedang-tonase').text( numeral.formatDec(c.bw_sedang.tonase) );
-				$('#dm-bw-sedang-ton').text( '≈ '+numeral.formatDec(c.bw_sedang.tonase / 1000)+' ton' );
 				$('#dm-bw-besar-ekor').text( numeral.formatInt(c.bw_besar.ekor) );
 				$('#dm-bw-besar-tonase').text( numeral.formatDec(c.bw_besar.tonase) );
 				$('#dm-bw-besar-ton').text( '≈ '+numeral.formatDec(c.bw_besar.tonase / 1000)+' ton' );
+				$('#dm-bw-jumbo-ekor').text( numeral.formatInt(c.bw_jumbo.ekor) );
+				$('#dm-bw-jumbo-tonase').text( numeral.formatDec(c.bw_jumbo.tonase) );
+				$('#dm-bw-jumbo-ton').text( '≈ '+numeral.formatDec(c.bw_jumbo.tonase / 1000)+' ton' );
 
 				$('#dm-umur-range-unit').text( '(umur '+c.umur_min+'-'+c.umur_max+' hari)' );
 				dm.kesiapanDetail = c.detail;

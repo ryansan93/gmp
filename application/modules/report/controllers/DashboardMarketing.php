@@ -110,8 +110,8 @@ class DashboardMarketing extends Public_Controller {
 
             $siap_panen = array();
             $bw_kecil = array('ekor' => 0, 'tonase' => 0);
-            $bw_sedang = array('ekor' => 0, 'tonase' => 0);
             $bw_besar = array('ekor' => 0, 'tonase' => 0);
+            $bw_jumbo = array('ekor' => 0, 'tonase' => 0);
 
             $total_tonase_siap = 0;
             $total_ekor_siap = 0;
@@ -123,15 +123,15 @@ class DashboardMarketing extends Public_Controller {
                     // (>= umur_min), bukan cuma yg persis di window siap panen, biar lebih
                     // kebaca trennya buat marketing (bukan cuma yg siap hari ini).
                     if ( $v['umur'] >= $umur_min ) {
-                        if ( $v['bb'] < 1.3 ) {
+                        if ( $v['bb'] >= 1.75 && $v['bb'] <= 1.99 ) {
                             $bw_kecil['ekor'] += $v['sisa_ekor'];
                             $bw_kecil['tonase'] += $v['tonase'];
-                        } else if ( $v['bb'] <= 1.8 ) {
-                            $bw_sedang['ekor'] += $v['sisa_ekor'];
-                            $bw_sedang['tonase'] += $v['tonase'];
-                        } else {
+                        } else if ( $v['bb'] >= 2.00 && $v['bb'] <= 2.50 ) {
                             $bw_besar['ekor'] += $v['sisa_ekor'];
                             $bw_besar['tonase'] += $v['tonase'];
+                        } else if ( $v['bb'] >= 2.51 ) {
+                            $bw_jumbo['ekor'] += $v['sisa_ekor'];
+                            $bw_jumbo['tonase'] += $v['tonase'];
                         }
                     }
 
@@ -181,8 +181,8 @@ class DashboardMarketing extends Public_Controller {
                 'umur_min' => $umur_min,
                 'umur_max' => $umur_max,
                 'bw_kecil' => array('ekor' => (int) $bw_kecil['ekor'], 'tonase' => round($bw_kecil['tonase'], 1)),
-                'bw_sedang' => array('ekor' => (int) $bw_sedang['ekor'], 'tonase' => round($bw_sedang['tonase'], 1)),
                 'bw_besar' => array('ekor' => (int) $bw_besar['ekor'], 'tonase' => round($bw_besar['tonase'], 1)),
+                'bw_jumbo' => array('ekor' => (int) $bw_jumbo['ekor'], 'tonase' => round($bw_jumbo['tonase'], 1)),
                 'per_unit' => $per_unit,
                 'detail' => $detail,
             );
