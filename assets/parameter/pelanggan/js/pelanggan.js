@@ -473,6 +473,7 @@ var plg = {
 						'rw' :  $(div_pelanggan).find('input[name=rw_plg]').val().trim(),
 					};
 					var npwp = $(div_pelanggan).find('input[name=npwp_plg]').mask();
+					var nama_coretax = $(div_pelanggan).find('input[name=nama_coretax_plg]').val().trim();
 					var skb = $(div_pelanggan).find('input[name=skb_plg]').val().trim();
 					var tgl_habis_skb = !empty($(div_pelanggan).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_pelanggan).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
@@ -490,6 +491,7 @@ var plg = {
 						'nama' : nama_pelanggan,
 						'cp' : contact_person,
 						'npwp' : npwp,
+						'nama_coretax' : nama_coretax,
 						'skb' : skb,
 						'tgl_habis_skb' : tgl_habis_skb,
 						'telepons' : telepons,
@@ -589,6 +591,7 @@ var plg = {
 						'rw' :  $(div_pelanggan).find('input[name=rw_plg]').val().trim(),
 					};
 					var npwp = $(div_pelanggan).find('input[name=npwp_plg]').mask();
+					var nama_coretax = $(div_pelanggan).find('input[name=nama_coretax_plg]').val().trim();
 					var skb = $(div_pelanggan).find('input[name=skb_plg]').val().trim();
 					var tgl_habis_skb = !empty($(div_pelanggan).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_pelanggan).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
@@ -611,6 +614,7 @@ var plg = {
 						'nama' : nama_pelanggan,
 						'cp' : contact_person,
 						'npwp' : npwp,
+						'nama_coretax' : nama_coretax,
 						'skb' : skb,
 						'tgl_habis_skb' : tgl_habis_skb,
 						'telepons' : telepons,

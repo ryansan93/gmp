@@ -1030,6 +1030,7 @@ class Peternak extends Public_Controller {
             $m_mitra->nama = $params['nama'];
             $m_mitra->ktp = $params['ktp'];
             $m_mitra->npwp = $params['npwp'];
+            $m_mitra->nama_coretax = $params['nama_coretax'] ?: null;
             $m_mitra->skb = $params['skb'] ?: null;
             $m_mitra->tgl_habis_skb = $params['tgl_habis_skb'] ?: null;
             $m_mitra->alamat_kecamatan = $params['alamat']['kecamatan'];
@@ -1149,6 +1150,7 @@ class Peternak extends Public_Controller {
             $m_mitra->nama = $params['nama'];
             $m_mitra->ktp = $params['ktp'];
             $m_mitra->npwp = $params['npwp'];
+            $m_mitra->nama_coretax = $params['nama_coretax'] ? $params['nama_coretax'] : null;
             $m_mitra->skb = $params['skb'] ? $params['skb'] : null;
             $m_mitra->tgl_habis_skb = $params['tgl_habis_skb'] ? $params['tgl_habis_skb'] : null;
             $m_mitra->alamat_kecamatan = $params['alamat']['kecamatan'];
@@ -1776,6 +1778,7 @@ class Peternak extends Public_Controller {
                 m.nomor,
                 m.ktp,
                 m.npwp,
+                m.nama_coretax,
                 m.nama,
                 k.alamat_jalan,
                 k.alamat_rt,
@@ -1863,6 +1866,7 @@ class Peternak extends Public_Controller {
                     'nomor' => $value['nomor'],
                     'ktp' => $value['ktp'],
                     'npwp' => $value['npwp'],
+                    'nama_coretax' => $value['nama_coretax'],
                     'nama' => $value['nama'],
                     'alamat' => $alamat,
                     'kdg' => $value['kandang'],

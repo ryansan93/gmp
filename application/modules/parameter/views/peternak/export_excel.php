@@ -9,6 +9,7 @@
 			<th>KAPASITAS</th>
 			<th>NIK</th>
 			<th>NPWP</th>
+			<th>NAMA CORETAX</th>
 			<th>ALAMAT KANDANG</th>
 		</tr>
 	</thead>
@@ -23,6 +24,7 @@
 				<td style="vertical-align: top;" align="right" style="mso-number-format:0;"><?php echo $val['kapasitas']; ?></td>
 				<td style="vertical-align: top;" align="left" style="mso-number-format:\@;"><?php echo !empty($val['ktp']) ? $val['ktp'] : '-'; ?></td>
 				<td style="vertical-align: top;" align="left" style="mso-number-format:\@;"><?php echo !empty($val['npwp']) ? $val['npwp'] : '-'; ?></td>
+				<td style="vertical-align: top;" align="left"><?php echo !empty($val['nama_coretax']) ? $val['nama_coretax'] : '-'; ?></td>
 				<td style="vertical-align: top;" align="left"><?php echo $val['alamat']; ?></td>
 			</tr>
 		<?php endforeach ?>

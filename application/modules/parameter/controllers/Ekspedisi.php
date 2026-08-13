@@ -322,6 +322,7 @@ class Ekspedisi extends Public_Controller {
 			$m_ekspedisi->nik = $params['ktp'];
 			$m_ekspedisi->cp = $params['cp'];
 			$m_ekspedisi->npwp = $params['npwp'];
+			$m_ekspedisi->nama_coretax = isset($params['nama_coretax']) ? $params['nama_coretax'] : null;
 			$m_ekspedisi->skb = isset($params['skb']) ? $params['skb'] : null;
 			$m_ekspedisi->tgl_habis_skb = isset($params['tgl_habis_skb']) ? $params['tgl_habis_skb'] : null;
 			$m_ekspedisi->alamat_kecamatan = $params['alamat_ekspedisi']['kecamatan'];
@@ -399,6 +400,7 @@ class Ekspedisi extends Public_Controller {
 		$m_ekspedisi->nik = $params['ktp'];
 		$m_ekspedisi->cp = $params['cp'];
 		$m_ekspedisi->npwp = $params['npwp'];
+		$m_ekspedisi->nama_coretax = isset($params['nama_coretax']) ? $params['nama_coretax'] : null;
 		$m_ekspedisi->skb = $params['skb'];
 		$m_ekspedisi->tgl_habis_skb = $params['tgl_habis_skb'];
 		$m_ekspedisi->alamat_kecamatan = $params['alamat_ekspedisi']['kecamatan'];
@@ -788,6 +790,54 @@ class Ekspedisi extends Public_Controller {
 
 		return $datas;
 	}
+
+	public function export_excel()
+    {
+        $m_ekspedisi = new \Model\Storage\Ekspedisi_model();
+        $list_nomor = $m_ekspedisi->select('nomor')->distinct('nomor')->get()->toArray();
+
+        $data = array();
+        foreach ($list_nomor as $k_nomor => $nomor) {
+            $ekspedisi = $m_ekspedisi->where('nomor', $nomor)
+                             ->with(['kecamatan'])
+                             ->orderBy('version', 'desc')
+                             ->orderBy('id', 'desc')
+                             ->first()->toArray();
+
+            $jalan = empty($ekspedisi['alamat_jalan']) ? '' : strtoupper('DSN.'.trim(str_replace('DSN.', '', $ekspedisi['alamat_jalan'])));
+            $rt = empty($ekspedisi['alamat_rt']) ? '' : strtoupper(' RT.'.$ekspedisi['alamat_rt']);
+            $rw = empty($ekspedisi['alamat_rw']) ? '' : strtoupper('/RW.'.$ekspedisi['alamat_rw']);
+            $kelurahan = empty($ekspedisi['alamat_kelurahan']) ? '' : strtoupper(' ,'.$ekspedisi['alamat_kelurahan']);
+            $kecamatan = empty($ekspedisi['alamat_kecamatan']) ? '' : strtoupper(' ,'.$ekspedisi['kecamatan']['nama']);
+            $kabupaten = empty($ekspedisi['kecamatan']['d_kota']) ? '' : strtoupper(' ,'.$ekspedisi['kecamatan']['d_kota']['nama']);
+            $provinsi = empty($ekspedisi['kecamatan']['d_kota']['d_provinsi']) ? '' : strtoupper(' ,'.$ekspedisi['kecamatan']['d_kota']['d_provinsi']['nama']);
+
+            $alamat = $jalan.$rt.$rw.$kelurahan.$kecamatan.$kabupaten.$provinsi;
+
+            $key = $ekspedisi['nama'].'|'.$ekspedisi['nomor'];
+            $data[ $key ] = array(
+                'id' => $ekspedisi['id'],
+                'nomor' => $ekspedisi['nomor'],
+                'ktp' => $ekspedisi['nik'],
+                'npwp' => $ekspedisi['npwp'],
+                'nama_coretax' => $ekspedisi['nama_coretax'],
+                'nama' => $ekspedisi['nama'],
+                'alamat' => $alamat,
+                'status' => $ekspedisi['mstatus']
+            );
+
+            ksort($data);
+        }
+
+        $content['data'] = $data;
+        $res_view_html = $this->load->view('parameter/ekspedisi/export_excel', $content, true);
+
+        $filename = 'export-ekspedisi-'.str_replace('-', '', date('Y-m-d')).'.xls';
+
+        header("Content-type: application/xls");
+        header("Content-Disposition: attachment; filename=".$filename."");
+        echo $res_view_html;
+    }
 
 	public function model($status)
     {

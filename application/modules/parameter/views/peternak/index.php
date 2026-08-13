@@ -116,7 +116,7 @@
 										<i class="fa fa-check" aria-hidden="true"></i> APPROVE
 									</button>
 								<?php } ?>
-								<button id="btn-export" type="button" class="btn btn-default cursor-p pull-right" title="EXPORT" onclick="ptk.form_export_excel(this)"> 
+								<button id="btn-export" type="button" class="btn btn-default cursor-p pull-right" title="EXPORT" onclick="ptk.form_export_excel(this)">
 									<i class="fa fa-print" aria-hidden="true"></i> EXPORT EXCEL
 								</button>
 							</div>

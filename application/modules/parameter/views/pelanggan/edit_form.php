@@ -262,6 +262,14 @@
 				</div>
 				<div class="col-sm-12 no-padding">
 					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right no-padding">Nama Coretax</span>
+						<div class="col-sm-2" style="margin-left: 11px; padding-right: 20px;">
+							<input class="form-control" type="text" name="nama_coretax_plg" placeholder="Nama Coretax" value="<?php echo $data['nama_coretax']; ?>">
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12 no-padding">
+					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-2 text-right no-padding">No. SKB</span>
 						<div class="col-sm-2" style="margin-left: 11px; padding-right: 20px;">
 							<input class="form-control" type="text" name="skb_plg" placeholder="No. SKB" value="<?php echo $data['skb']; ?>" maxlength="50" />

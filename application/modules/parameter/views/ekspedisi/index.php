@@ -36,6 +36,9 @@
 									&nbsp
 								</div>
 							<?php } ?>
+							<button id="btn-export" type="button" class="btn btn-default cursor-p pull-right" title="EXPORT" onclick="ekspedisi.export_excel(this)">
+								<i class="fa fa-print" aria-hidden="true"></i> EXPORT EXCEL
+							</button>
 						</div>
 						<table class="table table-bordered tbl_ekspedisi">
 							<thead>

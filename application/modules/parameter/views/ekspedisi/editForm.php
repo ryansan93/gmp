@@ -100,9 +100,12 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<!-- <span class="file"><?php echo $l_ktp['filename']; ?></span> -->
-							<a href="uploads/<?php echo $l_ktp['filename']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a>
+							<?php if (isset($l_ktp['path']) && !empty($l_ktp['path'])) { ?>
+								<!-- <a href="uploads/<?php echo $l_ktp['path']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a> -->
+								<a href="uploads/<?php echo $l_ktp['path']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a>
+							<?php } ?>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_ekspedisi['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran ekspedisi" name="lampiran_ktp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo $l_ktp['id']; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran ekspedisi" name="lampiran_ktp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo !empty($l_ktp['id']) ? $l_ktp['id'] : null; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDS"></i>
 							</label>
 						</div>
@@ -228,11 +231,22 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<!-- <span class="file"><?php echo $l_npwp['filename']; ?></span> -->
-							<a href="uploads/<?php echo $l_npwp['filename']; ?>" target="_blank"><?php echo $l_npwp['filename']; ?></a>
+							<?php if (isset($l_ktp['path']) && !empty($l_ktp['path'])) { ?>
+								<!-- <a href="uploads/<?php echo $l_ktp['path']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a> -->
+								<a href="uploads/<?php echo $l_npwp['path']; ?>" target="_blank"><?php echo $l_npwp['filename']; ?></a>
+							<?php } ?>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_usaha_ekspedisi['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran ekspedisi" name="lampiran_npwp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo $l_npwp['id']; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran ekspedisi" name="lampiran_npwp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo !empty($l_npwp['id']) ? $l_npwp['id'] : null; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran NPWP"></i>
 							</label>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12 no-padding">
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right no-padding">Nama Coretax</span>
+						<div class="col-sm-2" style="margin-left: 11px;">
+							<input class="form-control" type="text" name="nama_coretax_ekspedisi" placeholder="Nama Coretax" value="<?php echo $data['nama_coretax']; ?>">
 						</div>
 					</div>
 				</div>
@@ -401,9 +415,9 @@
 						<tbody>
 							<?php foreach ($data['banks'] as $bank) : ?>
 								<?php 
-									$id_old = $bank['lampiran']['id'];
-									$path = $bank['lampiran']['path'];
-									$filename = $bank['lampiran']['filename'];
+									$id_old = !empty($bank['lampiran']['id']) ? $bank['lampiran']['id'] : null;
+									$path = !empty($bank['lampiran']['path']) ? $bank['lampiran']['path'] : null;
+									$filename = !empty($bank['lampiran']['filename']) ? $bank['lampiran']['filename'] : null;
 								?>
 								<tr class="detail_rekening v-center">
 									<td><input required="required" class="form-control" type="text" name="rekening_ekspedisi" data-id="<?php echo $bank['id']; ?>" placeholder="No Rekeneing" value="<?php echo $bank['rekening_nomor']; ?>" ></td>
@@ -431,9 +445,11 @@
 			<div id="lampiran_ekspedisi">
 				<div class="col-sm-12"><b>Lampiran DDP</b></div>
 				<!-- <span class="file"><?php echo $l_dds['filename']; ?></span> -->
-				<a href="uploads/<?php echo $l_dds['filename']; ?>" target="_blank"><?php echo $l_dds['filename']; ?></a>
+				<?php if ( isset($l_dds['path']) && !empty($l_dds['path']) ) { ?>
+					<a href="uploads/<?php echo $l_dds['path']; ?>" target="_blank"><?php echo $l_dds['filename']; ?></a>
+				<?php } ?>
 				<label class="col-sm-2 text-right" data-idnama="<?php echo $list_lampiran_dds_ekspedisi['id'] ?>">
-					<input type="file" onchange="showNameFile(this)" class="file_lampiran ekspedisi" name="lampiran_dds" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran DDS" data-old="<?php echo $l_dds['id']; ?>">
+					<input type="file" onchange="showNameFile(this)" class="file_lampiran ekspedisi" name="lampiran_dds" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran DDS" data-old="<?php echo !empty($l_dds['id']) ? $l_dds['id'] : null; ?>">
 					<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDS"></i>
 				</label>
 			</div>

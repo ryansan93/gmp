@@ -689,6 +689,7 @@ class Pelanggan extends Public_Controller {
 			$m_pelanggan->nik = $params['ktp'];
 			$m_pelanggan->cp = $params['cp'];
 			$m_pelanggan->npwp = $params['npwp'];
+			$m_pelanggan->nama_coretax = $params['nama_coretax'];
 			$m_pelanggan->skb = $params['skb'];
 			$m_pelanggan->tgl_habis_skb = $params['tgl_habis_skb'];
 			$m_pelanggan->alamat_kecamatan = $params['alamat_pelanggan']['kecamatan'];
@@ -788,6 +789,7 @@ class Pelanggan extends Public_Controller {
 			$m_pelanggan->nik = $params['ktp'];
 			$m_pelanggan->cp = $params['cp'];
 			$m_pelanggan->npwp = $params['npwp'];
+			$m_pelanggan->nama_coretax = $params['nama_coretax'];
 			$m_pelanggan->skb = $params['skb'];
 			$m_pelanggan->tgl_habis_skb = $params['tgl_habis_skb'];
 			$m_pelanggan->alamat_kecamatan = $params['alamat_pelanggan']['kecamatan'];
@@ -1184,6 +1186,7 @@ class Pelanggan extends Public_Controller {
                 'nomor' => $pelanggan['nomor'],
                 'ktp' => $pelanggan['nik'],
                 'npwp' => $pelanggan['npwp'],
+                'nama_coretax' => $pelanggan['nama_coretax'],
                 'nama' => $pelanggan['nama'],
                 'alamat' => $alamat,
                 'unit' => str_replace(' ,', '', $kabupaten),
@@ -1204,6 +1207,7 @@ class Pelanggan extends Public_Controller {
 
         // cetak_r($data);
     }
+
 
 	public function model($status)
     {

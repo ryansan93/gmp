@@ -53,6 +53,12 @@
 				</div>
 			</div>
 			<div class="form-group align-items-center d-flex">
+				<span class="col-sm-2 text-right">Nama Coretax</span>
+				<div class="col-sm-3">
+					<input type="text" class="form-control" name="nama_coretax" placeholder="nama coretax">
+				</div>
+			</div>
+			<div class="form-group align-items-center d-flex">
 				<span class="col-sm-2 text-right">No. SKB</span>
 				<div class="col-sm-3">
 					<input type="text" class="form-control" name="skb" placeholder="No. SKB" maxlength="50">

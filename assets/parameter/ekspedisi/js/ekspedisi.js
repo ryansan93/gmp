@@ -368,6 +368,7 @@ var ekspedisi = {
 					};
 					// var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
 					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val().replace(/\D/g, '');
+					var nama_coretax = $(div_ekspedisi).find('input[name=nama_coretax_ekspedisi]').val().trim();
 					var skb = !empty($(div_ekspedisi).find('input[name=skb_ekspedisi]').val()) ? $(div_ekspedisi).find('input[name=skb_ekspedisi]').val().trim() : null;
 					var tgl_habis_skb = !empty($(div_ekspedisi).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_ekspedisi).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
@@ -385,6 +386,7 @@ var ekspedisi = {
 						'nama' : nama_ekspedisi,
 						'cp' : contact_person,
 						'npwp' : npwp,
+						'nama_coretax' : nama_coretax,
 						'skb' : skb,
 						'tgl_habis_skb' : tgl_habis_skb,
 						'telepons' : telepons,
@@ -482,6 +484,7 @@ var ekspedisi = {
 					};
 					// var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').mask();
 					var npwp = $(div_ekspedisi).find('input[name=npwp_ekspedisi]').val().replace(/\D/g, '');
+					var nama_coretax = $(div_ekspedisi).find('input[name=nama_coretax_ekspedisi]').val().trim();
 					var skb = $(div_ekspedisi).find('input[name=skb_ekspedisi]').val().trim();
 					var tgl_habis_skb = !empty($(div_ekspedisi).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_ekspedisi).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
@@ -504,6 +507,7 @@ var ekspedisi = {
 						'nama' : nama_ekspedisi,
 						'cp' : contact_person,
 						'npwp' : npwp,
+						'nama_coretax' : nama_coretax,
 						'skb' : skb,
 						'tgl_habis_skb' : tgl_habis_skb,
 						'telepons' : telepons,
@@ -684,6 +688,10 @@ var ekspedisi = {
 			processData : false,
 		});
 	},
+
+	export_excel : function () {
+		window.open('parameter/Ekspedisi/export_excel', '_blank');
+	}, // end - export_excel
 
 	ack : function () {
 		var ids = $('input[type=hidden]').data('id');

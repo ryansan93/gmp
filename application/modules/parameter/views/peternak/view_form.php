@@ -84,6 +84,12 @@
                             </div>
                         </div>
                         <div class="form-group align-items-center d-flex">
+                            <span class="col-sm-2 text-right">Nama Coretax</span>
+                            <div class="col-sm-3">
+                                <input type="text" class="form-control" name="nama_coretax" placeholder="nama coretax" value="<?php echo $mitra['nama_coretax'] ?>" readonly="">
+                            </div>
+                        </div>
+                        <div class="form-group align-items-center d-flex">
                             <span class="col-sm-2 text-right">No. SKB</span>
                             <div class="col-sm-3">
                                 <input type="text" class="form-control" name="skb" placeholder="No. SKB" value="<?php echo $mitra['skb'] ?>" readonly="" maxlength="50">

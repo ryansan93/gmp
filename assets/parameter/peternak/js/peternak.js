@@ -627,6 +627,7 @@ var ptk = {
 					var ktp = $(div_mitra).find('input[name=ktp]').mask();
 					var nama = $(div_mitra).find('input[name=nama_mitra]').val().trim();
 					var npwp = $(div_mitra).find('input[name=npwp]').val().trim();
+					var nama_coretax = $(div_mitra).find('input[name=nama_coretax]').val().trim();
 					var skb = $(div_mitra).find('input[name=skb]').val().trim();
 					var tgl_habis_skb = !empty($(div_mitra).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_mitra).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var telepons = $.map( $(div_mitra).find('input[name=telepon]'), function(ipt){
@@ -755,6 +756,7 @@ var ptk = {
 						'ktp' : ktp,
 						'nama' : nama,
 						'npwp' : npwp,
+						'nama_coretax' : nama_coretax,
 						'skb' : skb,
 						'tgl_habis_skb' : tgl_habis_skb,
 						'pemilik': pemilik,
@@ -873,6 +875,7 @@ var ptk = {
 					var ktp = $(div_mitra).find('input[name=ktp]').mask();
 					var nama = $(div_mitra).find('input[name=nama_mitra]').val().trim();
 					var npwp = $(div_mitra).find('input[name=npwp]').val().trim();
+					var nama_coretax = $(div_mitra).find('input[name=nama_coretax]').val().trim();
 					var skb = $(div_mitra).find('input[name=skb]').val().trim();
 					var tgl_habis_skb = !empty($(div_mitra).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_mitra).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var telepons = $.map( $(div_mitra).find('input[name=telepon]'), function(ipt){
@@ -1029,6 +1032,7 @@ var ptk = {
 						'ktp' : ktp,
 						'nama' : nama,
 						'npwp' : npwp,
+						'nama_coretax' : nama_coretax,
 						'skb' : skb,
 						'tgl_habis_skb' : tgl_habis_skb,
 						'pemilik': pemilik,

@@ -74,7 +74,9 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<div class="col-sm-12">
-								<a target="_blank" href="<?php echo 'uploads/'.$l_ktp['path']; ?>" ><?php echo $l_ktp['filename']; ?></a>
+								<?php if ( isset($l_ktp['path']) && !empty($l_ktp['path']) ) { ?>
+									<a target="_blank" href="<?php echo 'uploads/'.$l_ktp['path']; ?>" ><?php echo $l_ktp['filename']; ?></a>
+								<?php } ?>
 							</div>
 						</div>
 					</div>
@@ -166,8 +168,18 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<div class="col-sm-12">
-								<a target="_blank" href="<?php echo 'uploads/'.$l_npwp['path']; ?>" ><?php echo $l_npwp['filename']; ?></a>
+								<?php if ( isset($l_npwp['path']) && !empty($l_npwp['path']) ) { ?>
+									<a target="_blank" href="<?php echo 'uploads/'.$l_npwp['path']; ?>" ><?php echo $l_npwp['filename']; ?></a>
+								<?php } ?>
 							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12 no-padding">
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right no-padding">Nama Coretax</span>
+						<div class="col-sm-2" style="margin-left: 11px;">
+							<input class="form-control" type="text" name="nama_coretax_supl" placeholder="Nama Coretax" value="<?php echo $data['nama_coretax']; ?>" readonly>
 						</div>
 					</div>
 				</div>
@@ -284,8 +296,8 @@
 						<tbody>
 							<?php foreach ($data['banks'] as $bank) : ?>
 								<?php 
-									$path = $bank['lampiran']['path'];
-									$filename = $bank['lampiran']['filename'];
+									$path = !empty($bank['lampiran']['path']) ? $bank['lampiran']['path'] : null;
+									$filename = !empty($bank['lampiran']['filename']) ? $bank['lampiran']['filename'] : null;
 								?>
 								<tr class="detail_rekening v-center">
 									<td><?php echo $bank['rekening_nomor']; ?></td>
@@ -304,7 +316,9 @@
 			<div id="lampiran_supplier">
 				<div class="col-sm-2"><b>Lampiran DDP</b></div>
 				<div class="col-sm-10">
-					<a target="_blank" href="<?php echo 'uploads/'.$l_dds['path']; ?>" ><?php echo $l_dds['filename']; ?></a>
+					<?php if ( isset($l_dds['path']) && !empty($l_dds['path']) ) { ?>
+						<a target="_blank" href="<?php echo 'uploads/'.$l_dds['path']; ?>" ><?php echo $l_dds['filename']; ?></a>
+					<?php } ?>
 				</div>
 			</div>
 		</div>
