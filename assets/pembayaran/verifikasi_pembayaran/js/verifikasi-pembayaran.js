@@ -535,6 +535,7 @@ var vp = {
 
     printPreview: function (elm) {
         var id = $(elm).attr('data-id');
+        var table = $(elm).attr('data-table');
 
         window.open('pembayaran/VerifikasiPembayaran/printPreview/'+id, 'blank');
     }, // end - printPreview

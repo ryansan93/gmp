@@ -93,7 +93,7 @@
 				<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
 				<div class="col-xs-12 no-padding lock_btn_fiskal" data-date="<?php echo substr($data['tgl_bayar'], 0, 10); ?>" style="margin-top: 5px;">
                     <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
-                        <button type="button" class="col-xs-12 btn btn-default" onclick="vp.printPreview(this)" data-id="<?php echo exEncrypt($data['id']); ?>"><i class="fa fa-print"></i> Cetak</button>
+                        <button type="button" class="col-xs-12 btn btn-default" onclick="vp.printPreview(this)" data-id="<?php echo exEncrypt(json_encode(array('id' => $data['id'], 'table' => $data['tbl_name']))); ?>"><i class="fa fa-print"></i> Cetak</button>
                     </div>
 					<?php if ( $data['verifikasi'] == 1 ) { ?>
 						<div class="col-xs-6 no-padding" style="padding-right: 5px;">

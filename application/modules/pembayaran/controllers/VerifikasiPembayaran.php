@@ -1385,10 +1385,14 @@ class VerifikasiPembayaran extends Public_Controller
         display_json( $this->result );
     }
 
-    public function printPreview($id) {        
-        $id = exDecrypt( $id );
+    public function printPreview($data) {
+        $data = json_decode( exDecrypt( $data ), true );
+
+        $id = $data['id'];
+        $table = $data['table'];
         
-        $data = $this->getData( $id, 2 )[0];
+        // getData($id = null, $status = 1, $start_date = null, $end_date = null, $jenis = null, $bank = null, $tbl_name = null)
+        $data = $this->getData( $id, 2, null, null, null, null, $table )[0];
 
         $m_prs = new \Model\Storage\Perusahaan_model();
         $d_prs = $m_prs->orderBy('id', 'desc')->with(['d_kota'])->first();
