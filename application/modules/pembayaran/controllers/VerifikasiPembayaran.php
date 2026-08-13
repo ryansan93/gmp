@@ -283,7 +283,8 @@ class VerifikasiPembayaran extends Public_Controller
                     bp.nama_bank as nama_bank,
                     bp.id,
                     bp.tgl_realisasi as tgl_bayar,
-                    cast(bp.lampiran_realisasi as varchar(max)) as lampiran_realisasi,
+                    -- cast(bp.lampiran_realisasi as varchar(max)) as lampiran_realisasi,
+                    null as lampiran_realisasi,
                     cast(bp.ket_realisasi as varchar(max)) as ket_realisasi,
                     bp.no_bukti,
                     nb.kode as kode_trans,
@@ -969,8 +970,9 @@ class VerifikasiPembayaran extends Public_Controller
 
         $data = $this->getData($id, 2, null, null, null, null, $tbl_name)[0];
 
-        $content['attachment']  = \Model\Storage\AttachmentRealisasiPembayaran_model::showLastData($data['id'], $tbl_name);        
+        $content['attachment']  = \Model\Storage\AttachmentRealisasiPembayaran_model::showLastData($data['id'], $tbl_name);
         $content['data']        = $data;
+
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/form_realisasi_bayar_detail', $content, true);
 
         echo $html;
