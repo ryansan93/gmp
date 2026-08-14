@@ -63,13 +63,13 @@
 			<div class="form-group align-items-center d-flex">
 				<span class="col-sm-2 text-right">KTP</span>
 				<div class="col-sm-3">
-					<input type="text" class="form-control" name="ktp" placeholder="nomor ktp" required data-tipe="ktp">
+					<input type="text" class="form-control ktp_input" name="ktp" placeholder="nomor ktp" required data-tipe="ktp">
 				</div>
 			</div>
 			<div class="form-group align-items-center d-flex">
-				<span class="col-sm-2 text-right">NPWP</span>
+				<span class="col-sm-2 text-right npwp_label">NPWP</span>
 				<div class="col-sm-3">
-					<input type="email" class="form-control" name="npwp" placeholder="npwp">
+					<input type="text" class="form-control npwp_input" name="npwp" placeholder="npwp">
 				</div>
 			</div>
 			<div class="form-group align-items-center d-flex">
@@ -507,7 +507,7 @@
 						<form class="form form-horizontal">
 							<div class="row">
 								<div class="col-sm-12">
-									<table class="table table-bordered lampiran-mitra">
+									<table class="table table-bordered lampiran-mitra" data-id-lampiran-npwp="<?php echo $id_lampiran_npwp_mitra; ?>">
 										<thead>
 											<tr>
 												<th colspan="3">Mitra</th>

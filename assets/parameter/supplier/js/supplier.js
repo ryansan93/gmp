@@ -4,12 +4,13 @@ var supl = {
 	start_up : function	() {
 		supl.setBindSHA1();
 		supl.getLists();
+		supl.bindComposeNamaPerusahaan();
 
 		$('[data-tipe=phone]').mask("9999 9999 9??999");
 		$('[data-tipe=rt]').mask("999");
 		$('[data-tipe=rw]').mask("999");
 		$('[name=ktp_supl]').mask("9999999999999999");
-		$('[name=npwp_supl]').mask("999.999.999.9-999.999");
+		$('[name=npwp_supl]').mask("9999999999999999");
 
 		$('#tglHbsBerlaku').datetimepicker({
             locale: 'id',
@@ -100,7 +101,7 @@ var supl = {
 				$('[data-tipe=rt]').mask("999");
 				$('[data-tipe=rw]').mask("999");
 				$('[name=ktp_supl]').mask("9999999999999999");
-				$('[name=npwp_supl]').mask("999.999.999.9-999.999");
+				$('[name=npwp_supl]').mask("9999999999999999");
 
 				$('#tglHbsBerlaku').datetimepicker({
 					locale: 'id',
@@ -129,12 +130,45 @@ var supl = {
 
         $(div_supplier).find('select.badan_usaha_supl').off('change.composeNama').on('change.composeNama', function(){
             supl.composeNamaPerusahaan(div_supplier);
+            supl.applyAturanPajak(div_supplier);
         });
 
         $(div_supplier).find('input.nama_singkat_supl').off('keyup.composeNama').on('keyup.composeNama', function(){
             supl.composeNamaPerusahaan(div_supplier);
         });
+
+        supl.applyAturanPajak(div_supplier);
     }, // end - bindComposeNamaPerusahaan
+
+    getBadanUsahaBucket : function(div_supplier) {
+        var selected = $(div_supplier).find('select.badan_usaha_supl option:selected');
+        var singkatan = (selected.data('singkatan') || '').toString().toUpperCase();
+        var badan_resmi = ['PT', 'CV', 'KOP', 'FA', 'YYS'];
+
+        if ( empty(singkatan) || singkatan == '-' ) {
+            return 'individu';
+        }
+
+        return ( badan_resmi.indexOf(singkatan) !== -1 ) ? 'badan' : 'individu';
+    }, // end - getBadanUsahaBucket
+
+    applyAturanPajak : function(div_supplier) {
+        var bucket = supl.getBadanUsahaBucket(div_supplier);
+
+        var npwp_input = $(div_supplier).find('input.npwp_input');
+        var npwp_lampiran = $(div_supplier).find('input.npwp_lampiran_input');
+        var npwp_label = $(div_supplier).find('span.npwp_label');
+
+        if ( bucket == 'badan' ) {
+            npwp_input.attr('required', 'required');
+            npwp_lampiran.attr('required', 'required');
+            npwp_label.html('NPWP Badan <span style="color:#c00;">*</span>');
+        } else {
+            npwp_input.removeAttr('required');
+            npwp_lampiran.removeAttr('required');
+            npwp_label.text('NPWP');
+        }
+    }, // end - applyAturanPajak
 
     composeNamaPerusahaan : function(div_supplier) {
         var selected = $(div_supplier).find('select.badan_usaha_supl option:selected');
@@ -355,6 +389,18 @@ var supl = {
 			}
 		});
 
+		var ktp_val = $('input.ktp_input').val();
+		if ( !empty(ktp_val) && ktp_val.replace(/\D/g, '').length != 16 ) {
+			error++;
+			lbl_errors.push('* NIK/KTP harus 16 digit');
+		}
+
+		var npwp_val = $('input.npwp_input').val();
+		if ( !empty(npwp_val) && npwp_val.replace(/\D/g, '').length != 16 ) {
+			error++;
+			lbl_errors.push('* NPWP harus 16 digit');
+		}
+
 		if (error > 0) {
 			bootbox.alert('Data belum lengkap : <br> ' + lbl_errors.join('<br>') );
 		} else {
@@ -461,6 +507,18 @@ var supl = {
 				$(elm).parent().removeClass('has-error');
 			}
 		});
+
+		var ktp_val = $('input.ktp_input').val();
+		if ( !empty(ktp_val) && ktp_val.replace(/\D/g, '').length != 16 ) {
+			error++;
+			lbl_errors.push('* NIK/KTP harus 16 digit');
+		}
+
+		var npwp_val = $('input.npwp_input').val();
+		if ( !empty(npwp_val) && npwp_val.replace(/\D/g, '').length != 16 ) {
+			error++;
+			lbl_errors.push('* NPWP harus 16 digit');
+		}
 
 		if (error > 0) {
 			bootbox.alert('Data belum lengkap : <br> ' + lbl_errors.join('<br>') );

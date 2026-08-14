@@ -97,7 +97,7 @@
 					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-2 text-right no-padding">NIK</span>
 						<div class="col-sm-2" style="margin-left: 11px;">
-							<input required="required" class="form-control" type="text" name="ktp_ekspedisi" placeholder="Nomer KTP">
+							<input required="required" class="form-control ktp_input" type="text" name="ktp_ekspedisi" placeholder="Nomer KTP">
 						</div>
 						<div class="col-sm-8 no-padding">
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_ekspedisi['id'] ?>">
@@ -183,13 +183,13 @@
 				<div class="col-sm-12">Alamat Tempat Usaha</div>
 				<div class="col-sm-12 no-padding">
 					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-2 text-right no-padding">NPWP</span>
+						<span class="col-sm-2 text-right no-padding npwp_label">NPWP</span>
 						<div class="col-sm-2" style="margin-left: 11px;">
-							<input required="required" class="form-control" type="text" name="npwp_ekspedisi" placeholder="Nomer NPWP">
+							<input class="form-control npwp_input" type="text" name="npwp_ekspedisi" placeholder="Nomer NPWP">
 						</div>
 						<div class="col-sm-8 no-padding">
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_usaha_ekspedisi['id'] ?>">
-								<input required="required" type="file" onchange="showNameFile(this)" class="file_lampiran ekspedisi" data-required="1" name="lampiran_npwp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran NWPW">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran ekspedisi npwp_lampiran_input" name="lampiran_npwp" data-allowtypes="doc|pdf|docx|jpg|jpeg|png" style="display: none;" placeholder="Lampiran NWPW">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran NPWP"></i>
 							</label>
 						</div>

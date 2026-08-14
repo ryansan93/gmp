@@ -177,7 +177,7 @@
 					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-2 text-right no-padding">NPWP</span>
 						<div class="col-sm-2" style="margin-left: 11px;">
-							<input required="required" class="form-control" type="text" name="npwp_supl" placeholder="Nomer NPWP" value="<?php echo $data['npwp']; ?>" readonly>
+							<input class="form-control" type="text" name="npwp_supl" placeholder="Nomer NPWP" value="<?php echo $data['npwp']; ?>" readonly>
 						</div>
 						<div class="col-sm-8 no-padding">
 							<div class="col-sm-12">

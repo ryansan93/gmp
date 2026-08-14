@@ -212,7 +212,7 @@
 					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-2 text-right no-padding">NPWP</span>
 						<div class="col-sm-2" style="margin-left: 11px; padding-right: 20px;">
-							<input required="required" class="form-control" type="text" name="npwp_plg" placeholder="Nomer NPWP" value="<?php echo (!empty($data['npwp']) && $data['npwp'] != '') ? $data['npwp'] : '-'; ?>" readonly>
+							<input class="form-control" type="text" name="npwp_plg" placeholder="Nomer NPWP" value="<?php echo (!empty($data['npwp']) && $data['npwp'] != '') ? $data['npwp'] : '-'; ?>" readonly>
 						</div>
 						<?php if (isset($l_npwp['path']) && !empty($l_npwp['path'])) { ?>
 							<div class="col-sm-8 no-padding">

@@ -7,6 +7,7 @@ var plg = {
 		});
 		
 		plg.setBindSHA1();
+		plg.bindComposeNamaPerusahaan();
 		if ( $('#history').attr('data-ismobile') == 1 ) {
 			$('select.kecamatan').select2();
 			$('select.pelanggan').select2();
@@ -18,7 +19,7 @@ var plg = {
 		$('[data-tipe=rt]').mask("999");
 		$('[data-tipe=rw]').mask("999");
 		$('[name=ktp_plg]').mask("9999999999999999");
-		$('[name=npwp_plg]').mask("999.999.999.9-999.999");
+		$('[name=npwp_plg]').mask("9999999999999999");
 
 		$('#tglHbsBerlaku').datetimepicker({
             locale: 'id',
@@ -201,12 +202,12 @@ var plg = {
 				var npwp = $('[name=npwp_plg]').val();
 				if ( !empty(v_id) && empty(resubmit) ) {
 					if ( !empty(npwp.trim()) ) {
-						$('[name=npwp_plg]').mask("999.999.999.9-999.999");
+						$('[name=npwp_plg]').mask("9999999999999999");
 					} else {
 						$('[name=npwp_plg]').val("-");
 					}
 				} else {
-					$('[name=npwp_plg]').mask("999.999.999.9-999.999");
+					$('[name=npwp_plg]').mask("9999999999999999");
 				}
 
 				$('#tglHbsBerlaku').datetimepicker({
@@ -236,12 +237,45 @@ var plg = {
 
         $(div_pelanggan).find('select.badan_usaha_plg').off('change.composeNama').on('change.composeNama', function(){
             plg.composeNamaPerusahaan(div_pelanggan);
+            plg.applyAturanPajak(div_pelanggan);
         });
 
         $(div_pelanggan).find('input.nama_singkat_plg').off('keyup.composeNama').on('keyup.composeNama', function(){
             plg.composeNamaPerusahaan(div_pelanggan);
         });
+
+        plg.applyAturanPajak(div_pelanggan);
     }, // end - bindComposeNamaPerusahaan
+
+    getBadanUsahaBucket : function(div_pelanggan) {
+        var selected = $(div_pelanggan).find('select.badan_usaha_plg option:selected');
+        var singkatan = (selected.data('singkatan') || '').toString().toUpperCase();
+        var badan_resmi = ['PT', 'CV', 'KOP', 'FA', 'YYS'];
+
+        if ( empty(singkatan) || singkatan == '-' ) {
+            return 'individu';
+        }
+
+        return ( badan_resmi.indexOf(singkatan) !== -1 ) ? 'badan' : 'individu';
+    }, // end - getBadanUsahaBucket
+
+    applyAturanPajak : function(div_pelanggan) {
+        var bucket = plg.getBadanUsahaBucket(div_pelanggan);
+
+        var npwp_input = $(div_pelanggan).find('input.npwp_input');
+        var npwp_lampiran = $(div_pelanggan).find('input.npwp_lampiran_input');
+        var npwp_label = $(div_pelanggan).find('span.npwp_label');
+
+        if ( bucket == 'badan' ) {
+            npwp_input.attr('required', 'required');
+            npwp_lampiran.attr('required', 'required');
+            npwp_label.html('NPWP Badan <span style="color:#c00;">*</span>');
+        } else {
+            npwp_input.removeAttr('required');
+            npwp_lampiran.removeAttr('required');
+            npwp_label.text('NPWP');
+        }
+    }, // end - applyAturanPajak
 
     composeNamaPerusahaan : function(div_pelanggan) {
         var selected = $(div_pelanggan).find('select.badan_usaha_plg option:selected');
@@ -463,6 +497,18 @@ var plg = {
 			}
 		});
 
+		var ktp_val = $('input.ktp_input').val();
+		if ( !empty(ktp_val) && ktp_val.replace(/\D/g, '').length != 16 ) {
+			error++;
+			lbl_errors.push('* NIK/KTP harus 16 digit');
+		}
+
+		var npwp_val = $('input.npwp_input').val();
+		if ( !empty(npwp_val) && npwp_val.replace(/\D/g, '').length != 16 ) {
+			error++;
+			lbl_errors.push('* NPWP harus 16 digit');
+		}
+
 		if (error > 0) {
 			bootbox.alert('Data belum lengkap : <br> ' + lbl_errors.join('<br>') );
 		} else {
@@ -573,6 +619,18 @@ var plg = {
 				$(elm).parent().removeClass('has-error');
 			}
 		});
+
+		var ktp_val = $('input.ktp_input').val();
+		if ( !empty(ktp_val) && ktp_val.replace(/\D/g, '').length != 16 ) {
+			error++;
+			lbl_errors.push('* NIK/KTP harus 16 digit');
+		}
+
+		var npwp_val = $('input.npwp_input').val();
+		if ( !empty(npwp_val) && npwp_val.replace(/\D/g, '').length != 16 ) {
+			error++;
+			lbl_errors.push('* NPWP harus 16 digit');
+		}
 
 		if (error > 0) {
 			bootbox.alert('Data belum lengkap : <br> ' + lbl_errors.join('<br>') );

@@ -582,6 +582,7 @@ class Peternak extends Public_Controller {
         $m_bu = new \Model\Storage\BadanUsaha_model();
         $d_bu = $m_bu->getData();
         $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
+        $content['id_lampiran_npwp_mitra'] = $this->getIdLampiranMitra('FC NPWP');
 
         $content['akses'] = $akses;
         $content['resubmit'] = null;
@@ -646,6 +647,7 @@ class Peternak extends Public_Controller {
         $m_bu = new \Model\Storage\BadanUsaha_model();
         $d_bu = $m_bu->getData();
         $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
+        $content['id_lampiran_npwp_mitra'] = $this->getIdLampiranMitra('FC NPWP');
 
         $content['akses'] = $akses;
         $content['data'] = 'EDIT FORM';
@@ -911,6 +913,13 @@ class Peternak extends Public_Controller {
         $m_lampiran = new \Model\Storage\NamaLampiran_model();
         $d_lampiran = $m_lampiran->where('jenis', $jenis)->get();
         return $d_lampiran;
+    }
+
+    public function getIdLampiranMitra($nama)
+    {
+        $m_lampiran = new \Model\Storage\NamaLampiran_model();
+        $d_lampiran = $m_lampiran->where('jenis', 'MITRA')->where('nama', $nama)->first();
+        return !empty($d_lampiran) ? $d_lampiran['id'] : null;
     }
 
     public function getListPerwakilan()
