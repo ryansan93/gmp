@@ -116,6 +116,9 @@ class Ekspedisi extends Public_Controller {
 		$content['list_lampiran_rekening_ekspedisi'] = $this->getNamaLampiran("BANK_EKSPEDISI", "Rekening Ekspedisi")->first();
 		$content['list_lampiran_dds_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "DDP Ekspedisi")->first();
 		$content['ekspedisi_pph23'] = $this->getEkspedisiPph23();
+		$m_bu = new \Model\Storage\BadanUsaha_model();
+        $d_bu = $m_bu->getData();
+        $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
         // $content['data'] = null;
         $html = $this->load->view($this->pathView . 'addForm', $content, true);
         
@@ -181,6 +184,9 @@ class Ekspedisi extends Public_Controller {
 		$content['list_lampiran_rekening_ekspedisi'] = $this->getNamaLampiran("BANK_EKSPEDISI", "Rekening Ekspedisi")->first();
 		$content['list_lampiran_dds_ekspedisi'] = $this->getNamaLampiran("EKSPEDISI", "DDP Ekspedisi")->first();
 		$content['ekspedisi_pph23'] = $this->getEkspedisiPph23();
+		$m_bu = new \Model\Storage\BadanUsaha_model();
+        $d_bu = $m_bu->getData();
+        $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
 
         $html = $this->load->view($this->pathView . 'editForm', $content, true);
         
@@ -193,8 +199,8 @@ class Ekspedisi extends Public_Controller {
 
         // mengambil data ekspedisi
 		$m_ekspedisi = new \Model\Storage\Ekspedisi_model();
-		$d_ekspedisi = $m_ekspedisi->where('id', $id)->with(['telepons', 'banks', 'potongan_pph'])->with('logs')->first();
-		
+		$d_ekspedisi = $m_ekspedisi->where('id', $id)->with(['telepons', 'banks', 'potongan_pph', 'd_badan_usaha'])->with('logs')->first();
+
 		// mengambil lokasi
 		$lokasi = new \Model\Storage\Lokasi_model();
 		$kec = $lokasi->where('id', $d_ekspedisi['alamat_kecamatan'])->first();
@@ -323,6 +329,7 @@ class Ekspedisi extends Public_Controller {
 			$m_ekspedisi->cp = $params['cp'];
 			$m_ekspedisi->npwp = $params['npwp'];
 			$m_ekspedisi->nama_coretax = isset($params['nama_coretax']) ? $params['nama_coretax'] : null;
+		$m_ekspedisi->badan_usaha = !empty($params['badan_usaha']) ? $params['badan_usaha'] : null;
 			$m_ekspedisi->skb = isset($params['skb']) ? $params['skb'] : null;
 			$m_ekspedisi->tgl_habis_skb = isset($params['tgl_habis_skb']) ? $params['tgl_habis_skb'] : null;
 			$m_ekspedisi->alamat_kecamatan = $params['alamat_ekspedisi']['kecamatan'];
@@ -401,6 +408,7 @@ class Ekspedisi extends Public_Controller {
 		$m_ekspedisi->cp = $params['cp'];
 		$m_ekspedisi->npwp = $params['npwp'];
 		$m_ekspedisi->nama_coretax = isset($params['nama_coretax']) ? $params['nama_coretax'] : null;
+		$m_ekspedisi->badan_usaha = !empty($params['badan_usaha']) ? $params['badan_usaha'] : null;
 		$m_ekspedisi->skb = $params['skb'];
 		$m_ekspedisi->tgl_habis_skb = $params['tgl_habis_skb'];
 		$m_ekspedisi->alamat_kecamatan = $params['alamat_ekspedisi']['kecamatan'];

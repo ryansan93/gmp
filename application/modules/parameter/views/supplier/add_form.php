@@ -26,18 +26,6 @@
 							</select>
 						</div>
 					</div>
-					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Nama Supplier</span>
-						<div class="col-sm-6">
-							<input required="required" class="form-control" type="text" name="nama_supl" placeholder="Perusahaan/Perseorangan">
-						</div>
-					</div>
-					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Contact Person</span>
-						<div class="col-sm-6">
-							<input required="required" class="form-control" type="text" name="contact_supl" placeholder="Contact Person">
-						</div>
-					</div>
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">
@@ -56,17 +44,49 @@
 				</div>
 				<div class="col-sm-12">
 					<div class="form-group align-items-center d-flex">
-						<label class="col-sm-2 text-right"></label>
-						<div class="col-sm-3">
+						<span class="col-sm-2 text-right">Badan Usaha</span>
+						<div class="col-sm-4">
+							<select class="form-control badan_usaha_supl" name="badan_usaha_supl">
+								<option value="">- Pilih -</option>
+								<?php if ( !empty($badan_usaha) ) { ?>
+									<?php foreach ($badan_usaha as $key => $value) { ?>
+										<?php $singkatan_bersih = trim(preg_replace('/\s*Tbk$/i', '', $value['singkatan'])); ?>
+										<option value="<?php echo $value['id_badan_usaha']; ?>" data-singkatan="<?php echo $singkatan_bersih; ?>" data-terbuka="<?php echo $value['is_terbuka']; ?>"><?php echo $value['nama_badan_usaha']; ?><?php echo (!empty($singkatan_bersih)) ? ' ('.$singkatan_bersih.($value['is_terbuka'] == 1 ? ' Tbk' : '').')' : ''; ?></option>
+									<?php } ?>
+								<?php } ?>
+							</select>
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right">Nama</span>
+						<div class="col-sm-6">
+							<input required="required" class="form-control nama_singkat_supl" type="text" placeholder="Nama (tanpa PT/CV/Tbk)">
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right">Nama Perusahaan</span>
+						<div class="col-sm-8">
+							<input required="required" class="form-control nama_perusahaan_supl" type="text" name="nama_supl" placeholder="Nama Perusahaan" readonly>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<div class="form-group align-items-center d-flex">
+						<label class="col-sm-2 text-right">Contact Person</label>
+						<div class="col-sm-6">
 							<table class="table telepon">
 								<thead>
 									<tr>
-										<th class="col-sm-8 text-left">Telepon</th>
-										<th class="col-sm-4"></th>
+										<th class="col-sm-5 text-left">Nama Contact Person</th>
+										<th class="col-sm-5 text-left">Telepon</th>
+										<th class="col-sm-2"></th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr>
+										<td>
+											<input class="form-control" type="text" name="cp_supl" value="" placeholder="Nama Contact Person" required>
+										</td>
 										<td>
 											<input class="form-control" type="text" name="telp_supl" value="" placeholder="Telepon" data-tipe="phone" required>
 										</td>

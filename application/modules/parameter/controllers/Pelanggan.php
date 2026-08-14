@@ -465,6 +465,9 @@ class Pelanggan extends Public_Controller {
         $d_tp = $m_tp->getData();
         $content['jenis'] = !empty($d_jns) ? $d_jns : null;
         $content['tipe_pelanggan'] = !empty($d_tp) ? $d_tp : null;
+		$m_bu = new \Model\Storage\BadanUsaha_model();
+        $d_bu = $m_bu->getData();
+        $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "KTP Pelanggan")->first();
 		$content['list_lampiran_usaha_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "NPWP Pelanggan")->first();
@@ -539,6 +542,9 @@ class Pelanggan extends Public_Controller {
         $d_tp = $m_tp->getData();
         $content['jenis'] = !empty($d_jns) ? $d_jns : null;
 		$content['tipe_pelanggan'] = !empty($d_tp) ? $d_tp : null;
+		$m_bu = new \Model\Storage\BadanUsaha_model();
+        $d_bu = $m_bu->getData();
+        $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "KTP Pelanggan")->first();
 		$content['list_lampiran_usaha_pelanggan'] = $this->getNamaLampiran("PELANGGAN", "NPWP Pelanggan")->first();
@@ -556,7 +562,7 @@ class Pelanggan extends Public_Controller {
 
         // mengambil data pelanggan
 		$m_pelanggan = new \Model\Storage\Pelanggan_model();
-		$d_pelanggan = $m_pelanggan->where('tipe', 'pelanggan')->where('id', $id)->with(['d_jenis', 'd_tipe', 'telepons', 'banks', 'posisi', 'logs'])->first();
+		$d_pelanggan = $m_pelanggan->where('tipe', 'pelanggan')->where('id', $id)->with(['d_jenis', 'd_tipe', 'd_badan_usaha', 'telepons', 'banks', 'posisi', 'logs'])->first();
 		
 		// mengambil lokasi
 		$lokasi = new \Model\Storage\Lokasi_model();
@@ -690,6 +696,7 @@ class Pelanggan extends Public_Controller {
 			$m_pelanggan->cp = $params['cp'];
 			$m_pelanggan->npwp = $params['npwp'];
 			$m_pelanggan->nama_coretax = $params['nama_coretax'];
+			$m_pelanggan->badan_usaha = !empty($params['badan_usaha']) ? $params['badan_usaha'] : null;
 			$m_pelanggan->skb = $params['skb'];
 			$m_pelanggan->tgl_habis_skb = $params['tgl_habis_skb'];
 			$m_pelanggan->alamat_kecamatan = $params['alamat_pelanggan']['kecamatan'];
@@ -790,6 +797,7 @@ class Pelanggan extends Public_Controller {
 			$m_pelanggan->cp = $params['cp'];
 			$m_pelanggan->npwp = $params['npwp'];
 			$m_pelanggan->nama_coretax = $params['nama_coretax'];
+			$m_pelanggan->badan_usaha = !empty($params['badan_usaha']) ? $params['badan_usaha'] : null;
 			$m_pelanggan->skb = $params['skb'];
 			$m_pelanggan->tgl_habis_skb = $params['tgl_habis_skb'];
 			$m_pelanggan->alamat_kecamatan = $params['alamat_pelanggan']['kecamatan'];

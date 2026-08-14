@@ -579,6 +579,9 @@ class Peternak extends Public_Controller {
         $content['list_lampiran_kandang'] = $this->getListLampiran('KANDANG');
         $content['list_lampiran_jaminan'] = $this->getListLampiran('MITRA_JAMINAN');
         $content['perusahaan'] = $this->getPerusahaan();
+        $m_bu = new \Model\Storage\BadanUsaha_model();
+        $d_bu = $m_bu->getData();
+        $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
 
         $content['akses'] = $akses;
         $content['resubmit'] = null;
@@ -606,6 +609,12 @@ class Peternak extends Public_Controller {
         $content['list_lampiran_kandang'] = $this->getListLampiran('KANDANG');
         $content['list_lampiran_jaminan'] = $this->getListLampiran('MITRA_JAMINAN');
         $content['perusahaan'] = $this->getPerusahaan();
+        if ( !empty($data_mitra['data']['badan_usaha']) ) {
+            $m_bu = new \Model\Storage\BadanUsaha_model();
+            $content['d_badan_usaha'] = $m_bu->where('id_badan_usaha', $data_mitra['data']['badan_usaha'])->first();
+        } else {
+            $content['d_badan_usaha'] = null;
+        }
 
         $content['akses'] = $akses;
         $content['data'] = 'VIEW FORM';
@@ -634,6 +643,9 @@ class Peternak extends Public_Controller {
         $content['list_lampiran_kandang'] = $this->getListLampiran('KANDANG');
         $content['list_lampiran_jaminan'] = $this->getListLampiran('MITRA_JAMINAN');
         $content['perusahaan'] = $this->getPerusahaan();
+        $m_bu = new \Model\Storage\BadanUsaha_model();
+        $d_bu = $m_bu->getData();
+        $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
 
         $content['akses'] = $akses;
         $content['data'] = 'EDIT FORM';
@@ -1031,6 +1043,7 @@ class Peternak extends Public_Controller {
             $m_mitra->ktp = $params['ktp'];
             $m_mitra->npwp = $params['npwp'];
             $m_mitra->nama_coretax = $params['nama_coretax'] ?: null;
+            $m_mitra->badan_usaha = !empty($params['badan_usaha']) ? $params['badan_usaha'] : null;
             $m_mitra->skb = $params['skb'] ?: null;
             $m_mitra->tgl_habis_skb = $params['tgl_habis_skb'] ?: null;
             $m_mitra->alamat_kecamatan = $params['alamat']['kecamatan'];
@@ -1151,6 +1164,7 @@ class Peternak extends Public_Controller {
             $m_mitra->ktp = $params['ktp'];
             $m_mitra->npwp = $params['npwp'];
             $m_mitra->nama_coretax = $params['nama_coretax'] ? $params['nama_coretax'] : null;
+            $m_mitra->badan_usaha = !empty($params['badan_usaha']) ? $params['badan_usaha'] : null;
             $m_mitra->skb = $params['skb'] ? $params['skb'] : null;
             $m_mitra->tgl_habis_skb = $params['tgl_habis_skb'] ? $params['tgl_habis_skb'] : null;
             $m_mitra->alamat_kecamatan = $params['alamat']['kecamatan'];

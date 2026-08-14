@@ -23,6 +23,11 @@ class Mitra_model extends Conf{
     return $this->hasOne('\Model\Storage\Mitra_model', 'nomor', 'pemilik')->orderBy('id', 'desc');
   }
 
+  public function d_badan_usaha()
+  {
+    return $this->hasOne('\Model\Storage\BadanUsaha_model', 'id_badan_usaha', 'badan_usaha');
+  }
+
   public function telepons()
   {
     return $this->hasMany('\Model\Storage\TeleponMitra_model', 'mitra', 'id');

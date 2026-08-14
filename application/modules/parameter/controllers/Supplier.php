@@ -98,6 +98,9 @@ class Supplier extends Public_Controller {
 		$m_model = new \Model\Storage\Jenis_model();
         $d_jns = $m_model->getData();
         $content['jenis'] = !empty($d_jns) ? $d_jns : null;
+		$m_bu = new \Model\Storage\BadanUsaha_model();
+        $d_bu = $m_bu->getData();
+        $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_supplier'] = $this->getNamaLampiran("SUPPLIER", "KTP Supplier")->first();
 		$content['list_lampiran_usaha_supplier'] = $this->getNamaLampiran("SUPPLIER", "NPWP Supplier")->first();
@@ -167,6 +170,9 @@ class Supplier extends Public_Controller {
 		$m_model = new \Model\Storage\Jenis_model();
         $d_jns = $m_model->getData();
         $content['jenis'] = !empty($d_jns) ? $d_jns : null;
+		$m_bu = new \Model\Storage\BadanUsaha_model();
+        $d_bu = $m_bu->getData();
+        $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
         $content['list_provinsi'] = $this->getLokasi('PV');
 		$content['list_lampiran_supplier'] = $this->getNamaLampiran("SUPPLIER", "KTP Supplier")->first();
 		$content['list_lampiran_usaha_supplier'] = $this->getNamaLampiran("SUPPLIER", "NPWP Supplier")->first();
@@ -184,7 +190,7 @@ class Supplier extends Public_Controller {
 
         // mengambil data supplier
 		$m_supplier = new \Model\Storage\Supplier_model();
-		$d_supplier = $m_supplier->where('tipe', 'supplier')->where('id', $id)->with(['d_jenis', 'telepons', 'banks', 'logs'])->first();
+		$d_supplier = $m_supplier->where('tipe', 'supplier')->where('id', $id)->with(['d_jenis', 'd_badan_usaha', 'telepons', 'banks', 'logs'])->first();
 		
 		// mengambil lokasi
 		$lokasi = new \Model\Storage\Lokasi_model();
@@ -300,19 +306,22 @@ class Supplier extends Public_Controller {
 
 		try {
 			$status = "submit";
+			$contacts = !empty($params['contacts']) ? $params['contacts'] : array();
+
 			// supplier
 			$m_supplier = new \Model\Storage\Supplier_model();
 			$supplier_id = $m_supplier->getNextIdentity();
 
-			$m_supplier->id = $supplier_id;		
+			$m_supplier->id = $supplier_id;
 			$m_supplier->jenis = $params['jenis_supplier'];
 			$kode_jenis = 'S';
 
 			$m_supplier->nomor = $m_supplier->getNextNomor($kode_jenis);
 			$m_supplier->nama = $params['nama'];
 			$m_supplier->nik = $params['ktp'];
-			$m_supplier->cp = $params['cp'];
+			$m_supplier->cp = !empty($contacts) ? $contacts[0]['nama_cp'] : null;
 			$m_supplier->npwp = $params['npwp'];
+			$m_supplier->badan_usaha = !empty($params['badan_usaha']) ? $params['badan_usaha'] : null;
 			$m_supplier->skb = !empty($params['skb']) ? $params['skb'] : null;
 			$m_supplier->tgl_habis_skb = !empty($params['tgl_habis_skb']) ? $params['tgl_habis_skb'] : null;
 			$m_supplier->alamat_kecamatan = $params['alamat_supplier']['kecamatan'];
@@ -336,13 +345,13 @@ class Supplier extends Public_Controller {
 			$deskripsi_log_supplier = 'di-' . $status . ' oleh ' . $this->userdata['detail_user']['nama_detuser'];
 			Modules::run( 'base/event/save', $m_supplier, $deskripsi_log_supplier );
 
-			// telepon supplier
-			$telepons = $params['telepons'];
-			foreach ($telepons as $k => $telepon) {
+			// contact person & telepon supplier
+			foreach ($contacts as $k => $contact) {
 				$m_telp = new \Model\Storage\TelpPelanggan_model();
 				$m_telp->id = $m_telp->getNextIdentity();
 				$m_telp->pelanggan = $supplier_id;
-				$m_telp->nomor = $telepon;
+				$m_telp->nama_cp = !empty($contact['nama_cp']) ? $contact['nama_cp'] : null;
+				$m_telp->nomor = $contact['telepon'];
 				$m_telp->save();
 				Modules::run( 'base/event/save', $m_telp, $deskripsi_log_supplier );
 			}
@@ -381,6 +390,7 @@ class Supplier extends Public_Controller {
 			$status = $params['status'];
 			$mstatus = $params['mstatus'];
 			$version = $params['version'] + 1;
+			$contacts = !empty($params['contacts']) ? $params['contacts'] : array();
 
 			$m_supplier = new \Model\Storage\Supplier_model();
 			$m_supplier->where('id', $supplier_id_old)->update(
@@ -398,8 +408,9 @@ class Supplier extends Public_Controller {
 			$m_supplier->nomor = $params['nomor'];
 			$m_supplier->nama = $params['nama'];
 			$m_supplier->nik = $params['ktp'];
-			$m_supplier->cp = $params['cp'];
+			$m_supplier->cp = !empty($contacts) ? $contacts[0]['nama_cp'] : null;
 			$m_supplier->npwp = $params['npwp'];
+			$m_supplier->badan_usaha = !empty($params['badan_usaha']) ? $params['badan_usaha'] : null;
 			$m_supplier->skb = !empty($params['skb']) ? $params['skb'] : null;
 			$m_supplier->tgl_habis_skb = !empty($params['tgl_habis_skb']) ? $params['tgl_habis_skb'] : null;
 			$m_supplier->alamat_kecamatan = $params['alamat_supplier']['kecamatan'];
@@ -423,14 +434,14 @@ class Supplier extends Public_Controller {
 			$deskripsi_log_supplier = 'di-update oleh ' . $this->userdata['detail_user']['nama_detuser'];
 			Modules::run( 'base/event/update', $m_supplier, $deskripsi_log_supplier );
 
-			// telepon supplier
-			$telepons = $params['telepons'];
-			foreach ($telepons as $k => $telepon) {
+			// contact person & telepon supplier
+			foreach ($contacts as $k => $contact) {
 				$m_telp = new \Model\Storage\TelpPelanggan_model();
 				$m_telp->id = $m_telp->getNextIdentity();
 
 				$m_telp->pelanggan = $supplier_id;
-				$m_telp->nomor = $telepon;
+				$m_telp->nama_cp = !empty($contact['nama_cp']) ? $contact['nama_cp'] : null;
+				$m_telp->nomor = $contact['telepon'];
 				$m_telp->save();
 				Modules::run( 'base/event/update', $m_telp, $deskripsi_log_supplier );
 			}

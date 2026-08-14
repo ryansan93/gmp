@@ -19,7 +19,7 @@
 						<label class="control-label" style="padding-top: 0px;">SINGKATAN</label>
 					</div>
 					<div class="col-xs-4">
-						<input type="text" class="form-control singkatan" placeholder="Contoh: PT" maxlength="10" data-required="1">
+						<input type="text" class="form-control singkatan" placeholder="Contoh: PT (boleh kosong)" maxlength="10">
 					</div>
 				</div>
 				<div class="form-group d-flex align-items-center">

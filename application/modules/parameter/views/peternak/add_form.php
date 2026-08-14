@@ -22,9 +22,29 @@
 				</div>
 			</div>
 			<div class="form-group align-items-center d-flex">
+				<span class="col-sm-2 text-right">Badan Usaha</span>
+				<div class="col-sm-4">
+					<select class="form-control badan_usaha_mitra" name="badan_usaha_mitra">
+						<option value="">- Pilih -</option>
+						<?php if ( !empty($badan_usaha) ) { ?>
+							<?php foreach ($badan_usaha as $key => $value) { ?>
+								<?php $singkatan_bersih = trim(preg_replace('/\s*Tbk$/i', '', $value['singkatan'])); ?>
+								<option value="<?php echo $value['id_badan_usaha']; ?>" data-singkatan="<?php echo $singkatan_bersih; ?>" data-terbuka="<?php echo $value['is_terbuka']; ?>"><?php echo $value['nama_badan_usaha']; ?><?php echo (!empty($singkatan_bersih)) ? ' ('.$singkatan_bersih.($value['is_terbuka'] == 1 ? ' Tbk' : '').')' : ''; ?></option>
+							<?php } ?>
+						<?php } ?>
+					</select>
+				</div>
+			</div>
+			<div class="form-group align-items-center d-flex">
+				<span class="col-sm-2 text-right">Nama</span>
+				<div class="col-sm-5">
+					<input required="required" type="text" class="form-control nama_singkat_mitra" placeholder="Nama (tanpa PT/CV/Tbk)">
+				</div>
+			</div>
+			<div class="form-group align-items-center d-flex">
 				<span class="col-sm-2 text-right">Nama Plasma</span>
 				<div class="col-sm-5">
-					<input type="text" class="form-control" name="nama_mitra" placeholder="nama mitra" required>
+					<input required="required" type="text" class="form-control nama_perusahaan_mitra" name="nama_mitra" placeholder="Nama Plasma" readonly>
 				</div>
 			</div>
 			<div class="form-group align-items-center d-flex">

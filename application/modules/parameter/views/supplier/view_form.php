@@ -19,18 +19,6 @@
 							<input class="form-control" type="text" name="jenis_supl" value="<?php echo $data->d_jenis->nama; ?>" readonly>
 						</div>
 					</div>
-					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Nama Supplier</span>
-						<div class="col-sm-6">
-							<input required="required" class="form-control" type="text" name="nama_supl" placeholder="Perusahaan/Perseorangan" value="<?php echo $data['nama']; ?>" readonly>
-						</div>
-					</div>
-					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Contact Person</span>
-						<div class="col-sm-6">
-							<input required="required" class="form-control" type="text" name="contact_supl" placeholder="Contact Person" value="<?php echo $data['cp']; ?>" readonly>
-						</div>
-					</div>
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">
@@ -49,17 +37,35 @@
 				</div>
 				<div class="col-sm-12">
 					<div class="form-group align-items-center d-flex">
-						<label class="col-sm-2 text-right"></label>
-						<div class="col-sm-3">
+						<span class="col-sm-2 text-right">Badan Usaha</span>
+						<div class="col-sm-4">
+							<input class="form-control" type="text" name="badan_usaha_supl" value="<?php echo !empty($data->d_badan_usaha) ? $data->d_badan_usaha->nama_badan_usaha.' ('.$data->d_badan_usaha->singkatan.')' : '-'; ?>" readonly>
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right">Nama Perusahaan</span>
+						<div class="col-sm-8">
+							<input required="required" class="form-control" type="text" name="nama_supl" placeholder="Perusahaan/Perseorangan" value="<?php echo $data['nama']; ?>" readonly>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<div class="form-group align-items-center d-flex">
+						<label class="col-sm-2 text-right">Contact Person</label>
+						<div class="col-sm-6">
 							<table class="table telepon">
 								<thead>
 									<tr>
-										<th class="col-sm-8 text-left">Telepon</th>
+										<th class="col-sm-6 text-left">Nama Contact Person</th>
+										<th class="col-sm-6 text-left">Telepon</th>
 									</tr>
 								</thead>
 								<tbody>
 									<?php foreach ($data['telepons'] as $telp) : ?>
 										<tr>
+											<td>
+												<input class="form-control" type="text" name="cp_supl" placeholder="Nama Contact Person" value="<?php echo $telp['nama_cp']; ?>" readonly>
+											</td>
 											<td>
 												<input class="form-control" type="text" name="telp_supl" placeholder="Telepon" data-tipe="phone" value="<?php echo $telp['nomor']; ?>" required readonly>
 											</td>
@@ -81,7 +87,9 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<div class="col-sm-12">
-								<a target="_blank" href="<?php echo 'uploads/'.$l_ktp['path']; ?>" ><?php echo $l_ktp['filename']; ?></a>
+								<?php if ( isset($l_ktp['path']) && !empty($l_ktp['path']) ) { ?>
+									<a target="_blank" href="<?php echo 'uploads/'.$l_ktp['path']; ?>" ><?php echo $l_ktp['filename']; ?></a>
+								<?php } ?>
 							</div>
 						</div>
 					</div>
@@ -173,7 +181,9 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<div class="col-sm-12">
-								<a target="_blank" href="<?php echo 'uploads/'.$l_npwp['path']; ?>" ><?php echo $l_npwp['filename']; ?></a>
+								<?php if ( isset($l_npwp['path']) && !empty($l_npwp['path']) ) { ?>
+									<a target="_blank" href="<?php echo 'uploads/'.$l_npwp['path']; ?>" ><?php echo $l_npwp['filename']; ?></a>
+								<?php } ?>
 							</div>
 						</div>
 					</div>
@@ -285,8 +295,8 @@
 						<tbody>
 							<?php foreach ($data['banks'] as $bank) : ?>
 								<?php 
-									$path = $bank['lampiran']['path'];
-									$filename = $bank['lampiran']['filename'];
+									$path = !empty($bank['lampiran']['path']) ? $bank['lampiran']['path'] : null;
+									$filename = !empty($bank['lampiran']['filename']) ? $bank['lampiran']['filename'] : null;
 								?>
 								<tr class="detail_rekening v-center">
 									<td><?php echo $bank['rekening_nomor']; ?></td>
@@ -305,7 +315,9 @@
 			<div id="lampiran_supplier">
 				<div class="col-sm-2"><b>Lampiran DDS</b></div>
 				<div class="col-sm-10">
-					<a target="_blank" href="<?php echo 'uploads/'.$l_dds['path']; ?>" ><?php echo $l_dds['filename']; ?></a>
+					<?php if ( !empty($l_dds['path']) ) { ?>
+						<a target="_blank" href="<?php echo 'uploads/'.$l_dds['path']; ?>" ><?php echo $l_dds['filename']; ?></a>
+					<?php } ?>
 				</div>
 			</div>
 		</div>

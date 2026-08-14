@@ -20,12 +20,6 @@
 						</div>
 					</div>
 					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Nama Ekspedisi</span>
-						<div class="col-sm-6">
-							<input required="required" class="form-control" type="text" name="nama_supl" placeholder="Perusahaan/Perseorangan" value="<?php echo $data['nama']; ?>" readonly>
-						</div>
-					</div>
-					<div class="form-group align-items-center d-flex">
 						<span class="col-sm-6 text-right">Contact Person</span>
 						<div class="col-sm-6">
 							<input required="required" class="form-control" type="text" name="contact_supl" placeholder="Contact Person" value="<?php echo $data['cp']; ?>" readonly>
@@ -37,6 +31,20 @@
 						<span class="col-sm-6 text-right">Platform</span>
 						<div class="col-sm-6">
 							<input required="required" class="form-control text-right" type="text" name="platform" placeholder="Platform" data-tipe="integer" value="<?php echo 0; ?>" readonly>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right">Badan Usaha</span>
+						<div class="col-sm-4">
+							<input class="form-control" type="text" name="badan_usaha_supl" value="<?php echo (!empty($data['d_badan_usaha'])) ? $data['d_badan_usaha']['nama_badan_usaha'].' ('.$data['d_badan_usaha']['singkatan'].')' : '-'; ?>" readonly>
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right">Nama Perusahaan</span>
+						<div class="col-sm-8">
+							<input required="required" class="form-control" type="text" name="nama_supl" placeholder="Perusahaan/Perseorangan" value="<?php echo $data['nama']; ?>" readonly>
 						</div>
 					</div>
 				</div>

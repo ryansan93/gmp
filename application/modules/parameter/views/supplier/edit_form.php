@@ -31,18 +31,6 @@
 							</select>
 						</div>
 					</div>
-					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Nama Supplier</span>
-						<div class="col-sm-6">
-							<input required="required" class="form-control" type="text" name="nama_supl" placeholder="Perusahaan/Perseorangan" value="<?php echo $data['nama']; ?>" >
-						</div>
-					</div>
-					<div class="form-group align-items-center d-flex">
-						<span class="col-sm-6 text-right">Contact Person</span>
-						<div class="col-sm-6">
-							<input required="required" class="form-control" type="text" name="contact_supl" placeholder="Contact Person" value="<?php echo $data['cp']; ?>" >
-						</div>
-					</div>
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">
@@ -61,13 +49,42 @@
 				</div>
 				<div class="col-sm-12">
 					<div class="form-group align-items-center d-flex">
-						<label class="col-sm-2 text-right"></label>
-						<div class="col-sm-3">
+						<span class="col-sm-2 text-right">Badan Usaha</span>
+						<div class="col-sm-4">
+							<select class="form-control badan_usaha_supl" name="badan_usaha_supl">
+								<option value="">- Pilih -</option>
+								<?php if ( !empty($badan_usaha) ) { ?>
+									<?php foreach ($badan_usaha as $key => $value) { ?>
+										<?php $singkatan_bersih = trim(preg_replace('/\s*Tbk$/i', '', $value['singkatan'])); ?>
+										<option value="<?php echo $value['id_badan_usaha']; ?>" data-singkatan="<?php echo $singkatan_bersih; ?>" data-terbuka="<?php echo $value['is_terbuka']; ?>" <?php echo ($data['badan_usaha'] == $value['id_badan_usaha']) ? 'selected' : ''; ?>><?php echo $value['nama_badan_usaha']; ?><?php echo (!empty($singkatan_bersih)) ? ' ('.$singkatan_bersih.($value['is_terbuka'] == 1 ? ' Tbk' : '').')' : ''; ?></option>
+									<?php } ?>
+								<?php } ?>
+							</select>
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right">Nama</span>
+						<div class="col-sm-6">
+							<input class="form-control nama_singkat_supl" type="text" placeholder="Isi utk update Nama Perusahaan">
+						</div>
+					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-2 text-right">Nama Perusahaan</span>
+						<div class="col-sm-8">
+							<input required="required" class="form-control nama_perusahaan_supl" type="text" name="nama_supl" placeholder="Nama Perusahaan" value="<?php echo $data['nama']; ?>" readonly>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<div class="form-group align-items-center d-flex">
+						<label class="col-sm-2 text-right">Contact Person</label>
+						<div class="col-sm-6">
 							<table class="table telepon">
 								<thead>
 									<tr>
-										<th class="col-sm-8 text-left">Telepon</th>
-										<th class="col-sm-4"></th>
+										<th class="col-sm-5 text-left">Nama Contact Person</th>
+										<th class="col-sm-5 text-left">Telepon</th>
+										<th class="col-sm-2"></th>
 									</tr>
 								</thead>
 								<tbody>
@@ -75,6 +92,9 @@
 									<?php foreach ($data['telepons'] as $telp) : ?>
 										<?php $idx_tlp++; ?>
 										<tr>
+											<td>
+												<input class="form-control" type="text" name="cp_supl" value="<?php echo $telp['nama_cp']; ?>" placeholder="Nama Contact Person" required>
+											</td>
 											<td>
 												<input class="form-control" type="text" name="telp_supl" value="<?php echo $telp['nomor']; ?>" placeholder="Telepon" data-tipe="phone" required>
 											</td>
@@ -102,9 +122,11 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<!-- <span class="file"><?php echo $l_ktp['filename']; ?></span> -->
-							<a href="uploads/<?php echo $l_ktp['filename']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a>
+							<?php if (isset($l_ktp['path']) && !empty($l_ktp['path'])) { ?>
+								<a href="uploads/<?php echo $l_ktp['path']; ?>" target="_blank"><?php echo $l_ktp['filename']; ?></a>
+							<?php } ?>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_supplier['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo $l_ktp['id']; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_ktp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran File KTP" data-old="<?php echo !empty($l_ktp['id']) ? $l_ktp['id'] : null; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDS"></i>
 							</label>
 						</div>
@@ -230,9 +252,11 @@
 						</div>
 						<div class="col-sm-8 no-padding">
 							<!-- <span class="file"><?php echo $l_npwp['filename']; ?></span> -->
-							<a href="uploads/<?php echo $l_npwp['filename']; ?>" target="_blank"><?php echo $l_npwp['filename']; ?></a>
+							<?php if ( isset($l_npwp['path']) && !empty($l_npwp['path']) ) { ?>
+								<a href="uploads/<?php echo $l_npwp['path']; ?>" target="_blank"><?php echo $l_npwp['filename']; ?></a>
+							<?php } ?>
 							<label class="col-sm-1" data-idnama="<?php echo $list_lampiran_usaha_supplier['id'] ?>">
-								<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo $l_npwp['id']; ?>">
+								<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_npwp" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran NWPW" data-old="<?php echo !empty($l_npwp['id']) ? $l_npwp['id'] : null; ?>">
 								<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran NPWP"></i>
 							</label>
 						</div>
@@ -382,9 +406,9 @@
 						<tbody>
 							<?php foreach ($data['banks'] as $bank) : ?>
 								<?php 
-									$id_old = $bank['lampiran']['id'];
-									$path = $bank['lampiran']['path'];
-									$filename = $bank['lampiran']['filename'];
+									$id_old = !empty($bank['lampiran']['id']) ? $bank['lampiran']['id'] : null;
+									$path = !empty($bank['lampiran']['path']) ? $bank['lampiran']['path'] : null;
+									$filename = !empty($bank['lampiran']['filename']) ? $bank['lampiran']['filename'] : null;
 								?>
 								<tr class="detail_rekening v-center">
 									<td><input required="required" class="form-control" type="text" name="rekening_supl" data-id="<?php echo $bank['id']; ?>" placeholder="No Rekeneing" value="<?php echo $bank['rekening_nomor']; ?>" ></td>
@@ -412,9 +436,11 @@
 			<div id="lampiran_supplier">
 				<div class="col-sm-12"><b>Lampiran DDS</b></div>
 				<!-- <span class="file"><?php echo $l_dds['filename']; ?></span> -->
-				<a href="uploads/<?php echo $l_dds['filename']; ?>" target="_blank"><?php echo $l_dds['filename']; ?></a>
+				<?php if ( isset($l_dds['path']) && !empty($l_dds['path']) ) { ?>
+					<a href="uploads/<?php echo $l_dds['path']; ?>" target="_blank"><?php echo $l_dds['filename']; ?></a>
+				<?php } ?>
 				<label class="col-sm-2 text-right" data-idnama="<?php echo $list_lampiran_dds_supplier['id'] ?>">
-					<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_dds" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDS" data-old="<?php echo $l_dds['id']; ?>">
+					<input type="file" onchange="showNameFile(this)" class="file_lampiran supplier" name="lampiran_dds" data-allowtypes="doc|DOC|pdf|PDF|docx|DOCX|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;" placeholder="Lampiran DDS" data-old="<?php echo !empty($l_dds['id']) ? $l_dds['id'] : null; ?>">
 					<i class="glyphicon glyphicon-paperclip cursor-p" title="Lampiran DDS"></i>
 				</label>
 			</div>

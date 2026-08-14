@@ -60,6 +60,12 @@
                             </div>
                         </div>
                         <div class="form-group align-items-center d-flex">
+                            <span class="col-sm-2 text-right">Badan Usaha</span>
+                            <div class="col-sm-4">
+                                <input type="text" class="form-control" value="<?php echo (!empty($d_badan_usaha)) ? $d_badan_usaha['nama_badan_usaha'].' ('.$d_badan_usaha['singkatan'].')' : '-'; ?>" readonly="">
+                            </div>
+                        </div>
+                        <div class="form-group align-items-center d-flex">
                             <span class="col-sm-2 text-right">Nama Plasma</span>
                             <div class="col-sm-5">
                                 <input type="text" class="form-control" name="nama_mitra" placeholder="nama mitra" value="<?php echo $mitra['nama'] ?>" required="1" readonly="">

@@ -21,6 +21,11 @@ class Ekspedisi_model extends Conf {
 		return $this->hasMany('\Model\Storage\TelpEkspedisi_model', 'ekspedisi_id', 'id');
 	}
 
+	public function d_badan_usaha()
+	{
+		return $this->hasOne('\Model\Storage\BadanUsaha_model', 'id_badan_usaha', 'badan_usaha');
+	}
+
 	public function kecamatan()
 	{
 		return $this->hasOne('\Model\Storage\Lokasi_model', 'id', 'alamat_kecamatan')->with('dKota');

@@ -80,7 +80,7 @@ class BadanUsaha extends Public_Controller
 
 			$m_bu->id_badan_usaha = $id_badan_usaha;
 			$m_bu->nama_badan_usaha = $params['nama_badan_usaha'];
-			$m_bu->singkatan = $params['singkatan'];
+			$m_bu->singkatan = !empty($params['singkatan']) ? $params['singkatan'] : null;
 			$m_bu->status_hukum = $params['status_hukum'];
 			$m_bu->is_terbuka = $params['is_terbuka'];
 			$m_bu->save();
@@ -106,7 +106,7 @@ class BadanUsaha extends Public_Controller
 			$m_bu->where('id_badan_usaha', $params['id_badan_usaha'])->update(
                 array(
                     'nama_badan_usaha' => $params['nama_badan_usaha'],
-                    'singkatan' => $params['singkatan'],
+                    'singkatan' => !empty($params['singkatan']) ? $params['singkatan'] : null,
                     'status_hukum' => $params['status_hukum'],
                     'is_terbuka' => $params['is_terbuka']
                 )

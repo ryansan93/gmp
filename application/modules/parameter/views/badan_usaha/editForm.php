@@ -27,7 +27,7 @@
 						<label class="control-label" style="padding-top: 0px;">SINGKATAN</label>
 					</div>
 					<div class="col-xs-4">
-						<input type="text" class="form-control singkatan" maxlength="10" data-required="1" value="<?php echo $data['singkatan']; ?>">
+						<input type="text" class="form-control singkatan" maxlength="10" placeholder="Contoh: PT (boleh kosong)" value="<?php echo ($data['singkatan'] == '-') ? '' : $data['singkatan']; ?>">
 					</div>
 				</div>
 				<div class="form-group d-flex align-items-center">

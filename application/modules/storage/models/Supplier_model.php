@@ -21,6 +21,11 @@ class Supplier_model extends Conf {
 		return $this->hasOne('\Model\Storage\Jenis_model', 'kode', 'jenis');
 	}
 
+	public function d_badan_usaha()
+	{
+		return $this->hasOne('\Model\Storage\BadanUsaha_model', 'id_badan_usaha', 'badan_usaha');
+	}
+
 	public function telepons()
 	{
 		return $this->hasMany('\Model\Storage\TelpPelanggan_model', 'pelanggan', 'id');

@@ -114,6 +114,7 @@ var ekspedisi = {
 				}
 
                 ekspedisi.setBindSHA1();
+                ekspedisi.bindComposeNamaPerusahaan();
 
                 if ( !empty(resubmit) ) {
                 	ekspedisi.load_kab_ekspedisi();
@@ -123,6 +124,38 @@ var ekspedisi = {
             },
         });
     }, // end - loadForm
+
+    bindComposeNamaPerusahaan : function() {
+        var div_ekspedisi = $('div[name=data-ekspedisi]');
+
+        $(div_ekspedisi).find('select.badan_usaha_ekspedisi').off('change.composeNama').on('change.composeNama', function(){
+            ekspedisi.composeNamaPerusahaan(div_ekspedisi);
+        });
+
+        $(div_ekspedisi).find('input.nama_singkat_ekspedisi').off('keyup.composeNama').on('keyup.composeNama', function(){
+            ekspedisi.composeNamaPerusahaan(div_ekspedisi);
+        });
+    }, // end - bindComposeNamaPerusahaan
+
+    composeNamaPerusahaan : function(div_ekspedisi) {
+        var selected = $(div_ekspedisi).find('select.badan_usaha_ekspedisi option:selected');
+        var singkatan = selected.data('singkatan');
+        var is_terbuka = selected.data('terbuka');
+        var nama = $(div_ekspedisi).find('input.nama_singkat_ekspedisi').val();
+        nama = !empty(nama) ? nama.trim().toUpperCase() : '';
+
+        if ( !empty(nama) ) {
+            var nama_perusahaan = nama;
+            if ( !empty(singkatan) ) {
+                nama_perusahaan = singkatan + '. ' + nama;
+                if ( is_terbuka == 1 ) {
+                    nama_perusahaan += ', Tbk';
+                }
+            }
+
+            $(div_ekspedisi).find('input.nama_perusahaan_ekspedisi').val(nama_perusahaan);
+        }
+    }, // end - composeNamaPerusahaan
 
     load_kab_ekspedisi : function() {
     	var select_prov_ekspedisi = $('select[name=propinsi_ekspedisi]');

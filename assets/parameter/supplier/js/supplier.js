@@ -113,6 +113,7 @@ var supl = {
 				}
 
                 supl.setBindSHA1();
+                supl.bindComposeNamaPerusahaan();
 
                 if ( !empty(resubmit) ) {
                 	supl.load_kab_supl();
@@ -122,6 +123,38 @@ var supl = {
             },
         });
     }, // end - load_form
+
+    bindComposeNamaPerusahaan : function() {
+        var div_supplier = $('div[name=data-supplier]');
+
+        $(div_supplier).find('select.badan_usaha_supl').off('change.composeNama').on('change.composeNama', function(){
+            supl.composeNamaPerusahaan(div_supplier);
+        });
+
+        $(div_supplier).find('input.nama_singkat_supl').off('keyup.composeNama').on('keyup.composeNama', function(){
+            supl.composeNamaPerusahaan(div_supplier);
+        });
+    }, // end - bindComposeNamaPerusahaan
+
+    composeNamaPerusahaan : function(div_supplier) {
+        var selected = $(div_supplier).find('select.badan_usaha_supl option:selected');
+        var singkatan = selected.data('singkatan');
+        var is_terbuka = selected.data('terbuka');
+        var nama = $(div_supplier).find('input.nama_singkat_supl').val();
+        nama = !empty(nama) ? nama.trim().toUpperCase() : '';
+
+        if ( !empty(nama) ) {
+            var nama_perusahaan = nama;
+            if ( !empty(singkatan) ) {
+                nama_perusahaan = singkatan + '. ' + nama;
+                if ( is_terbuka == 1 ) {
+                    nama_perusahaan += ', Tbk';
+                }
+            }
+
+            $(div_supplier).find('input.nama_perusahaan_supl').val(nama_perusahaan);
+        }
+    }, // end - composeNamaPerusahaan
 
     load_kab_supl : function() {
     	var select_prov_supl = $('select[name=propinsi_supl]');
@@ -344,14 +377,14 @@ var supl = {
     				// data supplier
     				var jenis_supplier = $(div_supplier).find('select[name=jenis_supl]').val();
     				var nama_supplier = $(div_supplier).find('input[name=nama_supl]').val();
-    				var contact_person = $(div_supplier).find('input[name=contact_supl]').val();
     				var plafon = numeral.unformat( $(div_supplier).find('input[name=plafon]').val() );
     				var jatuh_tempo = numeral.unformat( $(div_supplier).find('input[name=jatuh_tempo]').val() );
 
-    				var telepons = $.map( $(div_supplier).find('input[name=telp_supl]'), function(ipt) {
-						var telp = $(ipt).mask();
+    				var contacts = $.map( $(div_supplier).find('table.telepon tbody tr'), function(tr) {
+						var nama_cp = $(tr).find('input[name=cp_supl]').val();
+						var telp = $(tr).find('input[name=telp_supl]').mask();
 						if (!empty(telp)) {
-							return telp;
+							return { 'nama_cp' : nama_cp, 'telepon' : telp };
 						}
 					});
 
@@ -364,6 +397,7 @@ var supl = {
 						'rw' :  $(div_supplier).find('input[name=rw_supl]').val().trim(),
 					};
 					var npwp = $(div_supplier).find('input[name=npwp_supl]').mask();
+					var badan_usaha = $(div_supplier).find('select[name=badan_usaha_supl]').val();
 					// var skb = $(div_supplier).find('input[name=skb_supl]').val().trim();
 					// var tgl_habis_skb = !empty($(div_supplier).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_supplier).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
@@ -378,11 +412,11 @@ var supl = {
 						'jenis_supplier' : jenis_supplier,
 						'ktp' : ktp,
 						'nama' : nama_supplier,
-						'cp' : contact_person,
 						'npwp' : npwp,
+						'badan_usaha' : badan_usaha,
 						// 'skb' : skb,
 						// 'tgl_habis_skb' : tgl_habis_skb,
-						'telepons' : telepons,
+						'contacts' : contacts,
 						'alamat_supplier' : alamat_supplier,
 						'alamat_usaha' : alamat_usaha,
 						'banks' : banks,
@@ -457,14 +491,14 @@ var supl = {
     				// data supplier
     				var jenis_supplier = $(div_supplier).find('select[name=jenis_supl]').val();
     				var nama_supplier = $(div_supplier).find('input[name=nama_supl]').val();
-    				var contact_person = $(div_supplier).find('input[name=contact_supl]').val();
     				var plafon = numeral.unformat( $(div_supplier).find('input[name=plafon]').val() );
     				var jatuh_tempo = numeral.unformat( $(div_supplier).find('input[name=jatuh_tempo]').val() );
 
-    				var telepons = $.map( $(div_supplier).find('input[name=telp_supl]'), function(ipt) {
-						var telp = $(ipt).mask();
+    				var contacts = $.map( $(div_supplier).find('table.telepon tbody tr'), function(tr) {
+						var nama_cp = $(tr).find('input[name=cp_supl]').val();
+						var telp = $(tr).find('input[name=telp_supl]').mask();
 						if (!empty(telp)) {
-							return telp;
+							return { 'nama_cp' : nama_cp, 'telepon' : telp };
 						}
 					});
 
@@ -477,6 +511,7 @@ var supl = {
 						'rw' :  $(div_supplier).find('input[name=rw_supl]').val().trim(),
 					};
 					var npwp = $(div_supplier).find('input[name=npwp_supl]').mask();
+					var badan_usaha = $(div_supplier).find('select[name=badan_usaha_supl]').val();
 					// var skb = $(div_supplier).find('input[name=skb_supl]').val().trim();
 					// var tgl_habis_skb = !empty($(div_supplier).find('#tglHbsBerlaku input').val()) ? dateSQL($(div_supplier).find('#tglHbsBerlaku').data('DateTimePicker').date()) : null;
 					var alamat_usaha = {
@@ -496,11 +531,11 @@ var supl = {
 						'jenis_supplier' : jenis_supplier,
 						'ktp' : ktp,
 						'nama' : nama_supplier,
-						'cp' : contact_person,
 						'npwp' : npwp,
+						'badan_usaha' : badan_usaha,
 						// 'skb' : skb,
 						// 'tgl_habis_skb' : tgl_habis_skb,
-						'telepons' : telepons,
+						'contacts' : contacts,
 						'alamat_supplier' : alamat_supplier,
 						'alamat_usaha' : alamat_usaha,
 						'banks' : banks,
