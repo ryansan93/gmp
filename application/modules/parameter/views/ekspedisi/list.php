@@ -45,11 +45,11 @@
 			<td><?php echo $v_ekspedisi['keterangan']; ?></td>
 			<td class="text-center">
 				<?php if ( $v_ekspedisi['mstatus'] == 0 ): ?>
-					<button id="btn-add" type="button" class="btn btn-primary cursor-p" title="AKTIF" onclick="ekspedisi.load_form_status(this)" data-id="<?php echo $v_ekspedisi['id']; ?>" data-tipe="aktif"> 
+					<button id="btn-add" type="button" class="btn btn-primary cursor-p" title="AKTIF" onclick="ekspedisi.loadForm_status(this)" data-id="<?php echo $v_ekspedisi['id']; ?>" data-tipe="aktif"> 
 						AKTIF
 					</button>
 				<?php else: ?>
-					<button id="btn-add" type="button" class="btn btn-danger cursor-p" title="NON AKTIF" onclick="ekspedisi.load_form_status(this)" data-id="<?php echo $v_ekspedisi['id']; ?>" data-tipe="non_aktif"> 
+					<button id="btn-add" type="button" class="btn btn-danger cursor-p" title="NON AKTIF" onclick="ekspedisi.loadForm_status(this)" data-id="<?php echo $v_ekspedisi['id']; ?>" data-tipe="non_aktif"> 
 						NON AKTIF
 					</button>
 				<?php endif ?>
