@@ -4367,6 +4367,42 @@ class TSDRHPP extends Public_Controller {
         display_json( $this->result );
     }
 
+    /**
+     * Ambil harga jual (harga_pasar) TERKINI per no_do langsung dari det_real_sj,
+     * mengikuti logika yang sama dengan get_data_rpah() (baris ~3711-3751). Dipakai
+     * saat submit tutup_siklus supaya harga yang tersimpan ke rhpp_penjualan tidak
+     * memakai snapshot lama yang mungkin sudah usang di form browser (form RHPP bisa
+     * kebuka lama sebelum di-submit, sementara harga di Realisasi SJ bisa diedit
+     * user lain di tab lain kapan saja sebelum submit itu terjadi).
+     */
+    private function _hargaPasarFresh($noreg)
+    {
+        $harga = array();
+
+        $m_drpah = new \Model\Storage\DetRpah_model();
+        $d_drpah = $m_drpah->where('noreg', $noreg)->with(['data_real_sj'])->get()->toArray();
+
+        foreach ($d_drpah as $v_det) {
+            $m_rpah = new \Model\Storage\Rpah_model();
+            $d_rpah = $m_rpah->where('id', $v_det['id_rpah'])->orderBy('id', 'desc')->first();
+
+            if ( !$d_rpah ) {
+                continue;
+            }
+
+            $m_real_sj = new \Model\Storage\RealSJ_model();
+            $d_real_sj = $m_real_sj->where('noreg', $noreg)->where('tgl_panen', $d_rpah->tgl_panen)->orderBy('id', 'desc')->first();
+
+            foreach ($v_det['data_real_sj'] as $v_drs) {
+                if ( $d_real_sj && $d_real_sj->id == $v_drs['id_header'] ) {
+                    $harga[ $v_drs['no_do'] ] = ($v_drs['harga'] > 0) ? (!empty($v_drs['harga_jadi']) ? $v_drs['harga_jadi'] : $v_drs['harga']) : 0;
+                }
+            }
+        }
+
+        return $harga;
+    }
+
     public function tutup_siklus()
     {
         $params = $this->input->post('params');
@@ -4375,6 +4411,89 @@ class TSDRHPP extends Public_Controller {
             // cetak_r( $params, 1 );
 
             $id_plasma = null;
+
+            // Koreksi harga jual & seluruh turunannya (bonus_pasar, pendapatan
+            // peternak, potongan pajak, lr_inti) pakai data det_real_sj TERKINI,
+            // bukan snapshot yang dikirim browser. Lihat _hargaPasarFresh().
+            if ( !empty($params['data_rhpp']) ) {
+                $harga_pasar_fresh = $this->_hargaPasarFresh( $params['noreg'] );
+
+                $idx_plasma = null;
+                foreach ($params['data_rhpp'] as $k_rhpp => $v_rhpp) {
+                    if ( !empty($v_rhpp['data_penjualan']) ) {
+                        $tot_pasar_baru = 0;
+
+                        foreach ($v_rhpp['data_penjualan'] as $k_pj => $v_pj) {
+                            if ( isset($harga_pasar_fresh[ $v_pj['nota'] ]) ) {
+                                $params['data_rhpp'][$k_rhpp]['data_penjualan'][$k_pj]['harga_pasar'] = $harga_pasar_fresh[ $v_pj['nota'] ];
+                                $params['data_rhpp'][$k_rhpp]['data_penjualan'][$k_pj]['total_pasar'] = $harga_pasar_fresh[ $v_pj['nota'] ] * $v_pj['tonase'];
+                            }
+
+                            $tot_pasar_baru += $params['data_rhpp'][$k_rhpp]['data_penjualan'][$k_pj]['total_pasar'];
+                        }
+
+                        if ( stristr($v_rhpp['jenis'], 'plasma') === false ) {
+                            // jenis inti: tot_penjualan_ayam = total harga pasar (bukan kontrak)
+                            $params['data_rhpp'][$k_rhpp]['tot_penjualan_ayam'] = $tot_pasar_baru;
+                        } else {
+                            $idx_plasma = $k_rhpp;
+                        }
+                    }
+                }
+
+                if ( $idx_plasma !== null ) {
+                    $v_plasma = $params['data_rhpp'][$idx_plasma];
+
+                    $bonus_pasar_baru = 0;
+                    foreach ($v_plasma['data_penjualan'] as $k_pj => $v_pj) {
+                        $selisih_baru = $v_pj['harga_pasar'] - $v_pj['harga_kontrak'];
+                        $insentif_baru = ($selisih_baru > 0) ? $selisih_baru * ($v_plasma['persen_bonus_pasar'] / 100) : 0;
+                        $total_insentif_baru = $insentif_baru * $v_pj['tonase'];
+
+                        $params['data_rhpp'][$idx_plasma]['data_penjualan'][$k_pj]['selisih'] = $selisih_baru;
+                        $params['data_rhpp'][$idx_plasma]['data_penjualan'][$k_pj]['insentif'] = $insentif_baru;
+                        $params['data_rhpp'][$idx_plasma]['data_penjualan'][$k_pj]['total_insentif'] = $total_insentif_baru;
+
+                        $bonus_pasar_baru += $total_insentif_baru;
+                    }
+
+                    $params['data_rhpp'][$idx_plasma]['bonus_pasar'] = $bonus_pasar_baru;
+
+                    $pdpt_belum_pajak_baru = round(
+                        $v_plasma['tot_penjualan_ayam']
+                        + $bonus_pasar_baru
+                        + $v_plasma['bonus_kematian']
+                        + $v_plasma['bonus_insentif_fcr']
+                        + $v_plasma['total_bonus_insentif_listrik']
+                        + $v_plasma['total_bonus']
+                        - $v_plasma['tot_pembelian_sapronak']
+                        - $v_plasma['biaya_materai']
+                        - $v_plasma['total_potongan']
+                    );
+
+                    $potongan_pajak_baru = ( $v_plasma['prs_potongan_pajak'] > 0 && $pdpt_belum_pajak_baru > 0 )
+                        ? round( $pdpt_belum_pajak_baru * ($v_plasma['prs_potongan_pajak'] / 100) )
+                        : 0;
+
+                    $params['data_rhpp'][$idx_plasma]['pdpt_peternak_belum_pajak'] = $pdpt_belum_pajak_baru;
+                    $params['data_rhpp'][$idx_plasma]['potongan_pajak'] = $potongan_pajak_baru;
+                    $params['data_rhpp'][$idx_plasma]['pdpt_peternak_sudah_pajak'] = $pdpt_belum_pajak_baru - $potongan_pajak_baru;
+
+                    // Sisi inti (kalau ada): "pendapatan_peternak_form_inti" ikut pdpt_peternak_belum_pajak plasma yang baru dikoreksi
+                    foreach ($params['data_rhpp'] as $k_rhpp => $v_rhpp) {
+                        if ( $k_rhpp != $idx_plasma && stristr($v_rhpp['jenis'], 'plasma') === false ) {
+                            $pendapatan_form_inti_baru = ($pdpt_belum_pajak_baru > 0) ? $pdpt_belum_pajak_baru : 0;
+
+                            $tot_pengeluaran_inti_baru = $v_rhpp['tot_pembelian_sapronak']
+                                + $v_rhpp['biaya_operasional']
+                                + $v_rhpp['biaya_materai']
+                                + $pendapatan_form_inti_baru;
+
+                            $params['data_rhpp'][$k_rhpp]['lr_inti'] = $v_rhpp['tot_penjualan_ayam'] + (!empty($v_rhpp['cn']) ? $v_rhpp['cn'] : 0) - $tot_pengeluaran_inti_baru;
+                        }
+                    }
+                }
+            }
 
             $m_conf = new \Model\Storage\Conf();
             $now = $m_conf->getDate();
