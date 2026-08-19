@@ -661,7 +661,7 @@ class Ekspedisi extends Public_Controller {
 
 		$content['akses'] = $akses;
 		$content['data_detail'] = $this->getDataForStatus($nomor);
-		$html = $this->load->view($this->pathView . 'form_status_ekspedisi', $content, true);
+		$html = $this->load->view($this->pathView . 'form_status_supplier', $content, true);
 
 		echo $html;
 	}
