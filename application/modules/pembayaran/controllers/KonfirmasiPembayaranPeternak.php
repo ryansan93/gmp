@@ -18,13 +18,21 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
      * Dipakai buat kontrol berbasis NOMINAL: bukan blokir total begitu pernah
      * dikonfirmasi, tapi kurangi dari nominal yang berhak dikonfirmasi lagi.
      */
-    private function _sudahDikonfirmasiRhpp($jenis, $id_trans)
+    /**
+     * $exclude_id_header dipakai saat edit() -- baris det milik konfirmasi
+     * yang sedang diedit sendiri tidak boleh ikut dihitung sebagai "sudah
+     * dikonfirmasi", karena baris itu memang mau dihapus & diganti, bukan
+     * tambahan di luar itu.
+     */
+    private function _sudahDikonfirmasiRhpp($jenis, $id_trans, $exclude_id_header = null)
     {
+        $sql_exclude = !empty($exclude_id_header) ? " and id_header != ".$exclude_id_header : "";
+
         $m_kppd = new \Model\Storage\Conf();
         $d_kppd = $m_kppd->hydrateRaw("
             select isnull(sum(sub_total), 0) as nominal
             from konfirmasi_pembayaran_peternak_det
-            where jenis = '".$jenis."' and id_trans = ".$id_trans."
+            where jenis = '".$jenis."' and id_trans = ".$id_trans.$sql_exclude."
         ");
 
         return $d_kppd->count() > 0 ? (float) $d_kppd->toArray()[0]['nominal'] : 0;
@@ -949,6 +957,33 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
         $mappingFiles = !empty($files) ? mappingFiles($files) : null;
 
         try {
+            // Kontrol berbasis nominal, sama seperti save() -- tapi baris det
+            // milik konfirmasi yg sedang diedit ini sendiri (id_header =
+            // params['id']) dikecualikan dari hitungan "sudah dikonfirmasi",
+            // karena baris itu memang mau diganti, bukan tambahan.
+            foreach ($params['detail'] as $v_cek) {
+                $jenis_cek = $v_cek['tipe_rhpp'];
+
+                if ( $jenis_cek == 'RHPP' ) {
+                    $m_r_cek = new \Model\Storage\Rhpp_model();
+                    $d_r_cek = $m_r_cek->where('id', $v_cek['id_trans'])->first();
+                    $total_entitled_cek = !empty($d_r_cek) ? $d_r_cek->pdpt_peternak_sudah_pajak : 0;
+                } else {
+                    $m_rg_cek = new \Model\Storage\RhppGroup_model();
+                    $d_rg_cek = $m_rg_cek->where('id', $v_cek['id_trans'])->first();
+                    $total_entitled_cek = !empty($d_rg_cek) ? $d_rg_cek->pdpt_peternak_sudah_pajak : 0;
+                }
+
+                $sudah_dikonfirmasi_cek = $this->_sudahDikonfirmasiRhpp( $jenis_cek, $v_cek['id_trans'], $params['id'] );
+                $sisa_cek = $total_entitled_cek - $sudah_dikonfirmasi_cek;
+
+                if ( $v_cek['sub_total'] > $sisa_cek + 0.01 ) {
+                    $this->result['message'] = 'Nominal konfirmasi ('.angkaRibuan($v_cek['sub_total']).') untuk '.$jenis_cek.' id <b>'.$v_cek['id_trans'].'</b> melebihi sisa hak yang belum dikonfirmasi (<b>'.angkaRibuan($sisa_cek).'</b>). Kemungkinan RHPP ini sudah dikonfirmasi di transaksi lain, atau datanya sudah berubah -- muat ulang daftar RHPP dulu.';
+                    display_json($this->result);
+                    return;
+                }
+            }
+
             $m_kpp = new \Model\Storage\KonfirmasiPembayaranPeternak_model();
             $d_kpp = $m_kpp->where('id', $params['id'])->first();
 
