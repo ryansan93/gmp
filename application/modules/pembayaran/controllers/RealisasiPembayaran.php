@@ -661,7 +661,8 @@ class RealisasiPembayaran extends Public_Controller
                         'transfer' => $transfer,
                         'bayar' => $bayar,
                         'jumlah' => $jumlah,
-                        'checked' => ($d_rpd) ? true : false
+                        'checked' => ($d_rpd) ? true : false,
+                        'lampiran' => $v_kpp['lampiran']
                     );
                 }
             }
