@@ -627,6 +627,54 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
         return $html;
     }
 
+    /**
+     * Total yang benar-benar berhak dikonfirmasi SEKARANG untuk sebuah RHPP/RHPP
+     * GROUP (pdpt_peternak_sudah_pajak terkini dikurangi piutang) -- dipakai di
+     * edit_form() supaya kalau RHPP-nya sudah dikoreksi (mis. lewat Hitung Ulang)
+     * SETELAH konfirmasi ini dibuat, form edit langsung menampilkan nilai yang
+     * sudah ter-update, bukan snapshot sub_total lama yang tersimpan.
+     */
+    private function _totalEntitledRhpp($jenis, $id_trans)
+    {
+        $m_conf = new \Model\Storage\Conf();
+
+        if ( $jenis == 'rhpp group' ) {
+            $m_rg = new \Model\Storage\RhppGroup_model();
+            $d_rg = $m_rg->where('id', $id_trans)->first();
+
+            if ( empty($d_rg) ) {
+                return 0;
+            }
+
+            $d_conf = $m_conf->hydrateRaw("
+                select id_header, sum(nominal) as nominal
+                from rhpp_group_piutang
+                where id_header = ".$id_trans."
+                group by id_header
+            ");
+            $nominal_piutang = $d_conf->count() > 0 ? $d_conf->toArray()[0]['nominal'] : 0;
+
+            return $d_rg->pdpt_peternak_sudah_pajak - $nominal_piutang;
+        } else {
+            $m_r = new \Model\Storage\Rhpp_model();
+            $d_r = $m_r->where('id', $id_trans)->first();
+
+            if ( empty($d_r) ) {
+                return 0;
+            }
+
+            $d_conf = $m_conf->hydrateRaw("
+                select id_header, sum(nominal) as nominal
+                from rhpp_piutang
+                where id_header = ".$id_trans."
+                group by id_header
+            ");
+            $nominal_piutang = $d_conf->count() > 0 ? $d_conf->toArray()[0]['nominal'] : 0;
+
+            return $d_r->pdpt_peternak_sudah_pajak - $nominal_piutang;
+        }
+    }
+
     public function edit_form($id, $perusahaan)
     {
         $m_kpp = new \Model\Storage\KonfirmasiPembayaranPeternak_model();
@@ -680,6 +728,8 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
                     $jml_noreg++;
                 }
 
+                $total_live = $this->_totalEntitledRhpp( 'rhpp group', $v_det['id_trans'] );
+
                 $detail[$v_det['id_trans']] = array(
                     'jenis' => 'rhpp group',
                     'tgl_docin' => $tgl_docin,
@@ -688,10 +738,10 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
                     'kandang' => $kandang,
                     'populasi' => $populasi,
                     'populasi_real' => $populasi_real,
-                    'total' => $v_det['sub_total']
+                    'total' => $total_live
                 );
 
-                $total += $v_det['sub_total'];
+                $total += $total_live;
             } else {
                 if ( empty($start_date) && empty($end_date) ) {
                     $start_date = $v_det['detail2'][0]['tgl_docin'];
@@ -706,6 +756,8 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
                     }
                 }
 
+                $total_live = $this->_totalEntitledRhpp( 'rhpp', $v_det['id_trans'] );
+
                 $detail[$v_det['id_trans']] = array(
                     'jenis' => 'rhpp',
                     'tgl_docin' => tglIndonesia($v_det['detail2'][0]['tgl_docin'], '-', ' '),
@@ -714,10 +766,10 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
                     'kandang' => $v_det['detail2'][0]['kandang'],
                     'populasi' => angkaRibuan($v_det['detail2'][0]['populasi']),
                     'populasi_real' => $v_det['detail2'][0]['populasi'],
-                    'total' => $v_det['sub_total']
+                    'total' => $total_live
                 );
 
-                $total += $v_det['sub_total'];
+                $total += $total_live;
             }
         }
 
@@ -730,6 +782,12 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
         $m_kdg = new \Model\Storage\Kandang_model();
         $d_kdg = $m_kdg->where('mitra_mapping', $d_mm['id'])->with(['d_unit'])->orderBy('id', 'desc')->first()->toArray();
 
+        // Info doang (bukan blokir): kasih tau kalau konfirmasi ini sudah
+        // pernah direalisasi/dibayar, supaya user sadar perubahan nominal di
+        // sini akan otomatis ikut disinkronkan ke realisasi_pembayaran_det.
+        $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
+        $sudah_direalisasi = !empty($d_kpp['lunas']) || $m_rpd->where('no_bayar', $d_kpp['nomor'])->count() > 0;
+
         $data = array(
             'id' => $d_kpp['id'],
             'start_date' => $start_date,
@@ -738,7 +796,9 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
             'mitra' => $d_kpp['mitra'],
             'perusahaan' => $d_kpp['perusahaan'],
             'total' => $total,
-            'detail' => $detail
+            'detail' => $detail,
+            'invoice' => $d_kpp['invoice'],
+            'sudah_direalisasi' => $sudah_direalisasi ? 1 : 0
         );
 
         $content['data'] = $data;
@@ -994,7 +1054,7 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
                     $moved = uploadFile($v_mf);
                 }
             }
-            $isMoved = $moved['status'];
+            $isMoved = !empty($moved) ? $moved['status'] : false;
             if ($isMoved) {
                 $path_name = $moved['path'];
             }
@@ -1009,6 +1069,15 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
                     'total' => $params['total'],
                     'lampiran' => $path_name
                 )
+            );
+
+            // Sinkronkan tagihan di realisasi_pembayaran_det (kalau konfirmasi
+            // ini sudah pernah direalisasi/dibayar sebagian atau penuh) --
+            // no-op kalau memang belum pernah direalisasi (tidak ada baris
+            // yang cocok). Nomor konfirmasi tidak berubah lewat edit ini.
+            $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
+            $m_rpd->where('no_bayar', $d_kpp->nomor)->update(
+                array('tagihan' => $params['total'])
             );
 
             $m_kppd2 = new \Model\Storage\KonfirmasiPembayaranPeternakDet2_model();

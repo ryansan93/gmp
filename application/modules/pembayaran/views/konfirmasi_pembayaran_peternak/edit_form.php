@@ -1,3 +1,10 @@
+<?php if ( !empty($data['sudah_direalisasi']) ): ?>
+<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+	<div class="alert alert-warning" style="display: block; margin-bottom: 0;">
+		<i class="fa fa-warning"></i> <b>Konfirmasi ini sudah pernah direalisasi/dibayar.</b> Perubahan nominal di sini akan otomatis disinkronkan ke data Realisasi Pembayaran (kolom tagihan) supaya tidak nyisa data lama yang beda.
+	</div>
+</div>
+<?php endif ?>
 <div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 	<div class="col-xs-12 no-padding"><label class="control-label text-left">Periode Tutup Siklus</label></div>
 	<div class="col-xs-5 no-padding">
