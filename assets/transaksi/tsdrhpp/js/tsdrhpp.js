@@ -1163,6 +1163,97 @@ var tsdrhpp = {
         });
     }, // end - print
 
+    hitungUlang: function(elm) {
+        var noreg = $(elm).data('noreg');
+
+        var dcontent = $('div#rhpp');
+
+        $.ajax({
+            url: 'transaksi/TSDRHPP/hitungUlangView',
+            data: { 'noreg': noreg },
+            type: 'GET',
+            dataType: 'HTML',
+            beforeSend: function() { showLoading(); },
+            success: function(html) {
+                hideLoading();
+                $(dcontent).html( html );
+                App.formatNumber();
+                tsdrhpp.setting_up();
+            }
+        });
+    }, // end - hitungUlang
+
+    simpanHitungUlang: function(elm) {
+        var id = $(elm).data('id');
+        var noreg = $(elm).data('noreg');
+        var noregEnc = $(elm).data('noreg-enc');
+        var wajibKeterangan = $(elm).data('wajib-keterangan') == 1;
+        var keterangan = $('.keterangan_hitung_ulang').val();
+        var inputBeritaAcara = $('.berita_acara_hitung_ulang').get(0);
+        var fileBeritaAcara = ( inputBeritaAcara && inputBeritaAcara.files && inputBeritaAcara.files.length > 0 ) ? inputBeritaAcara.files[0] : null;
+
+        if ( wajibKeterangan && empty(keterangan) ) {
+            $('.keterangan_hitung_ulang').addClass('has-error');
+            bootbox.alert('Alasan hitung ulang wajib diisi karena RHPP ini sudah masuk proses pembayaran.');
+            return;
+        }
+
+        if ( wajibKeterangan && !fileBeritaAcara ) {
+            bootbox.alert('Berita Acara wajib dilampirkan karena RHPP ini sudah masuk proses pembayaran.');
+            return;
+        }
+
+        bootbox.confirm( 'Yakin ingin menyimpan hasil hitung ulang RHPP ini ? Invoice tidak akan berubah.', function(result) {
+            if ( result ) {
+                var simpanHitungUlangAjax = function() {
+                    $.ajax({
+                        url: 'transaksi/TSDRHPP/hitungUlang',
+                        data: { 'id': id, 'keterangan': keterangan },
+                        type: 'POST',
+                        dataType: 'JSON',
+                        beforeSend: function() { showLoading(); },
+                        success: function(data) {
+                            hideLoading();
+                            if ( data.status == 1 ) {
+                                bootbox.alert(data.message, function(){
+                                    tsdrhpp.load_form(noreg);
+                                });
+                            } else {
+                                bootbox.alert(data.message);
+                            }
+                        }
+                    });
+                };
+
+                if ( fileBeritaAcara ) {
+                    var formData = new FormData();
+                    formData.append('files[]', fileBeritaAcara);
+                    formData.append('data', JSON.stringify({ 'noreg': noregEnc }));
+
+                    $.ajax({
+                        url: 'transaksi/TSDRHPP/uploadBeritaAcara',
+                        dataType: 'json',
+                        type: 'post',
+                        processData: false,
+                        contentType: false,
+                        data: formData,
+                        beforeSend: function() { showLoading(); },
+                        success: function(data) {
+                            hideLoading();
+                            if ( data.status == 1 ) {
+                                simpanHitungUlangAjax();
+                            } else {
+                                bootbox.alert('Gagal upload Berita Acara: ' + data.message);
+                            }
+                        }
+                    });
+                } else {
+                    simpanHitungUlangAjax();
+                }
+            }
+        });
+    }, // end - simpanHitungUlang
+
     export_pdf : function (noreg) {
         window.open('transaksi/TSDRHPP/export_pdf/'+noreg, 'blank');
     }, // end - export_excel

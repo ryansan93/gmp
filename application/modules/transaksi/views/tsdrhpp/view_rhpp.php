@@ -53,6 +53,11 @@
 		                	<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
 		                		<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-tags"></i> Jenis RHPP: <?php echo !empty($data['jenis_rhpp_rhpp']) ? $data['jenis_rhpp_rhpp'] : '-'; ?></small>
 		                	</div>
+		                	<?php if ( !empty($data['log_hitung_ulang']) ): ?>
+		                	<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+		                		<small class="text-warning" style="font-style: italic;"><i class="glyphicon glyphicon-warning-sign"></i> <?php echo ucfirst($data['log_hitung_ulang']); ?></small>
+		                	</div>
+		                	<?php endif ?>
 	                	</div>
 	                </div>
 	                <div class="col-sm-12 no-padding">
@@ -128,12 +133,32 @@
 	            			</div>
 	            		</div>
 	            		<div class="col-sm-12">
+		            		<?php if ( !empty($data['preview_hitung_ulang']) ): ?>
+		            			<div class="alert alert-info" style="display: block; margin-bottom: 10px;">
+		            				<i class="fa fa-refresh"></i> <b>Ini pratinjau hasil Hitung Ulang, belum disimpan.</b> Data di bawah dihitung ulang dari data sumber terkini. Invoice tidak akan berubah kalau disimpan.
+		            			</div>
+		            			<?php if ( !empty($data['wajib_keterangan_hitung_ulang']) ): ?>
+		            				<div class="alert alert-warning" style="display: block;"><?php echo $data['keterangan_info_hitung_ulang']; ?></div>
+		            				<p><b>Alasan hitung ulang (wajib diisi) :</b></p>
+		            				<textarea class="form-control keterangan_hitung_ulang" rows="2"></textarea>
+		            				<p style="margin-top: 10px;"><b>Berita Acara (PDF, wajib dilampirkan) :</b></p>
+		            				<label class="">
+		            					<input type="file" onchange="showNameFile(this)" class="file_lampiran berita_acara_hitung_ulang" name="" placeholder="Berita Acara" data-allowtypes="pdf|PDF" style="display: none;">
+		            					<i class="glyphicon glyphicon-paperclip cursor-p"></i> <span class="berita_acara_hitung_ulang_nama">Pilih file...</span>
+		            				</label>
+		            				<br><br>
+		            			<?php endif ?>
+		            			<button type="button" class="btn btn-warning btn-block" style="display: block; width: 100%; margin-bottom: 5px;" data-id="<?php echo $data['id_hitung_ulang']; ?>" data-noreg="<?php echo $data['noreg']; ?>" data-noreg-enc="<?php echo exEncrypt($data['noreg']); ?>" data-wajib-keterangan="<?php echo $data['wajib_keterangan_hitung_ulang']; ?>" onclick="tsdrhpp.simpanHitungUlang(this)"><i class="fa fa-check"></i> Simpan Hasil Hitung Ulang</button>
+		            			<button type="button" class="btn btn-default btn-block" style="display: block; width: 100%;" data-noreg="<?php echo $data['noreg']; ?>" onclick="tsdrhpp.changeTabActive(this)" data-href="rhpp"><i class="fa fa-times"></i> Batal, Kembali ke Tampilan Normal</button>
+		            		<?php else: ?>
+		            		<button type="button" class="btn btn-warning btn-block" style="display: block; width: 100%; margin-bottom: 5px;" data-id="<?php echo $data['id']; ?>" data-noreg="<?php echo $data['noreg']; ?>" onclick="tsdrhpp.hitungUlang(this)"><i class="fa fa-refresh"></i> Hitung Ulang</button>
 		            		<?php if ( empty($data['rhpp_locked']) ): ?>
 			            	<button type="button" class="btn btn-danger btn-block" style="display: block; width: 100%;" data-id="<?php echo $data['id']; ?>" data-noreg="<?php echo $data['noreg']; ?>" onclick="tsdrhpp.delete(this)"><i class="fa fa-trash"></i> Hapus</button>
 		            		<?php else: ?>
 		            			<div class="alert alert-warning text-center" style="display: block; margin-bottom: 0; padding: 15px; border: 1px solid #faebcc; border-radius: 4px; background-color: #fcf8e3; color: #8a6d3b;">
 		            				<i class="fa fa-lock"></i> <b>RHPP tidak bisa dihapus.</b> <?php echo $data['rhpp_locked_reason']; ?>
 		            			</div>
+		            		<?php endif ?>
 		            		<?php endif ?>
 							<!-- <button type="button" class="btn btn-success pull-right" data-id="<?php echo $data['id']; ?>" data-noreg="<?php echo $data['noreg']; ?>" onclick="tsdrhpp.changeTabActive(this)" data-href="rhpp" style="margin-right: 5px;"><i class="fa fa-edit"></i> Edit</button> -->
 	            		</div>
@@ -152,6 +177,11 @@
 	            		<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
 	            			<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-tags"></i> Jenis RHPP: <?php echo !empty($data['jenis_rhpp_rhpp']) ? $data['jenis_rhpp_rhpp'] : '-'; ?></small>
 	            		</div>
+	            		<?php if ( !empty($data['log_hitung_ulang']) ): ?>
+	            		<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
+	            			<small class="text-warning" style="font-style: italic;"><i class="glyphicon glyphicon-warning-sign"></i> <?php echo ucfirst($data['log_hitung_ulang']); ?></small>
+	            		</div>
+	            		<?php endif ?>
 					</div>
             	<?php endif ?>
             </form>
