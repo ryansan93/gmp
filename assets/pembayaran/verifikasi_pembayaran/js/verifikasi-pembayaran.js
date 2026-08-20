@@ -323,6 +323,205 @@ var vp = {
         },'html');
     }, // end - formRealisasiBayarEdit
 
+    formEditJurnal: function(elm) {
+        var params = {
+            'id': $(elm).attr('data-id'),
+            'tbl_name': $(elm).attr('data-table')
+        };
+
+        $.get('pembayaran/VerifikasiPembayaran/formEditJurnal',{
+            'params': params
+        },function(data){
+            var _options = {
+                className : 'veryWidth',
+                message : data,
+                size : 'large',
+            };
+            bootbox.dialog(_options).bind('shown.bs.modal', function(){
+                var modal_dialog = $(this).find('.modal-dialog');
+                var modal_body = $(this).find('.modal-body');
+
+                $(modal_dialog).css({'max-width' : '80%'});
+                $(modal_dialog).css({'width' : '80%'});
+
+                var modal_header = $(this).find('.modal-header');
+                $(modal_header).css({'padding-top' : '0px'});
+
+                $(modal_body).find('select.asal, select.tujuan').select2({ dropdownParent: $(this) }).on('select2:select', function(e) {
+                    vp.hitTotalJurnal();
+                });
+
+                $(modal_body).find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+                    $(this).priceFormat(Config[$(this).data('tipe')]);
+                });
+
+                vp.hitTotalJurnal();
+            });
+        },'html');
+    }, // end - formEditJurnal
+
+    addRowJurnal: function(elm) {
+        let row = $(elm).closest('tr');
+        let tbody = $(row).closest('tbody');
+        let modal = $(elm).closest('.modal');
+
+        $(row).find('select.asal, select.tujuan').select2('destroy')
+                                   .removeAttr('data-live-search')
+                                   .removeAttr('data-select2-id')
+                                   .removeAttr('aria-hidden')
+                                   .removeAttr('tabindex');
+        $(row).find('select.asal option, select.tujuan option').removeAttr('data-select2-id');
+
+        let newRow = row.clone();
+
+        newRow.removeAttr('data-id');
+        newRow.removeAttr('data-delete');
+        newRow.find('input, select, textarea').val('');
+
+        row.after(newRow);
+
+        $.map( [row, newRow], function(tr) {
+            $(tr).find('select.asal, select.tujuan').select2({ dropdownParent: modal }).on('select2:select', function(e) {
+                vp.hitTotalJurnal();
+            });
+        });
+
+        newRow.find('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+            $(this).priceFormat(Config[$(this).data('tipe')]);
+        });
+
+        vp.hitTotalJurnal();
+    }, // end - addRowJurnal
+
+    removeRowJurnal: function(elm) {
+        let tbody = $(elm).closest('tbody');
+        let row = $(elm).closest('tr');
+
+        if ( $(tbody).find('tr').length > 1 ) {
+            var id = $(row).attr('data-id');
+            if ( !empty(id) ) {
+                bootbox.confirm('Baris ini sudah tersimpan sebagai jurnal otomatis. Hapus baris ini juga saat Simpan ?', function(result) {
+                    if ( result ) {
+                        $(row).attr('data-delete', '1');
+                        $(row).hide();
+
+                        vp.hitTotalJurnal();
+                    }
+                });
+            } else {
+                $(row).remove();
+
+                vp.hitTotalJurnal();
+            }
+        } else {
+            bootbox.alert('Minimal harus ada 1 baris jurnal.');
+        }
+    }, // end - removeRowJurnal
+
+    hitTotalJurnal: function() {
+        var total_debet = 0;
+        var total_kredit = 0;
+        var total = 0;
+
+        $.map( $('#tbl_edit_jurnal tbody tr').not('[data-delete]'), function(tr) {
+            var nominal = ( numeral.unformat( $(tr).find('input.nominal').val() ) || 0 );
+            var coa_asal = $(tr).find('select.asal').val();
+            var coa_tujuan = $(tr).find('select.tujuan').val();
+
+            if ( !empty(coa_asal) ) {
+                total_kredit += nominal;
+            }
+            if ( !empty(coa_tujuan) ) {
+                total_debet += nominal;
+            }
+
+            total += nominal;
+        });
+
+        var fmt = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+        $('#total_kredit_jurnal').text( total_kredit.toLocaleString('id-ID', fmt) );
+        $('#total_debet_jurnal').text( total_debet.toLocaleString('id-ID', fmt) );
+        $('#total_nominal_jurnal').text( total.toLocaleString('id-ID', fmt) );
+    }, // end - hitTotalJurnal
+
+    saveEditJurnal: function(elm) {
+        var rows = $('#tbl_edit_jurnal tbody tr');
+        var fmt = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+
+        var totalSebelumnya = parseFloat( $('#total_nominal_jurnal').attr('data-original') );
+        var total_debet = 0;
+        var total_kredit = 0;
+        var totalNow = 0;
+        $.map( $(rows).not('[data-delete]'), function(tr) {
+            var nominal = ( numeral.unformat( $(tr).find('input.nominal').val() ) || 0 );
+            var coa_asal = $(tr).find('select.asal').val();
+            var coa_tujuan = $(tr).find('select.tujuan').val();
+
+            if ( !empty(coa_asal) ) {
+                total_kredit += nominal;
+            }
+            if ( !empty(coa_tujuan) ) {
+                total_debet += nominal;
+            }
+
+            totalNow += nominal;
+        });
+
+        if ( Math.abs(total_debet - total_kredit) > 1 ) {
+            bootbox.alert('Data tidak balance. Total Debet ('+total_debet.toLocaleString('id-ID', fmt)+') harus sama dengan Total Kredit ('+total_kredit.toLocaleString('id-ID', fmt)+').');
+        } else if ( Math.abs(totalNow - totalSebelumnya) > 1 ) {
+            bootbox.alert('Total nominal jurnal ('+totalNow.toLocaleString('id-ID', fmt)+') tidak boleh berbeda dengan total sebelumnya ('+totalSebelumnya.toLocaleString('id-ID', fmt)+').');
+        } else {
+            bootbox.confirm('Apakah anda yakin ingin menyimpan perubahan jurnal ?', function(result) {
+                if ( result ) {
+                    var tanggal_jurnal = $('#tanggal_jurnal').attr('data-tgl');
+
+                    var detail = $.map( rows, function(tr) {
+                        return {
+                            'id': $(tr).attr('data-id') || null,
+                            'delete': $(tr).attr('data-delete') == '1' ? 1 : 0,
+                            'tanggal': tanggal_jurnal,
+                            'coa_asal': $(tr).find('select.asal').val(),
+                            'coa_asal_nama': $(tr).find('select.asal option:selected').attr('data-nama'),
+                            'unit_asal': $(tr).find('select.unit_asal').val(),
+                            'coa_tujuan': $(tr).find('select.tujuan').val(),
+                            'coa_tujuan_nama': $(tr).find('select.tujuan option:selected').attr('data-nama'),
+                            'unit_tujuan': $(tr).find('select.unit_tujuan').val(),
+                            'nominal': numeral.unformat($(tr).find('input.nominal').val()),
+                            'keterangan': $(tr).find('input.keterangan').val()
+                        };
+                    });
+
+                    var params = {
+                        'id': $(elm).attr('data-id'),
+                        'tbl_name': $(elm).attr('data-table'),
+                        'detail': detail
+                    };
+
+                    $.ajax({
+                        url : 'pembayaran/VerifikasiPembayaran/saveEditJurnal',
+                        data : { 'params': params },
+                        type : 'POST',
+                        dataType : 'JSON',
+                        beforeSend : function(){ showLoading() },
+                        success : function(data){
+                            hideLoading();
+                            if ( data.status == 1 ) {
+                                bootbox.alert(data.message, function() {
+                                    $('.modal').modal('hide');
+
+                                    vp.getLists();
+                                });
+                            } else {
+                                bootbox.alert(data.message);
+                            }
+                        },
+                    });
+                }
+            });
+        }
+    }, // end - saveEditJurnal
+
     save: function(elm) {
         var modal_body = $('.modal-body');
 

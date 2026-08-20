@@ -993,6 +993,137 @@ class VerifikasiPembayaran extends Public_Controller
         echo $html;
     }
 
+    public function formEditJurnal() {
+        $params = $this->input->get('params');
+
+        $id = $params['id'];
+        $tbl_name = $params['tbl_name'];
+
+        $m_dj = new \Model\Storage\DetJurnal_model();
+        $content['jurnal_existing'] = $m_dj->where('tbl_name', $tbl_name)->where('tbl_id', $id)->orderBy('id', 'asc')->get()->toArray();
+        $content['id'] = $id;
+        $content['tbl_name'] = $tbl_name;
+        $content['total_existing'] = array_sum(array_column($content['jurnal_existing'], 'nominal'));
+
+        $m_coa = new \Model\Storage\Coa_model();
+        $content['coa'] = $m_coa->getDataCoa();
+
+        $content['unit'] = Modules::run('accounting/JurnalUnit/getUnit');
+
+        $html = $this->load->view('pembayaran/verifikasi_pembayaran/edit_jurnal', $content, true);
+
+        echo $html;
+    }
+
+    public function saveEditJurnal() {
+        $params = $this->input->post('params');
+
+        try {
+            $tbl_name = $params['tbl_name'];
+            $tbl_id = $params['id'];
+
+            $m_dj_ref = new \Model\Storage\DetJurnal_model();
+            $d_existing = $m_dj_ref->where('tbl_name', $tbl_name)->where('tbl_id', $tbl_id)->orderBy('id', 'asc')->get();
+            $d_ref = $d_existing->count() > 0 ? $d_existing->first() : null;
+            $total_sebelumnya = $d_existing->count() > 0 ? (float) $d_existing->sum('nominal') : 0;
+
+            $total_debet = 0;
+            $total_kredit = 0;
+            $total_now = 0;
+            foreach ($params['detail'] as $v_det) {
+                if ( empty($v_det['delete']) ) {
+                    $nominal = (float) $v_det['nominal'];
+                    $total_now += $nominal;
+
+                    if ( !empty($v_det['coa_tujuan']) ) {
+                        $total_debet += $nominal;
+                    }
+                    if ( !empty($v_det['coa_asal']) ) {
+                        $total_kredit += $nominal;
+                    }
+                }
+            }
+
+            if ( abs($total_debet - $total_kredit) > 1 ) {
+                throw new Exception('Data tidak balance. Total Debet ('.number_format($total_debet, 2, ',', '.').') harus sama dengan Total Kredit ('.number_format($total_kredit, 2, ',', '.').').');
+            }
+
+            if ( abs($total_now - $total_sebelumnya) > 1 ) {
+                throw new Exception('Total nominal jurnal ('.number_format($total_now, 2, ',', '.').') tidak boleh berbeda dengan total sebelumnya ('.number_format($total_sebelumnya, 2, ',', '.').').');
+            }
+
+            foreach ($params['detail'] as $v_det) {
+                if ( !empty($v_det['id']) ) {
+                    if ( !empty($v_det['delete']) ) {
+                        $m_dj = new \Model\Storage\DetJurnal_model();
+                        $d_dj = $m_dj->where('id', $v_det['id'])->first();
+
+                        $m_dj = new \Model\Storage\DetJurnal_model();
+                        $m_dj->where('id', $v_det['id'])->delete();
+
+                        if ( !empty($d_dj) ) {
+                            $deskripsi_log = 'baris jurnal di-hapus manual oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                            Modules::run( 'base/event/update', $d_dj, $deskripsi_log);
+                        }
+                    } else {
+                        $m_dj = new \Model\Storage\DetJurnal_model();
+                        $m_dj->where('id', $v_det['id'])->update(
+                            array(
+                                'tanggal'     => $v_det['tanggal'],
+                                'keterangan'  => $v_det['keterangan'],
+                                'asal'        => !empty($v_det['coa_asal']) ? $v_det['coa_asal_nama'] : null,
+                                'coa_asal'    => !empty($v_det['coa_asal']) ? $v_det['coa_asal'] : null,
+                                'unit'        => !empty($v_det['unit_asal']) ? $v_det['unit_asal'] : null,
+                                'tujuan'      => !empty($v_det['coa_tujuan']) ? $v_det['coa_tujuan_nama'] : null,
+                                'coa_tujuan'  => !empty($v_det['coa_tujuan']) ? $v_det['coa_tujuan'] : null,
+                                'unit_tujuan' => !empty($v_det['unit_tujuan']) ? $v_det['unit_tujuan'] : null,
+                                'nominal'     => $v_det['nominal'],
+                            )
+                        );
+
+                        $m_dj = new \Model\Storage\DetJurnal_model();
+                        $d_dj = $m_dj->where('id', $v_det['id'])->first();
+
+                        $deskripsi_log = 'jurnal di-edit manual oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                        Modules::run( 'base/event/update', $d_dj, $deskripsi_log);
+                    }
+                } else {
+                    if ( empty($d_ref) ) {
+                        throw new Exception('Tidak bisa menambah baris baru karena belum ada jurnal otomatis untuk transaksi ini.');
+                    }
+
+                    $m_dj = new \Model\Storage\DetJurnal_model();
+                    $m_dj->id_header = $d_ref->id_header;
+                    $m_dj->tanggal = $v_det['tanggal'];
+                    $m_dj->keterangan = $v_det['keterangan'];
+                    $m_dj->nominal = $v_det['nominal'];
+                    $m_dj->asal = !empty($v_det['coa_asal']) ? $v_det['coa_asal_nama'] : null;
+                    $m_dj->coa_asal = !empty($v_det['coa_asal']) ? $v_det['coa_asal'] : null;
+                    $m_dj->unit = !empty($v_det['unit_asal']) ? $v_det['unit_asal'] : null;
+                    $m_dj->tujuan = !empty($v_det['coa_tujuan']) ? $v_det['coa_tujuan_nama'] : null;
+                    $m_dj->coa_tujuan = !empty($v_det['coa_tujuan']) ? $v_det['coa_tujuan'] : null;
+                    $m_dj->unit_tujuan = !empty($v_det['unit_tujuan']) ? $v_det['unit_tujuan'] : null;
+                    $m_dj->perusahaan = $d_ref->perusahaan;
+                    $m_dj->tbl_name = $d_ref->tbl_name;
+                    $m_dj->tbl_id = $d_ref->tbl_id;
+                    $m_dj->noreg = $d_ref->noreg;
+                    $m_dj->kode_trans = $d_ref->kode_trans;
+                    $m_dj->save();
+
+                    $deskripsi_log = 'baris jurnal baru ditambahkan manual oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                    Modules::run( 'base/event/update', $m_dj, $deskripsi_log);
+                }
+            }
+
+            $this->result['status'] = 1;
+            $this->result['message'] = 'Jurnal berhasil di update.';
+        } catch (Exception $e) {
+            $this->result['message'] = $e->getMessage();
+        }
+
+        display_json( $this->result );
+    }
+
     public function save() {
         $data = json_decode($this->input->post('data'),TRUE);
 
@@ -1514,7 +1645,10 @@ class VerifikasiPembayaran extends Public_Controller
         // cetak_r( $data );
 
         $arr = array(
-            array('2026-07-17', 'realisasi_pembayaran', '5455'),
+            array('2026-08-13', 'bayar_peralatan', '22'),
+            array('2026-08-13', 'bayar_peralatan', '23'),
+            array('2026-08-13', 'bayar_peralatan', '24'),
+            array('2026-08-13', 'bayar_peralatan', '25'),
         );
 
         foreach ($arr as $key => $value) {
