@@ -67,7 +67,7 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
         $params = $this->input->get('params');
         $edit = $this->input->get('edit');
 
-        $id = $params['id'];
+        $id = !empty($params['id']) ? $params['id'] : null;
 
         $content = array();
         $html = "url not found";
