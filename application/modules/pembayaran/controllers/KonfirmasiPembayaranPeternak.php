@@ -11,6 +11,25 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
         $this->hakAkses = hakAkses($this->url);
     }
 
+    /**
+     * Total nominal RHPP/RHPP GROUP yang SUDAH pernah dikonfirmasi sebelumnya
+     * (bisa lebih dari 1 kali kalau sebelumnya cuma dikonfirmasi sebagian,
+     * mis. setelah RHPP dikoreksi lewat Hitung Ulang dan nilainya berubah).
+     * Dipakai buat kontrol berbasis NOMINAL: bukan blokir total begitu pernah
+     * dikonfirmasi, tapi kurangi dari nominal yang berhak dikonfirmasi lagi.
+     */
+    private function _sudahDikonfirmasiRhpp($jenis, $id_trans)
+    {
+        $m_kppd = new \Model\Storage\Conf();
+        $d_kppd = $m_kppd->hydrateRaw("
+            select isnull(sum(sub_total), 0) as nominal
+            from konfirmasi_pembayaran_peternak_det
+            where jenis = '".$jenis."' and id_trans = ".$id_trans."
+        ");
+
+        return $d_kppd->count() > 0 ? (float) $d_kppd->toArray()[0]['nominal'] : 0;
+    }
+
     public function index()
     {
         if ( $this->hakAkses['a_view'] == 1 ) {
@@ -804,6 +823,33 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
         $mappingFiles = !empty($files) ? mappingFiles($files) : null;
 
         try {
+            // Kontrol berbasis nominal: tolak dulu SEBELUM upload/simpan apa
+            // pun kalau ada item yang nominal-nya melebihi sisa hak RHPP itu
+            // (sudah dikurangi total yg sudah pernah dikonfirmasi sebelumnya).
+            // Jangan percaya nominal dari form -- hitung ulang di server.
+            foreach ($params['detail'] as $v_cek) {
+                $jenis_cek = $v_cek['tipe_rhpp'];
+
+                if ( $jenis_cek == 'RHPP' ) {
+                    $m_r_cek = new \Model\Storage\Rhpp_model();
+                    $d_r_cek = $m_r_cek->where('id', $v_cek['id_trans'])->first();
+                    $total_entitled_cek = !empty($d_r_cek) ? $d_r_cek->pdpt_peternak_sudah_pajak : 0;
+                } else {
+                    $m_rg_cek = new \Model\Storage\RhppGroup_model();
+                    $d_rg_cek = $m_rg_cek->where('id', $v_cek['id_trans'])->first();
+                    $total_entitled_cek = !empty($d_rg_cek) ? $d_rg_cek->pdpt_peternak_sudah_pajak : 0;
+                }
+
+                $sudah_dikonfirmasi_cek = $this->_sudahDikonfirmasiRhpp( $jenis_cek, $v_cek['id_trans'] );
+                $sisa_cek = $total_entitled_cek - $sudah_dikonfirmasi_cek;
+
+                if ( $v_cek['sub_total'] > $sisa_cek + 0.01 ) {
+                    $this->result['message'] = 'Nominal konfirmasi ('.angkaRibuan($v_cek['sub_total']).') untuk invoice <b>'.$v_cek['invoice'].'</b> melebihi sisa hak yang belum dikonfirmasi (<b>'.angkaRibuan($sisa_cek).'</b>). Kemungkinan RHPP ini sudah pernah dikonfirmasi sebagian/seluruhnya, atau datanya sudah berubah -- muat ulang daftar RHPP dulu.';
+                    display_json($this->result);
+                    return;
+                }
+            }
+
             $path_name  = null;
             $moved = null;
 
