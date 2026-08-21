@@ -1,0 +1,40 @@
+.btn-scroll-table {
+	position: fixed;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 1000;
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+	border: 1px solid #ccc;
+	background-color: rgba(255, 255, 255, 0.9);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+	color: #333;
+	font-size: 16px;
+	line-height: 1;
+	display: none;
+}
+
+.btn-scroll-table:hover {
+	background-color: #fff;
+	color: #000;
+}
+
+/* posisi left di-set via JS (rv.positionScrollButtons), mengikuti posisi
+   asli tabel di layar - supaya benar baik saat sidebar terbuka/tertutup */
+
+#tbl_rhpp_v2_wrapper tbody tr.row-clickable {
+	cursor: pointer;
+}
+
+#tbl_rhpp_v2_wrapper tbody tr.row-clickable:hover {
+	background-color: #eaf6ff;
+}
+
+#tbl_rhpp_v2_wrapper tbody tr.row-flagged {
+	background-color: #fff3cd;
+}
+
+#tbl_rhpp_v2_wrapper tbody tr.row-flagged:hover {
+	background-color: #ffe8a1;
+}
