@@ -73,7 +73,7 @@ class RhppV2 extends Public_Controller {
                     r.fcr,
                     r.deplesi,
                     r.rata_umur,
-                    case when isnull(r.rata_umur, 0) > 0 then (r.bb * 1000) / r.rata_umur else 0 end as adg,
+                    case when isnull(r.rata_umur, 0) > 0 then ((r.bb - isnull(td.bb, 0)) * 1000) / r.rata_umur else 0 end as adg,
                     r.ip,
                     (isnull(r.tot_penjualan_ayam, 0) - isnull(r.tot_pembelian_sapronak, 0)) as selisih_budidaya,
                     r.bonus_pasar,
@@ -110,6 +110,26 @@ class RhppV2 extends Public_Controller {
                     ) lpg
                     on
                         lpg.id_header = r.id
+                left join
+                    (
+                        select od1.* from order_doc od1
+                        right join
+                            (select max(version) as version, noreg from order_doc group by noreg) od2
+                            on
+                                od1.noreg = od2.noreg and od1.version = od2.version
+                    ) od
+                    on
+                        od.noreg = r.noreg
+                left join
+                    (
+                        select td1.* from terima_doc td1
+                        right join
+                            (select max(version) as version, no_order from terima_doc group by no_order) td2
+                            on
+                                td1.no_order = td2.no_order and td1.version = td2.version
+                    ) td
+                    on
+                        td.no_order = od.no_order
                 where
                     r.jenis = 'rhpp_plasma' and
                     not exists (select * from rhpp_group_noreg where noreg = r.noreg)
@@ -130,7 +150,7 @@ class RhppV2 extends Public_Controller {
                     rg.fcr,
                     rg.deplesi,
                     rg.rata_umur,
-                    case when isnull(rg.rata_umur, 0) > 0 then (rg.bb * 1000) / rg.rata_umur else 0 end as adg,
+                    case when isnull(rg.rata_umur, 0) > 0 then ((rg.bb - isnull(rgn.bb_first, 0)) * 1000) / rg.rata_umur else 0 end as adg,
                     rg.ip,
                     (isnull(rg.tot_penjualan_ayam, 0) - isnull(rg.tot_pembelian_sapronak, 0)) as selisih_budidaya,
                     rg.bonus_pasar,
@@ -167,7 +187,8 @@ class RhppV2 extends Public_Controller {
                                 order by
                                     rgn.noreg
                                 FOR XML path('')
-                            , elements), 3, 500)
+                            , elements), 3, 500),
+                            sum(isnull(td.bb, 0) * _rgn.populasi) / nullif(sum(_rgn.populasi), 0) as bb_first
                         from rhpp_group_noreg _rgn
                         left join
                             rdim_submit rs
@@ -181,6 +202,26 @@ class RhppV2 extends Public_Controller {
                             wilayah w
                             on
                                 w.id = k.unit
+                        left join
+                            (
+                                select od1.* from order_doc od1
+                                right join
+                                    (select max(version) as version, noreg from order_doc group by noreg) od2
+                                    on
+                                        od1.noreg = od2.noreg and od1.version = od2.version
+                            ) od
+                            on
+                                od.noreg = _rgn.noreg
+                        left join
+                            (
+                                select td1.* from terima_doc td1
+                                right join
+                                    (select max(version) as version, no_order from terima_doc group by no_order) td2
+                                    on
+                                        td1.no_order = td2.no_order and td1.version = td2.version
+                            ) td
+                            on
+                                td.no_order = od.no_order
                         group by
                             _rgn.id_header,
                             w.kode
