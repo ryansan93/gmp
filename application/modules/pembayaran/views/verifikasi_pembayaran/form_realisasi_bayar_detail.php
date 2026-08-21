@@ -101,9 +101,11 @@
 						<div class="col-xs-6 no-padding" style="padding-left: 5px;">
 							<button type="button" class="col-xs-12 btn btn-primary" onclick="vp.formRealisasiBayarEdit(this)" data-id="<?php echo $data['id']; ?>" data-table="<?php echo $data['tbl_name']; ?>"><i class="fa fa-edit"></i> Edit</button>
 						</div>
-						<div class="col-xs-12 no-padding" style="margin-top: 5px;">
-							<button type="button" class="col-xs-12 btn btn-warning" onclick="vp.formEditJurnal(this)" data-id="<?php echo $data['id']; ?>" data-table="<?php echo $data['tbl_name']; ?>"><i class="fa fa-book"></i> Edit Jurnal</button>
-						</div>
+						<?php if ( isset($akses_edit_jurnal) && $akses_edit_jurnal === true ) { ?>
+							<div class="col-xs-12 no-padding" style="margin-top: 5px;">
+								<button type="button" class="col-xs-12 btn btn-warning" onclick="vp.formEditJurnal(this)" data-id="<?php echo $data['id']; ?>" data-table="<?php echo $data['tbl_name']; ?>"><i class="fa fa-book"></i> Edit Jurnal</button>
+							</div>
+						<?php } ?>
 					<?php } ?>
 				</div>
 			</form>

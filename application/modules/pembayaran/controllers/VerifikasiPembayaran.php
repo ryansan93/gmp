@@ -972,6 +972,7 @@ class VerifikasiPembayaran extends Public_Controller
 
         $content['attachment']  = \Model\Storage\AttachmentRealisasiPembayaran_model::showLastData($data['id'], $tbl_name);
         $content['data']        = $data;
+        $content['akses_edit_jurnal'] = hakAksesKhusus('edit_jurnal_verifikasi_pembayaran');
 
         $html = $this->load->view('pembayaran/verifikasi_pembayaran/form_realisasi_bayar_detail', $content, true);
 
@@ -994,6 +995,11 @@ class VerifikasiPembayaran extends Public_Controller
     }
 
     public function formEditJurnal() {
+        if ( !hakAksesKhusus('edit_jurnal_verifikasi_pembayaran') ) {
+            echo '<div class="modal-body"><div class="alert alert-danger" style="margin-bottom: 0;">Anda tidak memiliki akses khusus untuk mengedit jurnal.</div></div>';
+            return;
+        }
+
         $params = $this->input->get('params');
 
         $id = $params['id'];
@@ -1019,6 +1025,10 @@ class VerifikasiPembayaran extends Public_Controller
         $params = $this->input->post('params');
 
         try {
+            if ( !hakAksesKhusus('edit_jurnal_verifikasi_pembayaran') ) {
+                throw new Exception('Anda tidak memiliki akses khusus untuk mengedit jurnal.');
+            }
+
             $tbl_name = $params['tbl_name'];
             $tbl_id = $params['id'];
 
