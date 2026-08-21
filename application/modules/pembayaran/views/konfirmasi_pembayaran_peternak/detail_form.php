@@ -81,13 +81,33 @@
 	</small>
 </div>
 <div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
-<?php if ( empty($data['d_realisasi']) ): ?>
-	<div class="col-xs-12 no-padding">
-		<?php if ( $akses['a_edit'] == 1 ): ?>
-			<button type="button" class="btn btn-primary pull-right" onclick="kpp.changeTabActive(this)" data-id="<?php echo $data['id']; ?>" data-href="transaksi" data-edit="edit"><i class="fa fa-edit"></i> Edit</button>
-		<?php endif ?>
-		<?php if ( $akses['a_delete'] == 1 ): ?>
-			<button type="button" class="btn btn-danger pull-right" onclick="kpp.delete(this)" data-id="<?php echo $data['id']; ?>" style="margin-right: 10px;"><i class="fa fa-trash"></i> Hapus</button>
-		<?php endif ?>
+<div class="col-xs-12 no-padding">
+	<?php if ( !empty($log) ): ?>
+	<div class="col-xs-9 no-padding">
+		<div class="col-md-12 no-padding">
+			<div class="col-lg-3 no-padding pull-left">
+				<label class="control-label" style="padding-top: 0px;"><u>Keterangan</u></label>
+			</div>
+		</div>
+		<div class="col-md-12 no-padding">
+			<div class="col-lg-12 no-padding pull-left">
+				<ul>
+					<?php foreach ($log as $k_log => $v_log): ?>
+						<li><?php echo strtoupper( $v_log['deskripsi'].' pada '.tglIndonesia(substr($v_log['waktu'], 0, 10), '-', ' ', true).' '.substr($v_log['waktu'], 11, 5) ) ?></li>
+					<?php endforeach ?>
+				</ul>
+			</div>
+		</div>
 	</div>
-<?php endif ?>
+	<?php endif ?>
+	<?php if ( empty($data['d_realisasi']) ): ?>
+		<div class="col-xs-3 no-padding">
+			<?php if ( $akses['a_edit'] == 1 ): ?>
+				<button type="button" class="btn btn-primary pull-right" onclick="kpp.changeTabActive(this)" data-id="<?php echo $data['id']; ?>" data-href="transaksi" data-edit="edit"><i class="fa fa-edit"></i> Edit</button>
+			<?php endif ?>
+			<?php if ( $akses['a_delete'] == 1 ): ?>
+				<button type="button" class="btn btn-danger pull-right" onclick="kpp.delete(this)" data-id="<?php echo $data['id']; ?>" style="margin-right: 10px;"><i class="fa fa-trash"></i> Hapus</button>
+			<?php endif ?>
+		</div>
+	<?php endif ?>
+</div>

@@ -72,16 +72,17 @@
 		<thead>
 			<tr>
 				<th class="col-xs-1">No. Bayar</th>
+				<th class="col-xs-1">No. Invoice</th>
 				<th class="col-xs-1">Tgl Bayar</th>
 				<th class="col-xs-3">Perusahaan</th>
-				<th class="col-xs-3">Mitra</th>
+				<th class="col-xs-2">Mitra</th>
 				<th class="col-xs-2">Total</th>
 				<th class="col-xs-1">Action</th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr>
-				<td colspan="5">Data tidak ditemukan.</td>
+				<td colspan="7">Data tidak ditemukan.</td>
 			</tr>
 		</tbody>
 	</table>

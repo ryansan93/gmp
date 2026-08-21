@@ -620,6 +620,9 @@ class KonfirmasiPembayaranPeternak extends Public_Controller
             $data = $d_kpp;
         }
 
+        $m_lt = new \Model\Storage\LogTables_model();
+        $content['log'] = $m_lt->select('deskripsi', 'waktu')->where('tbl_name', 'konfirmasi_pembayaran_peternak')->where('tbl_id', $id)->orderBy('id', 'asc')->get()->toArray();
+
         $content['akses'] = $this->hakAkses;
         $content['data'] = $data;
         $html = $this->load->view('pembayaran/konfirmasi_pembayaran_peternak/detail_form', $content, true);

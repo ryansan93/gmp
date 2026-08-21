@@ -2,6 +2,7 @@
 	<?php foreach ($data as $k_data => $v_data): ?>
 		<tr>
 			<td class="text-center"><?php echo $v_data['nomor']; ?></td>
+			<td class="text-center"><?php echo !empty($v_data['invoice']) ? strtoupper($v_data['invoice']) : '-'; ?></td>
 			<td class="text-center"><?php echo tglIndonesia($v_data['tgl_bayar'], '-', ' '); ?></td>
 			<td><?php echo strtoupper($v_data['nama_perusahaan']); ?></td>
 			<td><?php echo strtoupper($v_data['nama_mitra']); ?></td>
@@ -17,6 +18,6 @@
 	<?php endforeach ?>
 <?php else: ?>
 	<tr>
-		<td colspan="5">Data tidak ditemukan.</td>
+		<td colspan="7">Data tidak ditemukan.</td>
 	</tr>
 <?php endif ?>
