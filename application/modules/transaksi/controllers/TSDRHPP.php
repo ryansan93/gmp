@@ -7485,7 +7485,7 @@ class TSDRHPP extends Public_Controller {
 
             $deskripsi_log = 'hitung ulang RHPP oleh ' . $this->userdata['detail_user']['nama_detuser'];
             if ( !empty($keterangan) ) {
-                $deskripsi_log .= ' - alasan: ' . $keterangan;
+                // $deskripsi_log .= ' - alasan: ' . $keterangan;
 
                 $m_ts->where('id', $id)->update(
                     array(
