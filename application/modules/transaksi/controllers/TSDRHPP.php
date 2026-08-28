@@ -4068,6 +4068,7 @@ class TSDRHPP extends Public_Controller {
                                     $_data_real[$key_do][ $key ] = array(
                                         'tanggal' => $d_rpah->tgl_panen,
                                         'do' => $v_det['no_do'],
+                                        'no_nota' => $v_drs['no_nota'],
                                         'pembeli' => $v_det['pelanggan'],
                                         'ekor' => $v_drs['ekor'],
                                         'tonase' => $tonase,
@@ -4639,10 +4640,14 @@ class TSDRHPP extends Public_Controller {
      * bisa kebuka lama sebelum di-submit, sementara harga di Realisasi SJ bisa
      * diedit user lain di tab lain kapan saja sebelum submit itu terjadi).
      *
-     * Key-nya "no_do||jenis_ayam" (bukan cuma no_do) -- satu No. DO/SJ bisa punya
-     * lebih dari satu No. Nota dengan harga beda kalau dipecah per jenis ayam
-     * (mis. NORMAL vs AFKIR), jadi key harus ikut jenis_ayam supaya baris-baris
-     * itu tidak saling menimpa harga masing-masing.
+     * Key-nya "no_nota||jenis_ayam" -- no_nota unik per baris SJ (satu No. DO
+     * bisa punya lebih dari satu No. Nota dengan harga beda, mis. DO/LMG/26/03128
+     * yg realisasinya dipecah jadi LMG/005717 (24.500) & LMG/005718 (24.300)).
+     * SEBELUMNYA key pakai no_do saja -- kalau 1 DO punya >1 nota dgn jenis_ayam
+     * sama, baris kedua menimpa harga baris pertama di array ini (last-write-wins),
+     * jadi tutup_siklus() menyimpan harga yg sama utk kedua baris. jenis_ayam
+     * tetap disertakan di key utk jaga2 kalau ada nota yg juga dipecah per jenis
+     * ayam (NORMAL vs AFKIR) dgn no_nota yg somehow sama.
      */
     private function _hargaPasarFresh($noreg)
     {
@@ -4664,7 +4669,7 @@ class TSDRHPP extends Public_Controller {
 
             foreach ($v_det['data_real_sj'] as $v_drs) {
                 if ( $d_real_sj && $d_real_sj->id == $v_drs['id_header'] ) {
-                    $key = $v_drs['no_do'] . '||' . $v_drs['jenis_ayam'];
+                    $key = $v_drs['no_nota'] . '||' . $v_drs['jenis_ayam'];
                     $harga[ $key ] = ($v_drs['harga'] > 0) ? (!empty($v_drs['harga_jadi']) ? $v_drs['harga_jadi'] : $v_drs['harga']) : 0;
                 }
             }
@@ -4925,6 +4930,7 @@ class TSDRHPP extends Public_Controller {
                     $data_penjualan[] = array(
                         'tanggal' => $v_dr['tanggal'],
                         'nota' => $v_dr['do'],
+                        'no_nota' => $v_dr['no_nota'],
                         'pembeli' => $v_dr['pembeli'],
                         'ekor' => $v_dr['ekor'],
                         'tonase' => $v_dr['tonase'],
@@ -5010,7 +5016,7 @@ class TSDRHPP extends Public_Controller {
                         $tot_pasar_baru = 0;
 
                         foreach ($v_rhpp['data_penjualan'] as $k_pj => $v_pj) {
-                            $key_harga_fresh = $v_pj['nota'] . '||' . $v_pj['jenis_ayam'];
+                            $key_harga_fresh = (isset($v_pj['no_nota']) ? $v_pj['no_nota'] : $v_pj['nota']) . '||' . $v_pj['jenis_ayam'];
 
                             if ( isset($harga_pasar_fresh[ $key_harga_fresh ]) ) {
                                 $params['data_rhpp'][$k_rhpp]['data_penjualan'][$k_pj]['harga_pasar'] = $harga_pasar_fresh[ $key_harga_fresh ];

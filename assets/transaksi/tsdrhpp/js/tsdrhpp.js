@@ -774,6 +774,7 @@ var tsdrhpp = {
 				let _data_penjualan = {
 					'tanggal': $(tr).find('td.tanggal').data('val'),
 					'nota': $(tr).find('td.nota').data('val'),
+					'no_nota': $(tr).find('td.no_nota').data('val'),
 					'pembeli': $(tr).find('td.pembeli').data('val'),
 					'ekor': $(tr).find('td.ekor').data('val'),
 					'tonase': $(tr).find('td.tonase').data('val'),

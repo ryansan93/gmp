@@ -587,6 +587,7 @@
 																<td class="text-right insentif" data-val="<?php echo $val['insentif']; ?>"><?php echo angkaRibuan($val['insentif']); ?></td>
 																<td class="text-right total_insentif" data-val="<?php echo $val['total_insentif']; ?>"><?php echo angkaRibuan($val['total_insentif']); ?></td>
 																<td class="text-right jenis_ayam hide" data-val="<?php echo $val['jenis_ayam']; ?>"><?php echo strtoupper($val['jenis_ayam']); ?></td>
+								<td class="text-right no_nota hide" data-val="<?php echo $val['no_nota']; ?>"><?php echo $val['no_nota']; ?></td>
 															</tr>
 															<?php
 																$total_ekor += $val['ekor'];
@@ -1622,6 +1623,7 @@
 																<td class="text-right harga_pasar" data-val="<?php echo $val['hrg_pasar']; ?>"><?php echo angkaRibuan($val['hrg_pasar']); ?></td>
 																<td class="text-right total_pasar" data-val="<?php echo $val['total_pasar']; ?>"><?php echo angkaRibuan($val['total_pasar']); ?></td>
 																<td class="text-right jenis_ayam hide" data-val="<?php echo $val['jenis_ayam']; ?>"><?php echo strtoupper($val['jenis_ayam']); ?></td>
+								<td class="text-right no_nota hide" data-val="<?php echo $val['no_nota']; ?>"><?php echo $val['no_nota']; ?></td>
 															</tr>
 															<?php
 																$total_ekor += $val['ekor'];
