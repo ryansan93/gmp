@@ -252,6 +252,7 @@
 					<th class="col-xs-1 text-center">Transaksi</th>
 					<th class="col-xs-1 text-center">No. Bayar</th>
 					<th class="col-xs-2 text-center">Tagihan</th>
+					<th class="col-xs-2 text-center hide">PPh</th>
 					<th class="col-xs-2 text-center hide">DN</th>
 					<th class="col-xs-2 text-center hide">CN</th>
 					<th class="col-xs-2 text-center">Transfer</th>
@@ -260,10 +261,12 @@
 			</thead>
 			<tbody>
 				<?php foreach ($data['detail'] as $k_det => $v_det): ?>
+					<?php $pph = isset($v_det['pph']) ? $v_det['pph'] : 0; ?>
 					<tr>
 						<td class="text-center transaksi" data-val="<?php echo $v_det['transaksi']; ?>"><?php echo $v_det['transaksi']; ?></td>
 						<td class="text-center no_bayar" data-val="<?php echo $v_det['no_bayar']; ?>"><?php echo $v_det['no_bayar']; ?></td>
 						<td class="text-right tagihan" data-val="<?php echo $v_det['tagihan']; ?>"><?php echo angkaDecimal($v_det['tagihan']); ?></td>
+						<td class="text-right pph hide" data-val="<?php echo $pph; ?>"><?php echo angkaDecimal($pph); ?></td>
 						<td class="text-right dn hide" data-val="<?php echo $v_det['dn']; ?>"><?php echo angkaDecimal($v_det['dn']); ?></td>
 						<td class="text-right cn hide" data-val="<?php echo $v_det['cn']; ?>"><?php echo angkaDecimal($v_det['cn']); ?></td>
 						<td class="text-right transfer" data-val="<?php echo $v_det['transfer']; ?>"><?php echo angkaDecimal($v_det['transfer']); ?></td>

@@ -143,10 +143,10 @@
 			<tr>
 				<td colspan="6"><b>Total</b></td>
 				<td class="text-right total_tagihan"><b>0</b></td>
-				<td class="text-right total_potongan_pph"><b>0</b></td>
-				<td class="text-right total_netto"><b>0</b></td>
 				<td class="text-right total_dn"><b>0</b></td>
 				<td class="text-right total_cn"><b>0</b></td>
+				<td class="text-right total_potongan_pph"><b>0</b></td>
+				<td class="text-right total_netto"><b>0</b></td>
 				<td class="text-right total_transfer"><b>0</b></td>
 				<td class="text-right total_bayar"><b>0</b></td>
 				<td class="text-right total_sisa"><b>0</b></td>

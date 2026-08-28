@@ -478,7 +478,8 @@ var rp = {
                 var _detail = {
                     'transaksi': $(tr).find('td.transaksi').attr('data-val'),
                     'no_bayar': $(tr).find('td.no_bayar').attr('data-val'),
-                    'tagihan': $(tr).find('td.tagihan').attr('data-val')
+                    'tagihan': $(tr).find('td._sisa').attr('data-val'),
+                    'pph': $(tr).find('td._potongan_pph').attr('data-val')
                 };
 
                 detail.push( _detail );
@@ -1174,6 +1175,7 @@ var rp = {
                 'transaksi': $(tr).find('.transaksi').attr('data-val'),
                 'no_bayar': $(tr).find('.no_bayar').attr('data-val'),
                 'tagihan': parseFloat($(tr).find('.tagihan').attr('data-val')),
+                'pph': parseFloat($(tr).find('td.pph').attr('data-val')),
                 'bayar': parseFloat($(tr).find('td.bayar').attr('data-val')),
                 'cn': parseFloat($(tr).find('td.cn').attr('data-val')),
                 'dn': parseFloat($(tr).find('td.dn').attr('data-val')),
@@ -1319,6 +1321,7 @@ var rp = {
                 'transaksi': $(tr).find('.transaksi').attr('data-val'),
                 'no_bayar': $(tr).find('.no_bayar').attr('data-val'),
                 'tagihan': parseFloat($(tr).find('.tagihan').attr('data-val')),
+                'pph': parseFloat($(tr).find('td.pph').attr('data-val')),
                 'bayar': parseFloat($(tr).find('td.bayar').attr('data-val')),
                 'cn': parseFloat($(tr).find('td.cn').attr('data-val')),
                 'dn': parseFloat($(tr).find('td.dn').attr('data-val')),

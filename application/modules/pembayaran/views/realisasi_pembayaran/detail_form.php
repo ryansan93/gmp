@@ -139,6 +139,7 @@
 				<th class="col-xs-2">Tagihan</th>
 				<th class="col-xs-1 hide">DN</th>
 				<th class="col-xs-1 hide">CN</th>
+				<th class="col-xs-1">PPh</th>
 				<th class="col-xs-2">Transfer</th>
 				<th class="col-xs-2">Tot Bayar</th>
 			</tr>
@@ -160,6 +161,7 @@
 					<td class="text-right"><?php echo angkaDecimal($v_det['tagihan']); ?></td>
 					<td class="text-right hide"><?php echo angkaDecimal($v_det['dn']); ?></td>
 					<td class="text-right hide"><?php echo angkaDecimal($v_det['cn']); ?></td>
+					<td class="text-right"><?php echo angkaDecimal(isset($v_det['pph']) ? $v_det['pph'] : 0); ?></td>
 					<td class="text-right"><?php echo angkaDecimal($v_det['transfer']); ?></td>
 					<td class="text-right"><?php echo angkaDecimal($v_det['bayar']); ?></td>
 				</tr>

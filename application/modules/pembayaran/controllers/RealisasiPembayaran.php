@@ -1581,33 +1581,60 @@ class RealisasiPembayaran extends Public_Controller
 
                     $lampiran = null;
                     $invoice = null;
+                    $tagihan_asli = $v_det['tagihan'];
                     if ( $d_conf->count() > 0 ) {
                         $d_kpp = $d_conf->toArray()[0];
-                        
+
                         $invoice = $d_kpp['invoice'];
                         $lampiran = isset($d_kpp['lampiran']) ? $d_kpp['lampiran'] : null;
+
+                        $tagihan_asli = $d_kpp['total'];
+                        if ( $v_det['transaksi'] == 'OA PAKAN' && isset($d_kpp['potongan_pph_23']) ) {
+                            $tagihan_asli += $d_kpp['potongan_pph_23'];
+                        }
                     }
 
                     $detail[] = array(
                         'id_header' => $v_det['id_header'],
                         'transaksi' => $v_det['transaksi'],
                         'no_bayar' => !empty($invoice) ? $invoice: $v_det['no_bayar'],
-                        'tagihan' => $v_det['tagihan'],
+                        'tagihan' => $tagihan_asli,
                         'dn' => $v_det['dn'],
                         'cn' => $v_det['cn'],
+                        'pph' => isset($v_det['pph']) ? $v_det['pph'] : 0,
                         'transfer' => $v_det['transfer'],
                         'bayar' => $v_det['bayar'],
                         'kode_unit' => $kode_unit,
                         'lampiran' => $lampiran
                     );
                 } else {
+                    $tagihan_asli = $v_det['tagihan'];
+                    $table_name_asli = null;
+                    if ( $v_det['transaksi'] == 'DOC' ) {
+                        $table_name_asli = 'konfirmasi_pembayaran_doc';
+                    } else if ( $v_det['transaksi'] == 'VOADIP' ) {
+                        $table_name_asli = 'konfirmasi_pembayaran_voadip';
+                    }
+
+                    if ( !empty($table_name_asli) ) {
+                        $m_conf = new \Model\Storage\Conf();
+                        $sql = "
+                            select top 1 total from ".$table_name_asli." where nomor = '".$v_det['no_bayar']."'
+                        ";
+                        $d_conf_asli = $m_conf->hydrateRaw( $sql );
+                        if ( $d_conf_asli->count() > 0 ) {
+                            $tagihan_asli = $d_conf_asli->toArray()[0]['total'];
+                        }
+                    }
+
                     $detail[] = array(
                         'id_header' => $v_det['id_header'],
                         'transaksi' => $v_det['transaksi'],
                         'no_bayar' => (isset($v_det['no_sj']) && !empty($v_det['no_sj'])) ? $v_det['no_sj'] : $v_det['no_bayar'],
-                        'tagihan' => $v_det['tagihan'],
+                        'tagihan' => $tagihan_asli,
                         'dn' => $v_det['dn'],
                         'cn' => $v_det['cn'],
+                        'pph' => isset($v_det['pph']) ? $v_det['pph'] : 0,
                         'transfer' => $v_det['transfer'],
                         'bayar' => $v_det['bayar'],
                         'kode_unit' => $kode_unit
@@ -1930,6 +1957,7 @@ class RealisasiPembayaran extends Public_Controller
                     'transaksi' => $v_det['transaksi'],
                     'no_bayar' => $v_det['no_bayar'],
                     'tagihan' => $v_det['tagihan'],
+                    'pph' => isset($v_det['pph']) ? $v_det['pph'] : 0,
                     'dn' => $dn,
                     'cn' => $cn,
                     'transfer' => $transfer,
@@ -2271,6 +2299,7 @@ class RealisasiPembayaran extends Public_Controller
                     $m_rpd->transaksi = $v_det['transaksi'];
                     $m_rpd->no_bayar = $v_det['no_bayar'];
                     $m_rpd->tagihan = $v_det['tagihan'];
+                    $m_rpd->pph = isset($v_det['pph']) ? $v_det['pph'] : 0;
                     $m_rpd->bayar = $v_det['bayar'];
                     $m_rpd->cn = $v_det['cn'];
                     $m_rpd->dn = $v_det['dn'];
@@ -2515,6 +2544,7 @@ class RealisasiPembayaran extends Public_Controller
                 $m_rpd->transaksi = $v_det['transaksi'];
                 $m_rpd->no_bayar = $v_det['no_bayar'];
                 $m_rpd->tagihan = $v_det['tagihan'];
+                $m_rpd->pph = isset($v_det['pph']) ? $v_det['pph'] : 0;
                 $m_rpd->bayar = $v_det['bayar'];
                 $m_rpd->cn = $v_det['cn'];
                 $m_rpd->dn = $v_det['dn'];
