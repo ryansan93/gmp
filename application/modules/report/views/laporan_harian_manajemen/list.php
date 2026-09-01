@@ -1,4 +1,7 @@
 <div class="col-xs-12 no-padding">
+    <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+        <button id="btn-copy-lhm" type="button" class="btn btn-primary btn-xs cursor-p" title="COPY" onclick="lhm.copyText()">Copy</button>
+    </div>
     <div class="col-xs-12 no-padding">Saldo Bank = <?php echo angkaRibuan($data['saldo_bank']); ?></div>
     <div class="col-xs-12 no-padding">Total Trf = <?php echo angkaRibuan($data['tot_trf']); ?></div>
     <!-- <div class="col-xs-12 no-padding">Hutang Pakan = <?php echo angkaRibuan($data['hutang_pakan']); ?></div> -->
@@ -15,5 +18,22 @@
     <div class="col-xs-12 no-padding hide">Laba = <?php echo angkaRibuan($data['lr_per_ekor']).' / Ekor'; ?></div>
     <div class="col-xs-12 no-padding">Laba = <?php echo angkaRibuan($data['lr_per_kg']).' / Kg'; ?></div>
     <div class="col-xs-12 no-padding">Harga Rata Ayam = <?php echo angkaRibuan($data['hrg_rata_ayam']); ?></div>
-    <div class="col-xs-12 no-padding">Harga Doc = <?php echo angkaRibuan($data['hrg_doc']); ?></div>
+    <div class="col-xs-12 no-padding">Harga Rata DOC = <?php echo angkaRibuan($data['hrg_doc']); ?></div>
+    <div class="col-xs-12 no-padding">&nbsp;</div>
+    <div class="col-xs-12 no-padding">Harga DOC :</div>
+    <?php $no = 1; ?>
+    <?php foreach ($data_harga['doc'] as $k_doc => $v_doc) { ?>
+        <div class="col-xs-12 no-padding"><?php echo $no.'. '.angkaRibuan($v_doc['hrg_doc']).' ; '.$v_doc['jumlah'].' RHPP'; ?></div>
+        <?php $no++; ?>
+    <?php } ?>
+    <div class="col-xs-12 no-padding">&nbsp;</div>
+    <div class="col-xs-12 no-padding">Harga Pakan :</div>
+    <?php foreach ($data_harga['pakan'] as $k_pkn => $v_pkn) { ?>
+        <div class="col-xs-12 no-padding"><?php echo $k_pkn; ?></div>
+        <?php $no = 1; ?>
+        <?php foreach ($v_pkn['harga'] as $k_hrg => $v_hrg) { ?>
+            <div class="col-xs-12 no-padding"><?php echo $no.'. '.angkaRibuan($v_hrg['harga']).' ; '.$v_hrg['jumlah'].' RHPP'; ?></div>
+            <?php $no++; ?>
+        <?php } ?>
+    <?php } ?>
 </div>

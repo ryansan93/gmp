@@ -704,6 +704,134 @@ class LaporanHarianManajemen extends Public_Controller {
         return $data;
     }
 
+    public function getDataHarga( $tanggal ) {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                count(data.id) as jumlah,
+                data.hrg_doc
+            from
+            (
+                select 
+                    'RHPP' as jenis,
+                    r.id,
+                    rd.harga as hrg_doc
+                from rhpp r
+                left join
+                    (select id_header, harga from rhpp_doc group by id_header, harga) rd
+                    on
+                        r.id = rd.id_header
+                left join
+                    tutup_siklus ts
+                    on
+                        r.id_ts = ts.id
+                where
+                    r.jenis = 'rhpp_inti' and
+                    not exists (select * from rhpp_group_noreg where noreg = r.noreg) and
+                    ts.tgl_tutup = '".$tanggal."'
+
+                union all
+
+                select 
+                    'RHPP GROUP' as jenis,
+                    rg.id,
+                    rgd.harga as hrg_doc
+                from rhpp_group rg
+                left join
+                    (select id_header, harga from rhpp_group_doc group by id_header, harga) rgd
+                    on
+                        rg.id = rgd.id_header
+                left join
+                    rhpp_group_header rgh
+                    on
+                        rg.id_header = rgh.id
+                where
+                    rg.jenis = 'rhpp_inti' and
+                    rgh.tgl_submit = '".$tanggal."'
+            ) data
+            group by
+                data.hrg_doc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $doc = null;
+        if ( $d_conf->count() > 0 ) {
+            $doc = $d_conf->toArray();
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                count(data.id) as jumlah,
+                data.hrg_pkn,
+                data.barang_pkn
+            from
+            (
+                select 
+                    'RHPP' as jenis,
+                    r.id,
+                    rp.harga as hrg_pkn,
+                    rp.barang as barang_pkn
+                from rhpp r
+                left join
+                    (select id_header, barang, harga from rhpp_pakan group by id_header, barang, harga) rp
+                    on
+                        r.id = rp.id_header
+                left join
+                    tutup_siklus ts
+                    on
+                        r.id_ts = ts.id
+                where
+                    r.jenis = 'rhpp_inti' and
+                    not exists (select * from rhpp_group_noreg where noreg = r.noreg) and
+                    ts.tgl_tutup = '".$tanggal."'
+
+                union all
+
+                select 
+                    'RHPP GROUP' as jenis,
+                    rg.id,
+                    rgp.harga as hrg_pkn,
+                    rgp.barang as barang_pkn
+                from rhpp_group rg
+                left join
+                    (select id_header, barang, harga from rhpp_group_pakan group by id_header, barang, harga) rgp
+                    on
+                        rg.id = rgp.id_header
+                left join
+                    rhpp_group_header rgh
+                    on
+                        rg.id_header = rgh.id
+                where
+                    rg.jenis = 'rhpp_inti' and
+                    rgh.tgl_submit = '".$tanggal."'
+            ) data
+            group by
+                data.hrg_pkn,
+                data.barang_pkn
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $pakan = null;
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                $pakan[ $value['barang_pkn'] ]['harga'][ $value['hrg_pkn'] ] = array(
+                    'harga' => $value['hrg_pkn'],
+                    'jumlah' => $value['jumlah']
+                );
+            }
+        }
+
+        $data = array(
+            'doc' => $doc,
+            'pakan' => $pakan
+        );
+
+        return $data;
+    }
+
     public function getLists()
     {
         $params = $this->input->post('params');
@@ -712,9 +840,11 @@ class LaporanHarianManajemen extends Public_Controller {
             $tanggal = $params['tanggal'];
 
             $data = $this->getData( $tanggal )[0];
+            $data_harga = $this->getDataHarga( $tanggal );
 
             $content['tanggal'] = $tanggal;
             $content['data'] = $data;
+            $content['data_harga'] = $data_harga;
             $html = $this->load->view($this->pathView.'list', $content, TRUE);
 
             $this->result['status'] = 1;

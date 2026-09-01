@@ -4669,7 +4669,7 @@ class TSDRHPP extends Public_Controller {
 
             foreach ($v_det['data_real_sj'] as $v_drs) {
                 if ( $d_real_sj && $d_real_sj->id == $v_drs['id_header'] ) {
-                    $key = $v_drs['no_nota'] . '||' . $v_drs['jenis_ayam'];
+                    $key = $v_drs['no_nota'] . '||' . $v_drs['jenis_ayam'] . '||' . $v_drs['harga'];
                     $harga[ $key ] = ($v_drs['harga'] > 0) ? (!empty($v_drs['harga_jadi']) ? $v_drs['harga_jadi'] : $v_drs['harga']) : 0;
                 }
             }
@@ -5016,7 +5016,7 @@ class TSDRHPP extends Public_Controller {
                         $tot_pasar_baru = 0;
 
                         foreach ($v_rhpp['data_penjualan'] as $k_pj => $v_pj) {
-                            $key_harga_fresh = (isset($v_pj['no_nota']) ? $v_pj['no_nota'] : $v_pj['nota']) . '||' . $v_pj['jenis_ayam'];
+                            $key_harga_fresh = (isset($v_pj['no_nota']) ? $v_pj['no_nota'] : $v_pj['nota']) . '||' . $v_pj['jenis_ayam'] . '||' . $v_pj['harga_pasar'];
 
                             if ( isset($harga_pasar_fresh[ $key_harga_fresh ]) ) {
                                 $params['data_rhpp'][$k_rhpp]['data_penjualan'][$k_pj]['harga_pasar'] = $harga_pasar_fresh[ $key_harga_fresh ];
@@ -7520,48 +7520,53 @@ class TSDRHPP extends Public_Controller {
 
     public function tes()
     {
-        $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select 
-                r.id,
-                r.id_ts, 
-                r.pdpt_peternak_belum_pajak, 
-                r.prs_potongan_pajak, 
-                r.potongan_pajak, 
-                r.pdpt_peternak_sudah_pajak as pdpt_peternak_sudah_pajak, 
-                ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as potongan_pajak_new,
-                ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as pdpt_peternak_sudah_pajak_new,
-                r.potongan_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as selisih_pajak,
-                r.pdpt_peternak_sudah_pajak - ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as selisih_pdpt
-        --	update r
-        --	set
-        --		r.pdpt_peternak_sudah_pajak = ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0)
-            from rhpp r 
-            left join
-                (
-                    select id_header, sum(nominal) as nominal
-                    from rhpp_piutang
-                    group by
-                        id_header
-                ) r_piutang
-                on
-                    r.id = r_piutang.id_header
-            where 
-            r.id_ts in (
-                select id from tutup_siklus ts where not exists (select * from rhpp_group_noreg where noreg = ts.noreg) and tgl_tutup between '2026-07-01' and '2026-07-31'
-            ) 
-            and r.jenis = 'rhpp_plasma'
-        ";
-        $d_conf = $m_conf->hydrateRaw( $sql );
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select 
+        //         r.id,
+        //         r.id_ts, 
+        //         r.pdpt_peternak_belum_pajak, 
+        //         r.prs_potongan_pajak, 
+        //         r.potongan_pajak, 
+        //         r.pdpt_peternak_sudah_pajak as pdpt_peternak_sudah_pajak, 
+        //         ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as potongan_pajak_new,
+        //         ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as pdpt_peternak_sudah_pajak_new,
+        //         r.potongan_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as selisih_pajak,
+        //         r.pdpt_peternak_sudah_pajak - ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as selisih_pdpt
+        // --	update r
+        // --	set
+        // --		r.pdpt_peternak_sudah_pajak = ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0)
+        //     from rhpp r 
+        //     /*
+        //     left join
+        //         (
+        //             select id_header, sum(nominal) as nominal
+        //             from rhpp_piutang
+        //             group by
+        //                 id_header
+        //         ) r_piutang
+        //         on
+        //             r.id = r_piutang.id_header
+        //     */
+        //     where 
+        //     /*
+        //     r.id_ts in (
+        //         select id from tutup_siklus ts where not exists (select * from rhpp_group_noreg where noreg = ts.noreg) and tgl_tutup between '2026-07-01' and '2026-07-31'
+        //     ) 
+        //     */
+        //     and r.jenis = 'rhpp_plasma'
+        //     and r.noreg = ''
+        // ";
+        // $d_conf = $m_conf->hydrateRaw( $sql );
 
-        if ( $d_conf->count() > 0 ) {
-            $d_conf = $d_conf->toArray();
+        // if ( $d_conf->count() > 0 ) {
+        //     $d_conf = $d_conf->toArray();
 
-            foreach ($d_conf as $key => $val) {
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
-            }
-        }
+        //     foreach ($d_conf as $key => $val) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
+        //     }
+        // }
 
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 2366, 2366, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 7812, 7812, 2);
     }
 }
