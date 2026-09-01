@@ -223,7 +223,8 @@ class KartuStok extends Public_Controller {
                 group by
                     sa.kode_gudang,
                     sa.kode_barang,
-                    sa.jenis_barang
+                    sa.jenis_barang,
+                    sa.hrg_beli
                 /* END - SALDO AWAL */
 
                 union all
@@ -325,8 +326,8 @@ class KartuStok extends Public_Controller {
                     isnull(hrg.hrg_beli, hp.hrg_beli) as hrg_beli,
                     0 as jml_debet,
                     0 as debet,
-                    klwr.jumlah as jml_kredit,
-                    (klwr.jumlah * isnull(hrg.hrg_beli, hp.hrg_beli)) as kredit,
+                    hrg.jumlah as jml_kredit,
+                    (hrg.jumlah * isnull(hrg.hrg_beli, hp.hrg_beli)) as kredit,
                     klwr.kode_trans as kode_trans,
                     klwr.jenis_trans,
                     3 as urut
@@ -342,6 +343,7 @@ class KartuStok extends Public_Controller {
                             ds.kode_gudang,
                             ds.kode_barang,
                             dst.kode_trans,
+                            sum(dst.jumlah) as jumlah,
                             sum(dst.jumlah * ds.hrg_beli) / sum(dst.jumlah) as hrg_beli
                         from det_stok_trans dst
                         left join
@@ -353,7 +355,8 @@ class KartuStok extends Public_Controller {
                         group by
                             ds.kode_gudang,
                             ds.kode_barang,
-                            dst.kode_trans
+                            dst.kode_trans,
+                            ds.hrg_beli
                     ) hrg
                     on
                         hrg.kode_gudang = klwr.kode_gudang and
