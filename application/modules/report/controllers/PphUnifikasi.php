@@ -111,7 +111,7 @@ class PphUnifikasi extends Public_Controller {
      * kode final 28-423-01/fasilitas 6 terlepas dari sumbernya (RHPP/OA), sesuai sheet
      * referensi "Ref Fasilitas Insentif" & "Ref Daftar Kode Bukti Potong" di template.
      */
-    public function buildRow($periode, $tgl_transaksi, $npwp, $nik, $nama, $bruto, $rate, $skb, $kode_normal, $nomor_dokumen) {
+    public function buildRow($periode, $tgl_transaksi, $npwp, $nik, $nama, $bruto, $rate, $skb, $kode_normal, $nomor_dokumen, $nama_coretax = null) {
         $identitas = $this->resolveIdentitas($npwp, $nik);
 
         $is_final = ( abs((float) $rate - 0.5) < 0.0001 );
@@ -151,6 +151,10 @@ class PphUnifikasi extends Public_Controller {
             'referensi' => $nomor_dokumen,
             'no_bukti_potong_diganti' => '',
             'pengganti_ke' => '',
+            // Bantuan referensi manual (bukan bagian format resmi BPPU), sama pola spt FpOrtax:
+            // NIK mentah (blm digabung fallback ke NPWP spt npwp_penerima) + nama_coretax master data.
+            'nik' => trim((string) $nik),
+            'nama_coretax' => strtoupper(trim((string) $nama_coretax)),
         );
     }
 
@@ -196,7 +200,7 @@ class PphUnifikasi extends Public_Controller {
 
         $mtr_by_kandang = "
             select
-                k.kandang, mtr.nomor, mtr.nama, mtr.ktp, mtr.npwp, mm.nim, mtr.skb
+                k.kandang, mtr.nomor, mtr.nama, mtr.ktp, mtr.npwp, mm.nim, mtr.skb, mtr.nama_coretax
             from mitra mtr
             right join
                 (
@@ -213,11 +217,11 @@ class PphUnifikasi extends Public_Controller {
                 on
                     k.mitra_mapping = mm.id
             group by
-                k.kandang, mtr.nomor, mtr.nama, mtr.ktp, mtr.npwp, mm.nim, mtr.skb
+                k.kandang, mtr.nomor, mtr.nama, mtr.ktp, mtr.npwp, mm.nim, mtr.skb, mtr.nama_coretax
         ";
         $mtr_by_nomor = "
             select
-                mtr.nomor, mtr.nama, mtr.ktp, mtr.npwp, mm.nim, mtr.skb
+                mtr.nomor, mtr.nama, mtr.ktp, mtr.npwp, mm.nim, mtr.skb, mtr.nama_coretax
             from mitra mtr
             right join
                 (
@@ -230,7 +234,7 @@ class PphUnifikasi extends Public_Controller {
                 on
                     mtr.id = mm.mitra
             group by
-                mtr.nomor, mtr.nama, mtr.ktp, mtr.npwp, mm.nim, mtr.skb
+                mtr.nomor, mtr.nama, mtr.ktp, mtr.npwp, mm.nim, mtr.skb, mtr.nama_coretax
         ";
 
         $m_conf = new \Model\Storage\Conf();
@@ -242,7 +246,8 @@ class PphUnifikasi extends Public_Controller {
                 REPLACE(REPLACE(mtr.npwp, '-', ''), '.', '') as npwp,
                 r.prs_potongan_pajak,
                 r.pdpt_peternak_belum_pajak as bruto,
-                mtr.skb
+                mtr.skb,
+                mtr.nama_coretax
             from det_jurnal dj
             left join
                 rhpp r
@@ -271,7 +276,8 @@ class PphUnifikasi extends Public_Controller {
                 REPLACE(REPLACE(mtr.npwp, '-', ''), '.', '') as npwp,
                 rg.prs_potongan_pajak,
                 rg.pdpt_peternak_belum_pajak as bruto,
-                mtr.skb
+                mtr.skb,
+                mtr.nama_coretax
             from det_jurnal dj
             left join
                 rhpp_group rg
@@ -329,7 +335,8 @@ class PphUnifikasi extends Public_Controller {
                         0
                 end as prs_potongan_pajak,
                 kpop.sub_total as bruto,
-                eks.skb
+                eks.skb,
+                eks.nama_coretax
             from det_jurnal dj
             left join
                 (select distinct id_header, no_bayar from realisasi_pembayaran_det where transaksi = 'OA PAKAN') rpd
@@ -399,6 +406,7 @@ class PphUnifikasi extends Public_Controller {
                 REPLACE(REPLACE(supplier.npwp, '-', ''), '.', '') as npwp,
                 supplier.nik,
                 supplier.nama,
+                supplier.nama_coretax,
                 sum(dj.nominal / 0.0025) as bruto
             from det_jurnal dj
             left join
@@ -436,7 +444,7 @@ class PphUnifikasi extends Public_Controller {
                     when wp.nama like 'Jawa Tengah%' or wp.nama = 'YOGYAKARTA' then 'Jateng'
                     else 'Lainnya'
                 end,
-                supplier.nomor, supplier.npwp, supplier.nik, supplier.nama
+                supplier.nomor, supplier.npwp, supplier.nik, supplier.nama, supplier.nama_coretax
             having
                 sum(dj.nominal) <> 0
             order by
@@ -514,7 +522,7 @@ class PphUnifikasi extends Public_Controller {
             foreach ($doc as $d) {
                 $nomor_dokumen = 'Kw DOC '.$d['region'].' '.$periode['yymm'];
                 // Bukti potong konsolidasi bulanan: tgl pemotongan/dokumen = akhir bulan, sesuai sample.
-                $rows[] = $this->buildRow($periode, $periode['end_date'], $d['npwp'], $d['nik'], $d['nama'], $d['bruto'], 0, null, '22-100-18', $nomor_dokumen);
+                $rows[] = $this->buildRow($periode, $periode['end_date'], $d['npwp'], $d['nik'], $d['nama'], $d['bruto'], 0, null, '22-100-18', $nomor_dokumen, $d['nama_coretax']);
             }
         }
 
@@ -523,7 +531,7 @@ class PphUnifikasi extends Public_Controller {
             foreach ($oa as $o) {
                 // NOMOR_DOKUMEN per baris = kolom invoice di konfirmasi_pembayaran_oa_pakan (bukan lagi label generik "Tag OA <YYMM>").
                 $nomor_dokumen = !empty($o['invoice']) ? trim($o['invoice']) : 'Tag OA '.$periode['yymm'];
-                $rows[] = $this->buildRow($periode, $o['tgl_bayar'], $o['npwp'], $o['nik'], $o['nama'], $o['bruto'], $o['prs_potongan_pajak'], $o['skb'], '24-104-56', $nomor_dokumen);
+                $rows[] = $this->buildRow($periode, $o['tgl_bayar'], $o['npwp'], $o['nik'], $o['nama'], $o['bruto'], $o['prs_potongan_pajak'], $o['skb'], '24-104-56', $nomor_dokumen, $o['nama_coretax']);
             }
         }
 
@@ -535,7 +543,7 @@ class PphUnifikasi extends Public_Controller {
             $seq = 1;
             foreach ($rhpp as $r) {
                 $nomor_dokumen = 'RHPP '.$periode['yymm'].'-'.$seq;
-                $rows[] = $this->buildRow($periode, $r['tgl_rhpp'], $r['npwp'], $r['ktp'], $r['nama'], $r['bruto'], $r['prs_potongan_pajak'], $r['skb'], '24-104-31', $nomor_dokumen);
+                $rows[] = $this->buildRow($periode, $r['tgl_rhpp'], $r['npwp'], $r['ktp'], $r['nama'], $r['bruto'], $r['prs_potongan_pajak'], $r['skb'], '24-104-31', $nomor_dokumen, $r['nama_coretax']);
                 $seq++;
             }
         }
@@ -645,9 +653,12 @@ class PphUnifikasi extends Public_Controller {
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('DATA');
 
-        $header = array('NO', 'MASA_PAJAK', 'TAHUN_PAJAK', 'TANGGAL_PEMOTONGAN', 'NITKU_PEMOTONG', 'NPWP_PENERIMA', 'NITKU_PENERIMA', 'NAMA_PENERIMA', 'KODE_OBJEK_PAJAK', 'BRUTO', 'FASILITAS', 'NO_FASILITAS', 'TARIF_LAINNYA', 'JENIS_DOKUMEN', 'NOMOR_DOKUMEN', 'TANGGAL_DOKUMEN', 'EMAIL', 'KETERANGAN1', 'KETERANGAN2', 'KETERANGAN3', 'KETERANGAN4', 'KETERANGAN5', 'Referensi', 'Nomor Bukti Potong Diganti', 'Pengganti Ke-');
+        // Kolom A-Y mengikuti format template resmi BPPU apa adanya (jangan disisipi).
+        // Kolom Z-AA ('NIK', 'Nama Coretax') tambahan di luar template, sbg bantuan referensi
+        // manual, sama pola spt FpOrtax::exportExcelFpOrtax (lihat memory fp-ortax-report).
+        $header = array('NO', 'MASA_PAJAK', 'TAHUN_PAJAK', 'TANGGAL_PEMOTONGAN', 'NITKU_PEMOTONG', 'NPWP_PENERIMA', 'NITKU_PENERIMA', 'NAMA_PENERIMA', 'KODE_OBJEK_PAJAK', 'BRUTO', 'FASILITAS', 'NO_FASILITAS', 'TARIF_LAINNYA', 'JENIS_DOKUMEN', 'NOMOR_DOKUMEN', 'TANGGAL_DOKUMEN', 'EMAIL', 'KETERANGAN1', 'KETERANGAN2', 'KETERANGAN3', 'KETERANGAN4', 'KETERANGAN5', 'Referensi', 'Nomor Bukti Potong Diganti', 'Pengganti Ke-', 'NIK', 'Nama Coretax');
         // Kolom kode/leading-zero diformat teks ('@') spy tidak hilang saat dibuka Excel (pola sama spt FpOrtax).
-        $textFormatCols = array('B', 'E', 'F', 'G', 'I', 'K', 'L');
+        $textFormatCols = array('B', 'E', 'F', 'G', 'I', 'K', 'L', 'Z');
 
         for ($i=0; $i < count($header); $i++) {
             $huruf = toAlpha($i+1);
@@ -688,13 +699,15 @@ class PphUnifikasi extends Public_Controller {
             $sheet->setCellValue('W'.$baris, $row['referensi']);
             $sheet->setCellValue('X'.$baris, $row['no_bukti_potong_diganti']);
             $sheet->setCellValue('Y'.$baris, $row['pengganti_ke']);
+            $sheet->setCellValueExplicit('Z'.$baris, $row['nik'], DataType::TYPE_STRING);
+            $sheet->setCellValue('AA'.$baris, $row['nama_coretax']);
 
             $baris++;
         }
 
         $lastRow = $baris - 1;
         if ( $lastRow >= 2 ) {
-            $sheet->setAutoFilter('A1:Y'.$lastRow);
+            $sheet->setAutoFilter('A1:AA'.$lastRow);
 
             foreach (array('D', 'P') as $col) {
                 $sheet->getStyle($col.'2:'.$col.$lastRow)->getNumberFormat()->setFormatCode('dd/mm/yyyy');
@@ -704,13 +717,21 @@ class PphUnifikasi extends Public_Controller {
             }
         }
 
-        $colWidths = array('D'=>16,'F'=>18,'G'=>22,'H'=>27,'I'=>13,'J'=>16,'O'=>20,'P'=>16,'W'=>20);
+        $colWidths = array('D'=>16,'F'=>18,'G'=>22,'H'=>27,'I'=>13,'J'=>16,'O'=>20,'P'=>16,'W'=>20,'Z'=>18,'AA'=>27);
         foreach ($colWidths as $col => $width) {
             $sheet->getColumnDimension($col)->setWidth($width);
         }
 
         $writer = new Xlsx($spreadsheet);
         $writer->save('export_excel/'.$file_name);
+
+        // File sudah selesai dibuat -- tandai lewat cookie spy JS (downloadWithLoading, common.js)
+        // bisa berhenti menampilkan loading. Ditaruh sebelum force_download() krn browser
+        // navigation/download tidak punya callback "selesai" spt ajax success.
+        $download_token = $this->input->get('downloadToken');
+        if ( !empty($download_token) ) {
+            setcookie('fileDownloadToken', $download_token, time() + 60, '/');
+        }
 
         $this->load->helper('download');
         force_download('export_excel/'.$file_name, NULL);

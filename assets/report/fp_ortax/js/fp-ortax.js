@@ -224,11 +224,10 @@ var fpOrtax = {
 	            dataType: 'JSON',
 	            beforeSend: function() { showLoading(); },
 	            success: function(data) {
-	                hideLoading();
-
 	                if ( data.status == 1 ) {
 						fpOrtax.exportExcel(data.content);
 	                } else {
+	                	hideLoading();
 	                	bootbox.alert( data.message );
 	                }
 	            }
@@ -237,7 +236,9 @@ var fpOrtax = {
 	}, // end - excryptParams
 
 	exportExcel : function (params) {
-		goToURL('report/FpOrtax/exportExcel/'+params);
+		// showLoading() sudah aktif dari excryptParams; downloadWithLoading melanjutkannya
+		// sampai file Excel-nya benar2 selesai dibuat & mulai ke-download.
+		downloadWithLoading('report/FpOrtax/exportExcel/'+params);
 	}, // end - exportExcel
 };
 

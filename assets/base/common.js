@@ -397,6 +397,43 @@ function goToURL(_url) {
     location.href = _url;
 }
 
+function getCookie(name) {
+    var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
+}
+
+function eraseCookie(name) {
+    document.cookie = name + '=; Max-Age=-99999999; path=/;';
+}
+
+// Navigasi ke URL download (force_download, bukan ajax) sambil tetap menampilkan showLoading()
+// sampai file-nya benar2 selesai dibuat di server -- dideteksi lewat cookie penanda yg di-set
+// server tepat sebelum force_download() dipanggil (teknik "jQuery File Download" klasik, krn
+// browser navigation/download tidak punya callback selesai spt ajax success).
+function downloadWithLoading(url, pesan) {
+    var token = 'dl' + new Date().getTime();
+    var sep = (url.indexOf('?') === -1) ? '?' : '&';
+
+    showLoading(pesan);
+    location.href = url + sep + 'downloadToken=' + token;
+
+    var checkDownload = setInterval(function() {
+        if ( getCookie('fileDownloadToken') == token ) {
+            clearInterval(checkDownload);
+            clearTimeout(safetyTimeout);
+            eraseCookie('fileDownloadToken');
+            hideLoading();
+        }
+    }, 500);
+
+    // Jaring pengaman kalau cookie tidak pernah muncul (mis. export gagal di tengah jalan
+    // tanpa sempat set cookie) -- supaya loading tidak nyangkut selamanya.
+    var safetyTimeout = setTimeout(function() {
+        clearInterval(checkDownload);
+        hideLoading();
+    }, 120000);
+}
+
 function updateCountdown(elm, target) {
     $(elm).keyup(function() {
         var maxLengh = $(elm).attr('maxlength');

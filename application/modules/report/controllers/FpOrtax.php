@@ -142,6 +142,7 @@ class FpOrtax extends Public_Controller {
                 data.npwp_bakul,
                 data.nik_bakul,
                 data.nama_bakul,
+                data.nama_coretax_bakul,
                 data.alamat_jalan,
                 data.alamat_rt,
                 data.alamat_rw,
@@ -162,6 +163,7 @@ class FpOrtax extends Public_Controller {
                     cast(plg.npwp as varchar(100)) as npwp_bakul,
                     cast(plg.nik as varchar(100)) as nik_bakul,
                     UPPER(plg.nama) as nama_bakul,
+                    UPPER(plg.nama_coretax) as nama_coretax_bakul,
                     plg.alamat_jalan as alamat_jalan,
                     plg.alamat_rt as alamat_rt,
                     plg.alamat_rw as alamat_rw,
@@ -503,10 +505,15 @@ class FpOrtax extends Public_Controller {
         $sheetFaktur->setCellValueExplicit('C1', self::NPWP_PENJUAL, DataType::TYPE_STRING);
         $sheetFaktur->getStyle('A1')->applyFromArray(array('font' => array('bold' => true)));
 
-        $headerFaktur = array('Baris', 'Tanggal Faktur', 'Jenis Faktur', 'Kode Transaksi', 'Keterangan Tambahan', 'Dokumen Pendukung', 'Referensi', 'Cap Fasilitas', 'ID TKU Penjual', 'NPWP/NIK Pembeli', 'Jenis ID Pembeli', 'Negara Pembeli', 'Nomor Dokumen Pembeli', 'Nama Pembeli', 'Alamat Pembeli', 'Email Pembeli', 'ID TKU Pembeli');
+        // Kolom A-Q mengikuti format template resmi DJP Coretax apa adanya (jangan disisipi).
+        // Kolom R-S ('NIK', 'Nama Coretax') tambahan di luar template, sbg bantuan referensi
+        // manual saat entry/cek di portal Coretax (NIK mentah terpisah dari kolom J yg sudah
+        // digabung NPWP/NIK; Nama Coretax dari pelanggan.nama_coretax, diisi via modul
+        // Import > Nama Coretax, bisa kosong kalau belum pernah diisi).
+        $headerFaktur = array('Baris', 'Tanggal Faktur', 'Jenis Faktur', 'Kode Transaksi', 'Keterangan Tambahan', 'Dokumen Pendukung', 'Referensi', 'Cap Fasilitas', 'ID TKU Penjual', 'NPWP/NIK Pembeli', 'Jenis ID Pembeli', 'Negara Pembeli', 'Nomor Dokumen Pembeli', 'Nama Pembeli', 'Alamat Pembeli', 'Email Pembeli', 'ID TKU Pembeli', 'NIK', 'Nama Coretax');
         // Kolom yang di file asli diformat sebagai teks ('@') walau isinya kode angka,
         // supaya leading zero (mis. kode '08', '10') tidak hilang saat dibuka di Excel.
-        $textFormatColsFaktur = array('D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M');
+        $textFormatColsFaktur = array('D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'R');
 
         for ($i=0; $i < count($headerFaktur); $i++) {
             $huruf = toAlpha($i+1);
@@ -542,12 +549,14 @@ class FpOrtax extends Public_Controller {
             $sheetFaktur->setCellValue('O'.$baris, $this->buildAlamatPembeli($header));
             // Email Pembeli sengaja dibiarkan kosong/null (bukan string kosong) supaya persis sama dengan sample.
             $sheetFaktur->setCellValueExplicit('Q'.$baris, $identitas['id_tku'], DataType::TYPE_STRING);
+            $sheetFaktur->setCellValueExplicit('R'.$baris, $header['nik_bakul'], DataType::TYPE_STRING);
+            $sheetFaktur->setCellValue('S'.$baris, $header['nama_coretax_bakul']);
 
             $baris++;
         }
 
         $lastRowFaktur = $baris - 1;
-        $sheetFaktur->setAutoFilter('A3:Q'.$lastRowFaktur);
+        $sheetFaktur->setAutoFilter('A3:S'.$lastRowFaktur);
 
         // Format per-kolom diterapkan sekaligus atas satu range (bukan per-cell dalam loop)
         // karena getStyle() per-cell jauh lebih lambat pada ribuan baris.
@@ -556,7 +565,7 @@ class FpOrtax extends Public_Controller {
             $sheetFaktur->getStyle($col.'4:'.$col.$lastRowFaktur)->getNumberFormat()->setFormatCode('@');
         }
 
-        $colWidthsFaktur = array('B'=>16.18,'C'=>11,'D'=>4,'E'=>10.82,'F'=>15.45,'G'=>12.54,'H'=>11.73,'I'=>24.27,'J'=>21.18,'K'=>15.27,'L'=>6,'M'=>24.45,'N'=>27.45,'O'=>12,'P'=>4.54,'Q'=>24.27);
+        $colWidthsFaktur = array('B'=>16.18,'C'=>11,'D'=>4,'E'=>10.82,'F'=>15.45,'G'=>12.54,'H'=>11.73,'I'=>24.27,'J'=>21.18,'K'=>15.27,'L'=>6,'M'=>24.45,'N'=>27.45,'O'=>12,'P'=>4.54,'Q'=>24.27,'R'=>21.18,'S'=>27.45);
         foreach ($colWidthsFaktur as $col => $width) {
             $sheetFaktur->getColumnDimension($col)->setWidth($width);
         }
@@ -622,6 +631,14 @@ class FpOrtax extends Public_Controller {
 
         $writer = new Xlsx($spreadsheet);
         $writer->save('export_excel/'.$file_name);
+
+        // File sudah selesai dibuat -- tandai lewat cookie spy JS (downloadWithLoading, common.js)
+        // bisa berhenti menampilkan loading. Ditaruh sebelum force_download() krn browser
+        // navigation/download tidak punya callback "selesai" spt ajax success.
+        $download_token = $this->input->get('downloadToken');
+        if ( !empty($download_token) ) {
+            setcookie('fileDownloadToken', $download_token, time() + 60, '/');
+        }
 
         $this->load->helper('download');
         force_download('export_excel/'.$file_name, NULL);

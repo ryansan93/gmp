@@ -175,11 +175,10 @@ var pphUnifikasi = {
 	            dataType: 'JSON',
 	            beforeSend: function() { showLoading(); },
 	            success: function(data) {
-	                hideLoading();
-
 	                if ( data.status == 1 ) {
 						pphUnifikasi.exportExcel(data.content);
 	                } else {
+	                	hideLoading();
 	                	bootbox.alert( data.message );
 	                }
 	            }
@@ -188,7 +187,9 @@ var pphUnifikasi = {
 	}, // end - excryptParams
 
 	exportExcel : function (params) {
-		goToURL('report/PphUnifikasi/exportExcel/'+params);
+		// showLoading() sudah aktif dari excryptParams; downloadWithLoading melanjutkannya
+		// sampai file Excel-nya benar2 selesai dibuat & mulai ke-download.
+		downloadWithLoading('report/PphUnifikasi/exportExcel/'+params);
 	}, // end - exportExcel
 };
 
