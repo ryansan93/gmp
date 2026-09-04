@@ -39,6 +39,19 @@
 			</div>
         </div>
 		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+				<div class="col-xs-12 no-padding"><label class="control-label">Unit</label></div>
+				<div class="col-xs-12 no-padding">
+					<select class="form-control unit" data-required="1">
+						<option value="all">ALL</option>
+						<?php if ( !empty($unit) ) { ?>
+							<?php foreach ($unit as $k_unit => $v_unit) { ?>
+								<option value="<?php echo $v_unit['kode']; ?>"><?php echo strtoupper( $v_unit['nama'] ); ?></option>
+							<?php } ?>
+						<?php } ?>
+					</select>
+				</div>
+			</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 			<div class="col-xs-12 no-padding"><label class="control-label">Jenis</label></div>
 			<div class="col-xs-12 no-padding">
 				<select class="form-control jenis" data-required="1">
@@ -59,6 +72,18 @@
 					<?php if ( !empty($supplier) ) { ?>
 						<?php foreach ($supplier as $k_supl => $v_supl) { ?>
 							<option value="<?php echo $v_supl['nomor']; ?>" data-jenis="<?php echo $v_supl['tipe']; ?>"><?php echo strtoupper( $v_supl['tipe'].' | '.$v_supl['nama'] ); ?></option>
+						<?php } ?>
+					<?php } ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Jenis Hutang</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control jenis_hutang" multiple="multiple">
+					<?php if ( !empty($jenis_hutang) ) { ?>
+						<?php foreach ($jenis_hutang as $v) { ?>
+							<option value="<?php echo $v['value']; ?>"><?php echo $v['label']; ?></option>
 						<?php } ?>
 					<?php } ?>
 				</select>

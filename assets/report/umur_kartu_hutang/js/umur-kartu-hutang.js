@@ -9,6 +9,10 @@ var khl = {
             khl.getSupplierJenis();
         });;
         $('select.supplier').select2();
+        $('select.jenis_hutang').select2({
+            placeholder: '-- Semua Jenis Hutang --',
+            allowClear: true,
+        });
 
         $('#Tahun').datetimepicker({
             locale: 'id',
@@ -48,6 +52,7 @@ var khl = {
 				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() ),
                 'jenis': $('.jenis').select2().val(),
 				'supplier': $('.supplier').select2().val(),
+				'jenis_hutang': $('.jenis_hutang').select2().val(),
 			};
 
 			$.ajax({

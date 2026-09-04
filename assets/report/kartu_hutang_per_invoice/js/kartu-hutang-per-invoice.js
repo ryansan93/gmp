@@ -5,10 +5,15 @@ var khl = {
 
     settingUp: function() {
         $('select.bulan').select2();
+        $('select.unit').select2();
         $('select.jenis').select2().on("select2:select", function (e) {
             khl.getSupplierJenis();
         });;
         $('select.supplier').select2();
+        $('select.jenis_hutang').select2({
+            placeholder: '-- Semua Jenis Hutang --',
+            allowClear: true,
+        });
 
         $('#Tahun').datetimepicker({
             locale: 'id',
@@ -46,8 +51,10 @@ var khl = {
 			var params = {
 				'bulan': $('.bulan').select2().val(),
 				'tahun': dateSQL( $('#Tahun').data('DateTimePicker').date() ),
+                'unit': $('.unit').select2().val(),
                 'jenis': $('.jenis').select2().val(),
 				'supplier': $('.supplier').select2().val(),
+				'jenis_hutang': $('.jenis_hutang').select2().val(),
 			};
 
 			$.ajax({
