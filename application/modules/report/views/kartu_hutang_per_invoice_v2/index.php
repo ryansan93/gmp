@@ -1,0 +1,93 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="col-xs-12 no-padding contain bulanan" style="margin-bottom: 10px;">
+			<div class="col-xs-6 no-padding" style="padding-right: 5px;">
+                <div class="col-xs-12 no-padding"><label class="control-label">Tanggal Awal</label></div>
+				<div class="col-xs-12 no-padding">
+					<div class="input-group date datetimepicker" name="start_date" id="TanggalAwal">
+						<input type="text" class="form-control text-center" placeholder="Tanggal Awal" data-required="1" />
+						<span class="input-group-addon">
+							<span class="glyphicon glyphicon-calendar"></span>
+						</span>
+					</div>
+				</div>
+			</div>
+			<div class="col-xs-6 no-padding" style="padding-left: 5px;">
+                <div class="col-xs-12 no-padding"><label class="control-label">Tanggal Akhir</label></div>
+				<div class="col-xs-12 no-padding">
+					<div class="input-group date datetimepicker" name="end_date" id="TanggalAkhir">
+						<input type="text" class="form-control text-center" placeholder="Tanggal Akhir" data-required="1" />
+						<span class="input-group-addon">
+							<span class="glyphicon glyphicon-calendar"></span>
+						</span>
+					</div>
+				</div>
+			</div>
+        </div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+				<div class="col-xs-12 no-padding"><label class="control-label">Unit</label></div>
+				<div class="col-xs-12 no-padding">
+					<select class="form-control unit" data-required="1">
+						<option value="all">ALL</option>
+						<?php if ( !empty($unit) ) { ?>
+							<?php foreach ($unit as $k_unit => $v_unit) { ?>
+								<option value="<?php echo $v_unit['kode']; ?>"><?php echo strtoupper( $v_unit['nama'] ); ?></option>
+							<?php } ?>
+						<?php } ?>
+					</select>
+				</div>
+			</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Jenis</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control jenis" data-required="1">
+					<option value="all">ALL</option>
+					<?php if ( !empty($jenis) ) { ?>
+						<?php foreach ($jenis as $k_jns => $v_jns) { ?>
+							<option value="<?php echo $v_jns; ?>"><?php echo strtoupper( $v_jns ); ?></option>
+						<?php } ?>
+					<?php } ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Supplier</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control supplier" data-required="1">
+					<option value="all">ALL</option>
+					<?php if ( !empty($supplier) ) { ?>
+						<?php foreach ($supplier as $k_supl => $v_supl) { ?>
+							<option value="<?php echo $v_supl['nomor']; ?>" data-jenis="<?php echo $v_supl['tipe']; ?>"><?php echo strtoupper( $v_supl['tipe'].' | '.$v_supl['nama'] ); ?></option>
+						<?php } ?>
+					<?php } ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+			<div class="col-xs-12 no-padding"><label class="control-label">Jenis Hutang</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="form-control jenis_hutang" multiple="multiple">
+					<?php if ( !empty($jenis_hutang) ) { ?>
+						<?php foreach ($jenis_hutang as $v) { ?>
+							<option value="<?php echo $v['value']; ?>"><?php echo $v['label']; ?></option>
+						<?php } ?>
+					<?php } ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding">
+			<div class="col-xs-12 no-padding">
+				<button type="button" class="col-xs-12 btn btn-primary" onclick="khl2.getData()"><i class="fa fa-search"></i> Tampilkan</button>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding"><hr style="margin-top: 10px; margin-bottom: 10px;"></div>
+		<div class="col-xs-12 no-padding">
+            <small>
+                <table class="table table-bordered" style="margin-bottom: 0px;">
+                    <tbody>
+                    </tbody>
+                </table>
+            </small>
+		</div>
+	</div>
+</div>

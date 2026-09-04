@@ -1,7 +1,7 @@
 <?php if ( !empty($data) && count($data) > 0 ) { ?>
-    <?php 
-        $kode_supplier = null; 
-        $no_inv = null; 
+    <?php
+        $kode_supplier = null;
+        $no_inv = null;
         $idx_supplier = 0;
         $idx_inv = 0;
         $saldo = 0;
@@ -44,7 +44,7 @@
                 <td class="col-xs-2"><b>Kredit</b></td>
                 <td class="col-xs-2"><b>Saldo</b></td>
             </tr>
-            <?php 
+            <?php
                 $idx_inv = 0;
                 $saldo = $value['saldo'];
                 $no_inv = $value['no_inv'];
@@ -55,7 +55,7 @@
         <?php } ?>
 
         <?php if ( $kode_supplier <> $value['supplier'] ) { ?>
-            <?php 
+            <?php
                 $idx_supplier = 0;
                 // $saldo_supl = $value['saldo'];
                 $kode_supplier = $value['supplier'];
@@ -64,7 +64,7 @@
                 $tot_kredit_supl = 0;
             ?>
         <?php } ?>
-        <?php 
+        <?php
             $tanggal = $value['tanggal'];
             $ket = $value['jenis_trans'];
             $debet = $value['debet'];
@@ -99,7 +99,7 @@
             <td class="text-right"><?php echo angkaDecimal($kredit); ?></td>
             <td class="text-right"><?php echo ($saldo >= 0) ? angkaDecimal($saldo) : '('.angkaDecimal(abs($saldo)).')'; ?></td>
         </tr>
-        <?php if ( !empty($no_inv) && $no_inv <> $data[$key+1]['no_inv'] ) { ?>
+        <?php if ( !isset($data[$key+1]) || $no_inv <> $data[$key+1]['no_inv'] ) { ?>
             <?php // $gt_saldo += $saldo; ?>
             <tr>
                 <td colspan="2"><b>Total Per Invoice</b></td>
@@ -113,7 +113,7 @@
 
             <?php $saldo_supl += $saldo; ?>
         <?php } ?>
-        <?php if ( !empty($kode_supplier) && $kode_supplier <> $data[$key+1]['supplier'] ) { ?>
+        <?php if ( !isset($data[$key+1]) || $kode_supplier <> $data[$key+1]['supplier'] ) { ?>
             <?php $gt_saldo += $saldo_supl; ?>
             <tr class="biru">
                 <td colspan="2"><b>Total Per Supplier</b></td>
@@ -127,7 +127,7 @@
 
             <?php $saldo_supl = 0; ?>
         <?php } ?>
-        <?php  
+        <?php
             $idx_inv++;
         ?>
     <?php } ?>

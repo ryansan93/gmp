@@ -1,9 +1,13 @@
 <?php if ( !empty($data) && count($data) > 0 ) { ?>
-    <?php 
-        $kode_supplier = null; 
-        $idx_supplier = 0;
+    <?php
+        $kode_supplier = null;
+        $no_inv = null;
+        $idx_inv = 0;
         $saldo = 0;
+        $saldo_supl = 0;
 
+        $tot_debet_inv = 0;
+        $tot_kredit_inv = 0;
         $tot_debet_supl = 0;
         $tot_kredit_supl = 0;
 
@@ -23,32 +27,64 @@
                     <div class="col-xs-12 no-padding">
                         <div class="col-xs-1 no-padding"><label class="label-control">Nama Supplier</label></div>
                         <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
-                        <div class="col-xs-10 no-padding"><label class="label-control"><?php echo $value['nama_supplier']; ?></label></div>
+                        <div class="col-xs-10 no-padding"><label class="label-control"><?php echo strtoupper($value['nama_supplier']); ?></label></div>
                     </div>
                 </td>
             </tr>
-            <tr>
-                <td class="col-xs-1"><b>Tanggal</b></td>
-                <td class="col-xs-5"><b>Jenis Transaksi</b></td>
-                <td class="col-xs-2"><b>Debet</b></td>
-                <td class="col-xs-2"><b>Kredit</b></td>
-                <td class="col-xs-2"><b>Saldo</b></td>
-            </tr>
-            <?php 
-                $idx_supplier = 0;
-                $saldo = $value['saldo'];
+            <?php
                 $kode_supplier = $value['supplier'];
 
                 $tot_debet_supl = 0;
                 $tot_kredit_supl = 0;
+                $saldo_supl = 0;
             ?>
         <?php } ?>
-        <?php 
+
+        <?php if ( $no_inv <> $value['no_inv'] ) { ?>
+            <tr style="background-color: #fff3cd;">
+                <td colspan="5">
+                    <div class="col-xs-4 no-padding">
+                        <div class="col-xs-4 no-padding"><label class="label-control">No. Invoice</label></div>
+                        <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
+                        <div class="col-xs-7 no-padding"><label class="label-control"><?php echo $value['no_inv']; ?></label></div>
+                    </div>
+                    <div class="col-xs-4 no-padding">
+                        <div class="col-xs-4 no-padding"><label class="label-control">Tanggal Invoice</label></div>
+                        <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
+                        <div class="col-xs-7 no-padding"><label class="label-control"><?php echo !empty($value['tanggal_invoice']) ? tglIndonesia($value['tanggal_invoice'], '-', ' ') : ''; ?></label></div>
+                    </div>
+                    <div class="col-xs-4 no-padding">
+                        <div class="col-xs-3 no-padding"><label class="label-control">Unit</label></div>
+                        <div class="col-xs-1 no-padding" style="max-width: 1%;"><label class="label-control">:</label></div>
+                        <div class="col-xs-8 no-padding"><label class="label-control"><?php echo !empty($value['unit']) ? strtoupper($value['unit']) : '-'; ?></label></div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-xs-2"><b>Tanggal</b></td>
+                <td class="col-xs-4"><b>Jenis Transaksi</b></td>
+                <td class="col-xs-2"><b>Debet</b></td>
+                <td class="col-xs-2"><b>Kredit</b></td>
+                <td class="col-xs-2"><b>Saldo</b></td>
+            </tr>
+            <?php
+                $idx_inv = 0;
+                $saldo = $value['saldo'];
+                $no_inv = $value['no_inv'];
+
+                $tot_debet_inv = 0;
+                $tot_kredit_inv = 0;
+            ?>
+        <?php } ?>
+        <?php
             $tanggal = $value['tanggal'];
             $ket = $value['jenis_trans'];
             $debet = $value['debet'];
             $kredit = $value['kredit'];
             $saldo = ($saldo+$debet)-$kredit;
+
+            $tot_debet_inv += $debet;
+            $tot_kredit_inv += $kredit;
 
             $tot_debet_supl += $debet;
             $tot_kredit_supl += $kredit;
@@ -56,7 +92,7 @@
             $gt_debet += $debet;
             $gt_kredit += $kredit;
         ?>
-        <?php if ( $idx_supplier == 0 ) { ?>
+        <?php if ( $idx_inv == 0 ) { ?>
             <?php if ( $value['urut'] != 1 ) { ?>
                 <tr>
                     <td><?php echo tglIndonesia(substr($tanggal, 0, 7).'-01', '-', ' '); ?></td>
@@ -74,20 +110,33 @@
             <td class="text-right"><?php echo angkaDecimal($kredit); ?></td>
             <td class="text-right"><?php echo ($saldo >= 0) ? angkaDecimal($saldo) : '('.angkaDecimal(abs($saldo)).')'; ?></td>
         </tr>
-        <?php if ( !isset($data[$key+1]) || $kode_supplier <> $data[$key+1]['supplier'] ) { ?>
-            <?php $gt_saldo += $saldo; ?>
+        <?php if ( !isset($data[$key+1]) || $no_inv <> $data[$key+1]['no_inv'] ) { ?>
             <tr>
-                <td colspan="2"><b>Total Per Supplier</b></td>
-                <td class="text-right"><b><?php echo angkaDecimal($tot_debet_supl); ?></b></td>
-                <td class="text-right"><b><?php echo angkaDecimal($tot_kredit_supl); ?></b></td>
+                <td colspan="2"><b>Total Per Invoice</b></td>
+                <td class="text-right"><b><?php echo angkaDecimal($tot_debet_inv); ?></b></td>
+                <td class="text-right"><b><?php echo angkaDecimal($tot_kredit_inv); ?></b></td>
                 <td class="text-right"><b><?php echo ($saldo >= 0) ? angkaDecimal($saldo) : '('.angkaDecimal(abs($saldo)).')'; ?></b></td>
             </tr>
             <tr>
                 <td colspan="5"></td>
             </tr>
+
+            <?php $saldo_supl += $saldo; ?>
         <?php } ?>
-        <?php  
-            $idx_supplier++;
+        <?php if ( !isset($data[$key+1]) || $kode_supplier <> $data[$key+1]['supplier'] ) { ?>
+            <?php $gt_saldo += $saldo_supl; ?>
+            <tr class="biru">
+                <td colspan="2"><b>Total Per Supplier</b></td>
+                <td class="text-right"><b><?php echo angkaDecimal($tot_debet_supl); ?></b></td>
+                <td class="text-right"><b><?php echo angkaDecimal($tot_kredit_supl); ?></b></td>
+                <td class="text-right"><b><?php echo ($saldo_supl >= 0) ? angkaDecimal($saldo_supl) : '('.angkaDecimal(abs($saldo_supl)).')'; ?></b></td>
+            </tr>
+            <tr>
+                <td colspan="5"></td>
+            </tr>
+        <?php } ?>
+        <?php
+            $idx_inv++;
         ?>
     <?php } ?>
     <tr class="kuning">
