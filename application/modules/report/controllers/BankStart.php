@@ -665,7 +665,7 @@ class BankStart extends Public_Controller {
                             on
                                 rpd.id_header = rp.id
                         where 
-                            rp.tgl_bayar between '".$start_date."' and '".$end_date."' and
+                            rp.tgl_realisasi between '".$start_date."' and '".$end_date."' and
                             rp.status = 2
                         group by
                             rp.nomor,
