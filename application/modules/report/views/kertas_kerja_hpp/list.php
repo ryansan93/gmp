@@ -17,7 +17,7 @@
             <td class="text-right page2" title="OVK BELI"><?php echo angkaDecimal($value['beli_ovk']); ?></td>
             <td class="text-right page2" title="OVK MUTASI (+)"><?php echo angkaDecimal($value['mutasi_msk_ovk']); ?></td>
             <td class="text-right page2" title="OVK MUTASI (-)"><?php echo angkaDecimal($value['mutasi_klwr_ovk']); ?></td>
-            <td class="text-right page2" title="OVK KOREKSI (+/-)"><?php echo angkaDecimal(0); ?></td>
+            <td class="text-right page2" title="OVK KOREKSI (+/-)"><?php echo ($value['koreksi_ovk'] >= 0) ? angkaDecimal($value['koreksi_ovk']) : '('.angkaDecimal(abs($value['koreksi_ovk'])).')'; ?></td>
             <td class="text-right page2" title="OVK PEMAKAIAN"><?php echo ($value['pemakaian_ovk'] >= 0) ? angkaDecimal($value['pemakaian_ovk']) : '('.angkaDecimal(abs($value['pemakaian_ovk'])).')'; ?></td>
             <td class="text-right page3" title="DOC SALDO AWAL"><?php echo angkaDecimal($value['sa_doc']); ?></td>
             <td class="text-right page3" title="DOC BELI"><?php echo angkaDecimal($value['beli_doc']); ?></td>

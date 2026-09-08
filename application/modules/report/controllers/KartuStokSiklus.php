@@ -323,9 +323,37 @@ class KartuStokSiklus extends Public_Controller {
                         (dss.jumlah * dss.hrg_beli) as kredit
                     from det_stok_siklus dss
                     where
-                        dss.jenis_barang = 'voadip'
+                        dss.jenis_barang = 'voadip' and
+                        dss.jenis_trans <> 'ADJIN' -- adjustment in siklus bukan diterima=langsung terpakai, jangan dinetralkan di sini
                         and dss.tgl_trans < '".$_start_date."'
                     /* END - OVK */
+
+                    union all
+
+                    /* OVK - ADJUSTMENT OUT */
+                    select
+                        dss.noreg,
+                        dsts.tgl_trans as tanggal,
+                        'ADJUSTMENT OUT' as jenis_trans,
+                        dsts.kode_trans,
+                        dsts.kode_barang,
+                        dss.jenis_barang,
+                        dsts.jumlah,
+                        (dsts.jumlah * dss.hrg_beli) as nilai,
+                        0 as jml_debet,
+                        0 as debet,
+                        dsts.jumlah as jml_kredit,
+                        (dsts.jumlah * dss.hrg_beli) as kredit
+                    from det_stok_trans_siklus dsts
+                    left join
+                        det_stok_siklus dss
+                        on
+                            dsts.id_header = dss.id
+                    where
+                        dss.jenis_barang = 'voadip' and
+                        dsts.tbl_name = 'adjout_voadip_siklus' and
+                        dsts.tgl_trans < '".$_start_date."'
+                    /* END - OVK - ADJUSTMENT OUT */
                     /* END - KELUAR */
                     
                     /*
@@ -468,8 +496,36 @@ class KartuStokSiklus extends Public_Controller {
                 from det_stok_siklus dss
                 where
                     dss.tgl_trans between '".$_start_date."' and '".$_end_date."' and
-                    dss.jenis_barang = 'voadip'
+                    dss.jenis_barang = 'voadip' and
+                    dss.jenis_trans <> 'ADJIN' -- adjustment in siklus bukan diterima=langsung terpakai, jangan dinetralkan di sini
                 /* END - OVK */
+
+                union all
+
+                /* OVK - ADJUSTMENT OUT */
+                select
+                    dss.noreg,
+                    dsts.tgl_trans as tanggal,
+                    'ADJUSTMENT OUT' as jenis_trans,
+                    dsts.kode_trans,
+                    dsts.kode_barang,
+                    dss.jenis_barang,
+                    dss.hrg_beli,
+                    0 as jml_debet,
+                    0 as debet,
+                    dsts.jumlah as jml_kredit,
+                    (dsts.jumlah * dss.hrg_beli) as kredit,
+                    3 as urut
+                from det_stok_trans_siklus dsts
+                left join
+                    det_stok_siklus dss
+                    on
+                        dsts.id_header = dss.id
+                where
+                    dsts.tgl_trans between '".$_start_date."' and '".$_end_date."' and
+                    dss.jenis_barang = 'voadip' and
+                    dsts.tbl_name = 'adjout_voadip_siklus'
+                /* END - OVK - ADJUSTMENT OUT */
                 /* END - KELUAR */
             ) data
             left join

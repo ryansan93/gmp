@@ -1307,6 +1307,8 @@ class KertasKerjaHpp extends Public_Controller {
                         then dss.jumlah * dss.hrg_beli else 0 end) as beli_ovk,
                     sum(case when dss.jenis_barang = 'voadip' and kv_opkp.no_order is not null
                         then dss.jumlah * dss.hrg_beli else 0 end) as mutasi_msk_ovk,
+                    sum(case when dss.jenis_barang = 'voadip' and dss.jenis_trans = 'ADJIN'
+                        then dss.jumlah * dss.hrg_beli else 0 end) as koreksi_ovk,
                     sum(case when dss.jenis_barang = 'pakan' and kp_opkg.no_order is not null
                         then dss.jumlah * dss.oa else 0 end) as beli_oa,
                     sum(case when dss.jenis_barang = 'pakan' and kp_opkp.no_order is not null
@@ -1514,8 +1516,9 @@ class KertasKerjaHpp extends Public_Controller {
                     coalesce(dss.beli_ovk, 0) as beli_ovk,
                     coalesce(dss.mutasi_msk_ovk, 0) as mutasi_msk_ovk,
                     coalesce(dsts.mutasi_klwr_ovk, 0) as mutasi_klwr_ovk,
-                    coalesce(dss.beli_ovk, 0) 
-                        + coalesce(dss.mutasi_msk_ovk, 0) - coalesce(dsts.mutasi_klwr_ovk, 0) as pemakaian_ovk,
+                    coalesce(dss.koreksi_ovk, 0) as koreksi_ovk,
+                    coalesce(dss.beli_ovk, 0)
+                        + coalesce(dss.mutasi_msk_ovk, 0) + coalesce(dss.koreksi_ovk, 0) - coalesce(dsts.mutasi_klwr_ovk, 0) as pemakaian_ovk,
                     -- coalesce(dsts.pemakaian_ovk, 0) as pemakaian_ovk,
                     -- DOC
                     coalesce(sa_doc.doc_debet, 0) - coalesce(sa_doc.doc_kredit, 0) as sa_doc,
@@ -1566,8 +1569,9 @@ class KertasKerjaHpp extends Public_Controller {
                 data.beli_ovk,
                 data.mutasi_msk_ovk,
                 data.mutasi_klwr_ovk,
+                data.koreksi_ovk,
                 data.pemakaian_ovk,
-                (data.sa_ovk + data.beli_ovk + data.mutasi_msk_ovk)
+                (data.sa_ovk + data.beli_ovk + data.mutasi_msk_ovk + data.koreksi_ovk)
                     - (data.mutasi_klwr_ovk + data.pemakaian_ovk) as sisa_ovk,
                 data.sa_doc,
                 data.beli_doc,
@@ -1599,7 +1603,7 @@ class KertasKerjaHpp extends Public_Controller {
                     case when td.jml_ekor is not null then td.jml_ekor else rs.populasi end as populasi,
                     c.sa_pkn, c.beli_pkn, c.mutasi_msk_pkn, c.mutasi_klwr_pkn,
                     c.koreksi_pkn, c.pemakaian_pkn, c.sisa_pkn,
-                    c.sa_ovk, c.beli_ovk, c.mutasi_msk_ovk, c.mutasi_klwr_ovk, c.pemakaian_ovk,
+                    c.sa_ovk, c.beli_ovk, c.mutasi_msk_ovk, c.mutasi_klwr_ovk, c.koreksi_ovk, c.pemakaian_ovk,
                     c.sa_doc, c.beli_doc, c.mutasi_msk_doc, c.mutasi_klwr_doc, c.koreksi_doc, c.pemakaian_doc,
                     c.sa_oa, c.beli_oa, c.mutasi_msk_oa, c.mutasi_klwr_oa, c.koreksi_oa, c.pemakaian_oa,
                     c.pdpt_peternak
@@ -1747,7 +1751,7 @@ class KertasKerjaHpp extends Public_Controller {
                     'N' => array('value' => ($value['beli_ovk']), 'data_type' => 'decimal2'),
                     'O' => array('value' => ($value['mutasi_msk_ovk']), 'data_type' => 'decimal2'),
                     'P' => array('value' => ($value['mutasi_klwr_ovk']), 'data_type' => 'decimal2'),
-                    'Q' => array('value' => (0), 'data_type' => 'decimal2'),
+                    'Q' => array('value' => ($value['koreksi_ovk']), 'data_type' => 'decimal2'),
                     'R' => array('value' => ($value['pemakaian_ovk']), 'data_type' => 'decimal2'),
                     'S' => array('value' => ($value['sa_doc']), 'data_type' => 'decimal2'),
                     'T' => array('value' => ($value['beli_doc']), 'data_type' => 'decimal2'),
