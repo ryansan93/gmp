@@ -598,7 +598,11 @@
 															$ip = $data_plasma['detail']['ip'];
 														?>
 														<?php
-															$bonus_kematian = ($deplesi <= 5) ? 25 * $total_tonase : 0;
+															if ( isset($data['nilai_bonus_kematian']) && !empty($data['nilai_bonus_kematian']) ) {
+																$bonus_kematian = $data['nilai_bonus_kematian'];
+															} else {
+																$bonus_kematian = ($deplesi <= 5) ? $data['bonus_kematian'] * $total_tonase : 0;
+															}
 															$bonus_insentif_fcr = $data['bonus_insentif_fcr'];
 														?>
 													<?php else: ?>
@@ -1611,7 +1615,7 @@
 															$ip = $data_inti['detail']['ip'];
 														?>
 														<?php
-															$bonus_kematian = ($deplesi <= 5) ? 25 * $total_tonase : 0;
+															$bonus_kematian = ($deplesi <= 5) ? $data['bonus_kematian'] * $total_tonase : 0;
 															$bonus_insentif_fcr = $data['bonus_insentif_fcr'];
 														?>
 													<?php else: ?>

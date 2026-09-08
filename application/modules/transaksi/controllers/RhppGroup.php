@@ -310,7 +310,7 @@ class RhppGroup extends Public_Controller {
         $data_doc_plasma = null; $data_pakan_plasma = null; $data_pindah_pakan_plasma = null; $data_retur_pakan_plasma = null; $data_voadip_plasma = null; $data_retur_voadip_plasma = null; $data_rpah_plasma = null;
         $data_doc_inti = null; $data_pakan_inti = null; $data_pindah_pakan_inti = null; $data_oa_pindah_pakan_inti = null; $data_oa_pakan_inti = null; $data_retur_pakan_inti = null; $data_oa_retur_pakan_inti = null; $data_voadip_inti = null; $data_retur_voadip_inti = null; $data_rpah_inti = null;
 
-        $bonus_pasar = 0; $fcr = 0; $bb = 0; 
+        $bonus_pasar = 0; $bonus_kematian = 0; $fcr = 0; $bb = 0; 
         $deplesi_inti = 0; $ip_inti = 0;
         $deplesi_plasma = 0; $ip_plasma = 0;
 
@@ -781,10 +781,12 @@ class RhppGroup extends Public_Controller {
                 if ( $val['ip_akhir'] > 0 ) {
                     if ( ($ip_plasma >= $val['ip_awal']) && ($ip_plasma <= $val['ip_akhir']) ) {
                         $bonus_pasar = $val['bonus_ip'];
+                        $bonus_kematian = $val['bonus_dh'];
                     }
                 } else {
                     if ( $ip_plasma >= $val['ip_awal'] ) {
                         $bonus_pasar = $val['bonus_ip'];
+                        $bonus_kematian = $val['bonus_dh'];
                     }
                 }
             }
@@ -855,6 +857,7 @@ class RhppGroup extends Public_Controller {
             $data_header['bb'] = $bb;
             // $data_header['deplesi'] = $deplesi;
             // $data_header['ip'] = $ip;
+            $data_header['bonus_kematian'] = $bonus_kematian;
             $data_header['bonus_pasar'] = $bonus_pasar;
         } else {
             $m_rhpp_group_header = new \Model\Storage\RhppGroupHeader_model();
@@ -884,6 +887,7 @@ class RhppGroup extends Public_Controller {
             // $data_header['deplesi'] = $d_rhpp_inti['deplesi'];
             // $data_header['ip'] = $d_rhpp_inti['ip'];
             $data_header['bonus_pasar'] = !empty($d_rhpp_plasma) ? $d_rhpp_plasma['persen_bonus_pasar'] : 0;
+            $data_header['nilai_bonus_kematian'] = !empty($d_rhpp_plasma) ? $d_rhpp_plasma['bonus_kematian'] : 0;
             $cn = $d_rhpp_inti['cn'];
 
             $deplesi_inti = $d_rhpp_inti['deplesi'];
@@ -3202,22 +3206,53 @@ class RhppGroup extends Public_Controller {
 
     public function tes()
     {
-        // $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select * from rhpp_group rg
-        //     where
-        //         rg.jenis = 'rhpp_plasma'
-        // ";
-        // $d_conf = $m_conf->hydrateRaw( $sql );
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                rgh.mitra,
+                rgh.tgl_submit,
+                r.id,
+                r.id_header, 
+                r.pdpt_peternak_belum_pajak, 
+                r.prs_potongan_pajak, 
+                r.potongan_pajak, 
+                r.pdpt_peternak_sudah_pajak as pdpt_peternak_sudah_pajak, 
+                ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as potongan_pajak_new,
+                ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as pdpt_peternak_sudah_pajak_new,
+                r.potongan_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as selisih_pajak,
+                r.pdpt_peternak_sudah_pajak - ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as selisih_pdpt
+        --	update r
+        --	set
+        --		r.potongan_pajak = ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0),
+        --		r.pdpt_peternak_sudah_pajak = ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0)
+            from rhpp_group r
+            left join
+                rhpp_group_header rgh
+                on
+                    r.id_header = rgh.id
+            left join
+                (
+                    select id_header, sum(nominal) as nominal
+                    from rhpp_piutang
+                    group by
+                        id_header
+                ) r_piutang
+                on
+                    r.id = r_piutang.id_header
+            where 
+                rgh.tgl_submit between '2026-07-01' and '2026-07-31'
+                and r.jenis = 'rhpp_plasma'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-        //     foreach ($d_conf as $key => $val) {
-        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
-        //     }
-        // }
+            foreach ($d_conf as $key => $val) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
+            }
+        }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 58, 58, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 58, 58, 2);
     }
 }
