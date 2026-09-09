@@ -545,12 +545,12 @@ class FpOrtax extends Public_Controller {
             $sheetFaktur->setCellValue('K'.$baris, $identitas['jenis_id']);
             $sheetFaktur->setCellValue('L'.$baris, 'IDN');
             $sheetFaktur->setCellValueExplicit('M'.$baris, $identitas['nomor_dokumen'], DataType::TYPE_STRING);
-            $sheetFaktur->setCellValue('N'.$baris, $this->stripPrefixBadanUsaha($header['nama_bakul']));
+            $sheetFaktur->setCellValue('N'.$baris, $this->stripPrefixBadanUsaha($header['nama_coretax_bakul']));
             $sheetFaktur->setCellValue('O'.$baris, $this->buildAlamatPembeli($header));
             // Email Pembeli sengaja dibiarkan kosong/null (bukan string kosong) supaya persis sama dengan sample.
             $sheetFaktur->setCellValueExplicit('Q'.$baris, $identitas['id_tku'], DataType::TYPE_STRING);
             $sheetFaktur->setCellValueExplicit('R'.$baris, $header['nik_bakul'], DataType::TYPE_STRING);
-            $sheetFaktur->setCellValue('S'.$baris, $header['nama_coretax_bakul']);
+            $sheetFaktur->setCellValue('S'.$baris, $header['nama_bakul']);
 
             $baris++;
         }

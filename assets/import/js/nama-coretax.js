@@ -73,7 +73,6 @@ var ncx = {
 				url: 'import/NamaCoretax/upload',
 				dataType: 'json',
 	            type: 'post',
-	            async: false,
 	            processData: false,
 	            contentType: false,
 	            data: formData,

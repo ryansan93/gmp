@@ -678,7 +678,7 @@ class PphUnifikasi extends Public_Controller {
             $sheet->setCellValueExplicit('E'.$baris, $row['nitku_pemotong'], DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('F'.$baris, $row['npwp_penerima'], DataType::TYPE_STRING);
             $sheet->setCellValueExplicit('G'.$baris, $row['nitku_penerima'], DataType::TYPE_STRING);
-            $sheet->setCellValue('H'.$baris, $row['nama_penerima']);
+            $sheet->setCellValue('H'.$baris, $row['nama_coretax']);
             $sheet->setCellValueExplicit('I'.$baris, $row['kode_objek_pajak'], DataType::TYPE_STRING);
             $sheet->setCellValue('J'.$baris, $row['bruto']);
             $sheet->setCellValueExplicit('K'.$baris, $row['fasilitas'], DataType::TYPE_STRING);
@@ -700,7 +700,7 @@ class PphUnifikasi extends Public_Controller {
             $sheet->setCellValue('X'.$baris, $row['no_bukti_potong_diganti']);
             $sheet->setCellValue('Y'.$baris, $row['pengganti_ke']);
             $sheet->setCellValueExplicit('Z'.$baris, $row['nik'], DataType::TYPE_STRING);
-            $sheet->setCellValue('AA'.$baris, $row['nama_coretax']);
+            $sheet->setCellValue('AA'.$baris, $row['nama_penerima']);
 
             $baris++;
         }
