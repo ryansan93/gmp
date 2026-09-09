@@ -128,7 +128,7 @@ class PosisiStok extends Public_Controller {
             -- kiriman yang kirim & terimanya beda hari bisa jatuh di celah (tidak kehitung di
             -- 'supply' base -- karena tgl_trans sudah >= eff.p -- ataupun di gap ini -- karena
             -- tgl_kirim < eff.p) sehingga stok yang sudah diterima hilang dari laporan.
-            select tv.tgl_terima as tanggal, try_cast(kv.tujuan as int) as kode_gudang, dkv.item as kode_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans
+            select tv.tgl_terima as tanggal, try_cast(kv.tujuan as int) as kode_gudang, dkv.item as kode_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans, kv.no_order as no_order_asal
             from kirim_".$jenis." kv
             join det_kirim_".$jenis." dkv on dkv.id_header = kv.id
             join terima_".$jenis." tv on tv.id_kirim_".$jenis." = kv.id
@@ -137,15 +137,19 @@ class PosisiStok extends Public_Controller {
 
             union all
 
-            select rv.tgl_retur as tanggal, try_cast(rv.id_tujuan as int) as kode_gudang, drv.item as kode_barang, sum(drv.jumlah) as jumlah, rv.no_retur as kode_trans
+            -- kode_trans = no_retur (dokumen retur sendiri, dipakai utk DISPLAY & FIFO netting),
+            -- TAPI det_stok menyimpan layer RETUR di bawah kode_trans = no_order ASAL (bukan
+            -- no_retur) -- no_order_asal disediakan terpisah spy NOT EXISTS di bawah bisa
+            -- mengorelasikan ke det_stok dgn kunci yang BENAR, bukan ketipu kode_trans yang beda skema.
+            select rv.tgl_retur as tanggal, try_cast(rv.id_tujuan as int) as kode_gudang, drv.item as kode_barang, sum(drv.jumlah) as jumlah, rv.no_retur as kode_trans, rv.no_order as no_order_asal
             from retur_".$jenis." rv
             join det_retur_".$jenis." drv on drv.id_header = rv.id
             where rv.jenis_retur = 'opkp'
-            group by rv.tgl_retur, rv.id_tujuan, drv.item, rv.no_retur
+            group by rv.tgl_retur, rv.id_tujuan, drv.item, rv.no_retur, rv.no_order
 
             union all
 
-            select av.tanggal, av.kode_gudang, av.kode_barang, av.jumlah, av.kode as kode_trans
+            select av.tanggal, av.kode_gudang, av.kode_barang, av.jumlah, av.kode as kode_trans, av.kode as no_order_asal
             from adjin_".$jenis." av
         ";
 
@@ -191,7 +195,6 @@ class PosisiStok extends Public_Controller {
                 cross join eff
                 where
                     s.periode = eff.p and
-                    ds.tgl_trans < eff.p and
                     ds.jenis_barang = '".$jenis."' and
                     (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                     (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
@@ -208,16 +211,28 @@ class PosisiStok extends Public_Controller {
                     (g.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
             ),
             supply as (
-                -- layer dari snapshot det_stok periode terakhir yang tersedia (selalu lebih
-                -- lama drpd transaksi gap manapun -- FIFO alami lewat urutan tanggal)
+                -- layer dari snapshot det_stok periode terakhir yang tersedia. Pakai jml_stok
+                -- APA ADANYA (bukan jml_stok + det_stok_trans) -- jml_stok SUDAH mencerminkan
+                -- konsumsi nyata yang sudah tercatat, kapanpun batch itu memprosesnya. Menambah
+                -- balik det_stok_trans lalu menghitung ulang FIFO sendiri (versi lama) salah
+                -- kalau batch TERNYATA sudah memproses sebagian/semua transaksi gap di bawah --
+                -- alokasi FIFO buatan sendiri (asumsi tertua dulu) bisa beda dari alokasi nyata
+                -- yang sudah kepakai (mis. lot RETUR yang lebih baru malah kepakai duluan),
+                -- menghasilkan sisa per-lot yang salah walau totalnya kebetulan sama. Lihat
+                -- memory posisi-stok-vs-kartu-stok-selisih-gap.
+                --
+                -- SENGAJA tidak difilter `ds.tgl_trans < eff.p` (beda dari versi lama) -- ada
+                -- barang (mis. jenis pakan) yang snapshot periode-nya TIDAK di-roll-forward,
+                -- jadi baris utk transaksi HARI INI sendiri (tgl_trans = eff.p, bukan < eff.p)
+                -- muncul LANGSUNG sbg baris det_stok periode=eff.p, bukan lewat jalur gap. Kalau
+                -- baris begini di-exclude di sini, dia jatuh ke cabang gap-masuk yg salah pakai
+                -- jumlah bruto dari dokumen fisik alih2 jml_stok yg sudah benar. Aman diambil
+                -- semua tanpa syarat tanggal krn cabang gap-masuk & demand di bawah sudah
+                -- meng-exclude kode_trans yg TERNYATA sudah exist di sini (lihat NOT EXISTS).
                 select
                     ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans as tanggal,
-                    sum(isnull(ds.jml_stok, 0) + isnull(dst.jumlah, 0)) as jumlah
+                    sum(isnull(ds.jml_stok, 0)) as jumlah
                 from det_stok ds
-                left join
-                    (select id_header, sum(jumlah) as jumlah from det_stok_trans group by id_header) dst
-                    on
-                        ds.id = dst.id_header
                 left join
                     stok s
                     on
@@ -225,7 +240,6 @@ class PosisiStok extends Public_Controller {
                 cross join eff
                 where
                     s.periode = eff.p and
-                    ds.tgl_trans < eff.p and
                     ds.jenis_barang = '".$jenis."' and
                     (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                     (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
@@ -235,7 +249,9 @@ class PosisiStok extends Public_Controller {
                 union all
 
                 -- masuk di masa gap: tanggal >= periode terakhir s/d tanggal laporan (inklusif),
-                -- belum ikut batch hitung-stok manapun
+                -- belum ikut batch hitung-stok manapun. NOT EXISTS thd det_stok -- kalau kode_trans
+                -- ini TERNYATA sudah kebentuk jadi layer det_stok sendiri (batch sudah proses),
+                -- jangan ditambah lagi di sini supaya tidak dobel-hitung.
                 select
                     g.kode_gudang, g.kode_barang, g.kode_trans,
                     isnull(hrg.hrg_beli, hp.hrg_beli) as hrg_beli, g.tanggal, g.jumlah
@@ -267,7 +283,33 @@ class PosisiStok extends Public_Controller {
                     g.kode_gudang is not null and
                     g.tanggal >= eff.p and g.tanggal <= '".$_date."' and
                     (g.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
-                    (g.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    (g.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
+                    not exists (
+                        -- Discope ke periode = eff.p SAJA (bukan seluruh histori det_stok) --
+                        -- kode_trans yang sama bisa muncul lagi di banyak snapshot periode lain
+                        -- selama layer itu belum habis (batch membawa layer belum-habis maju ke
+                        -- snapshot berikutnya), jadi match TANPA guard periode ini nyaris selalu
+                        -- true untuk kode_trans manapun yang pernah ada -- salah total. TIDAK ada
+                        -- syarat tgl_trans di sini -- sengaja sama liberalnya dgn cabang snapshot
+                        -- di atas (yang sekarang juga tidak difilter tgl_trans) supaya keduanya
+                        -- konsisten: begitu det_stok punya barisnya sendiri utk periode ini
+                        -- (berapapun tgl_trans-nya), percaya jml_stok-nya, jangan direkonstruksi
+                        -- lagi dari dokumen fisik di sini (dobel-hitung).
+                        --
+                        -- Match ke g.no_order_asal (BUKAN g.kode_trans) -- utk RETUR, det_stok
+                        -- menyimpan layernya di bawah kode_trans = no_order ASAL (dari order yang
+                        -- diretur), sedangkan g.kode_trans di sini = no_retur (dokumen retur
+                        -- sendiri, skema kode yang beda). Match ke kode_trans langsung akan
+                        -- SELALU gagal utk RETUR, membuat layer yang SUDAH ada di det_stok
+                        -- (kode_trans = no_order asal) ikut ditambahkan LAGI di sini scr dobel.
+                        select 1 from det_stok ds3
+                        left join stok s3 on ds3.id_header = s3.id
+                        where
+                            s3.periode = eff.p and
+                            ds3.kode_gudang = g.kode_gudang and
+                            ds3.kode_barang = g.kode_barang and
+                            ds3.kode_trans = g.no_order_asal
+                    )
 
                 union all
 
@@ -298,15 +340,32 @@ class PosisiStok extends Public_Controller {
             ),
             demand as (
                 -- total keluar di masa gap per gudang+barang -- dipakai (bukan ditampilkan)
-                -- utk netting FIFO thd supply, sama seperti det_stok_trans akan lakukan
-                -- begitu batch hitung-stok jalan
+                -- utk netting FIFO thd supply, HANYA utk transaksi yang BELUM kepotong via
+                -- det_stok_trans manapun (NOT EXISTS di bawah). Kalau sudah ada rekamannya,
+                -- berarti batch SUDAH memprosesnya (sudah tercermin di jml_stok masing-masing
+                -- layer lewat supply di atas) -- dihitung lagi di sini akan dobel-hitung DAN
+                -- alokasi FIFO buatan sendiri bisa beda dari alokasi nyata yang sudah kepakai.
                 select kode_gudang, kode_barang, sum(jumlah) as total_keluar
                 from ( ".$sql_gap_keluar." ) k
                 cross join eff
                 where
                     k.tanggal >= eff.p and k.tanggal <= '".$_date."' and
                     (k.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
-                    (k.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    (k.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
+                    not exists (
+                        -- Discope ke periode = eff.p SAJA (bukan seluruh histori det_stok_trans)
+                        -- -- id_header yang sama (dan kode_trans yang sama) bisa muncul lagi tiap
+                        -- kali batch membawa layer yang belum habis maju ke snapshot berikutnya,
+                        -- jadi match TANPA guard periode ini nyaris selalu true -- salah total.
+                        select 1 from det_stok_trans dst_chk
+                        left join det_stok ds_chk on ds_chk.id = dst_chk.id_header
+                        left join stok s_chk on ds_chk.id_header = s_chk.id
+                        where
+                            s_chk.periode = eff.p and
+                            ds_chk.kode_gudang = k.kode_gudang and
+                            ds_chk.kode_barang = k.kode_barang and
+                            dst_chk.kode_trans = k.kode_trans
+                    )
                 group by kode_gudang, kode_barang
             ),
             fifo as (

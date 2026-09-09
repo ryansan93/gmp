@@ -430,6 +430,18 @@ class KartuStokRingkas extends Public_Controller {
                 -- mentok 0, jadi order yang melebihi stok yang tersedia (oversell) tidak pernah
                 -- tercatat/terpotong di sana -- ini yang membuat saldo laporan sebelumnya tidak
                 -- pernah bisa minus walau fisiknya sudah minus.
+                --
+                -- SENGAJA tidak lagi pakai harga RATA-RATA TERTIMBANG per kode_trans (versi lama)
+                -- -- satu transaksi yang narik dari 2 lot harga beda (mis. 3 unit @320.063 + 17
+                -- unit @299.881) dulu diringkas jadi 1 baris harga blend (mis. 301.142) yang TIDAK
+                -- PERNAH cocok dengan bucket harga Saldo Awal/Masuk manapun -- muncul sbg baris
+                -- baru isi kredit doang (kelihatan minus), sementara bucket harga yang SEBENARNYA
+                -- kepotong (299.881/320.063) jadi under-kredit (kelihatan surplus). Totalnya tetap
+                -- benar (efek saling menutup), tapi breakdown per-harga jadi pecah palsu. Sekarang
+                -- tiap transaksi keluar dipecah PERSIS ke lot asalnya (det_stok_trans per baris,
+                -- bukan di-rata-rata), jadi nempel pas ke bucket harga yang sama dgn Saldo
+                -- Awal/Masuk-nya. Bagian yang oversell (belum sempat kepotong lot manapun krn stok
+                -- sudah 0) tetap dinilai pakai harga fallback (lot terdekat tanggalnya), terpisah.
                 select
                     x.kode_gudang,
                     x.kode_barang,
@@ -443,58 +455,78 @@ class KartuStokRingkas extends Public_Controller {
                     isnull(sum(x.jumlah * x.hrg_beli), 0) as kredit
                 from
                 (
+                    -- Bagian yang BENAR-BENAR kepotong dari lot tertentu -- per-lot apa adanya
+                    -- (det_stok_trans), bukan diringkas ke satu harga rata-rata.
                     select
-                        klwr.kode_gudang,
-                        klwr.kode_barang,
+                        ds.kode_gudang,
+                        ds.kode_barang,
                         klwr.jenis_barang,
-                        klwr.tanggal,
-                        klwr.jumlah,
-                        klwr.kode_trans,
-                        isnull(hrg.hrg_beli, hp.hrg_beli) as hrg_beli
+                        ds.hrg_beli,
+                        sum(dst.jumlah) as jumlah
                     from
                     (
                         ".$sql_jenis_trans_keluar."
                     ) klwr
-                    left join
-                        (
-                            -- harga rata-rata tertimbang dari layer det_stok yang benar-benar
-                            -- terpotong untuk kode_trans ini (kalau ada)
-                            select
-                                ds.kode_gudang,
-                                ds.kode_barang,
-                                dst.kode_trans,
-                                sum(dst.jumlah * ds.hrg_beli) / sum(dst.jumlah) as hrg_beli
-                            from det_stok_trans dst
-                            left join
-                                det_stok ds
-                                on
-                                    ds.id = dst.id_header
-                            where
-                                dst.jumlah <> 0
-                            group by
-                                ds.kode_gudang, ds.kode_barang, dst.kode_trans
-                        ) hrg
+                    join
+                        det_stok_trans dst
                         on
-                            hrg.kode_gudang = klwr.kode_gudang and
-                            hrg.kode_barang = klwr.kode_barang and
-                            hrg.kode_trans = klwr.kode_trans
-                    outer apply
-                        (
-                            -- fallback kalau kode_trans ini sama sekali tidak pernah kepotong stok:
-                            -- pakai harga layer det_stok terdekat tanggalnya untuk gudang+barang yang sama
-                            select top 1
-                                ds2.hrg_beli
-                            from det_stok ds2
-                            where
-                                ds2.kode_gudang = klwr.kode_gudang and
-                                ds2.kode_barang = klwr.kode_barang
-                            order by
-                                abs(datediff(day, ds2.tgl_trans, klwr.tanggal)) asc
-                        ) hp
+                            dst.kode_trans = klwr.kode_trans and
+                            dst.jumlah <> 0
+                    join
+                        det_stok ds
+                        on
+                            ds.id = dst.id_header and
+                            ds.kode_gudang = klwr.kode_gudang and
+                            ds.kode_barang = klwr.kode_barang
                     where
                         (klwr.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                         (klwr.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
                         klwr.tanggal between '".$_start_date."' and '".$_end_date."'
+                    group by
+                        ds.kode_gudang, ds.kode_barang, klwr.jenis_barang, ds.hrg_beli
+
+                    union all
+
+                    -- Bagian OVERSELL -- fisik melebihi yang sempat kepotong dari lot manapun
+                    -- (det_stok_trans tidak pernah mencatatnya krn stok sudah 0 duluan). Dinilai
+                    -- pakai harga fallback (lot terdekat tanggalnya), sama seperti perilaku lama.
+                    select
+                        klwr2.kode_gudang,
+                        klwr2.kode_barang,
+                        klwr2.jenis_barang,
+                        isnull(hp.hrg_beli, 0) as hrg_beli,
+                        (klwr2.jumlah - isnull(terpotong.jumlah, 0)) as jumlah
+                    from
+                    (
+                        ".$sql_jenis_trans_keluar."
+                    ) klwr2
+                    left join
+                        (
+                            select ds.kode_gudang, ds.kode_barang, dst.kode_trans, sum(dst.jumlah) as jumlah
+                            from det_stok_trans dst
+                            left join det_stok ds on ds.id = dst.id_header
+                            where dst.jumlah <> 0
+                            group by ds.kode_gudang, ds.kode_barang, dst.kode_trans
+                        ) terpotong
+                        on
+                            terpotong.kode_gudang = klwr2.kode_gudang and
+                            terpotong.kode_barang = klwr2.kode_barang and
+                            terpotong.kode_trans = klwr2.kode_trans
+                    outer apply
+                        (
+                            select top 1 ds2.hrg_beli
+                            from det_stok ds2
+                            where
+                                ds2.kode_gudang = klwr2.kode_gudang and
+                                ds2.kode_barang = klwr2.kode_barang
+                            order by
+                                abs(datediff(day, ds2.tgl_trans, klwr2.tanggal)) asc
+                        ) hp
+                    where
+                        (klwr2.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (klwr2.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
+                        klwr2.tanggal between '".$_start_date."' and '".$_end_date."' and
+                        (klwr2.jumlah - isnull(terpotong.jumlah, 0)) > 0
                 ) x
                 group by
                     x.kode_gudang,
