@@ -24,7 +24,58 @@
 			?>
         	<form class="form-vertical" role="form">
 		        <!-- <div class="form-group d-flex align-items-center"> -->
-		        	<?php if ( empty($id) ): ?>
+		        	<?php if ( !empty($data['preview_hitung_ulang']) ): ?>
+		        		<div class="col-sm-12 no-padding" style="margin-bottom: 10px;">
+		        			<div class="alert alert-info" style="display: block; margin-bottom: 10px;">
+		        				<i class="fa fa-refresh"></i> <b>Ini pratinjau hasil Hitung Ulang, belum disimpan.</b> Data di bawah dihitung ulang dari data sumber terkini (RHPP tiap anggota). Invoice tidak akan berubah kalau disimpan.
+		        			</div>
+		        		</div>
+		        		<?php if ( !empty($data['wajib_keterangan_hitung_ulang']) ): ?>
+		        			<div class="col-sm-12 no-padding" style="margin-bottom: 10px;">
+		        				<div class="alert alert-warning" style="display: block;"><?php echo $data['keterangan_info_hitung_ulang']; ?></div>
+		        				<p><b>Alasan hitung ulang (wajib diisi) :</b></p>
+		        				<textarea class="form-control keterangan_hitung_ulang" rows="2"></textarea>
+		        				<p style="margin-top: 10px;"><b>Berita Acara (PDF, wajib dilampirkan) :</b></p>
+		        				<label class="">
+		        					<input type="file" onchange="showNameFile(this)" class="file_lampiran berita_acara_hitung_ulang" name="" placeholder="Berita Acara" data-allowtypes="pdf|PDF" style="display: none;">
+		        					<i class="glyphicon glyphicon-paperclip cursor-p"></i> <span class="berita_acara_hitung_ulang_nama">Pilih file...</span>
+		        				</label>
+		        				<br><br>
+		        			</div>
+		        		<?php endif ?>
+		        		<div class="col-sm-12 no-padding" style="margin-bottom: 10px;">
+			        		<button type="button" class="btn btn-warning btn-block" style="display: block; width: 100%; margin-bottom: 5px;" onclick="rg.simpanHitungUlang(this)" data-id="<?php echo $id_hitung_ulang; ?>" data-id-enc="<?php echo exEncrypt($id_hitung_ulang); ?>" data-wajib-keterangan="<?php echo $data['wajib_keterangan_hitung_ulang']; ?>"><i class="fa fa-check"></i> Simpan Hasil Hitung Ulang</button>
+			        		<button type="button" class="btn btn-default btn-block" style="display: block; width: 100%;" onclick="rg.batalHitungUlang(this)" data-id="<?php echo $id_hitung_ulang; ?>"><i class="fa fa-times"></i> Batal, Kembali ke Tampilan Normal</button>
+		        		</div>
+		        		<div class="col-sm-12 no-padding">
+		        			<hr style="margin-top: 5px; margin-bottom: 10px;">
+		        		</div>
+			        	<div class="col-sm-12 no-padding" style="margin-bottom: 10px;">
+				        	<div class="col-sm-2 no-padding" style="width: 11%;">
+				        		<label class="control-label" style="padding-top: 7px;">Biaya Materai</label>
+				        	</div>
+				        	<div class="col-sm-2">
+				        		<input type="text" class="form-control text-right biaya_materai" data-tipe="integer" data-required="1" onblur="rg.hit_tot_pengeluaran(this)" maxlength="7" value="<?php echo $data['biaya_materai']; ?>">
+				        	</div>
+			        	</div>
+			        	<div class="col-sm-12 no-padding" style="margin-bottom: 10px;">
+				        	<div class="col-sm-2 no-padding" style="width: 11%;">
+				        		<label class="control-label" style="padding-top: 7px;">Potongan Pajak</label>
+				        	</div>
+				        	<div class="col-sm-2">
+				        		<select class="form-control prs_potongan" data-required="1" onchange="rg.hit_potongan_pajak(this)">
+				    				<option value="">Pilih</option>
+				    				<?php foreach ($data['data_potongan_pajak'] as $k_dpp => $v_dpp): ?>
+				    					<?php $selected = ( abs((float)$v_dpp['prs_potongan'] - (float)$data['potongan_pajak']) < 0.0001 ) ? 'selected' : null; ?>
+				    					<option value="<?php echo $v_dpp['id']; ?>" <?php echo $selected; ?> ><?php echo angkaDecimal($v_dpp['prs_potongan']); ?></option>
+				    				<?php endforeach ?>
+				    			</select>
+				        	</div>
+				        	<div class="col-sm-1 no-padding">
+				        		<label class="control-label" style="padding-top: 7px;">%</label>
+				        	</div>
+			        	</div>
+		        	<?php elseif ( empty($id) ): ?>
 		        		<div class="col-sm-12 no-padding" style="margin-bottom: 10px;">
 			        		<div class="col-sm-6 no-padding">
 			        			<div class="col-sm-12 no-padding align-items-center" style="margin-bottom: 10px;">
@@ -89,38 +140,42 @@
 		        		</div>
 			        <?php else: ?>
 			        	<div class="col-md-12 no-padding" style="margin-bottom: 10px;">
-			        		<div class="col-sm-8 no-padding">
-		            			<div class="col-sm-12 no-padding <?php echo $hide_inti; ?>">
-		            				<?php if ( $data['cn'] == '' ): ?>
+			        		<div class="col-sm-12 no-padding <?php echo $hide_inti; ?>">
+			            			<?php if ( $data['cn'] == '' ): ?>
 					            		<div class="col-sm-12 d-flex align-items-center">
-					            			<!-- <div class="col-sm-1 d-flex align-items-center no-padding"><label class="control-label" style="padding-top: 0px;">CN : </label></div>
-					            			<div class="col-sm-4">
-					            				<input type="text" class="form-control text-right nilai_cn" data-tipe="decimal" placeholder="Nilai CN" onblur="rg.setCn(this)" data-required="1">
-					            			</div>
-					            			<div class="col-sm-2">
-					            				<button type="button" class="btn btn-primary" onclick="rg.submitCn(this)" data-id="<?php echo $id; ?>">Submit CN</button>
-					            			</div> -->
-
-											<div class="col-sm-1 no-padding text-left"><label class="control-label">CN : </label></div>
-											<div class="col-sm-3">
-												<input type="text" class="form-control text-right nilai_cn" data-tipe="decimal" placeholder="Nilai CN" onblur="rg.setCn(this)" data-required="1">
-											</div>
-											<div class="col-sm-2 no-padding text-right"><label class="control-label">BIAYA OPR : </label></div>
-											<div class="col-sm-4">
-												<input type="text" class="form-control text-right nilai_opr" data-tipe="decimal" placeholder="Nilai OPR" onblur="rg.setCn(this)" data-required="1">
-											</div>
-											<div class="col-sm-2">
-												<button type="button" class="btn btn-primary" onclick="rg.submitCn(this)" data-id="<?php echo $id; ?>">Submit CN & Biaya OPR</button>
-											</div>
-					            		</div>	            					
-		            				<?php endif ?>
-		            			</div>
-		            		</div>
-				        	<div class="col-sm-4 no-padding" style="margin-bottom: 10px;">
-			            		<button type="button" class="btn btn-danger pull-right" onclick="rg.delete(this)" data-id="<?php echo $id; ?>"><i class="fa fa-times"></i> Delete</button>
-			            	</div>
+										<div class="col-sm-1 no-padding text-left"><label class="control-label">CN : </label></div>
+										<div class="col-sm-3">
+											<input type="text" class="form-control text-right nilai_cn" data-tipe="decimal" placeholder="Nilai CN" onblur="rg.setCn(this)" data-required="1">
+										</div>
+										<div class="col-sm-2 no-padding text-right"><label class="control-label">BIAYA OPR : </label></div>
+										<div class="col-sm-4">
+											<input type="text" class="form-control text-right nilai_opr" data-tipe="decimal" placeholder="Nilai OPR" onblur="rg.setCn(this)" data-required="1">
+										</div>
+										<div class="col-sm-2">
+											<button type="button" class="btn btn-primary" onclick="rg.submitCn(this)" data-id="<?php echo $id; ?>">Submit CN & Biaya OPR</button>
+										</div>
+					            		</div>
+			            			<?php endif ?>
+			            		</div>
 			        	</div>
-		        	<?php endif ?>
+			        	<div class="col-sm-12 no-padding" style="margin-bottom: 10px;">
+			            	<button type="button" class="btn btn-warning btn-block" style="display: block; width: 100%; margin-bottom: 5px;" onclick="rg.hitungUlang(this)" data-id="<?php echo $id; ?>"><i class="fa fa-refresh"></i> Hitung Ulang</button>
+			            	<?php if ( empty($ada_konfirmasi_pembayaran) ): ?>
+			            		<button type="button" class="btn btn-danger btn-block" style="display: block; width: 100%;" onclick="rg.delete(this)" data-id="<?php echo $id; ?>"><i class="fa fa-times"></i> Delete</button>
+			            	<?php endif ?>
+			        	</div>
+			        	<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
+			        		<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-time"></i> RHPP Group diproses: <?php echo !empty($data['log_rhpp_group']) ? $data['log_rhpp_group'] : '-'; ?></small>
+			        	</div>
+			        	<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
+			        		<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-file"></i> No Invoice: <?php echo !empty($data['no_invoice_rhpp_group']) ? $data['no_invoice_rhpp_group'] : '-'; ?></small>
+			        	</div>
+			        	<?php if ( !empty($data['log_hitung_ulang']) ): ?>
+			        	<div class="col-sm-12 no-padding" style="margin-bottom: 5px;">
+			        		<small class="text-warning" style="font-style: italic;"><i class="glyphicon glyphicon-warning-sign"></i> <?php echo ucfirst($data['log_hitung_ulang']); ?></small>
+			        	</div>
+			        	<?php endif ?>
+			        	<?php endif ?>
 		        <!-- </div> -->
 		    </form>
             <fieldset>

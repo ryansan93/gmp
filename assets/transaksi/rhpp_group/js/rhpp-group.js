@@ -515,7 +515,10 @@ var rg = {
 		$(div_rhpp_plasma).find('td.pendapatan_peternak_setelah_potong_hutang b').html( text_pendapatan_peternak_setelah_potong_hutang );
     }, // end - hit_pendapatan_peternak_setelah_potong_hutang
 
-	save: function() {
+	// Kumpulkan data RHPP Group (per tab plasma/inti) dari tabel yang sedang di-render
+	// di layar -- dipakai bareng oleh save() (grup baru) dan simpanHitungUlang() (grup
+	// existing), supaya logic pengumpulan tidak dobel.
+	buildDataRhppGroup: function() {
 		var div_rhpp = $('#rhpp');
 
 		let data = [];
@@ -761,7 +764,11 @@ var rg = {
 
 			mitra = $(tab_pane).find('label.mitra').data('val');
 			nomor = $(tab_pane).find('label.mitra').data('nomor');
-			tgl_tutup = dateSQL( $('#TglTutup').data('DateTimePicker').date() );
+			// #TglTutup cuma ada di form "grup baru" (save()) -- di preview Hitung Ulang
+			// (simpanHitungUlang(), yg tdk butuh/kirim tgl_tutup) elemen ini tdk ada di
+			// halaman, jadi .data('DateTimePicker') undefined kalau tdk di-guard.
+			var dpTglTutup = $('#TglTutup').data('DateTimePicker');
+			tgl_tutup = dpTglTutup ? dateSQL( dpTglTutup.date() ) : null;
 
 			data[ $(tab_pane).attr('id') ] = {
 				'jenis': $(tab_pane).attr('id'),
@@ -809,6 +816,16 @@ var rg = {
 			};
 		});
 
+		return { data: data, mitra: mitra, nomor: nomor, tgl_tutup: tgl_tutup };
+	}, // end - buildDataRhppGroup
+
+	save: function() {
+		var built = rg.buildDataRhppGroup();
+		var data = built.data;
+		var mitra = built.mitra;
+		var nomor = built.nomor;
+		var tgl_tutup = built.tgl_tutup;
+
 		bootbox.confirm('Apakah anda yakin ingin menyimpan data RHPP Group mitra <b>'+mitra.toUpperCase()+'</b>', function(result) {
 			if ( result ) {
 				showLoading;
@@ -854,6 +871,151 @@ var rg = {
 			}
 		});
 	}, // end - save
+
+	hitungUlang: function(elm) {
+		var id = $(elm).data('id');
+
+		var params = {
+			'id': id,
+			'hitung_ulang': 1
+		};
+
+		$.ajax({
+            url: 'transaksi/RhppGroup/proses_hitung',
+            data: { 'params': params },
+            type: 'GET',
+            dataType: 'HTML',
+            beforeSend: function(){ showLoading(); },
+            success: function(html){
+            	$('#rhpp').html( html );
+
+            	$('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+		            $(this).priceFormat(Config[$(this).data('tipe')]);
+		        });
+
+		        // Angka pendapatan_peternak/potongan_pajak/dst BUKAN dikirim server (RhppGroup
+		        // menghitungnya di client), jadi biaya_materai & potongan_pajak yang di-pre-fill
+		        // (bukan lewat interaksi user spt alur "grup baru") perlu di-trigger manual sekali
+		        // di sini spy tabel langsung menampilkan angka yang benar, bukan nunggu blur/change.
+		        // td.total_pemasukan sisi INTI dihitung manual dulu (bukan lewat
+		        // hit_tot_pemasukan_inti(), yang secara internal manggil hit_tot_pengeluaran()
+		        // TANPA elm & jadi mereset biaya_materai ke 0 -- bug lama, di luar scope ini).
+		        var div_rhpp_inti = $('#rhpp_inti');
+		        var tot_penjualan_ayam = parseFloat($(div_rhpp_inti).find('td.tot_penjualan_ayam').attr('data-val'));
+		        var _cn = $(div_rhpp_inti).find('td.cn').attr('data-val');
+		        var cn = !empty(_cn) ? parseFloat(_cn) : 0;
+		        var tot_pemasukan_inti_val = tot_penjualan_ayam + cn;
+		        $(div_rhpp_inti).find('td.total_pemasukan b').text( numeral.formatInt(tot_pemasukan_inti_val) );
+		        $(div_rhpp_inti).find('td.total_pemasukan').attr('data-val', tot_pemasukan_inti_val );
+
+		        rg.hit_tot_pengeluaran( $('.biaya_materai') );
+
+                hideLoading();
+            },
+            error: function(jqXHR, status, err) {
+            	hideLoading();
+            	bootbox.alert('Gagal memuat Hitung Ulang (' + status + '). Cek console browser (F12) utk detail error server.');
+            	console.error('proses_hitung (hitung_ulang) failed:', jqXHR.status, jqXHR.responseText);
+            },
+        });
+	}, // end - hitungUlang
+
+	batalHitungUlang: function(elm) {
+		var id = $(elm).data('id');
+
+		rg.proses_hit_rhpp_group(elm);
+	}, // end - batalHitungUlang
+
+	simpanHitungUlang: function(elm) {
+		var id = $(elm).data('id');
+		var idEnc = $(elm).data('id-enc');
+		var wajibKeterangan = $(elm).data('wajib-keterangan') == 1;
+		var keterangan = $('.keterangan_hitung_ulang').val();
+		var inputBeritaAcara = $('.berita_acara_hitung_ulang').get(0);
+		var fileBeritaAcara = ( inputBeritaAcara && inputBeritaAcara.files && inputBeritaAcara.files.length > 0 ) ? inputBeritaAcara.files[0] : null;
+
+		if ( wajibKeterangan && empty(keterangan) ) {
+			$('.keterangan_hitung_ulang').addClass('has-error');
+			bootbox.alert('Alasan hitung ulang wajib diisi karena RHPP Group ini sudah masuk proses pembayaran.');
+			return;
+		}
+
+		if ( wajibKeterangan && !fileBeritaAcara ) {
+			bootbox.alert('Berita Acara wajib dilampirkan karena RHPP Group ini sudah masuk proses pembayaran.');
+			return;
+		}
+
+		var built = rg.buildDataRhppGroup();
+		var data = built.data;
+		var mitra = built.mitra;
+
+		bootbox.confirm('Apakah anda yakin ingin menyimpan hasil hitung ulang RHPP Group mitra <b>'+mitra.toUpperCase()+'</b> ? Invoice tidak akan berubah.', function(result) {
+			if ( result ) {
+				var simpanHitungUlangAjax = function() {
+					let data_rhpp = {
+						0: data['rhpp_inti'],
+						1: data['rhpp_plasma'],
+					};
+
+					let params = {
+						'id': id,
+						'data_rhpp': data_rhpp
+					};
+
+					$.ajax({
+			            url : 'transaksi/RhppGroup/hitungUlang',
+			            data : { 'params': params, 'keterangan': keterangan },
+			            type : 'POST',
+			            dataType : 'JSON',
+			            beforeSend : function(){ showLoading(); },
+			            success : function(data){
+			            	hideLoading();
+
+			            	if ( data.status == 1 ) {
+			            		bootbox.alert( data.message, function() {
+			            			var a = '<a class="cursor-p lihat" onclick="rg.proses_hit_rhpp_group(this)" data-href="rhpp" data-id="'+data.content.id+'">Lihat</a>';
+			            			$(a).click();
+			            		});
+			            	} else {
+			            		bootbox.alert( data.message );
+			            	}
+			            },
+			            error: function(jqXHR, status, err) {
+			            	hideLoading();
+			            	bootbox.alert('Gagal menyimpan Hitung Ulang (' + status + '). Cek console browser (F12) utk detail error server.');
+			            	console.error('hitungUlang failed:', jqXHR.status, jqXHR.responseText);
+			            },
+			        });
+				};
+
+				if ( fileBeritaAcara ) {
+					var formData = new FormData();
+					formData.append('files[]', fileBeritaAcara);
+					formData.append('data', JSON.stringify({ 'id': idEnc }));
+
+					$.ajax({
+						url: 'transaksi/RhppGroup/uploadBeritaAcara',
+						dataType: 'json',
+						type: 'post',
+						processData: false,
+						contentType: false,
+						data: formData,
+						beforeSend: function() { showLoading(); },
+						success: function(data) {
+							if ( data.status == 1 ) {
+								simpanHitungUlangAjax();
+							} else {
+								hideLoading();
+								bootbox.alert('Gagal upload Berita Acara: ' + data.message);
+							}
+						}
+					});
+				} else {
+					simpanHitungUlangAjax();
+				}
+			}
+		});
+	}, // end - simpanHitungUlang
 
 	delete: function(elm) {
 		var div_rhpp = $('#rhpp');

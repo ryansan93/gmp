@@ -297,6 +297,21 @@ class RhppGroup extends Public_Controller {
     {
         $params = $this->input->get('params');
 
+        // "Hitung Ulang" grup yang SUDAH tersimpan: dipicu dgn params['id'] (id
+        // rhpp_group_header) + params['hitung_ulang']=1 dari JS. Ambil ulang daftar
+        // noreg anggota grup itu, feed sbg params['list_noreg'] (bentuk yg SAMA dgn
+        // form "Tambah Grup" baru), lalu KOSONGKAN params['id'] supaya jatuh ke cabang
+        // "fresh compute dari sumber" di bawah (reuse penuh, TANPA duplikasi logic) --
+        // bukan cabang "load snapshot tersimpan". Id asli grup disimpan di
+        // $_hitung_ulang_id utk dipakai lagi setelah compute selesai (override field
+        // manual + flag preview_hitung_ulang utk view).
+        $_hitung_ulang_id = null;
+        if ( !empty($params['id']) && !empty($params['hitung_ulang']) ) {
+            $_hitung_ulang_id = $params['id'];
+            $params['list_noreg'] = $this->_ambilNoregGroup( $_hitung_ulang_id );
+            unset( $params['id'] );
+        }
+
         $data_rhpp_plasma = null;
         $data_rhpp_int = null;
         $data = null;
@@ -1242,6 +1257,56 @@ class RhppGroup extends Public_Controller {
             }
         }
 
+        // Hitung Ulang grup existing: data_potongan/data_bonus/data_piutang_plasma di
+        // atas ini (hasil fresh-compute) sebenarnya keliru dipakai di sini -- itu hasil
+        // baca potongan/bonus milik RHPP ANGGOTA (relevan cuma utk grup BARU, saat
+        // potongan/bonus individual noreg mau "ditawarkan" masuk grup). Grup yang
+        // SUDAH ada py salinan sendiri (rhpp_group_potongan/bonus/piutang, diisi
+        // manual lewat form SETELAH grup dibuat) -- itu yang harus dipertahankan,
+        // BUKAN di-derive ulang dari anggota. Timpa di sini sebelum dibungkus ke
+        // data_detail_plasma di bawah.
+        if ( !empty($_hitung_ulang_id) ) {
+            $m_rhpp_plasma_row = new \Model\Storage\RhppGroup_model();
+            $d_rhpp_plasma_row = $m_rhpp_plasma_row->where('id_header', $_hitung_ulang_id)->where('jenis', 'rhpp_plasma')->with(['potongan', 'bonus', 'piutang'])->first();
+
+            $data_potongan = null;
+            $data_bonus = null;
+            $data_piutang_plasma = null;
+
+            if ( !empty($d_rhpp_plasma_row) ) {
+                foreach ($d_rhpp_plasma_row->potongan as $v_potongan) {
+                    $data_potongan[ $v_potongan->id ] = array(
+                        'id_jual' => $v_potongan->id_trans,
+                        'tanggal' => null,
+                        'keterangan' => $v_potongan->keterangan,
+                        'tagihan' => $v_potongan->jumlah_tagihan,
+                        'sudah_bayar' => $v_potongan->jumlah_bayar,
+                        'sisa_bayar' => ( $v_potongan->jumlah_bayar < $v_potongan->jumlah_tagihan ) ? $v_potongan->jumlah_tagihan - $v_potongan->jumlah_bayar : 0
+                    );
+                }
+
+                foreach ($d_rhpp_plasma_row->bonus as $v_bonus) {
+                    $data_bonus[ $v_bonus->id ] = array(
+                        'id_trans' => $v_bonus->id_trans,
+                        'keterangan' => $v_bonus->keterangan,
+                        'jumlah' => $v_bonus->jumlah,
+                    );
+                }
+
+                foreach ($d_rhpp_plasma_row->piutang as $v_piutang) {
+                    $data_piutang_plasma[ $v_piutang->id ] = array(
+                        'id' => $v_piutang->id,
+                        'kode' => $v_piutang->piutang_kode,
+                        'nama_perusahaan' => $v_piutang->nama_perusahaan,
+                        'tanggal' => !empty($v_piutang->piutang) ? $v_piutang->piutang->tanggal : null,
+                        'keterangan' => !empty($v_piutang->piutang) ? $v_piutang->piutang->keterangan : null,
+                        'sisa_piutang' => $v_piutang->sisa_piutang,
+                        'nominal' => $v_piutang->nominal
+                    );
+                }
+            }
+        }
+
         $data_detail_plasma = array(
             'data_doc' => $data_doc_plasma,
             'data_pakan' => $data_pakan_plasma,
@@ -1287,6 +1352,99 @@ class RhppGroup extends Public_Controller {
         $data_header['potongan_pajak'] = isset($params['id']) ? $data_header['potongan_pajak'] : $data_header['potongan_pajak'] / count($params['list_noreg']);
         $data_header['berita_acara'] = $berita_acara;
 
+        // Hitung Ulang grup existing: biaya_materai/potongan_pajak%/biaya_opr/cn adalah
+        // field MANUAL di level grup (biaya_materai & potongan_pajak% diisi user saat
+        // grup dibuat; biaya_opr & cn diisi belakangan lewat submitCn(), bisa TIDAK
+        // pernah diisi) -- dipertahankan dari yang TERSIMPAN saat ini, bukan ikut
+        // di-reset ke 0/blank seperti default cabang "grup baru" di atas.
+        $wajib_keterangan_hitung_ulang = 0;
+        $keterangan_info_hitung_ulang = null;
+        if ( !empty($_hitung_ulang_id) ) {
+            $manual = $this->_ambilFieldManualGroup( $_hitung_ulang_id );
+
+            $data_header['biaya_materai'] = $manual['biaya_materai'];
+            $data_header['potongan_pajak'] = $manual['prs_potongan_pajak'];
+            $data_header['biaya_opr'] = $manual['biaya_operasional'];
+            $data_header['cn'] = $manual['cn'];
+            $cn = $manual['cn'];
+
+            $m_rgh_hu = new \Model\Storage\RhppGroupHeader_model();
+            $d_rgh_hu = $m_rgh_hu->where('id', $_hitung_ulang_id)->first();
+            $data_header['berita_acara'] = !empty($d_rgh_hu) ? $d_rgh_hu->berita_acara : null;
+
+            $status_bayar = $this->_cekStatusPembayaranRhppGroup( $_hitung_ulang_id );
+            $wajib_keterangan_hitung_ulang = $status_bayar['wajib_keterangan'] ? 1 : 0;
+            $keterangan_info_hitung_ulang = $status_bayar['keterangan_info'];
+        }
+
+        // Dipakai layar view (bukan cuma preview hitung ulang) utk sembunyikan tombol
+        // Delete kalau grup ini sudah masuk proses pembayaran -- menghapus baris yang
+        // sudah dikonfirmasi/ditransfer akan meninggalkan referensi yatim di
+        // konfirmasi_pembayaran_peternak_det/realisasi_pembayaran_det.
+        $ada_konfirmasi_pembayaran = 0;
+        if ( !empty($_hitung_ulang_id) ) {
+            $ada_konfirmasi_pembayaran = $status_bayar['wajib_keterangan'] ? 1 : 0;
+        } else if ( isset($params['id']) ) {
+            $status_bayar_view = $this->_cekStatusPembayaranRhppGroup( $params['id'] );
+            $ada_konfirmasi_pembayaran = $status_bayar_view['wajib_keterangan'] ? 1 : 0;
+        }
+
+        // Log riwayat Hitung Ulang -- pola sama dgn TSDRHPP::view(), dibaca dari
+        // rhpp_group_header.keterangan_hitung_ulang/tgl_hitung_ulang/oleh_hitung_ulang
+        // (kosong terus kalau grup ini belum pernah dihitung ulang sejak sudah masuk
+        // proses pembayaran -- keterangan cuma wajib diisi utk kasus itu).
+        $log_hitung_ulang = null;
+        $_id_utk_log = !empty($_hitung_ulang_id) ? $_hitung_ulang_id : ( isset($params['id']) ? $params['id'] : null );
+        if ( !empty($_id_utk_log) ) {
+            $m_rgh_log = new \Model\Storage\RhppGroupHeader_model();
+            $d_rgh_log = $m_rgh_log->where('id', $_id_utk_log)->first();
+
+            if ( !empty($d_rgh_log) && !empty($d_rgh_log->keterangan_hitung_ulang) ) {
+                $log_hitung_ulang = 'Hitung ulang (setelah pembayaran): ' . $d_rgh_log->keterangan_hitung_ulang
+                    . ' -- oleh ' . $d_rgh_log->oleh_hitung_ulang
+                    . ' pada ' . dateTimeFormat($d_rgh_log->tgl_hitung_ulang);
+            }
+        }
+        $data_header['log_hitung_ulang'] = $log_hitung_ulang;
+
+        // Baris keterangan lain, pola sama persis dgn TSDRHPP::view() ($log_rhpp /
+        // $no_invoice_rhpp) -- "RHPP Group diproses" (log pertama tbl_name='rhpp_group'
+        // utk baris plasma grup ini) & No Invoice (rhpp_group.invoice, baris plasma).
+        // "Jenis RHPP" TIDAK direplikasi di sini -- sudah jelas GROUP krn sedang di
+        // halaman RHPP Group, beda dgn TSDRHPP yg perlu bedakan GROUP/NON GROUP.
+        $log_rhpp_group = null;
+        $no_invoice_rhpp_group = null;
+        if ( !empty($_id_utk_log) ) {
+            $m_rg_plasma_log = new \Model\Storage\RhppGroup_model();
+            $d_rg_plasma_log = $m_rg_plasma_log->where('id_header', $_id_utk_log)->where('jenis', 'rhpp_plasma')->first();
+
+            if ( !empty($d_rg_plasma_log) ) {
+                $no_invoice_rhpp_group = $d_rg_plasma_log->invoice;
+
+                $m_conf_log = new \Model\Storage\Conf();
+                $sql = "
+                    select top 1 lt1.deskripsi, lt1.waktu
+                    from log_tables lt1
+                    right join
+                        (select min(id) as id, tbl_name, tbl_id from log_tables where tbl_name = 'rhpp_group' group by tbl_name, tbl_id) lt2
+                        on
+                            lt1.id = lt2.id
+                    where
+                        lt1.tbl_id = '".$d_rg_plasma_log->id."'
+                ";
+                $d_log_rhpp_group = $m_conf_log->hydrateRaw( $sql );
+
+                if ( $d_log_rhpp_group->count() > 0 ) {
+                    $d_log_rhpp_group = $d_log_rhpp_group->toArray()[0];
+                    if ( !empty($d_log_rhpp_group['deskripsi']) && !empty($d_log_rhpp_group['waktu']) ) {
+                        $log_rhpp_group = $d_log_rhpp_group['deskripsi'] . ' pada ' . dateTimeFormat($d_log_rhpp_group['waktu']);
+                    }
+                }
+            }
+        }
+        $data_header['log_rhpp_group'] = $log_rhpp_group;
+        $data_header['no_invoice_rhpp_group'] = $no_invoice_rhpp_group;
+
         $akses = hakAkses($this->url);
 
         $form_rhpp_inti = 0;
@@ -1295,7 +1453,18 @@ class RhppGroup extends Public_Controller {
         }
 
         $content['form_rhpp_inti'] = $form_rhpp_inti;
-        $content['id'] = isset($params['id']) ? $params['id'] : null;
+        $content['id'] = !empty($_hitung_ulang_id) ? $_hitung_ulang_id : ( isset($params['id']) ? $params['id'] : null );
+        $content['preview_hitung_ulang'] = !empty($_hitung_ulang_id) ? 1 : 0;
+        $content['id_hitung_ulang'] = $_hitung_ulang_id;
+        $content['ada_konfirmasi_pembayaran'] = $ada_konfirmasi_pembayaran;
+        $content['wajib_keterangan_hitung_ulang'] = $wajib_keterangan_hitung_ulang;
+        $content['keterangan_info_hitung_ulang'] = $keterangan_info_hitung_ulang;
+        // View mengecek flag2 ini lewat $data['...'] (bukan $preview_hitung_ulang dsb
+        // langsung), krn $data di view = $content['data']. Wajib di-mirror ke $data_header
+        // juga, jika tidak selalu dianggap kosong -> Hitung Ulang keliatan "tidak ngapa2in".
+        $data_header['preview_hitung_ulang'] = $content['preview_hitung_ulang'];
+        $data_header['wajib_keterangan_hitung_ulang'] = $wajib_keterangan_hitung_ulang;
+        $data_header['keterangan_info_hitung_ulang'] = $keterangan_info_hitung_ulang;
         $content['data'] = $data_header;
         $content['data_plasma'] = $data_rhpp_plasma;
         $content['data_inti'] = $data_rhpp_inti;
@@ -1816,6 +1985,337 @@ class RhppGroup extends Public_Controller {
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil disimpan';
             $this->result['content'] = array('id' => $id_header);
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = "Gagal : " . $e->getMessage();
+        }
+
+        display_json($this->result);
+    }
+
+    /**
+     * Daftar noreg anggota rhpp_group_header $id_header (diambil dari rhpp_group_noreg
+     * milik salah satu baris rhpp_group -- isinya sama utk plasma maupun inti). Dipakai
+     * utk mem-feed ulang proses_hitung() (jalur fresh-compute) sbg pengganti
+     * params['list_noreg'] dari form "Tambah Grup" baru, saat "Hitung Ulang" grup yang
+     * sudah tersimpan.
+     */
+    private function _ambilNoregGroup($id_header)
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select distinct rgn.noreg
+            from rhpp_group_noreg rgn
+            left join rhpp_group rg on rgn.id_header = rg.id
+            where rg.id_header = ".$id_header."
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $list_noreg = array();
+        if ( $d_conf->count() > 0 ) {
+            foreach ($d_conf->toArray() as $v_conf) {
+                $list_noreg[] = array('noreg' => $v_conf['noreg']);
+            }
+        }
+
+        return $list_noreg;
+    }
+
+    /**
+     * Field manual (bukan derived-dari-sumber) dari rhpp_group inti yang TERSIMPAN
+     * saat ini -- dipertahankan apa adanya saat "Hitung Ulang", sama pola dgn
+     * TSDRHPP::_ambilFieldManual(). biaya_operasional & cn SELALU manual di level grup
+     * (diisi lewat submitCn() setelah grup ada, bisa juga masih kosong/null kalau
+     * belum pernah disubmit) -- BUKAN dijumlah ulang dari tiap anggota seperti yang
+     * dilakukan cabang "grup baru" di proses_hitung() (nilai jumlah itu cuma default
+     * awal sebelum submitCn() pernah dipakai).
+     */
+    private function _ambilFieldManualGroup($id_header)
+    {
+        $m_rhpp_inti = new \Model\Storage\RhppGroup_model();
+        $d_rhpp_inti = $m_rhpp_inti->where('id_header', $id_header)->where('jenis', 'rhpp_inti')->first();
+
+        return array(
+            // (int) wajib -- kolom di DB decimal (mis. "20000.00"), sedangkan input
+            // Biaya Materai bertipe data-tipe="integer" & di-echo mentah ke value="..."
+            // tanpa lewat angkaRibuan(); titik desimalnya kepencet priceFormat() jadi
+            // ribuan (20000.00 -> 2.000.000). Field lain (biaya_opr dsb) aman krn selalu
+            // lewat angkaRibuan() dulu sebelum ditampilkan.
+            'biaya_materai' => !empty($d_rhpp_inti) ? (int)$d_rhpp_inti->biaya_materai : 0,
+            'prs_potongan_pajak' => !empty($d_rhpp_inti) ? $d_rhpp_inti->prs_potongan_pajak : 0,
+            'biaya_operasional' => !empty($d_rhpp_inti) ? $d_rhpp_inti->biaya_operasional : 0,
+            'cn' => !empty($d_rhpp_inti) ? $d_rhpp_inti->cn : null,
+        );
+    }
+
+    /**
+     * Cek status pembayaran RHPP Group $id_header -- pola sama dgn
+     * TSDRHPP::_cekStatusPembayaranRhpp(), pakai jenis='RHPP GROUP' (bukan 'RHPP') krn
+     * konfirmasi_pembayaran_peternak_det membedakan keduanya (id_trans menunjuk ke
+     * rhpp_group.id -- baris plasma -- bukan rhpp.id). Tidak ada analogi
+     * "blocked_group" di sini (RhppGroup tidak pernah digabung ke entitas yang lebih
+     * besar lagi).
+     */
+    private function _cekStatusPembayaranRhppGroup($id_header)
+    {
+        $status = array(
+            'wajib_keterangan' => false,
+            'keterangan_info' => null,
+        );
+
+        $m_rhpp = new \Model\Storage\RhppGroup_model();
+        $d_rhpp_plasma = $m_rhpp->where('id_header', $id_header)->where('jenis', 'rhpp_plasma')->first();
+
+        if ( !$d_rhpp_plasma ) {
+            return $status;
+        }
+
+        $m_kppd = new \Model\Storage\Conf();
+        $sql = "
+            select
+                kpp.nomor,
+                kpp.tgl_bayar,
+                kppd.*
+            from konfirmasi_pembayaran_peternak_det kppd
+            left join
+                konfirmasi_pembayaran_peternak kpp
+                on
+                    kppd.id_header = kpp.id
+            where
+                kppd.jenis = 'RHPP GROUP' and
+                kppd.id_trans = ".$d_rhpp_plasma->id."
+        ";
+        $d_kppd = $m_kppd->hydrateRaw( $sql );
+
+        if ( $d_kppd->count() > 0 ) {
+            $d_kppd = $d_kppd->toArray()[0];
+
+            $status['wajib_keterangan'] = true;
+            $status['keterangan_info'] = 'RHPP Group ini sudah diajukan pembayaran dengan nomor pengajuan <b>'.$d_kppd['nomor'].'</b> (tanggal bayar <b>'.strtoupper(tglIndonesia($d_kppd['tgl_bayar'], '-', ' ')).'</b>).';
+
+            $m_rpd = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    rp.nomor,
+                    rp.tgl_bayar,
+                    rpd.*
+                from realisasi_pembayaran_det rpd
+                left join
+                    realisasi_pembayaran rp
+                    on
+                        rpd.id_header = rp.id
+                where
+                    rpd.no_bayar = '".$d_kppd['nomor']."'
+            ";
+            $d_rpd = $m_rpd->hydrateRaw( $sql );
+
+            if ( $d_rpd->count() > 0 ) {
+                $d_rpd = $d_rpd->toArray()[0];
+
+                $status['keterangan_info'] = 'RHPP Group ini sudah <b>DITRANSFER</b> dengan nomor pembayaran <b>'.$d_rpd['nomor'].'</b> (tanggal bayar <b>'.strtoupper(tglIndonesia($d_rpd['tgl_bayar'], '-', ' ')).'</b>). Selisih hasil hitung ulang perlu ditindaklanjuti manual (mis. lewat menu Piutang Mitra) supaya diperhitungkan di transfer berikutnya.';
+            }
+        }
+
+        return $status;
+    }
+
+    /**
+     * Simpan hasil "Hitung Ulang" (update-in-place) -- pasangan proses_hitung() mode
+     * hitung_ulang=1. UPDATE baris rhpp_group (plasma & inti) yang SUDAH ada (bukan
+     * insert baru spt save()), hapus+insert ulang tabel turunan-dari-sumber (Doc,
+     * Noreg, Pakan, OaPakan, PindahPakan, OaPindahPakan, ReturPakan, OaReturPakan,
+     * Voadip, ReturVoadip, Penjualan). Potongan/Bonus/Piutang SENGAJA TIDAK disentuh
+     * -- input manual per grup (lihat catatan di proses_hitung()). invoice & nomor/
+     * mitra/tgl_submit juga TIDAK diubah (tetap sama, ini koreksi bukan pengajuan baru).
+     */
+    public function hitungUlang()
+    {
+        $params = $this->input->post('params');
+        $keterangan = trim((string) $this->input->post('keterangan'));
+
+        try {
+            $id = $params['id'];
+
+            $m_rgh = new \Model\Storage\RhppGroupHeader_model();
+            $d_rgh = $m_rgh->where('id', $id)->first();
+
+            if ( !$d_rgh ) {
+                $this->result['message'] = 'Data RHPP Group tidak ditemukan.';
+                display_json($this->result);
+                return;
+            }
+
+            $status = $this->_cekStatusPembayaranRhppGroup($id);
+
+            if ( $status['wajib_keterangan'] && empty($keterangan) ) {
+                $this->result['message'] = 'RHPP Group ini sudah masuk proses pembayaran, wajib isi keterangan alasan hitung ulang sebelum dilanjutkan.';
+                display_json($this->result);
+                return;
+            }
+
+            $id_plasma = null;
+
+            foreach ($params['data_rhpp'] as $k_rhpp => $v_rhpp) {
+                $m_rhpp = new \Model\Storage\RhppGroup_model();
+                $d_rhpp_row = $m_rhpp->where('id_header', $id)->where('jenis', $v_rhpp['jenis'])->first();
+
+                if ( empty($d_rhpp_row) ) {
+                    continue;
+                }
+
+                $id_rhpp = $d_rhpp_row->id;
+
+                if ( stristr($v_rhpp['jenis'], 'plasma') !== false ) {
+                    $id_plasma = $id_rhpp;
+                }
+
+                $m_rhpp->where('id', $id_rhpp)->update(
+                    array(
+                        'jml_panen_ekor' => $v_rhpp['jml_panen_ekor'],
+                        'jml_panen_kg' => $v_rhpp['jml_panen_kg'],
+                        'bb' => round($v_rhpp['bb'], 2),
+                        'fcr' => round($v_rhpp['fcr'], 2),
+                        'deplesi' => round($v_rhpp['deplesi'], 2),
+                        'rata_umur' => round($v_rhpp['rata_umur'], 2),
+                        'ip' => round($v_rhpp['ip'], 2),
+                        'tot_penjualan_ayam' => $v_rhpp['tot_penjualan_ayam'],
+                        'tot_pembelian_sapronak' => $v_rhpp['tot_pembelian_sapronak'],
+                        'biaya_materai' => $v_rhpp['biaya_materai'],
+                        'bonus_pasar' => $v_rhpp['bonus_pasar'],
+                        'bonus_kematian' => $v_rhpp['bonus_kematian'],
+                        'bonus_insentif_fcr' => $v_rhpp['bonus_insentif_fcr'],
+                        'biaya_operasional' => $v_rhpp['biaya_operasional'],
+                        'pdpt_peternak_belum_pajak' => $v_rhpp['pdpt_peternak_belum_pajak'],
+                        'prs_potongan_pajak' => $v_rhpp['prs_potongan_pajak'],
+                        'potongan_pajak' => $v_rhpp['potongan_pajak'],
+                        'pdpt_peternak_sudah_pajak' => $v_rhpp['pdpt_peternak_sudah_pajak'],
+                        'lr_inti' => $v_rhpp['lr_inti'],
+                        'total_bonus_insentif_listrik' => $v_rhpp['total_bonus_insentif_listrik'],
+                        'persen_bonus_pasar' => $v_rhpp['persen_bonus_pasar'],
+                        'total_bonus' => $v_rhpp['total_bonus'],
+                        'total_potongan' => $v_rhpp['total_potongan'],
+                        'cn' => !empty($v_rhpp['cn']) ? $v_rhpp['cn'] : null,
+                    )
+                );
+
+                // Child table derived-dari-sumber: hapus lalu insert ulang dari hasil
+                // fresh-compute. rhpp_group_potongan/bonus/piutang SENGAJA tidak
+                // disentuh (input manual, lihat catatan di proses_hitung()).
+                $m_del = new \Model\Storage\RhppGroupDoc_model();
+                $m_del->where('id_header', $id_rhpp)->delete();
+                if ( !empty($v_rhpp['data_doc']) ) {
+                    foreach ($v_rhpp['data_doc'] as $v_doc) {
+                        $m_row = new \Model\Storage\RhppGroupDoc_model();
+                        $m_row->id_header = $id_rhpp;
+                        $m_row->tanggal = substr($v_doc['tanggal'], 0, 10);
+                        $m_row->nota = $v_doc['nota'];
+                        $m_row->barang = $v_doc['barang'];
+                        $m_row->box = $v_doc['box_zak'];
+                        $m_row->jumlah = $v_doc['jumlah'];
+                        $m_row->harga = $v_doc['harga'];
+                        $m_row->total = $v_doc['total'];
+                        $m_row->vaksin = $v_doc['vaksin'];
+                        $m_row->harga_vaksin = $v_doc['harga_vaksin'];
+                        $m_row->total_vaksin = $v_doc['total_vaksin'];
+                        $m_row->save();
+                    }
+                }
+
+                $m_del = new \Model\Storage\RhppGroupNoreg_model();
+                $m_del->where('id_header', $id_rhpp)->delete();
+                if ( !empty($v_rhpp['data_list_noreg']) ) {
+                    foreach ($v_rhpp['data_list_noreg'] as $v_ln) {
+                        $m_row = new \Model\Storage\RhppGroupNoreg_model();
+                        $m_row->id_header = $id_rhpp;
+                        $m_row->noreg = $v_ln['noreg'];
+                        $m_row->kandang = $v_ln['kandang'];
+                        $m_row->populasi = $v_ln['populasi'];
+                        $m_row->tgl_docin = $v_ln['tgl_docin'];
+                        $m_row->tgl_tutup_siklus = $v_ln['tgl_tutup'];
+                        $m_row->save();
+                    }
+                }
+
+                $child_map = array(
+                    'data_pakan' => '\Model\Storage\RhppGroupPakan_model',
+                    'data_oa_pakan' => '\Model\Storage\RhppGroupOaPakan_model',
+                    'data_pindah_pakan' => '\Model\Storage\RhppGroupPindahPakan_model',
+                    'data_oa_pindah_pakan' => '\Model\Storage\RhppGroupOaPindahPakan_model',
+                    'data_retur_pakan' => '\Model\Storage\RhppGroupReturPakan_model',
+                    'data_oa_retur_pakan' => '\Model\Storage\RhppGroupOaReturPakan_model',
+                    'data_voadip' => '\Model\Storage\RhppGroupVoadip_model',
+                    'data_retur_voadip' => '\Model\Storage\RhppGroupReturVoadip_model',
+                );
+
+                foreach ($child_map as $data_key => $model_class) {
+                    $m_del = new $model_class();
+                    $m_del->where('id_header', $id_rhpp)->delete();
+
+                    if ( !empty($v_rhpp[$data_key]) ) {
+                        foreach ($v_rhpp[$data_key] as $row) {
+                            $m_row = new $model_class();
+                            $m_row->id_header = $id_rhpp;
+                            $m_row->tanggal = substr($row['tanggal'], 0, 10);
+                            $m_row->nota = $row['nota'];
+                            $m_row->barang = $row['barang'];
+                            if ( isset($row['zak']) ) {
+                                $m_row->zak = $row['zak'];
+                            } elseif ( isset($row['box_zak']) ) {
+                                $m_row->zak = $row['box_zak'];
+                            }
+                            if ( isset($row['nopol']) ) {
+                                $m_row->nopol = $row['nopol'];
+                            }
+                            $m_row->jumlah = $row['jumlah'];
+                            $m_row->harga = (isset($row['harga']) && $row['harga'] > 0) ? $row['harga'] : 0;
+                            $m_row->total = (isset($row['total']) && $row['total'] > 0) ? $row['total'] : 0;
+                            $m_row->save();
+                        }
+                    }
+                }
+
+                $m_del = new \Model\Storage\RhppGroupPenjualan_model();
+                $m_del->where('id_header', $id_rhpp)->delete();
+                if ( !empty($v_rhpp['data_penjualan']) ) {
+                    foreach ($v_rhpp['data_penjualan'] as $v_penjualan) {
+                        $m_row = new \Model\Storage\RhppGroupPenjualan_model();
+                        $m_row->id_header = $id_rhpp;
+                        $m_row->tanggal = substr($v_penjualan['tanggal'], 0, 10);
+                        $m_row->nota = $v_penjualan['nota'];
+                        $m_row->pembeli = $v_penjualan['pembeli'];
+                        $m_row->ekor = $v_penjualan['ekor'];
+                        $m_row->tonase = $v_penjualan['tonase'];
+                        $m_row->bb = $v_penjualan['bb'];
+                        $m_row->harga_kontrak = $v_penjualan['harga_kontrak'];
+                        $m_row->total_kontrak = $v_penjualan['total_kontrak'];
+                        $m_row->harga_pasar = $v_penjualan['harga_pasar'];
+                        $m_row->total_pasar = $v_penjualan['total_pasar'];
+                        $m_row->selisih = $v_penjualan['selisih'];
+                        $m_row->insentif = $v_penjualan['insentif'];
+                        $m_row->total_insentif = $v_penjualan['total_insentif'];
+                        $m_row->jenis_ayam = $v_penjualan['jenis_ayam'];
+                        $m_row->save();
+                    }
+                }
+
+                $deskripsi_log = 'hitung ulang RHPP Group oleh ' . $this->userdata['detail_user']['nama_detuser'];
+                Modules::run( 'base/event/update', $d_rhpp_row, $deskripsi_log);
+            }
+
+            Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, $id_plasma, 2 );
+
+            if ( !empty($keterangan) ) {
+                $m_rgh->where('id', $id)->update(
+                    array(
+                        'keterangan_hitung_ulang' => $keterangan,
+                        'tgl_hitung_ulang' => date('Y-m-d H:i:s'),
+                        'oleh_hitung_ulang' => $this->userdata['detail_user']['nama_detuser'],
+                    )
+                );
+            }
+
+            $this->result['status'] = 1;
+            $this->result['message'] = 'RHPP Group berhasil dihitung ulang.';
+            $this->result['content'] = array('id' => $id);
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
