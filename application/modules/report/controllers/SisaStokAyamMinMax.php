@@ -67,6 +67,7 @@ class SisaStokAyamMinMax extends Public_Controller {
 
         $m_conf = new \Model\Storage\Conf();
         $sql = "
+            /*
             select
                 data.kode,
                 data.umur,
@@ -94,25 +95,9 @@ class SisaStokAyamMinMax extends Public_Controller {
                     group by
                         kode
                 ) w
-                left join
+                inner join
                     (
-                        select
-                            w.kode as kode_unit, l.*
-                        from
-                        (
-                            select l1.* from lhk l1
-                            right join
-                            (
-                                select max(tanggal) as tanggal, noreg from lhk where tanggal <= '".$tanggal."' group by noreg
-                            ) l2
-                            on
-                                l1.tanggal = l2.tanggal and
-                                l1.noreg = l2.noreg
-                        ) l
-                        left join
-                            rdim_submit rs
-                            on
-                                l.noreg = rs.noreg
+                        select rs.*, w.kode as kode_unit from rdim_submit rs
                         left join
                             kandang k
                             on
@@ -121,14 +106,34 @@ class SisaStokAyamMinMax extends Public_Controller {
                             wilayah w
                             on
                                 k.unit = w.id
+                        left join
+                            (select * from tutup_siklus where tgl_tutup <= '".$tanggal."') ts
+                            on
+                                ts.noreg = rs.noreg
+                        where
+                            ts.id is null
+                    ) rd
+                    on
+                        rd.kode_unit = w.kode
+                inner join
+                    (
+                        select
+                           l.*
+                        from
+                        (
+                            select l1.* from lhk l1
+                            right join
+                            (
+                                select max(tanggal) as tanggal, noreg from lhk where tanggal <= '".$tanggal."' and umur <> 0 group by noreg
+                            ) l2
+                            on
+                                l1.tanggal = l2.tanggal and
+                                l1.noreg = l2.noreg
+                        ) l
                     ) l
                     on
-                        l.kode_unit = w.kode
-                left join
-                    (select * from tutup_siklus where tgl_tutup <= '".$tanggal."') ts
-                    on
-                        l.noreg = ts.noreg
-                left join
+                        l.noreg = rd.noreg
+                inner join
                     (
                         select od.noreg, td.* from (
                             select td1.* from terima_doc td1
@@ -150,26 +155,174 @@ class SisaStokAyamMinMax extends Public_Controller {
                     ) td
                     on
                         l.noreg = td.noreg
-                left join
+                inner join
                     (
                         select noreg, sum(jumlah) as jumlah from adjin_doc group by noreg
                     ) ad
                     on
                         l.noreg = ad.noreg
-                left join
+                inner join
                     (
                         select noreg, sum(netto_ekor) as ekor, sum(netto_kg) as tonase, max(tgl_panen) as tgl_panen_terakhir from real_sj rs where tgl_panen <= '".$tanggal."' group by noreg
                     ) panen
                     on
                         l.noreg = panen.noreg
                 where
-                    ts.id is null and
+                    -- ts.id is null and
                     l.id is not null and
                     (
                         ((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati - isnull(panen.ekor, 0)) > 0 and
                         ((((td.jml_ekor+isnull(ad.jumlah, 0)) - l.ekor_mati) * l.bb) - isnull(panen.tonase, 0)) > 0
                     )
 
+            ) data
+            ".$sql_unit."
+            group by
+                data.kode,
+                data.umur
+            order by
+                data.umur asc,
+                data.kode asc
+            */
+
+            select
+                data.kode,
+                data.umur,
+                min(data.bb) as min_bw,
+                max(data.bb) as max_bw,
+                case
+                	when isnull(sum(data.tonase), 0) > 0 and isnull(sum(data.sisa_ekor), 0) > 0 then
+                		round(sum(data.tonase) / sum(data.sisa_ekor), 3)
+                	else
+                		0
+                end as rata_bw,
+                -- round(sum(data.tonase) / sum(data.sisa_ekor), 3) as rata_bw,
+                sum(data.sisa_ekor) as total_ekor
+            from
+            (
+                select
+                    -- *
+                    case
+                        when l.tanggal is not null then
+                            l.tanggal
+                        else
+                            cast(td.datang as date)
+                    end as tanggal,
+                    -- l.tanggal,
+                    d_noreg.kode_unit as kode,
+                    d_noreg.noreg,
+                    (td.jml_ekor+isnull(ad.jumlah, 0)) as jml_ekor,
+                    case
+                        when l.umur is not null then
+                            l.umur
+                        else
+                            DATEDIFF(day, cast(td.datang as date), '". $params['tanggal'] ."')
+                    end as umur,
+                    l.ekor_mati,
+                    case
+                        when l.bb is not null then
+                            l.bb
+                        else
+                            td.bb
+                    end as bb,
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0)) as sisa_ekor,
+                    case
+                        when l.bb is not null then
+                            (((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0))) * l.bb
+                        else
+                            (((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0))) * td.bb
+                    end as tonase
+                from 
+                (
+                    select
+                        w.kode as kode_unit,
+                        rd.noreg
+                    from 
+                    (
+                        select max(id) as id, kode from wilayah
+                        where
+                            kode is not null
+                        group by
+                            kode
+                    ) w
+                    right join
+                        (
+                            select rs.noreg, w.kode as kode_unit from rdim_submit rs
+                            left join
+                                kandang k
+                                on
+                                    rs.kandang = k.id
+                            left join
+                                wilayah w
+                                on
+                                    k.unit = w.id
+                            left join
+                                (select * from tutup_siklus where tgl_tutup <= '".$tanggal."') ts
+                                on
+                                    ts.noreg = rs.noreg
+                            where
+                                ts.id is null
+                        ) rd
+                        on
+                            rd.kode_unit = w.kode
+                    group by
+                        w.kode,
+                        rd.noreg
+                ) d_noreg
+                left join
+                    (
+                        select
+                            l.*
+                        from
+                        (
+                            select l1.* from lhk l1
+                            right join
+                            (
+                                select max(tanggal) as tanggal, noreg from lhk where tanggal <= '".$tanggal."' and umur <> 0 group by noreg
+                            ) l2
+                            on
+                                l1.tanggal = l2.tanggal and
+                                l1.noreg = l2.noreg
+                        ) l
+                    ) l
+                    on
+                        l.noreg = d_noreg.noreg 
+                left join
+                    (
+                        select od.noreg, td.* from (
+                            select td1.* from terima_doc td1
+                            right join
+                                (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                on
+                                    td1.id = td2.id
+                        ) td
+                        left join
+                            (
+                                select od1.* from order_doc od1
+                                right join
+                                    (select max(id) as id, no_order from order_doc group by no_order) od2
+                                    on
+                                        od1.id = od2.id
+                            ) od
+                            on
+                                td.no_order = od.no_order
+                        where
+				            cast(td.datang as date) <= '".$tanggal."'
+                    ) td
+                    on
+                        td.noreg = d_noreg.noreg
+                left join
+                    (
+                        select noreg, sum(jumlah) as jumlah from adjin_doc group by noreg
+                    ) ad
+                    on
+                        ad.noreg = d_noreg.noreg
+                left join
+                    (
+                        select noreg, sum(netto_ekor) as ekor, sum(netto_kg) as tonase, max(tgl_panen) as tgl_panen_terakhir from real_sj rs where tgl_panen <= '".$tanggal."' group by noreg
+                    ) panen
+                    on
+                        panen.noreg = d_noreg.noreg
             ) data
             ".$sql_unit."
             group by
@@ -376,6 +529,7 @@ class SisaStokAyamMinMax extends Public_Controller {
         $m_conf = new \Model\Storage\Conf();
 
         $sql = "
+            /*
             select
                 data.kode,
                 data.noreg,
@@ -476,6 +630,153 @@ class SisaStokAyamMinMax extends Public_Controller {
                 where
                     ts.id is null and
                     l.id is not null
+            ) data
+            where
+                data.tanggal <= '". $params['tanggal'] ."' 
+                and data.umur = ". $params['umur'] ."
+                and data.kode = '". $params['unit'] ."'
+            order by
+                data.kode asc,
+                data.noreg asc
+            */
+
+            select
+                data.kode,
+                data.noreg,
+                data.tanggal,
+                data.umur,
+                data.jml_ekor,
+                data.ekor_mati,
+                data.adjin_ekor,
+                data.panen_ekor,
+                data.sisa_ekor,
+                data.bb,
+                data.tonase
+            from
+            (
+                select
+                    d_noreg.kode_unit as kode,
+                    d_noreg.noreg,
+                    case
+                        when l.tanggal is not null then
+                            l.tanggal
+                        else
+                            cast(td.datang as date)
+                    end as tanggal,
+                    case
+                        when l.umur is not null then
+                            l.umur
+                        else
+                            DATEDIFF(day, cast(td.datang as date), '". $params['tanggal'] ."')
+                    end as umur,
+                    (td.jml_ekor+isnull(ad.jumlah, 0)) as jml_ekor,
+                    isnull(l.ekor_mati, 0) as ekor_mati,
+                    isnull(ad.jumlah, 0) as adjin_ekor,
+                    isnull(panen.ekor, 0) as panen_ekor,
+                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0)) as sisa_ekor,
+                    case
+                        when l.bb is not null then
+                            l.bb
+                        else
+                            td.bb
+                    end as bb,
+                    case
+                        when l.bb is not null then
+                            (((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0))) * l.bb
+                        else
+                            (((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0))) * td.bb
+                    end as tonase
+                from 
+                (
+                    select
+                        w.kode as kode_unit,
+                        rd.noreg
+                    from 
+                    (
+                        select max(id) as id, kode from wilayah
+                        where
+                            kode is not null
+                        group by
+                            kode
+                    ) w
+                    right join
+                        (
+                            select rs.noreg, w.kode as kode_unit from rdim_submit rs
+                            left join
+                                kandang k
+                                on
+                                    rs.kandang = k.id
+                            left join
+                                wilayah w
+                                on
+                                    k.unit = w.id
+                            left join
+                                (select * from tutup_siklus where tgl_tutup <= '". $params['tanggal'] ."') ts
+                                on
+                                    ts.noreg = rs.noreg
+                            where
+                                ts.id is null
+                        ) rd
+                        on
+                            rd.kode_unit = w.kode
+                    group by
+                        w.kode,
+                        rd.noreg
+                ) d_noreg
+                left join
+                    (
+                        select
+                            l.*
+                        from
+                        (
+                            select l1.* from lhk l1
+                            right join
+                            (
+                                select max(tanggal) as tanggal, noreg from lhk where tanggal <= '". $params['tanggal'] ."' and umur <> 0 group by noreg
+                            ) l2
+                            on
+                                l1.tanggal = l2.tanggal and
+                                l1.noreg = l2.noreg
+                        ) l
+                    ) l
+                    on
+                        l.noreg = d_noreg.noreg 
+                left join
+                    (
+                        select od.noreg, td.* from (
+                            select td1.* from terima_doc td1
+                            right join
+                                (select max(id) as id, no_order from terima_doc group by no_order) td2
+                                on
+                                    td1.id = td2.id
+                        ) td
+                        left join
+                            (
+                                select od1.* from order_doc od1
+                                right join
+                                    (select max(id) as id, no_order from order_doc group by no_order) od2
+                                    on
+                                        od1.id = od2.id
+                            ) od
+                            on
+                                td.no_order = od.no_order
+                        where
+                            cast(td.datang as date) <= '". $params['tanggal'] ."'
+                    ) td
+                    on
+                        td.noreg = d_noreg.noreg
+                left join
+                    (
+                        select noreg, sum(jumlah) as jumlah from adjin_doc group by noreg
+                    ) ad
+                    on
+                        ad.noreg = d_noreg.noreg
+                left join
+                    (
+                        select noreg, sum(netto_ekor) as ekor, sum(netto_kg) as tonase, max(tgl_panen) as tgl_panen_terakhir from real_sj rs where tgl_panen <= '". $params['tanggal'] ."' group by noreg
+                    ) panen
+                    on
+                        panen.noreg = d_noreg.noreg
             ) data
             where
                 data.tanggal <= '". $params['tanggal'] ."' 
