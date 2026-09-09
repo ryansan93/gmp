@@ -406,7 +406,8 @@
 															$ip = $data['ip'];
 														?>
 														<?php 
-															$bonus_kematian = ($deplesi <= 5) ? 25 * $total_tonase : 0;
+															// $bonus_kematian = ($deplesi <= 5) ? 25 * $total_tonase : 0;
+															$bonus_kematian = $data['nilai_bonus_kematian'];
 															$bonus_insentif_fcr = $data['bonus_insentif_fcr']; 
 														?>
 													<?php else: ?>
