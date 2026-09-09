@@ -1965,6 +1965,7 @@ class RhppGroup extends Public_Controller {
         $data_header['biaya_opr'] = 0;
         $data_header['bonus_insentif_fcr'] = $d_rhpp_plasma['bonus_insentif_fcr'];
         $data_header['total_bonus_insentif_listrik'] = $d_rhpp_plasma['total_bonus_insentif_listrik'];
+        $data_header['nilai_bonus_kematian'] = !empty($d_rhpp_plasma) ? $d_rhpp_plasma['bonus_kematian'] : 0;
         $data_header['potongan_pajak'] = $d_rhpp_plasma['prs_potongan_pajak'];
         $data_header['fcr'] = $d_rhpp_plasma['fcr'];
         $data_header['bb'] = $d_rhpp_plasma['bb'];
