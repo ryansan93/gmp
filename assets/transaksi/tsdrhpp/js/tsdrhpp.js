@@ -1192,6 +1192,8 @@ var tsdrhpp = {
         var keterangan = $('.keterangan_hitung_ulang').val();
         var inputBeritaAcara = $('.berita_acara_hitung_ulang').get(0);
         var fileBeritaAcara = ( inputBeritaAcara && inputBeritaAcara.files && inputBeritaAcara.files.length > 0 ) ? inputBeritaAcara.files[0] : null;
+        var selectPotongan = $('select.prs_potongan');
+        var prsPotonganPajak = !empty(selectPotongan.val()) ? numeral.unformat(selectPotongan.find('option:selected').text()) : null;
 
         if ( wajibKeterangan && empty(keterangan) ) {
             $('.keterangan_hitung_ulang').addClass('has-error');
@@ -1209,7 +1211,7 @@ var tsdrhpp = {
                 var simpanHitungUlangAjax = function() {
                     $.ajax({
                         url: 'transaksi/TSDRHPP/hitungUlang',
-                        data: { 'id': id, 'keterangan': keterangan },
+                        data: { 'id': id, 'keterangan': keterangan, 'prs_potongan_pajak': prsPotonganPajak },
                         type: 'POST',
                         dataType: 'JSON',
                         beforeSend: function() { showLoading(); },

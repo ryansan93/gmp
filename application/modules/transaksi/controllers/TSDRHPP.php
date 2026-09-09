@@ -7245,13 +7245,18 @@ class TSDRHPP extends Public_Controller {
 
     /**
      * Ambil field manual (bukan derived-dari-sumber) dari row rhpp inti/plasma yang
-     * TERSIMPAN saat ini -- dipertahankan apa adanya saat "Hitung Ulang".
+     * TERSIMPAN saat ini -- dipertahankan apa adanya saat "Hitung Ulang". $override_prs_potongan_pajak
+     * (kalau diisi) dipakai menggantikan prs_potongan_pajak yang tersimpan -- dipakai
+     * saat user mengubah persentase Potongan Pajak lewat dropdown di layar preview
+     * Hitung Ulang, sebelum disimpan.
      */
-    private function _ambilFieldManual($d_rhpp_plasma, $d_rhpp_inti, $d_ts)
+    private function _ambilFieldManual($d_rhpp_plasma, $d_rhpp_inti, $d_ts, $override_prs_potongan_pajak = null)
     {
         return array(
             'biaya_materai' => !empty($d_ts->biaya_materai) ? $d_ts->biaya_materai : 0,
-            'prs_potongan_pajak' => !empty($d_rhpp_plasma) ? $d_rhpp_plasma->prs_potongan_pajak : 0,
+            'prs_potongan_pajak' => ( $override_prs_potongan_pajak !== null )
+                ? $override_prs_potongan_pajak
+                : ( !empty($d_rhpp_plasma) ? $d_rhpp_plasma->prs_potongan_pajak : 0 ),
             'total_bonus' => !empty($d_rhpp_plasma) ? $d_rhpp_plasma->total_bonus : 0,
             'total_potongan' => !empty($d_rhpp_plasma) ? $d_rhpp_plasma->total_potongan : 0,
             'biaya_operasional' => !empty($d_rhpp_inti) ? $d_rhpp_inti->biaya_operasional : 0,
@@ -7331,6 +7336,8 @@ class TSDRHPP extends Public_Controller {
     {
         $id = $this->input->post('id');
         $keterangan = trim((string) $this->input->post('keterangan'));
+        $prs_potongan_pajak_raw = $this->input->post('prs_potongan_pajak');
+        $prs_potongan_pajak = ( $prs_potongan_pajak_raw !== null && $prs_potongan_pajak_raw !== '' ) ? (float) $prs_potongan_pajak_raw : null;
 
         try {
             $m_ts = new \Model\Storage\TutupSiklus_model();
@@ -7360,7 +7367,7 @@ class TSDRHPP extends Public_Controller {
             $d_rhpp_plasma = $m_rhpp->where('id_ts', $id)->where('jenis', 'rhpp_plasma')->first();
             $d_rhpp_inti = $m_rhpp->where('id_ts', $id)->where('jenis', 'rhpp_inti')->first();
 
-            $manual = $this->_ambilFieldManual($d_rhpp_plasma, $d_rhpp_inti, $d_ts);
+            $manual = $this->_ambilFieldManual($d_rhpp_plasma, $d_rhpp_inti, $d_ts, $prs_potongan_pajak);
             $fresh = $this->_hitungUlangFresh( $d_ts->noreg );
             $lengkap = $this->_lengkapiTurunanFinansial($fresh['plasma'], $fresh['inti'], $manual);
 
@@ -7520,53 +7527,52 @@ class TSDRHPP extends Public_Controller {
 
     public function tes()
     {
-        // $m_conf = new \Model\Storage\Conf();
-        // $sql = "
-        //     select 
-        //         r.id,
-        //         r.id_ts, 
-        //         r.pdpt_peternak_belum_pajak, 
-        //         r.prs_potongan_pajak, 
-        //         r.potongan_pajak, 
-        //         r.pdpt_peternak_sudah_pajak as pdpt_peternak_sudah_pajak, 
-        //         ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as potongan_pajak_new,
-        //         ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as pdpt_peternak_sudah_pajak_new,
-        //         r.potongan_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as selisih_pajak,
-        //         r.pdpt_peternak_sudah_pajak - ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as selisih_pdpt
-        // --	update r
-        // --	set
-        // --		r.pdpt_peternak_sudah_pajak = ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0)
-        //     from rhpp r 
-        //     /*
-        //     left join
-        //         (
-        //             select id_header, sum(nominal) as nominal
-        //             from rhpp_piutang
-        //             group by
-        //                 id_header
-        //         ) r_piutang
-        //         on
-        //             r.id = r_piutang.id_header
-        //     */
-        //     where 
-        //     /*
-        //     r.id_ts in (
-        //         select id from tutup_siklus ts where not exists (select * from rhpp_group_noreg where noreg = ts.noreg) and tgl_tutup between '2026-07-01' and '2026-07-31'
-        //     ) 
-        //     */
-        //     and r.jenis = 'rhpp_plasma'
-        //     and r.noreg = ''
-        // ";
-        // $d_conf = $m_conf->hydrateRaw( $sql );
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 
+                r.id,
+                r.id_ts, 
+                r.pdpt_peternak_belum_pajak, 
+                r.prs_potongan_pajak, 
+                r.potongan_pajak, 
+                r.pdpt_peternak_sudah_pajak as pdpt_peternak_sudah_pajak, 
+                ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as potongan_pajak_new,
+                ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as pdpt_peternak_sudah_pajak_new,
+                r.potongan_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0) as selisih_pajak,
+                r.pdpt_peternak_sudah_pajak - ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0) as selisih_pdpt
+        --	update r
+        --	set
+        --		r.pdpt_peternak_sudah_pajak = ROUND(r.pdpt_peternak_belum_pajak - ROUND((r.pdpt_peternak_belum_pajak * (r.prs_potongan_pajak/100)), 0), 0)
+            from rhpp r 
+            /*
+            left join
+                (
+                    select id_header, sum(nominal) as nominal
+                    from rhpp_piutang
+                    group by
+                        id_header
+                ) r_piutang
+                on
+                    r.id = r_piutang.id_header
+            */
+            where 
+            /*
+            r.id_ts in (
+                select id from tutup_siklus ts where not exists (select * from rhpp_group_noreg where noreg = ts.noreg) and tgl_tutup between '2026-07-01' and '2026-07-31'
+            ) 
+            */
+            and r.jenis = 'rhpp_plasma'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        // if ( $d_conf->count() > 0 ) {
-        //     $d_conf = $d_conf->toArray();
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
 
-        //     foreach ($d_conf as $key => $val) {
-        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
-        //     }
-        // }
+            foreach ($d_conf as $key => $val) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $val['id'], $val['id'], 2);
+            }
+        }
 
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 7812, 7812, 2);
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 7812, 7812, 2);
     }
 }

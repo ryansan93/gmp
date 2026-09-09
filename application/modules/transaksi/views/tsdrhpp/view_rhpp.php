@@ -177,6 +177,28 @@
 	            		<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
 	            			<small class="text-muted" style="font-style: italic;"><i class="glyphicon glyphicon-tags"></i> Jenis RHPP: <?php echo !empty($data['jenis_rhpp_rhpp']) ? $data['jenis_rhpp_rhpp'] : '-'; ?></small>
 	            		</div>
+	            		<?php if ( !empty($data['preview_hitung_ulang']) ): ?>
+	            			<div class="col-sm-12">
+	            				<hr style="margin-top: 10px; margin-bottom: 10px;">
+	            			</div>
+	            			<div class="col-sm-12 text-left" style="margin-bottom: 10px;">
+	            				<div class="col-sm-2 no-padding" style="width: 11%;">
+	            					<label class="control-label" style="padding-top: 7px;">Potongan Pajak</label>
+	            				</div>
+	            				<div class="col-sm-2">
+	            					<select class="form-control prs_potongan" data-required="1" onchange="tsdrhpp.hit_potongan_pajak(this)">
+        								<option value="">Pilih</option>
+        								<?php foreach ($data['data_potongan_pajak'] as $k_dpp => $v_dpp): ?>
+        									<?php $selected = ( abs((float)$v_dpp['prs_potongan'] - (float)$data['potongan_pajak']) < 0.0001 ) ? 'selected' : null; ?>
+        									<option value="<?php echo $v_dpp['id']; ?>" <?php echo $selected; ?> ><?php echo angkaDecimal($v_dpp['prs_potongan']); ?></option>
+        								<?php endforeach ?>
+        							</select>
+	            				</div>
+	            				<div class="col-sm-1 no-padding" style="padding-left: 10px;">
+	            					<label class="control-label" style="padding-top: 7px;">%</label>
+	            				</div>
+	            			</div>
+	            		<?php endif ?>
 	            		<?php if ( !empty($data['log_hitung_ulang']) ): ?>
 	            		<div class="col-sm-12 text-left" style="margin-bottom: 5px;">
 	            			<small class="text-warning" style="font-style: italic;"><i class="glyphicon glyphicon-warning-sign"></i> <?php echo ucfirst($data['log_hitung_ulang']); ?></small>
