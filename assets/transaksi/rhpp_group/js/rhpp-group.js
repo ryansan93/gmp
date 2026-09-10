@@ -326,7 +326,13 @@ var rg = {
     	var div_rhpp_plasma = $('#rhpp_plasma');
     	var div_rhpp_inti = $('#rhpp_inti');
 
-    	var total_pembelian_sapronak_plasma = $(div_rhpp_plasma).find('td.total_pengeluaran').data('val');
+    	// PENTING: ambil basis dari td.tot_pembelian_sapronak (nilai stabil, TIDAK
+    	// ditulis ulang oleh fungsi ini), BUKAN dari td.total_pengeluaran -- td itu
+    	// sendiri adalah HASIL fungsi ini (sapronak + biaya_materai). Kalau dipakai
+    	// sbg basis, biaya_materai akan dobel-tercatat tiap kali fungsi ini dipanggil
+    	// lagi (mis. blur field 2x, atau trigger otomatis stlh Hitung Ulang) --
+    	// pdpt_peternak_belum_pajak jadi salah (lbh kecil dari yg seharusnya).
+    	var total_pembelian_sapronak_plasma = $(div_rhpp_plasma).find('td.tot_pembelian_sapronak').data('val');
     	var total_pembelian_sapronak_inti = $(div_rhpp_inti).find('td.total_pengeluaran').data('val');
     	var biaya_materai = numeral.unformat( $(elm).val() );
 
