@@ -26,6 +26,19 @@
 							</select>
 						</div>
 					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Kategori Supplier</span>
+						<div class="col-sm-6">
+							<select class="form-control" name="kategori_supplier_supl">
+								<option value="">- Pilih -</option>
+								<?php if ( !empty($kategori_supplier) ) { ?>
+									<?php foreach ($kategori_supplier as $key => $value) { ?>
+										<option value="<?php echo $value['kode_kategori']; ?>"><?php echo $value['nama_kategori']; ?></option>
+									<?php } ?>
+								<?php } ?>
+							</select>
+						</div>
+					</div>
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">

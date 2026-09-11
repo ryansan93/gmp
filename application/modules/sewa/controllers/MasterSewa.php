@@ -124,7 +124,14 @@ class MasterSewa extends Public_Controller {
     public function get_supplier_list()
     {
         $m_conf     = new \Model\Storage\Conf();
-        $sql = " select * from pelanggan where tipe = 'supplier' and mstatus = 1 order by nama asc ";
+        $sql = "
+            select * from pelanggan
+            where
+                tipe = 'supplier' and
+                mstatus = 1 and
+                LOWER(LTRIM(RTRIM(kategori_supplier))) = 'sewa'
+            order by nama asc
+        ";
 
         $d_conf     = $m_conf->hydrateRaw( $sql );
         

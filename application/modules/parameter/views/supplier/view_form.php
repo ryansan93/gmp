@@ -19,6 +19,12 @@
 							<input class="form-control" type="text" name="jenis_supl" value="<?php echo $data->d_jenis->nama; ?>" readonly>
 						</div>
 					</div>
+					<div class="form-group align-items-center d-flex">
+						<span class="col-sm-6 text-right">Kategori Supplier</span>
+						<div class="col-sm-6">
+							<input class="form-control" type="text" name="kategori_supplier_supl" value="<?php echo !empty($data->d_kategori_supplier) ? $data->d_kategori_supplier->nama_kategori : '-'; ?>" readonly>
+						</div>
+					</div>
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group align-items-center d-flex">

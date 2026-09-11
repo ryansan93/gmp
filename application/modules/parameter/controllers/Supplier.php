@@ -98,6 +98,9 @@ class Supplier extends Public_Controller {
 		$m_model = new \Model\Storage\Jenis_model();
         $d_jns = $m_model->getData();
         $content['jenis'] = !empty($d_jns) ? $d_jns : null;
+		$m_kategori = new \Model\Storage\KategoriSupplier_model();
+        $d_kategori = $m_kategori->orderBy('nama_kategori', 'asc')->get()->toArray();
+        $content['kategori_supplier'] = !empty($d_kategori) ? $d_kategori : null;
 		$m_bu = new \Model\Storage\BadanUsaha_model();
         $d_bu = $m_bu->getData();
         $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
@@ -170,6 +173,9 @@ class Supplier extends Public_Controller {
 		$m_model = new \Model\Storage\Jenis_model();
         $d_jns = $m_model->getData();
         $content['jenis'] = !empty($d_jns) ? $d_jns : null;
+		$m_kategori = new \Model\Storage\KategoriSupplier_model();
+        $d_kategori = $m_kategori->orderBy('nama_kategori', 'asc')->get()->toArray();
+        $content['kategori_supplier'] = !empty($d_kategori) ? $d_kategori : null;
 		$m_bu = new \Model\Storage\BadanUsaha_model();
         $d_bu = $m_bu->getData();
         $content['badan_usaha'] = !empty($d_bu) ? $d_bu : null;
@@ -190,7 +196,7 @@ class Supplier extends Public_Controller {
 
         // mengambil data supplier
 		$m_supplier = new \Model\Storage\Supplier_model();
-		$d_supplier = $m_supplier->where('tipe', 'supplier')->where('id', $id)->with(['d_jenis', 'd_badan_usaha', 'telepons', 'banks', 'logs'])->first();
+		$d_supplier = $m_supplier->where('tipe', 'supplier')->where('id', $id)->with(['d_jenis', 'd_kategori_supplier', 'd_badan_usaha', 'telepons', 'banks', 'logs'])->first();
 		
 		// mengambil lokasi
 		$lokasi = new \Model\Storage\Lokasi_model();
@@ -314,6 +320,7 @@ class Supplier extends Public_Controller {
 
 			$m_supplier->id = $supplier_id;
 			$m_supplier->jenis = $params['jenis_supplier'];
+			$m_supplier->kategori_supplier = !empty($params['kategori_supplier']) ? $params['kategori_supplier'] : null;
 			$kode_jenis = 'S';
 
 			$m_supplier->nomor = $m_supplier->getNextNomor($kode_jenis);
@@ -405,6 +412,7 @@ class Supplier extends Public_Controller {
 
 			$m_supplier->id = $supplier_id;
 			$m_supplier->jenis = $params['jenis_supplier'];
+			$m_supplier->kategori_supplier = !empty($params['kategori_supplier']) ? $params['kategori_supplier'] : null;
 			$m_supplier->nomor = $params['nomor'];
 			$m_supplier->nama = $params['nama'];
 			$m_supplier->nik = $params['ktp'];

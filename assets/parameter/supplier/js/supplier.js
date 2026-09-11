@@ -422,6 +422,7 @@ var supl = {
 
     				// data supplier
     				var jenis_supplier = $(div_supplier).find('select[name=jenis_supl]').val();
+    				var kategori_supplier = $(div_supplier).find('select[name=kategori_supplier_supl]').val();
     				var nama_supplier = $(div_supplier).find('input[name=nama_supl]').val();
     				var plafon = numeral.unformat( $(div_supplier).find('input[name=plafon]').val() );
     				var jatuh_tempo = numeral.unformat( $(div_supplier).find('input[name=jatuh_tempo]').val() );
@@ -456,6 +457,7 @@ var supl = {
 
 					var data_supplier = {
 						'jenis_supplier' : jenis_supplier,
+						'kategori_supplier' : kategori_supplier,
 						'ktp' : ktp,
 						'nama' : nama_supplier,
 						'npwp' : npwp,
@@ -548,6 +550,7 @@ var supl = {
 
     				// data supplier
     				var jenis_supplier = $(div_supplier).find('select[name=jenis_supl]').val();
+    				var kategori_supplier = $(div_supplier).find('select[name=kategori_supplier_supl]').val();
     				var nama_supplier = $(div_supplier).find('input[name=nama_supl]').val();
     				var plafon = numeral.unformat( $(div_supplier).find('input[name=plafon]').val() );
     				var jatuh_tempo = numeral.unformat( $(div_supplier).find('input[name=jatuh_tempo]').val() );
@@ -587,6 +590,7 @@ var supl = {
 						'mstatus' : mstatus,
 						'version' : version,
 						'jenis_supplier' : jenis_supplier,
+						'kategori_supplier' : kategori_supplier,
 						'ktp' : ktp,
 						'nama' : nama_supplier,
 						'npwp' : npwp,
