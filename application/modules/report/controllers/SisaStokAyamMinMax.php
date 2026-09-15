@@ -225,14 +225,18 @@ class SisaStokAyamMinMax extends Public_Controller {
                         else
                             td.bb
                     end as bb,
-                    ((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0)) as sisa_ekor,
                     case
+                        when ((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0)) < 0 then 0
+                        else ((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0))
+                    end as sisa_ekor,
+                    case
+                        when ((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0)) < 0 then 0
                         when l.bb is not null then
                             (((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0))) * l.bb
                         else
                             (((td.jml_ekor+isnull(ad.jumlah, 0)) - isnull(l.ekor_mati, 0) - isnull(panen.ekor, 0))) * td.bb
                     end as tonase
-                from 
+                from
                 (
                     select
                         w.kode as kode_unit,
@@ -328,6 +332,8 @@ class SisaStokAyamMinMax extends Public_Controller {
             group by
                 data.kode,
                 data.umur
+            having
+                sum(data.sisa_ekor) > 0
             order by
                 data.umur asc,
                 data.kode asc
