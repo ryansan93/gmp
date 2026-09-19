@@ -9,13 +9,13 @@
             </td> -->
             <td class="text-center" style="width:70px; white-space:nowrap;">
                 <?php if ( $akses['a_edit'] == 1 ) { ?>
-                    <button type="button" class="btn btn-xs btn-warning" data-id="<?php echo $row['id']; ?>" onclick="mjs.edit_form(this)">
+                    <button type="button" class="btn btn-sm btn-warning" data-id="<?php echo $row['id']; ?>" onclick="mjs.edit_form(this)">
                         <i class="fa fa-pencil"></i>
                     </button>
                 <?php } ?>
 
                 <?php if ( $akses['a_delete'] == 1 ) { ?>
-                    <button type="button" class="btn btn-xs btn-danger" data-id="<?php echo $row['id']; ?>" onclick="mjs.delete_data(this)">
+                    <button type="button" class="btn btn-sm btn-danger" data-id="<?php echo $row['id']; ?>" onclick="mjs.delete_data(this)">
                         <i class="fa fa-trash"></i>
                     </button>
                 <?php } ?>

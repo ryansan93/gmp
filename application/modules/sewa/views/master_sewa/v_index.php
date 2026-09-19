@@ -86,7 +86,7 @@
                         </div>
 
                         <div class="table-responsive" style="overflow-x:auto; white-space:nowrap;">
-                            <table class="table table-bordered" id="table-sewa" style="min-width:1100px; margin-bottom:0; white-space:nowrap;">
+                            <table class="table table-bordered" id="table-sewa" style="min-width:1100px; margin-bottom:0; white-space:nowrap; font-size:12px;">
                                 <thead>
                                     <tr>
                                         <th style="height:40px;" class="text-center" width="5%">No</th>
@@ -94,6 +94,7 @@
                                         <th style="height:40px;" class="text-center">No. Kontrak</th>
                                         <th style="height:40px;" class="text-center">Nama Sewa</th>
                                         <th style="height:40px;" class="text-center">Jenis Sewa</th>
+                                        <th style="height:40px;" class="text-center">Unit</th>
                                         <th style="height:40px;" class="text-center">Jumlah <br> Bulan</th>
                                         <th style="height:40px;" class="text-center">Jumlah <br> Siklus</th>
                                         <th style="height:40px;" class="text-center">Tanggal <br> Mulai</th>

@@ -21,6 +21,7 @@
                 <td class="text-center"><?php echo isset($row['no_kontrak']) ? $row['no_kontrak'] : '-'; ?></td>
                 <td class="text-center"><?php echo isset($row['nama_sewa']) ? $row['nama_sewa'] : '-'; ?></td>
                 <td class="text-center"><?php echo isset($row['nama_jenis_sewa']) ? $row['nama_jenis_sewa'] : $row['nama_sewa'] ; ?></td>
+                <td class="text-center"><?php echo isset($row['nama_unit']) ? ucwords(strtolower($row['nama_unit'])) : '-'; ?></td>
                 <td class="text-center"><?php echo isset($row['jumlah_bulan']) ? $row['jumlah_bulan'] : '-'; ?></td>
                 <td class="text-center"><?php echo isset($row['jumlah_siklus']) ? $row['jumlah_siklus'] : '-'; ?></td>
                 <td class="text-center"><?php echo isset($row['tanggal_mulai']) ? tglIndonesia($row['tanggal_mulai'], '-', ' ') : '-'; ?></td>

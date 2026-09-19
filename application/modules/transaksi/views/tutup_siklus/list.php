@@ -24,7 +24,8 @@
 				?>
 			</td>
 			<td class="text-center">
-				<?php if ( $val['tutup_siklus'] == 1 && empty($val['tgl_panen']) === false && !empty($akses['a_submit']) ): ?>
+				<?php // if ( $val['tutup_siklus'] == 1 && empty($val['tgl_panen']) === false && !empty($akses['a_submit']) ): ?>
+				<?php if ( $val['tutup_siklus'] == 1 && !empty($akses['a_submit']) ): ?>
 					<button
 						type="button"
 						class="btn btn-primary btn-sm"

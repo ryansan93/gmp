@@ -46,6 +46,7 @@ class MasterSewa extends Public_Controller {
             $content['title_panel'] = 'Master Sewa';
             $content['jenis_sewa']  = $this->get_jenis_sewa_list();
             $content['supplier']    = $this->get_supplier_list();
+            // $content['unit']        = $this->get_unit_list();
             $data['title_menu']     = 'Master Sewa';
 
             $data['view'] = $this->load->view($this->pathView . 'v_index', $content, TRUE);
@@ -66,13 +67,29 @@ class MasterSewa extends Public_Controller {
         $supplier           = trim($this->input->post('supplier'));
         
         $query = $m_sewa
-        ->select('ms_sewa.*', 'ms_jenis_sewa.nama_jenis_sewa', 'p.nama as nama_supplier')
+        // ->select('ms_sewa.*', 'ms_jenis_sewa.nama_jenis_sewa', 'p.nama as nama_supplier', 'wilayah.nama as nama_unit')
+        // ->leftJoin('ms_jenis_sewa', 'ms_jenis_sewa.kode_jenis_sewa', '=', 'ms_sewa.jenis_sewa')
+        // ->leftJoin('wilayah', 'wilayah.kode', '=', 'ms_sewa.unit')
+        // ->leftJoin('pelanggan as p', function($join) {
+        //     $join->on('p.nomor', '=', 'ms_sewa.no_supplier')
+        //          ->where('p.tipe', '=', 'supplier')
+        //          ->where('p.mstatus', '=', 1);
+        // });
+
+        ->select(
+            'ms_sewa.*', 
+            'ms_jenis_sewa.nama_jenis_sewa', 
+            'p.nama as nama_supplier', 
+            // Ganti LIMIT 1 menjadi TOP 1 untuk SQL Server
+            new \Illuminate\Database\Query\Expression('(SELECT TOP 1 nama FROM wilayah WHERE kode = ms_sewa.unit) as nama_unit')
+        )
         ->leftJoin('ms_jenis_sewa', 'ms_jenis_sewa.kode_jenis_sewa', '=', 'ms_sewa.jenis_sewa')
         ->leftJoin('pelanggan as p', function($join) {
             $join->on('p.nomor', '=', 'ms_sewa.no_supplier')
-                 ->where('p.tipe', '=', 'supplier')
-                 ->where('p.mstatus', '=', 1);
+                ->where('p.tipe', '=', 'supplier')
+                ->where('p.mstatus', '=', 1);
         });
+
 
         if ( !empty($jenisSewa) ) {
             $query->where('ms_sewa.jenis_sewa', $jenisSewa);
@@ -118,20 +135,29 @@ class MasterSewa extends Public_Controller {
         $data['data'] = null;
         $data['jenis_sewa'] = $this->get_jenis_sewa_list();
         $data['supplier']   = $this->get_supplier_list();
+        $data['unit']       = $this->get_unit_list();
         $this->load->view($this->pathView . 'v_form', $data);
     }
 
     public function get_supplier_list()
     {
         $m_conf     = new \Model\Storage\Conf();
-        $sql = "
-            select * from pelanggan
-            where
-                tipe = 'supplier' and
-                mstatus = 1 and
-                LOWER(LTRIM(RTRIM(kategori_supplier))) = 'sewa'
-            order by nama asc
-        ";
+        $sql = " select * from pelanggan where tipe = 'supplier' and mstatus = 1 and kategori_supplier = 'SEWA' order by nama asc ";
+
+        $d_conf     = $m_conf->hydrateRaw( $sql );
+        
+        $data       = null;
+        if ( $d_conf->count() > 0 ) {
+            $data = $d_conf->toArray();
+        }
+
+        return $data;
+    }
+
+    public function get_unit_list()
+    {
+        $m_conf     = new \Model\Storage\Conf();
+        $sql = " select kode, nama from wilayah where jenis = 'UN' order by nama asc ";
 
         $d_conf     = $m_conf->hydrateRaw( $sql );
         
@@ -150,10 +176,31 @@ class MasterSewa extends Public_Controller {
         $m_sewa = new \Model\Storage\MasterSewa_model();
         $d_sewa = $m_sewa->where('id', $id)->first();
 
-        $data['data'] = $d_sewa;
+        $data['data']       = $d_sewa;
         $data['jenis_sewa'] = $this->get_jenis_sewa_list();
-        $data['supplier'] = $this->get_supplier_list();
+        $data['supplier']   = $this->get_supplier_list();
+        $data['unit']       = $this->get_unit_list();
+
+        // $data['cek_amortisasi'] = $this->check_status_amortisasi($d_sewa->no_sewa);
+        // cetak_r($data['cek_amortisasi'], 1);
+
         $this->load->view($this->pathView . 'v_form', $data);
+    }
+
+    public function check_status_amortisasi($noSewa)
+    {
+        if (empty($noSewa)) {
+            return 0;
+        }
+
+        $m_amortisasi = new \Model\Storage\AmortisasiJadwal_model();
+
+        $countDone = $m_amortisasi
+            ->where('kode_transaksi', $noSewa)
+            ->where('status', 1)
+            ->count();
+
+        return $countDone > 0 ? 1 : 0;
     }
 
     private function generateNoSewa($jenis_sewa, $tanggal_mulai = null, $excludeId = null)
@@ -228,6 +275,50 @@ class MasterSewa extends Public_Controller {
             $row->status          = 0;
             $row->save();
         }
+
+        
+    }
+
+    private function syncTermin($noSewa, $tanggalMulai, $nominalSewa, $durasi, $dp, $nominalCicilan, $durasiCicilan, $tglJatuhTempo)
+    {
+        if (empty($noSewa)) return;
+
+        $termin = new \Model\Storage\MsSewaTermin_model();
+    
+        $termin->where('no_sewa', $noSewa)->delete();
+
+        if ($durasi <= 0) {
+            return; 
+        }
+
+        if ($dp > 0) {
+            $rowDp = new \Model\Storage\MsSewaTermin_model();
+            $rowDp->no_sewa          = $noSewa;
+            $rowDp->no_termin        = '0'; 
+            $rowDp->jenis_termin     = 'dp';
+            $rowDp->tgl_jatuh_tempo  = $tanggalMulai; 
+            $rowDp->nominal          = $dp;
+            $rowDp->nominal_terbayar = 0;
+            $rowDp->status           = 0;
+            $rowDp->save();
+        }
+
+        $sisaPokok = $nominalSewa - $dp;
+        $nilaiCicilan = $durasiCicilan > 0 ? $sisaPokok / $durasiCicilan : 0;
+
+        for ($i = 1; $i <= $durasi; $i++) {
+            $row = new \Model\Storage\MsSewaTermin_model();
+            $row->no_sewa          = $noSewa;
+            $row->no_termin        = (string) $i;
+            $row->jenis_termin     = 'cicilan';
+            
+            $row->tgl_jatuh_tempo  = date('Y-m-d', strtotime($tanggalMulai . " +{$i} month"));
+            
+            $row->nominal          = $nilaiCicilan;
+            $row->nominal_terbayar = 0;
+            $row->status           = 0;
+            $row->save();
+        }
     }
 
     public function save_data()
@@ -237,46 +328,90 @@ class MasterSewa extends Public_Controller {
         try {
             $m_sewa = new \Model\Storage\MasterSewa_model();
 
-            $namaSewa       = trim($params['nama_sewa']);
-            $noKontrak      = trim($params['no_kontrak']);
-            $jenisSewa      = strtoupper(trim($params['jenis_sewa']));
-            $tanggalMulai   = trim($params['tanggal_mulai']);
-            $noSupplier     = trim($params['no_supplier']);
+            $namaSewa     = trim($params['nama_sewa']);
+            $noKontrak    = trim($params['no_kontrak']);
+            $jenisSewa    = strtoupper(trim($params['jenis_sewa']));
+            $tanggalMulai = trim($params['tanggal_mulai']);
+            $noSupplier   = trim($params['no_supplier']);
+            $unit         = trim($params['unit']);
 
-            if ( empty($namaSewa) || empty($noKontrak) || empty($jenisSewa) || empty($tanggalMulai) ) {
+            if (empty($namaSewa) || empty($noKontrak) || empty($jenisSewa) || empty($tanggalMulai)) {
                 $this->result['message'] = 'Nama sewa, nomor kontrak, jenis sewa, dan tanggal mulai wajib diisi.';
             } else {
+                $attachmentName = null;
+                
+                if (!empty($_FILES['file_dokumen']['name'])) {
+                    $file = $_FILES['file_dokumen'];
+                    $allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                    $maxSize = 5 * 1024 * 1024;
+
+                    if (!in_array($file['type'], $allowedTypes) || $file['size'] > $maxSize) {
+                        $this->result['message'] = 'Format file harus PDF/JPG/PNG dan maksimal 5MB.';
+                        display_json($this->result);
+                        return;
+                    }
+
+                    $uploadPath = FCPATH . 'uploads/sewa/'; 
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+
+                    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                    $hash = hash('sha256', time() . $file['name'] . uniqid('', true));
+                    $attachmentName = $hash . '.' . $ext;
+
+                    if (!move_uploaded_file($file['tmp_name'], $uploadPath . $attachmentName)) {
+                        throw new \Exception('Gagal mengupload file ke server.');
+                    }
+                }
+
                 $noSewa = $this->generateNoSewa($jenisSewa, $tanggalMulai);
 
-                // Insert MS Sewa
-                    $m_sewa->no_sewa        = $noSewa;
-                    $m_sewa->nama_sewa      = $namaSewa;
-                    $m_sewa->no_kontrak     = $noKontrak;
-                    $m_sewa->jumlah_bulan   = !empty($params['jumlah_bulan']) ? (int) $params['jumlah_bulan'] : 0;
-                    $m_sewa->jumlah_siklus  = !empty($params['jumlah_siklus']) ? (int) $params['jumlah_siklus'] : 0;
-                    $m_sewa->jenis_sewa     = $jenisSewa;
-                    $m_sewa->tanggal_mulai  = $tanggalMulai;
-                    $m_sewa->no_supplier    = $noSupplier;
-                    $m_sewa->nominal_sewa   = !empty($params['nominal_sewa']) ? str_replace('.', '', $params['nominal_sewa']) : 0;
-                    $m_sewa->save();
-                // End Insert MS Sewa
+                $m_sewa->no_sewa         = $noSewa;
+                $m_sewa->nama_sewa       = $namaSewa;
+                $m_sewa->no_kontrak      = $noKontrak;
+                $m_sewa->jumlah_bulan    = !empty($params['jumlah_bulan']) ? (int) $params['jumlah_bulan'] : 0;
+                $m_sewa->jumlah_siklus   = !empty($params['jumlah_siklus']) ? (int) $params['jumlah_siklus'] : 0;
+                $m_sewa->jenis_sewa      = $jenisSewa;
+                $m_sewa->tanggal_mulai   = $tanggalMulai;
+                $m_sewa->no_supplier     = $noSupplier;
+                $m_sewa->nominal_sewa    = !empty($params['nominal_sewa']) ? (int) str_replace('.', '', $params['nominal_sewa']) : 0;
+                $m_sewa->dp              = !empty($params['dp']) ? (int) str_replace('.', '', $params['dp']) : 0;
+                $m_sewa->durasi_cicilan  = !empty($params['durasi_cicilan']) ? (int) $params['durasi_cicilan'] : 0;
+                $m_sewa->tgl_jatuh_tempo = !empty($params['tgl_jatuh_tempo']) ? (int) $params['tgl_jatuh_tempo'] : 1;
+                $m_sewa->nominal_cicilan = !empty($params['nominal_cicilan']) ? (int) str_replace('.', '', $params['nominal_cicilan']) : 0;
+                $m_sewa->unit            = $unit;
+                $m_sewa->attachment      = $attachmentName; 
+                $m_sewa->save();
 
-                // Insert Amortisasi
-                    $nominalSewa = $m_sewa->nominal_sewa;
-                    $durasi = $m_sewa->jumlah_bulan > 0 ? $m_sewa->jumlah_bulan : $m_sewa->jumlah_siklus;
-                    $this->syncAmortisasi($noSewa, $nominalSewa, $durasi);
-                // End Insert Amortisasi
+                $durasiAmortisasi = $m_sewa->jumlah_bulan > 0 ? $m_sewa->jumlah_bulan : $m_sewa->jumlah_siklus;
+                $durasiTermin     = $m_sewa->durasi_cicilan;
 
-                // Insert log event
-                    $id            = $m_sewa->id;
-                    $deskripsi_log = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
-                    Modules::run('base/event/save', $m_sewa, $deskripsi_log, null, $id, $m_sewa);
-                // End Insert log event
+                if ($durasiAmortisasi > 0 && !empty($noSewa)) {
+                    $this->syncAmortisasi($noSewa, $m_sewa->nominal_sewa, $durasiAmortisasi);
+                }
 
-                $this->result['status'] = 1;
+                if ($durasiTermin > 0 && !empty($noSewa)) {
+                    $tglJatuhTempo = $m_sewa->tgl_jatuh_tempo > 0 ? $m_sewa->tgl_jatuh_tempo : 1;
+                    
+                    $this->syncTermin(
+                        $noSewa, $tanggalMulai, $m_sewa->nominal_sewa, 
+                        $durasiTermin, $m_sewa->dp, $m_sewa->nominal_cicilan, 
+                        $durasiTermin, $tglJatuhTempo
+                    );
+                }
+
+                $m_sewa->load(['table_amortisasi_jadwal', 'ms_termin_sewa']);
+                $userNama      = $this->userdata['detail_user']['nama_detuser'] ?? 'System';
+                $deskripsi_log = "Data sewa {$noSewa} di-submit oleh {$userNama}";
+                Modules::run('base/event/save', $m_sewa, $deskripsi_log, null, $m_sewa->id, null);
+
+                $this->result['status']  = 1;
                 $this->result['message'] = 'Data berhasil disimpan';
             }
         } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = 'Gagal : ' . $e->getMessage();
+        } catch (\Exception $e) {
             $this->result['message'] = 'Gagal : ' . $e->getMessage();
         }
 
@@ -289,61 +424,134 @@ class MasterSewa extends Public_Controller {
 
         try {
             $m_sewa = new \Model\Storage\MasterSewa_model();
-            $namaSewa = trim($params['nama_sewa']);
-            $noKontrak = trim($params['no_kontrak']);
-            $jenisSewa = strtoupper(trim($params['jenis_sewa']));
+            
+            $namaSewa     = trim($params['nama_sewa']);
+            $noKontrak    = trim($params['no_kontrak']);
+            $jenisSewa    = strtoupper(trim($params['jenis_sewa']));
             $tanggalMulai = trim($params['tanggal_mulai']);
-            $noSupplier = trim($params['no_supplier']);
+            $noSupplier   = trim($params['no_supplier']);
+            $unit         = trim($params['unit']);
 
-            if ( empty($namaSewa) || empty($noKontrak) || empty($jenisSewa) || empty($tanggalMulai) || empty($noSupplier) ) {
+            $dp            = !empty($params['dp']) ? (int) str_replace('.', '', $params['dp']) : 0;
+            $durasiCicilan = !empty($params['durasi_cicilan']) ? (int) $params['durasi_cicilan'] : 0;
+
+            if (empty($namaSewa) || empty($noKontrak) || empty($jenisSewa) || empty($tanggalMulai) || empty($noSupplier)) {
                 $this->result['message'] = 'Nama sewa, nomor kontrak, jenis sewa, tanggal mulai, dan no supplier wajib diisi.';
-            } else {
-                $current = $m_sewa->where('id', $params['id'])->first();
-                $oldType = $current && !empty($current->jenis_sewa) ? strtoupper(trim($current->jenis_sewa)) : '';
-                $oldTanggalMulai = $current && !empty($current->tanggal_mulai) ? date('Y-m-d', strtotime($current->tanggal_mulai)) : '';
-                $noSewa = $current && !empty($current->no_sewa) ? trim($current->no_sewa) : '';
+                display_json($this->result); return;
+            }
 
-                if ($oldType !== $jenisSewa || $oldTanggalMulai !== date('Y-m-d', strtotime($tanggalMulai))) {
-                    $noSewa = $this->generateNoSewa($jenisSewa, $tanggalMulai, $params['id']);
+            if ($dp > 0 && $durasiCicilan <= 0) {
+                $this->result['message'] = 'Jika ada DP, Durasi Cicilan wajib diisi.';
+                display_json($this->result); return;
+            }
+
+            $current = $m_sewa->where('id', $params['id'])->first();
+            if (!$current) {
+                $this->result['message'] = 'Data sewa tidak ditemukan.';
+                display_json($this->result); return;
+            }
+
+            $oldNoSewa     = !empty($current->no_sewa) ? trim($current->no_sewa) : '';
+            $oldType       = !empty($current->jenis_sewa) ? strtoupper(trim($current->jenis_sewa)) : '';
+            $oldTglMulai   = !empty($current->tanggal_mulai) ? date('Y-m-d', strtotime($current->tanggal_mulai)) : '';
+            $oldAttachment = !empty($current->attachment) ? $current->attachment : null;
+
+            $noSewa = $oldNoSewa;
+            if ($oldType !== $jenisSewa || $oldTglMulai !== date('Y-m-d', strtotime($tanggalMulai))) {
+                $noSewa = $this->generateNoSewa($jenisSewa, $tanggalMulai, $params['id']);
+            }
+
+            if ($m_sewa->whereRaw('LOWER(LTRIM(RTRIM(no_sewa))) = ?', [strtolower(trim($noSewa))])->where('id', '!=', $params['id'])->first()) {
+                $this->result['message'] = 'Nomor sewa sudah ada.';
+                display_json($this->result); return;
+            }
+
+            $attachmentName = $oldAttachment; 
+            
+            if (!empty($_FILES['file_dokumen']['name'])) {
+                $file = $_FILES['file_dokumen'];
+                $allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                $maxSize = 5 * 1024 * 1024;
+
+                if (!in_array($file['type'], $allowedTypes) || $file['size'] > $maxSize) {
+                    $this->result['message'] = 'Format file harus PDF/JPG/PNG dan maksimal 5MB.';
+                    display_json($this->result); return;
                 }
 
-                $existing = $m_sewa
-                    ->whereRaw('LOWER(LTRIM(RTRIM(no_sewa))) = ?', [strtolower(trim($noSewa))])
-                    ->where('id', '!=', $params['id'])
-                    ->first();
+                $uploadPath = FCPATH . 'uploads/sewa/'; 
+                if (!is_dir($uploadPath)) mkdir($uploadPath, 0755, true);
 
-                if ( $existing ) {
-                    $this->result['message'] = 'Nomor sewa sudah ada.';
-                } else {
-                    $data_update = [
-                        'nama_sewa' => $namaSewa,
-                        'no_kontrak' => $noKontrak,
-                        'jumlah_bulan' => !empty($params['jumlah_bulan']) ? (int) $params['jumlah_bulan'] : 0,
-                        'jumlah_siklus' => !empty($params['jumlah_siklus']) ? (int) $params['jumlah_siklus'] : 0,
-                        'jenis_sewa' => $jenisSewa,
-                        'tanggal_mulai' => $tanggalMulai,
-                        'no_supplier' => $noSupplier,
-                        'nominal_sewa' => !empty($params['nominal_sewa']) ? str_replace('.', '', $params['nominal_sewa']) : 0,
-                        'no_sewa' => $noSewa,
-                    ];
+                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $hash = hash('sha256', time() . $file['name'] . uniqid('', true));
+                $attachmentName = $hash . '.' . $ext;
 
-                    $m_sewa->where('id', $params['id'])->update($data_update);
-
-                    $oldNoSewa = $current && !empty($current->no_sewa) ? trim($current->no_sewa) : '';
-                    if (!empty($oldNoSewa)) {
-                        $amortDel = new \Model\Storage\AmortisasiJadwal_model();
-                        $amortDel->where('kode_transaksi', $oldNoSewa)->delete();
+                if (move_uploaded_file($file['tmp_name'], $uploadPath . $attachmentName)) {
+                    if ($oldAttachment && file_exists($uploadPath . $oldAttachment)) {
+                        @unlink($uploadPath . $oldAttachment);
                     }
-
-                    $nominalSewa = !empty($params['nominal_sewa']) ? str_replace('.', '', $params['nominal_sewa']) : 0;
-                    $durasi = !empty($params['jumlah_bulan']) ? (int) $params['jumlah_bulan'] : (!empty($params['jumlah_siklus']) ? (int) $params['jumlah_siklus'] : 0);
-                    $this->syncAmortisasi($noSewa, $nominalSewa, $durasi);
-
-                    $this->result['status'] = 1;
-                    $this->result['message'] = 'Data berhasil diubah';
+                } else {
+                    throw new \Exception('Gagal mengupload file ke server.');
                 }
             }
+
+            $data_update = [
+                'nama_sewa'       => $namaSewa,
+                'no_kontrak'      => $noKontrak,
+                'jumlah_bulan'    => !empty($params['jumlah_bulan']) ? (int)$params['jumlah_bulan'] : 0,
+                'jumlah_siklus'   => !empty($params['jumlah_siklus']) ? (int)$params['jumlah_siklus'] : 0,
+                'jenis_sewa'      => $jenisSewa,
+                'tanggal_mulai'   => $tanggalMulai,
+                'no_supplier'     => $noSupplier,
+                'nominal_sewa'    => !empty($params['nominal_sewa']) ? (int)str_replace('.', '', $params['nominal_sewa']) : 0,
+                'no_sewa'         => $noSewa,
+                'dp'              => $dp,
+                'nominal_cicilan' => !empty($params['nominal_cicilan']) ? (int)str_replace('.', '', $params['nominal_cicilan']) : 0,
+                'durasi_cicilan'  => $durasiCicilan,
+                'tgl_jatuh_tempo' => !empty($params['tgl_jatuh_tempo']) ? (int)$params['tgl_jatuh_tempo'] : 0,
+                'unit'            => $unit,
+                'attachment'      => $attachmentName,
+            ];
+
+            $m_sewa->where('id', $params['id'])->update($data_update);
+
+            $durasiAmortisasi = $data_update['jumlah_bulan'] > 0 ? $data_update['jumlah_bulan'] : $data_update['jumlah_siklus'];
+            $durasiTermin     = $data_update['durasi_cicilan'];
+
+            if (!empty($oldNoSewa)) {
+                (new \Model\Storage\AmortisasiJadwal_model())->where('kode_transaksi', $oldNoSewa)->delete();
+                (new \Model\Storage\MsSewaTermin_model())->where('no_sewa', $oldNoSewa)->delete();
+            }
+
+            if ($durasiAmortisasi > 0 && !empty($noSewa)) {
+                $this->syncAmortisasi($noSewa, $data_update['nominal_sewa'], $durasiAmortisasi);
+            }
+
+            if ($durasiTermin > 0 && !empty($noSewa)) {
+                $tglJatuhTempo = $data_update['tgl_jatuh_tempo'] > 0 ? $data_update['tgl_jatuh_tempo'] : 1;
+                
+                $this->syncTermin(
+                    $noSewa, 
+                    $data_update['tanggal_mulai'], 
+                    $data_update['nominal_sewa'], 
+                    $durasiTermin, 
+                    $data_update['dp'], 
+                    $data_update['nominal_cicilan'], 
+                    $durasiTermin, 
+                    $tglJatuhTempo
+                );
+            }
+
+            $model_for_log  = $m_sewa->with(['table_amortisasi_jadwal', 'ms_termin_sewa'])->where('id', $params['id'])->first();
+            $userNama       = $this->userdata['detail_user']['nama_detuser'] ?? 'System';
+            $deskripsi_log  = "Update data sewa {$noSewa} oleh {$userNama}";
+            Modules::run('base/event/update', $model_for_log, $deskripsi_log, 'ms_sewa', $params['id'], null);
+
+            $this->result['status']  = 1;
+            $this->result['message'] = 'Data berhasil diubah';
+
         } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = 'Gagal : ' . $e->getMessage();
+        } catch (\Exception $e) {
             $this->result['message'] = 'Gagal : ' . $e->getMessage();
         }
 
@@ -499,27 +707,132 @@ class MasterSewa extends Public_Controller {
         exit;
     }
 
+    // public function delete_data()
+    // {
+    //     $id = $this->input->post('params');
+
+    //     try {
+    //         $m_sewa = new \Model\Storage\MasterSewa_model();
+    //         $current = $m_sewa->where('id', $id)->first();
+            
+    //         // Validasi: Pastikan data ada sebelum diproses
+    //         if (!$current) {
+    //             $this->result['message'] = 'Data sewa tidak ditemukan.';
+    //             display_json($this->result);
+    //             return;
+    //         }
+
+    //         $noSewa = !empty($current->no_sewa) ? trim($current->no_sewa) : '';
+    //         $userNama = $this->userdata['detail_user']['nama_detuser'] ?? 'System';
+
+    //         if (!empty($noSewa)) {
+    //             // ===== 1. HAPUS AMORTISASI =====
+    //             $amort = new \Model\Storage\AmortisasiJadwal_model();
+                
+    //             // ✅ PERBAIKAN: Gunakan ->get() bukan ->findAll()
+    //             $dataAmortLama = $amort->where('kode_transaksi', $noSewa)->get();
+    //             $jumlahAmort = $dataAmortLama->count();
+
+    //             if ($jumlahAmort > 0) {
+    //                 $amort->where('kode_transaksi', $noSewa)->delete();
+                    
+    //                 $deskripsi_log = "Amortisasi dihapus ({$jumlahAmort} data) untuk No. Sewa: {$noSewa} oleh {$userNama}";
+    //                 // Gunakan ->toArray() agar aman dikirim ke sistem log
+    //                 Modules::run('base/event/delete', $amort, $deskripsi_log, null, $noSewa, $dataAmortLama->toArray());
+    //             }
+
+    //             // ===== 2. HAPUS TERMIN =====
+    //             $terminDel = new \Model\Storage\MsSewaTermin_model();
+                
+    //             // ✅ PERBAIKAN: Gunakan ->get() bukan ->findAll()
+    //             $dataTerminLama = $terminDel->where('no_sewa', $noSewa)->get();
+    //             $jumlahTermin = $dataTerminLama->count();
+
+    //             if ($jumlahTermin > 0) {
+    //                 $terminDel->where('no_sewa', $noSewa)->delete();
+                    
+    //                 $deskripsi_log = "Termin dihapus ({$jumlahTermin} data) untuk No. Sewa: {$noSewa} oleh {$userNama}";
+    //                 Modules::run('base/event/delete', $terminDel, $deskripsi_log, null, $noSewa, $dataTerminLama->toArray());
+    //             }
+    //         }
+
+    //         // ===== 3. HAPUS DATA SEWA UTAMA =====
+    //         $m_sewa->where('id', $id)->delete();
+
+    //         // ✅ PERBAIKAN: Log lebih informatif & kirim data '$current' (bukan object model '$m_sewa')
+    //         $deskripsi_log = "Data Sewa [{$noSewa}] (ID: {$id}) dihapus oleh {$userNama}";
+    //         Modules::run('base/event/delete', $m_sewa, $deskripsi_log, null, $id, $current);
+
+    //         $this->result['status'] = 1;
+    //         $this->result['message'] = 'Data berhasil dihapus';
+            
+    //     } catch (\Illuminate\Database\QueryException $e) {
+    //         $this->result['message'] = 'Gagal : ' . $e->getMessage();
+    //     }
+
+    //     display_json($this->result);
+    // }
+
     public function delete_data()
     {
         $id = $this->input->post('params');
 
         try {
             $m_sewa = new \Model\Storage\MasterSewa_model();
+            
+            // 1. AMBIL DATA DULU (Wajib, agar object punya properti 'id' untuk Event controller)
             $current = $m_sewa->where('id', $id)->first();
-            $noSewa = $current && !empty($current->no_sewa) ? trim($current->no_sewa) : '';
-
-            if (!empty($noSewa)) {
-                $amort = new \Model\Storage\AmortisasiJadwal_model();
-                $amort->where('kode_transaksi', $noSewa)->delete();
+            
+            if (!$current) {
+                $this->result['message'] = 'Data sewa tidak ditemukan.';
+                display_json($this->result);
+                return;
             }
+
+
+            $current = $m_sewa->with(['table_amortisasi_jadwal', 'ms_termin_sewa'])->where('id', $id)->first();
+            if (!$current) {
+                $this->result['message'] = 'Data sewa tidak ditemukan.';
+                display_json($this->result);
+                return;
+
+            }
+
+            $noSewa         = !empty($current->no_sewa) ? trim($current->no_sewa) : '';
+            $userNama       = $this->userdata['detail_user']['nama_detuser'] ?? 'System';
+            $deskripsi_log  = "di-delete oleh {$userNama}";
+            Modules::run('base/event/delete', $current, $deskripsi_log, 'ms_sewa', $id, null);
+            
 
             $m_sewa->where('id', $id)->delete();
 
-            $deskripsi_log = 'di-hapus oleh ' . $this->userdata['detail_user']['nama_detuser'];
-            Modules::run('base/event/delete', $m_sewa, $deskripsi_log, null, $id, $m_sewa);
+            if (!empty($noSewa)) {
+                
+                $amort          = new \Model\Storage\AmortisasiJadwal_model();
+                $dataAmortLama  = $amort->where('kode_transaksi', $noSewa)->get();
+                $jumlahAmort    = $dataAmortLama->count();
+
+                if ($jumlahAmort > 0) {
+                    $amort->where('kode_transaksi', $noSewa)->delete();
+                    // $deskripsi_log = "di-delete oleh {$userNama}";
+                    // Modules::run('base/event/delete', $amort, $deskripsi_log, null, $noSewa, $dataAmortLama->toArray());
+                }
+
+                $terminDel      = new \Model\Storage\MsSewaTermin_model();
+                $dataTerminLama = $terminDel->where('no_sewa', $noSewa)->get();
+                $jumlahTermin   = $dataTerminLama->count();
+
+                if ($jumlahTermin > 0) {
+                    $terminDel->where('no_sewa', $noSewa)->delete();
+                    
+                    // $deskripsi_log = "delete oleh {$userNama}";
+                    // Modules::run('base/event/delete', $terminDel, $deskripsi_log, null, $noSewa, $dataTerminLama->toArray());
+                }
+            }
 
             $this->result['status'] = 1;
             $this->result['message'] = 'Data berhasil dihapus';
+            
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = 'Gagal : ' . $e->getMessage();
         }
@@ -534,7 +847,8 @@ class MasterSewa extends Public_Controller {
         $viewData = [
             'data'          => [],
             'supplier'      => [],
-            'amortisasi'    => []
+            'amortisasi'    => [],
+            'nama_unit'     => '-',
         ];
 
         try {
@@ -552,6 +866,13 @@ class MasterSewa extends Public_Controller {
                     $sql_amortisasi = "select * from tabel_amortisasi_jadwal where kode_transaksi = '" . trim($d_sewa->no_sewa) . "'";
                     $amortisasi = $m_conf->hydrateRaw($sql_amortisasi);
 
+                    $sql_termin = "select * from ms_sewa_termin where no_sewa = '" . trim($d_sewa->no_sewa) . "'";
+                    $termin = $m_conf->hydrateRaw($sql_termin);
+
+                    $sql_unit = "select top 1 nama as nama_unit from wilayah where kode = '" . trim($d_sewa->unit) . "'";
+                    $unit = $m_conf->hydrateRaw($sql_unit);
+                     
+
                     if ( $supplier && method_exists($supplier, 'count') && $supplier->count() > 0 ) {
                         $viewData['supplier'] = $supplier->toArray();
                     }
@@ -559,16 +880,133 @@ class MasterSewa extends Public_Controller {
                     if ( $amortisasi && method_exists($amortisasi, 'count') && $amortisasi->count() > 0 ) {
                         $viewData['amortisasi'] = $amortisasi->toArray();
                     }
+
+                    if ( $termin && method_exists($termin, 'count') && $termin->count() > 0 ) {
+                        $viewData['termin'] = $termin->toArray();
+                    }
+
+                    if ( $unit && method_exists($unit, 'count') && $unit->count() > 0 ) {
+                        $viewData['nama_unit'] = $unit->toArray();
+                    }
                 }
             }
         } catch (\Illuminate\Database\QueryException $e) {
             $viewData['data']       = [];
             $viewData['supplier']   = [];
             $viewData['amortisasi'] = [];
+            $viewData['termin']     = [];
+            $viewData['nama_unit']  = [];
         }
 
         // cetak_r($viewData);die;
 
         echo $this->load->view($this->pathView . 'v_detail_data', $viewData, TRUE);
     }
+
+    public function detailAmortisasi()
+    {
+        $id = $this->input->post('params');
+        
+        $viewData = [
+            'sewa'       => null,
+            'amortisasi' => []
+        ];
+
+        try {
+            $m_sewa = new \Model\Storage\MasterSewa_model();
+            $d_sewa = $m_sewa->where('id', $id)->first();
+
+            if ($d_sewa) {
+                $viewData['sewa'] = $d_sewa;
+
+                $m_amort = new \Model\Storage\AmortisasiJadwal_model();
+                $viewData['amortisasi'] = $m_amort->where('kode_transaksi', $d_sewa->no_sewa)
+                                                  ->orderBy('kode_amortisasi', 'asc')
+                                                  ->get()
+                                                  ->toArray();
+            }
+        } catch (\Illuminate\Database\QueryException $e) {  
+            $viewData['sewa']       = null;
+            $viewData['amortisasi'] = [];
+        }
+
+        // cetak_r($viewData);die; 
+
+        echo $this->load->view($this->pathView . 'v_detail_amortisasi', $viewData, TRUE);
+    }
+
+
+         
+    public function saveAmortisasi()
+    {
+        $this->result['status'] = 0;
+        $this->result['message'] = 'Gagal menyimpan data.';
+
+        try {
+            $params = $this->input->post('params');
+            $idSewa = isset($params['id_sewa']) ? $params['id_sewa'] : 0;
+            $amortisasiData = isset($params['amortisasi']) ? $params['amortisasi'] : [];
+
+            if (empty($idSewa) || empty($amortisasiData)) {
+                throw new Exception('Data tidak valid atau kosong.');
+            }
+
+            $m_amort = new \Model\Storage\AmortisasiJadwal_model();
+            $updatedCount = 0;
+            $deletedCount = 0;
+
+            foreach ($amortisasiData as $item) {
+                if (!isset($item['id']) || empty($item['id'])) continue;
+
+                $isDeleted = isset($item['is_deleted']) && $item['is_deleted'] == 1;
+
+                if ($isDeleted) {
+                    $deskripsi_log = " dihapus oleh " . $this->userdata['detail_user']['nama_detuser'];
+                    Modules::run('base/event/delete', $m_amort, $deskripsi_log, null, $item['id'], $m_amort);
+            
+                    $m_amort->where('id', $item['id'])->delete();
+                    $deletedCount++;
+                } else {
+                    $updateData = [
+                        'nilai' => (float) $item['nilai']
+                    ];
+
+                    $deskripsi_log = " di-update oleh " . $this->userdata['detail_user']['nama_detuser'];
+                    Modules::run('base/event/update', $m_amort, $deskripsi_log, null, $item['id'], $m_amort);
+
+                    $m_amort->where('id', $item['id'])->update($updateData);
+                    $updatedCount++;
+                }
+            }
+
+            // Kunci ms_swa 
+                $m_sewa = new \Model\Storage\MasterSewa_model();
+                $data_update = [
+                    'is_locked'      => 1,
+                ];
+                $m_sewa->where('id', $params['id_sewa'])->update($data_update);
+
+            // End Kunci ms_sewa
+
+            // // Log Event
+            // if ($updatedCount > 0 || $deletedCount > 0) {
+            //     $m_sewa = new \Model\Storage\MasterSewa_model();
+            //     $d_sewa = $m_sewa->where('id', $idSewa)->first();
+            //     if ($d_sewa) {
+            //         $deskripsi_log = 'amortisasi di-update (' . $updatedCount . ' data) dan dihapus (' . $deletedCount . ' data) oleh ' . $this->userdata['detail_user']['nama_detuser'];
+            //         Modules::run('base/event/update', $m_sewa, $deskripsi_log, null, $idSewa, $d_sewa);
+            //     }
+            // }
+
+            $this->result['status'] = 1;
+            $this->result['message'] = "Berhasil menyimpan {$updatedCount} data dan menghapus {$deletedCount} data amortisasi.";
+
+        } catch (\Exception $e) {
+            $this->result['message'] = 'Error: ' . $e->getMessage();
+        }
+
+        display_json($this->result);
+    }
+
+
 }
