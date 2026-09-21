@@ -151,27 +151,27 @@ class LabaRugi extends Public_Controller {
                 count(*) as jumlah_rhpp,
                 sum(ekor_panen) as ekor_panen,
                 sum(total_pakai_pakan) as total_pakai_pakan,
-                sum(lama_panen) / count(*) as lama_panen,
+                sum(lama_panen) / NULLIF(count(*), 0) as lama_panen,
                 sum(kg_panen) as kg_panen,
                 sum(total) as total,
-                sum(rata_harga_panen) / count(*) as rata_harga_panen,
-                sum(umur) / count(*) as umur,
-                ABS(((sum(populasi_panen) - sum(ekor_panen)) / sum(populasi_panen)) * 100) as deplesi,
-                sum(fcr) / count(*) as fcr,
-                sum(bb) / count(*) as bb,
-                sum(ip) / count(*) as ip,
-                sum(rhpp_ke_pusat) / count(*) as rata_rhpp_ke_pusat,
-                sum(transfer) / count(*) as rata_transfer,
+                sum(rata_harga_panen) / NULLIF(count(*), 0) as rata_harga_panen,
+                sum(umur) / NULLIF(count(*), 0) as umur,
+                ABS(((sum(populasi_panen) - sum(ekor_panen)) / NULLIF(sum(populasi_panen), 0)) * 100) as deplesi,
+                sum(fcr) / NULLIF(count(*), 0) as fcr,
+                sum(bb) / NULLIF(count(*), 0) as bb,
+                sum(ip) / NULLIF(count(*), 0) as ip,
+                sum(rhpp_ke_pusat) / NULLIF(count(*), 0) as rata_rhpp_ke_pusat,
+                sum(transfer) / NULLIF(count(*), 0) as rata_transfer,
                 sum(lr_inti) as lr_inti,
                 ABS(sum(lr_inti)) - sum(biaya_operasional) as lr_inti_tanpa_ops_300,
                 sum(bonus_pasar) as bonus_pasar,
                 sum(tot_pembelian_sapronak) as total_sapronak,
                 sum(pdpt_peternak_belum_pajak) as total_pendapatan_peternak,
-                (sum(pdpt_peternak_belum_pajak) / sum(populasi_panen)) as rata_total_pendapatan_peternak,
+                (sum(pdpt_peternak_belum_pajak) / NULLIF(sum(populasi_panen), 0)) as rata_total_pendapatan_peternak,
                 sum(biaya_materai) as total_biaya_materai,
                 sum(biaya_operasional) as total_biaya_ops_300,
-                sum(modal_inti) / count(*) as modal_inti,
-                sum(modal_inti_sebenarnya) / count(*) as modal_inti_sebenarnya
+                sum(modal_inti) / NULLIF(count(*), 0) as modal_inti,
+                sum(modal_inti_sebenarnya) / NULLIF(count(*), 0) as modal_inti_sebenarnya
             from (
                 select
                     {$sql_sel_month}
@@ -201,8 +201,8 @@ class LabaRugi extends Public_Controller {
                     rhpp.pdpt_peternak_belum_pajak,
                     rhpp.biaya_materai,
                     rhpp.biaya_operasional,
-                    (rhpp.tot_pembelian_sapronak + rhpp.pdpt_peternak_belum_pajak + rhpp.biaya_materai + rhpp.biaya_operasional) / sum(drs.kg_panen) as modal_inti,
-                    ((rhpp.tot_pembelian_sapronak + rhpp.pdpt_peternak_belum_pajak + rhpp.biaya_materai + rhpp.biaya_operasional) - rhpp.bonus_pasar) / sum(drs.kg_panen) as modal_inti_sebenarnya
+                    (rhpp.tot_pembelian_sapronak + rhpp.pdpt_peternak_belum_pajak + rhpp.biaya_materai + rhpp.biaya_operasional) / NULLIF(sum(drs.kg_panen), 0) as modal_inti,
+                    ((rhpp.tot_pembelian_sapronak + rhpp.pdpt_peternak_belum_pajak + rhpp.biaya_materai + rhpp.biaya_operasional) - rhpp.bonus_pasar) / NULLIF(sum(drs.kg_panen), 0) as modal_inti_sebenarnya
                 from
                     tutup_siklus ts
                 inner join
@@ -266,7 +266,7 @@ class LabaRugi extends Public_Controller {
                             (DateDiff(Day, min(rs.tgl_panen), max(rs.tgl_panen)) + 1) as umur_panen,
                             sum(drs.ekor) as ekor_panen, sum(drs.tonase) as kg_panen,
                             sum(drs.tonase * drs.harga) as total,
-                            (sum(drs.tonase * drs.harga) / sum(drs.tonase)) as rata_harga_panen
+                            (sum(drs.tonase * drs.harga) / NULLIF(sum(drs.tonase), 0)) as rata_harga_panen
                         from det_real_sj drs
                         inner join (select max(id) as id, tgl_panen, noreg from real_sj group by tgl_panen, noreg) rs on drs.id_header = rs.id
                         where rs.noreg in (select noreg from tutup_siklus where tgl_tutup between '".$start_date."' and '".$end_date."')
