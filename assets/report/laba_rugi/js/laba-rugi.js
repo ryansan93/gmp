@@ -1,6 +1,9 @@
 var lr = {
+	_xhr: {}, // jqXHR pending requests milik fitur ini, dilacak per key (getData/viewForm/encryptParams)
+
 	startUp: function () {
 		lr.settingUp();
+		lr.bindStopRequests();
 	}, // end - startUp
 
 	settingUp: function () {
@@ -13,6 +16,31 @@ var lr = {
             format: 'Y'
         });
 	}, // end - settingUp
+
+	// NOTE: query laporan ini berat (banyak join, bisa >1 menit di server). Supaya
+	// request lama yg masih jalan tidak numpuk/balapan sama request baru saat filter
+	// diganti-ganti cepat, ATAU nyangkut percuma saat halaman ditutup/refresh/pindah,
+	// semua request AJAX fitur ini dilacak di lr._xhr lalu di-abort() di titik-titik
+	// itu. CATATAN: abort() cuma menghentikan sisi BROWSER (berhenti menunggu &
+	// membatalkan render hasil) - query yg sudah terlanjur dikirim ke SQL Server tetap
+	// jalan sampai selesai di server (tidak ada cara membatalkan query SQL yg sedang
+	// berjalan cuma dari JS), tapi ini tetap mencegah penumpukan request BARU dan
+	// mencegah hasil basi (response request lama) menimpa tampilan yg lebih baru.
+	stopAllRequests: function() {
+		$.each(lr._xhr, function(key, xhr){
+			if ( xhr && typeof xhr.abort === 'function' && xhr.state() === 'pending' ) {
+				xhr.abort();
+			}
+		});
+		lr._xhr = {};
+	}, // end - stopAllRequests
+
+	bindStopRequests: function() {
+		// halaman di-refresh / ditutup / pindah url - lihat catatan stopAllRequests()
+		$(window).off('beforeunload.lr pagehide.lr').on('beforeunload.lr pagehide.lr', function(){
+			lr.stopAllRequests();
+		});
+	}, // end - bindStopRequests
 
 	getData: function() {
 		var err = 0;
@@ -36,7 +64,8 @@ var lr = {
 				'tahun': dateSQL($('#tahun').data('DateTimePicker').date())
 			};
 
-			$.ajax({
+			lr.stopAllRequests();
+			lr._xhr.getData = $.ajax({
                 url : 'report/LabaRugi/getData',
                 data : {
                     'params' : params
@@ -64,11 +93,12 @@ var lr = {
         };
 
         showLoading();
-        $.get('report/LabaRugi/viewForm',{
-            'params': params 
+        lr.stopAllRequests();
+        lr._xhr.viewForm = $.get('report/LabaRugi/viewForm',{
+            'params': params
         },function(data){
             hideLoading();
-            
+
             var _options = {
                 className : 'large',
                 message : data,
@@ -102,7 +132,8 @@ var lr = {
             'tahun': $(elm).attr('data-tahun')
         };
 
-        $.ajax({
+        lr.stopAllRequests();
+        lr._xhr.encryptParams = $.ajax({
             url: 'report/LabaRugi/encryptParams',
             data: {
                 'params': params
