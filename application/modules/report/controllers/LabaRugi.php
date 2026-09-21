@@ -469,8 +469,8 @@ class LabaRugi extends Public_Controller {
                 rhpp.pdpt_peternak_belum_pajak,
                 rhpp.biaya_materai,
                 rhpp.biaya_operasional,
-                (rhpp.tot_pembelian_sapronak+rhpp.pdpt_peternak_belum_pajak+rhpp.biaya_materai+rhpp.biaya_operasional) / drs.kg_panen as modal_inti,
-                ((rhpp.tot_pembelian_sapronak+rhpp.pdpt_peternak_belum_pajak+rhpp.biaya_materai+rhpp.biaya_operasional)-rhpp.bonus_pasar) / drs.kg_panen as modal_inti_sebenarnya
+                (rhpp.tot_pembelian_sapronak+rhpp.pdpt_peternak_belum_pajak+rhpp.biaya_materai+rhpp.biaya_operasional) / NULLIF(drs.kg_panen, 0) as modal_inti,
+                ((rhpp.tot_pembelian_sapronak+rhpp.pdpt_peternak_belum_pajak+rhpp.biaya_materai+rhpp.biaya_operasional)-rhpp.bonus_pasar) / NULLIF(drs.kg_panen, 0) as modal_inti_sebenarnya
             from
                 tutup_siklus ts 
             right join
@@ -571,7 +571,7 @@ class LabaRugi extends Public_Controller {
                         sum(drs.ekor) as ekor_panen,
                         sum(drs.tonase) as kg_panen,
                         sum(drs.tonase * drs.harga) as total,
-                        (sum(drs.tonase * drs.harga) / sum(drs.tonase)) as rata_harga_panen
+                        (sum(drs.tonase * drs.harga) / NULLIF(sum(drs.tonase), 0)) as rata_harga_panen
                     from det_real_sj drs
                     inner join
                         (select max(id) as id, tgl_panen, noreg from real_sj group by tgl_panen, noreg) rs
@@ -934,7 +934,7 @@ class LabaRugi extends Public_Controller {
                     r_penjualan.ekor as jml_ekor_terpanen,
                     r_penjualan.tonase as tonase,
                     r_penjualan.total as hasil_penjualan_ayam,
-                    (r_penjualan.total / r_penjualan.tonase) as rata_harga,
+                    (r_penjualan.total / NULLIF(r_penjualan.tonase, 0)) as rata_harga,
                     r_plasma.pdpt_peternak_belum_pajak as pdpt_plasma,
                     r_plasma.potongan_pajak,
                     r_piutang.nominal as potongan,
@@ -943,9 +943,9 @@ class LabaRugi extends Public_Controller {
                     trf.tgl_real_bayar as tgl_transfer,
                     (DateDiff (Day, r_penjualan.tgl_panen_akhir, ts.tgl_tutup) + 1) as durasi_rhpp_ke_pusat,
                     (DateDiff (Day, ts.tgl_tutup, trf.tgl_real_bayar) + 1) as durasi_transfer,
-                    (r_plasma.pdpt_peternak_belum_pajak / rd.jumlah) as rata_pdpt_plasma_per_populasi,
-                    ((r_inti.tot_pembelian_sapronak + r_plasma.pdpt_peternak_belum_pajak + r_inti.biaya_materai + r_inti.biaya_operasional) / r_penjualan.tonase) as modal_inti,
-                    ((r_inti.tot_pembelian_sapronak + (r_plasma.pdpt_peternak_belum_pajak - r_plasma.bonus_pasar) + r_inti.biaya_materai + r_inti.biaya_operasional) / r_penjualan.tonase) as modal_inti_tanpa_bonus_pasar,
+                    (r_plasma.pdpt_peternak_belum_pajak / NULLIF(rd.jumlah, 0)) as rata_pdpt_plasma_per_populasi,
+                    ((r_inti.tot_pembelian_sapronak + r_plasma.pdpt_peternak_belum_pajak + r_inti.biaya_materai + r_inti.biaya_operasional) / NULLIF(r_penjualan.tonase, 0)) as modal_inti,
+                    ((r_inti.tot_pembelian_sapronak + (r_plasma.pdpt_peternak_belum_pajak - r_plasma.bonus_pasar) + r_inti.biaya_materai + r_inti.biaya_operasional) / NULLIF(r_penjualan.tonase, 0)) as modal_inti_tanpa_bonus_pasar,
                     r_inti.lr_inti,
                     (r_inti.lr_inti + r_inti.biaya_operasional) as lr_inti_tanpa_opr,
                     r_inti.biaya_operasional,
@@ -1219,7 +1219,7 @@ class LabaRugi extends Public_Controller {
                     rg_penjualan.ekor as jml_ekor_terpanen,
                     rg_penjualan.tonase as tonase,
                     rg_penjualan.total as hasil_penjualan_ayam,
-                    (rg_penjualan.total / rg_penjualan.tonase) as rata_harga,
+                    (rg_penjualan.total / NULLIF(rg_penjualan.tonase, 0)) as rata_harga,
                     rg_plasma.pdpt_peternak_belum_pajak as pdpt_plasma,
                     rg_plasma.potongan_pajak,
                     rg_piutang.nominal as potongan,
@@ -1228,9 +1228,9 @@ class LabaRugi extends Public_Controller {
                     trf.tgl_real_bayar as tgl_transfer, 
                     (DateDiff (Day, rg_penjualan.tgl_panen_akhir, rgh.tgl_submit) + 1) as durasi_rhpp_ke_pusat,
                     (DateDiff (Day, rgh.tgl_submit, trf.tgl_real_bayar) + 1) as durasi_transfer,
-                    (rg_plasma.pdpt_peternak_belum_pajak / rgd.jumlah) as rata_pdpt_plasma_per_populasi,
-                    ((rg_inti.tot_pembelian_sapronak + rg_plasma.pdpt_peternak_belum_pajak + rg_inti.biaya_materai + rg_inti.biaya_operasional) / rg_penjualan.tonase) as modal_inti,
-                    ((rg_inti.tot_pembelian_sapronak + (rg_plasma.pdpt_peternak_belum_pajak - rg_plasma.bonus_pasar) + rg_inti.biaya_materai + rg_inti.biaya_operasional) / rg_penjualan.tonase) as modal_inti_tanpa_bonus_pasar,
+                    (rg_plasma.pdpt_peternak_belum_pajak / NULLIF(rgd.jumlah, 0)) as rata_pdpt_plasma_per_populasi,
+                    ((rg_inti.tot_pembelian_sapronak + rg_plasma.pdpt_peternak_belum_pajak + rg_inti.biaya_materai + rg_inti.biaya_operasional) / NULLIF(rg_penjualan.tonase, 0)) as modal_inti,
+                    ((rg_inti.tot_pembelian_sapronak + (rg_plasma.pdpt_peternak_belum_pajak - rg_plasma.bonus_pasar) + rg_inti.biaya_materai + rg_inti.biaya_operasional) / NULLIF(rg_penjualan.tonase, 0)) as modal_inti_tanpa_bonus_pasar,
                     rg_inti.lr_inti,
                     (rg_inti.lr_inti + rg_inti.biaya_operasional) as lr_inti_tanpa_opr,
                     rg_inti.biaya_operasional,
