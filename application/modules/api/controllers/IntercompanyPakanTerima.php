@@ -1,30 +1,34 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
- * Intercompany Pakan - sisi PENERIMA (instance ini = pemegang fisik).
+ * Intercompany Pakan - sisi PENERIMA.
  *
- * Endpoint machine-to-machine dipanggil oleh instance GMP lain (lewat
+ * Endpoint machine-to-machine dipanggil oleh instance GML/GMP lain (lewat
  * IntercompanyClient::post() di sisi pengirim, application/modules/intercompany/
  * controllers/IntercompanyPakan.php::kirimKePartner()). TIDAK ada konfirmasi manual
- * staff di sisi ini (sesuai keputusan: otomatis begitu pengirim simpan) - begitu
- * signature & idempotency lolos, stok REAL langsung tercatat.
+ * staff di sisi ini (sesuai keputusan: otomatis begitu pengirim simpan).
+ *
+ * KEPUTUSAN: stok RIIL sudah dicatat di instance PENGIRIM (order_pakan pengirim sejak
+ * awal menunjuk gudang lokal miliknya sendiri) - jadi stok di sisi PENERIMA ini cuma
+ * SHADOW (stok_manajemen), murni visibilitas manajemen. Jurnal (hutang ke supplier)
+ * justru RIIL di sisi PENERIMA (insert LANGSUNG ke jurnal/det_jurnal, BUKAN lewat
+ * engine InsertJurnal::exec() - dicoba tapi dibatalkan krn nominalnya bergantung ke
+ * det_stok riil yg tidak ada di sini, dan ada risiko self-deadlock; lihat NB di
+ * prosesTerima() poin 3). Nominal & COA dihitung/di-hardcode sendiri di sini, tidak
+ * bergantung ke det_stok sama sekali. Konsekuensinya, tagihan ini WAJIB muncul di
+ * layar Pengajuan Pembayaran (pembayaran/RealisasiPembayaran) sisi PENERIMA - baris
+ * konfirmasi_pembayaran_pakan/_det direplikasi manual di prosesTerima() poin 4, krn
+ * layar itu baca tabel itu, BUKAN jurnal/det_jurnal langsung. Sebaliknya di sisi
+ * PENGIRIM, baris konfirmasi_pembayaran_pakan yg mungkin sudah kebentuk dari Terima
+ * Pakan normal (SEBELUM staff transfer order ini) dihapus oleh
+ * TransferTransaksi::hapusKonfirmasiPembayaranPakan() - supaya tagihan tidak nyangkut
+ * dobel (nempel di GML DAN di sini).
  *
  * Beda dgn controller api/ lain di app ini (Mobile.php dkk) yang TANPA autentikasi
- * sama sekali - endpoint ini WAJIB diverifikasi HMAC karena langsung menulis stok
- * fisik & baris jurnal_manajemen tanpa review manusia. Lihat plan: intercompany
- * pakan - stok rill vs jurnal manajemen lintas-GMP.
+ * sama sekali - endpoint ini WAJIB diverifikasi HMAC karena langsung menulis dokumen
+ * order_pakan/kirim_pakan/terima_pakan & posting jurnal riil tanpa review manusia.
  */
 class IntercompanyPakanTerima extends API_Controller {
-
-    /**
-     * TODO (perlu dikonfirmasi tim akuntansi sebelum live): kode COA yang dipakai
-     * utk baris jurnal_manajemen (shadow, bukan hutang nyata - jadi COA di sini
-     * hanya utk keperluan visibilitas biaya internal, TIDAK boleh diikutkan
-     * perhitungan Neraca/Laba Rugi resmi karena jurnal_manajemen bukan tabel jurnal
-     * yang dibaca laporan keuangan manapun).
-     */
-    const COA_ASAL_DEFAULT = null;
-    const COA_TUJUAN_DEFAULT = null;
 
     public function terima()
     {
@@ -71,6 +75,7 @@ class IntercompanyPakanTerima extends API_Controller {
             $tbl_name_asal = isset($payload['tbl_name_asal']) ? $payload['tbl_name_asal'] : null;
             $tbl_id_asal = isset($payload['tbl_id_asal']) ? $payload['tbl_id_asal'] : null;
             $kode_supplier = isset($payload['kode_supplier']) ? $payload['kode_supplier'] : null;
+            $kondisi = isset($payload['kondisi']) ? $payload['kondisi'] : null;
 
             if (!empty($sudah_ada)) {
                 $no_transaksi_lama = null;
@@ -92,16 +97,37 @@ class IntercompanyPakanTerima extends API_Controller {
             $harga = isset($payload['harga']) ? $payload['harga'] : null;
             $kode_gudang_tujuan = isset($payload['kode_gudang_tujuan']) ? $payload['kode_gudang_tujuan'] : null;
 
-            // Semua insert di bawah (order_pakan s.d. jurnal_manajemen) dibungkus 1 transaksi -
+            // Info kirim_pakan ASLI dari instance pengirim (kalau ada) - diteruskan apa adanya,
+            // BUKAN digenerate ulang di sisi partner.
+            $info_kirim = array(
+                'no_sj' => isset($payload['no_sj']) ? $payload['no_sj'] : null,
+                'ongkos_angkut' => isset($payload['ongkos_angkut']) ? $payload['ongkos_angkut'] : null,
+                'ekspedisi' => isset($payload['ekspedisi']) ? $payload['ekspedisi'] : null,
+                'ekspedisi_id' => isset($payload['ekspedisi_id']) ? $payload['ekspedisi_id'] : null,
+                'no_polisi' => isset($payload['no_polisi']) ? $payload['no_polisi'] : null,
+                'sopir' => isset($payload['sopir']) ? $payload['sopir'] : null,
+            );
+
+            // Semua insert di bawah (order_pakan s.d. det_jurnal) dibungkus 1 transaksi -
             // supaya kalau ada 1 langkah gagal di tengah (mis. tipe kolom tidak cocok), SEMUA
             // di-rollback, tidak menyisakan order_pakan/kirim_pakan "yatim" tanpa detail seperti
             // yg sempat kejadian. Pakai getConnection()->transaction() (bukan Facade DB::), krn
             // project ini cuma pakai Capsule Manager langsung - pola sama spt LembarKerjaHpp.php.
+            // NB: sempat dicoba posting jurnal RIIL via engine InsertJurnal::exec() (sama dgn
+            // Terima Pakan normal) - DIBATALKAN krn 2 masalah: (1) nominalnya dihitung dari JOIN
+            // ke det_stok RIIL (kode_trans=no_order), yg TIDAK ADA di sini krn stok di sisi
+            // penerima sengaja shadow (lihat NB "2) Stok SHADOW" di prosesTerima()) - hasilnya
+            // nominal jurnal selalu NULL; (2) InsertJurnal query terima_pakan/kirim_pakan lewat
+            // koneksi \Model\Storage\Conf() SENDIRI (beda dari connection transaction() di
+            // bawah) - kalau dipanggil sebelum commit, self-deadlock (baris yg br saja di-insert
+            // masih terkunci transaksi sendiri, teruji nyata: 3 menit+ tanpa respons). Jurnal
+            // riil sekarang di-insert LANGSUNG (bukan lewat engine itu) di prosesTerima() poin 3
+            // - nominal & COA dihitung/di-hardcode sendiri, tidak bergantung ke det_stok.
             $result['content'] = $m_log->getConnection()->transaction(function () use (
                 $partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $kode_supplier,
-                $tanggal, $kode_barang, $jumlah, $harga, $kode_gudang_tujuan, $m_log
+                $tanggal, $kode_barang, $jumlah, $harga, $kode_gudang_tujuan, $kondisi, $info_kirim, $m_log
             ) {
-                return $this->prosesTerima($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $kode_supplier, $tanggal, $kode_barang, $jumlah, $harga, $kode_gudang_tujuan, $m_log);
+                return $this->prosesTerima($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $kode_supplier, $tanggal, $kode_barang, $jumlah, $harga, $kode_gudang_tujuan, $kondisi, $info_kirim, $m_log);
             });
 
             $result['status'] = 1;
@@ -118,18 +144,24 @@ class IntercompanyPakanTerima extends API_Controller {
      * $connection->transaction(function() { return $this->prosesTerima(...); }) di caller;
      * closure yg langsung berisi banyak statement jadi sulit dibaca kalau ditaruh inline.
      */
-    private function prosesTerima($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $kode_supplier, $tanggal, $kode_barang, $jumlah, $harga, $kode_gudang_tujuan, $m_log)
+    private function prosesTerima($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $kode_supplier, $tanggal, $kode_barang, $jumlah, $harga, $kode_gudang_tujuan, $kondisi, $info_kirim, $m_log)
     {
             // Sesuai keputusan: transaksi intercompany dicatat sbg dokumen NYATA di sini
             // (order_pakan/kirim_pakan/terima_pakan asli, BUKAN cuma shadow stok/jurnal) -
-            // nomornya pakai konvensi/fungsi getNextNomor() yg SAMA persis dgn Order Pakan
-            // asli di instance ini, supaya transaksi ini muncul wajar di layar Order/Kirim/
-            // Terima Pakan sendiri. 1 order_pakan dipakai bareng utk semua baris barang dari
-            // transaksi asal yg sama (kode_partner+tbl_name_asal+tbl_id_asal) - dicari dulu
-            // via intercompany_pakan_log (tbl_name_tujuan='order_pakan') sebelum bikin baru,
-            // supaya tidak nge-split 1 transaksi jadi banyak order_pakan.
-            $d_order_pakan = $this->cariOrBuatOrderPakan($partner_cocok->kode_partner, $tbl_name_asal, $tbl_id_asal, $tanggal, $kode_supplier);
+            // nomornya pakai konvensi/fungsi getNextNomor() yg SAMA dgn Order Pakan asli DI
+            // INSTANCE INI (format 'OPK/<kode_unit>/...', kode_unit diambil dari unit pemilik
+            // gudang tujuan - persis pola yg dipakai ODVP::save_order_pakan()), supaya
+            // transaksi ini muncul wajar di layar Order/Kirim/Terima Pakan sendiri. 1
+            // order_pakan dipakai bareng utk semua baris barang dari transaksi asal yg sama
+            // (kode_partner+tbl_name_asal+tbl_id_asal) - dicari dulu via intercompany_pakan_log
+            // (tbl_name_tujuan='order_pakan') sebelum bikin baru, supaya tidak nge-split 1
+            // transaksi jadi banyak order_pakan.
+            $d_order_pakan = $this->cariOrBuatOrderPakan($partner_cocok->kode_partner, $tbl_name_asal, $tbl_id_asal, $tanggal, $kode_supplier, $kode_gudang_tujuan);
 
+            // NB: layar view Order Pakan (order_pakan_view_form) di-JOIN pakai RIGHT JOIN
+            // perusahaan ON opd.perusahaan = prs.kode - kalau 'perusahaan' NULL, baris detail
+            // ini TIDAK PERNAH match & hilang total dari tampilan (RIGHT JOIN membalik arah
+            // filter-nya). Wajib diisi kode perusahaan default milik instance PENERIMA ini.
             $m_opd = new \Model\Storage\OrderPakanDetail_model();
             $m_opd->id_header = $d_order_pakan->id;
             $m_opd->barang = $kode_barang;
@@ -139,6 +171,7 @@ class IntercompanyPakanTerima extends API_Controller {
             $m_opd->total = !empty($harga) ? ($harga * $jumlah) : null;
             $m_opd->tujuan_kirim = 'gudang';
             $m_opd->id_tujuan_kirim = $kode_gudang_tujuan;
+            $m_opd->perusahaan = $this->defaultKodePerusahaan();
             $m_opd->save();
 
             // kirim_pakan + det_kirim_pakan - 1 pasang per barang (mengikuti 1 HTTP call = 1
@@ -150,7 +183,18 @@ class IntercompanyPakanTerima extends API_Controller {
             $m_kp->jenis_kirim = 'opks';
             $m_kp->jenis_tujuan = 'gudang';
             $m_kp->tujuan = $kode_gudang_tujuan;
-            $m_kp->asal = 'Intercompany - ' . $partner_cocok->kode_partner;
+            // NB: utk jenis_kirim='opks', layar detail (PengirimanPenerimaanPakan::loadForm())
+            // cari Supplier_model WHERE nomor = kirim_pakan.asal - HARUS nomor supplier asli,
+            // bukan teks bebas, kalau tidak jadi non-object & "Asal" tampil kosong.
+            $m_kp->asal = $kode_supplier;
+            // Info kirim ASLI dari instance pengirim (No SJ, ongkos angkut, ekspedisi, no
+            // polisi, sopir) - diteruskan apa adanya, sama persis dgn yg tercatat di sana.
+            $m_kp->no_sj = $info_kirim['no_sj'];
+            $m_kp->ongkos_angkut = $info_kirim['ongkos_angkut'];
+            $m_kp->ekspedisi = $info_kirim['ekspedisi'];
+            $m_kp->ekspedisi_id = $info_kirim['ekspedisi_id'];
+            $m_kp->no_polisi = $info_kirim['no_polisi'];
+            $m_kp->sopir = $info_kirim['sopir'];
             $m_kp->save();
 
             // NB: det_kirim_pakan.jumlah & det_terima_pakan.jumlah bertipe INT di database
@@ -160,6 +204,7 @@ class IntercompanyPakanTerima extends API_Controller {
             $m_dkp->id_header = $m_kp->id;
             $m_dkp->item = $kode_barang;
             $m_dkp->jumlah = (int) $jumlah;
+            $m_dkp->kondisi = $kondisi;
             $m_dkp->nilai_beli = $harga;
             $m_dkp->nilai_jual = $harga;
             $m_dkp->save();
@@ -172,12 +217,16 @@ class IntercompanyPakanTerima extends API_Controller {
             $m_tp->id_kirim_pakan = $m_kp->id;
             $m_tp->tgl_trans = $tanggal;
             $m_tp->tgl_terima = $tanggal;
+            // no_bbm - konvensi sama dgn PengirimanPenerimaanPakan.php utk jenis_kirim='opks',
+            // dipakai lagi sbg kode_trans di baris jurnal riil di bawah.
+            $m_tp->no_bbm = 'BBM/PKN/S' . str_replace('OPK', '', $d_order_pakan->no_order);
             $m_tp->save();
 
             $m_dtp = new \Model\Storage\TerimaPakanDetail_model();
             $m_dtp->id_header = $m_tp->id;
             $m_dtp->item = $kode_barang;
             $m_dtp->jumlah = (int) $jumlah;
+            $m_dtp->kondisi = $kondisi;
             $m_dtp->save();
 
             // 1) Log (arah TERIMA) - tbl_name/tbl_id TUJUAN nunjuk ke order_pakan di atas,
@@ -200,83 +249,121 @@ class IntercompanyPakanTerima extends API_Controller {
             $id_log = $m_log->id;
             $no_transaksi = $d_order_pakan->no_order;
 
-            // 2) Stok REAL (barang benar-benar ada di gudang instance ini) - tulis langsung
-            //    ke det_stok/det_stok_trans, TIDAK lewat SP hitung_stok_pakan_by_transaksi
-            //    (SP itu kompleks & sudah ada temuan technical-debt/duplikasi badan di
-            //    docs/optimasi_sp_stok.md - risiko terlalu tinggi utk diperluas dgn sumber
-            //    baru tanpa pengujian mendalam; di sini cukup "tambah stok masuk" sederhana).
-            $m_stok = new \Model\Storage\Stok_model();
-            $d_stok = $m_stok->where('periode', $tanggal)->first();
-            if (empty($d_stok)) {
-                $m_stok->periode = $tanggal;
-                $m_stok->tgl_proses = date('Y-m-d H:i:s');
-                $m_stok->save();
-                $id_header_stok = $m_stok->id;
+            // 2) Stok SHADOW (stok_manajemen) - sesuai keputusan, instance PENERIMA di alur
+            //    intercompany ini BUKAN pemilik stok riil (barangnya sudah dicatat sbg stok
+            //    riil di instance PENGIRIM, lihat IntercompanyPakan::kirimKePartner()) - di
+            //    sini cuma visibilitas manajemen.
+            $m_stok_mnj = new \Model\Storage\StokManajemen_model();
+            $d_stok_mnj = $m_stok_mnj->where('periode', $tanggal)->first();
+            if (empty($d_stok_mnj)) {
+                $m_stok_mnj->periode = $tanggal;
+                $m_stok_mnj->tgl_proses = date('Y-m-d H:i:s');
+                $m_stok_mnj->save();
+                $id_header_stok_mnj = $m_stok_mnj->id;
             } else {
-                $id_header_stok = $d_stok->id;
+                $id_header_stok_mnj = $d_stok_mnj->id;
             }
 
-            // NB: kode_gudang di det_stok bertipe INT (FK ke gudang.id), BUKAN string kode -
-            // 'kode_gudang_tujuan' yg dikirim pengirim harus berisi gudang.id milik instance
-            // INI (penerima), sesuai referensi intercompany_partner_gudang di sisi pengirim.
-            // 'jumlah' & 'jml_stok' dua-duanya ada di skema det_stok asli (dikonfirmasi via
-            // INFORMATION_SCHEMA 2026-09-17) - 'jumlah' = qty transaksi ini, 'jml_stok' =
-            // saldo berjalan. Insert ini TIDAK menghitung saldo berjalan (bukan FIFO spt SP
-            // hitung_stok_pakan_by_transaksi) - jml_stok diisi sama dgn jumlah sbg
-            // penyederhanaan; perlu direview kalau laporan stok butuh saldo berjalan akurat.
-            $m_det_stok = new \Model\Storage\DetStok_model();
-            $m_det_stok->id_header = $id_header_stok;
-            $m_det_stok->kode_gudang = (int) $kode_gudang_tujuan;
-            $m_det_stok->kode_barang = $kode_barang;
-            $m_det_stok->jumlah = $jumlah;
-            $m_det_stok->jml_stok = $jumlah;
-            $m_det_stok->hrg_beli = $harga;
-            $m_det_stok->tgl_trans = $tanggal;
-            $m_det_stok->jenis_trans = 'masuk';
-            $m_det_stok->jenis_barang = 'pakan';
-            // NB: 'intercompany_pakan_log' (22 char) muat di det_stok.kode_trans (varchar 25)
-            // tapi KEPANJANGAN utk det_stok_trans.kode_trans (varchar 20, cuma muat 20 char) -
-            // pakai kode singkat 'ic_pakan_log' yg konsisten & muat di keduanya.
-            $m_det_stok->kode_trans = 'ic_pakan_log';
-            $m_det_stok->save();
+            $m_det_stok_mnj = new \Model\Storage\DetStokManajemen_model();
+            $m_det_stok_mnj->id_header = $id_header_stok_mnj;
+            $m_det_stok_mnj->kode_gudang = is_numeric($kode_gudang_tujuan) ? (int) $kode_gudang_tujuan : null;
+            $m_det_stok_mnj->kode_barang = $kode_barang;
+            $m_det_stok_mnj->jumlah = $jumlah;
+            $m_det_stok_mnj->jml_stok = $jumlah;
+            $m_det_stok_mnj->hrg_beli = $harga;
+            $m_det_stok_mnj->tgl_trans = $tanggal;
+            $m_det_stok_mnj->jenis_trans = 'masuk';
+            $m_det_stok_mnj->jenis_barang = 'pakan';
+            // no_order asli (BUKAN konstanta 'ic_pakan_log') - konsisten dgn sisi pengirim
+            // (IntercompanyPakan::kirimKePartner()), supaya laporan stok manajemen (kalau ada)
+            // otomatis mengenali baris ini lewat konvensi kode_trans = no_order yg sama.
+            $m_det_stok_mnj->kode_trans = $d_order_pakan->no_order;
+            $m_det_stok_mnj->id_intercompany_log = $id_log;
+            $m_det_stok_mnj->save();
 
-            // det_stok_trans ASLI cuma: id, id_header, kode_trans, jumlah, kode_barang -
-            // TIDAK ADA kolom tbl_name di tabel ini (beda dgn det_stok_trans_siklus yg punya).
-            // Jangan tambahkan tbl_name di sini, akan error "invalid column name".
-            $m_det_stok_trans = new \Model\Storage\DetStokTrans_model();
-            $m_det_stok_trans->id_header = $m_det_stok->id;
-            $m_det_stok_trans->kode_barang = $kode_barang;
-            $m_det_stok_trans->kode_trans = 'ic_pakan_log';
-            $m_det_stok_trans->jumlah = $jumlah;
-            $m_det_stok_trans->save();
+            $m_det_stok_trans_mnj = new \Model\Storage\DetStokTransManajemen_model();
+            $m_det_stok_trans_mnj->id_header = $m_det_stok_mnj->id;
+            $m_det_stok_trans_mnj->kode_barang = $kode_barang;
+            $m_det_stok_trans_mnj->kode_trans = $d_order_pakan->no_order;
+            $m_det_stok_trans_mnj->jumlah = $jumlah;
+            $m_det_stok_trans_mnj->id_intercompany_log = $id_log;
+            $m_det_stok_trans_mnj->save();
 
             // NB: tbl_name_tujuan/tbl_id_tujuan baris log ini SENGAJA dibiarkan menunjuk ke
             // order_pakan (diisi di atas) - dipakai lagi utk grouping barang berikutnya dari
-            // transaksi asal yg sama (lihat cariOrBuatOrderPakan()). Referensi det_stok cukup
-            // dikembalikan lewat $result['content']['id_det_stok'] di bawah, tidak perlu
-            // menimpa kolom ini.
+            // transaksi asal yg sama (lihat cariOrBuatOrderPakan()).
 
-            // 3) Jurnal SHADOW (biaya pakan yg dipakai, TANPA hutang nyata - hutang sungguhan
-            //    tetap di instance pengirim). Nominal dari payload (instance ini tidak tahu
-            //    harga supplier sendiri).
-            $m_jurnal_mnj = new \Model\Storage\JurnalManajemen_model();
-            $m_jurnal_mnj->tanggal = $tanggal;
-            $m_jurnal_mnj->save();
+            // 3) Jurnal RIIL (hutang ke supplier) - insert LANGSUNG ke jurnal/det_jurnal, BUKAN
+            //    lewat InsertJurnal::exec() (dibatalkan - lihat NB di terima(): nominalnya
+            //    bergantung ke det_stok riil yg tidak ada di sini krn stok penerima sengaja
+            //    shadow, dan ada risiko self-deadlock). Nominal dihitung SENDIRI dari payload
+            //    (harga*jumlah) - tidak bergantung ke det_stok sama sekali.
+            //    COA & keterangan 'HUTANG PAKAN' pakai konfigurasi yg SAMA dgn rule otomatis
+            //    utk jenis_kirim='opks' urut=1 (setting_automatic_jurnal_det id_header=22,
+            //    dikonfirmasi via INFORMATION_SCHEMA 2026-09-22: coa_asal=21180.100 'Hutang
+            //    Niaga ORP (Pakan)', coa_tujuan=12030.000 'Persediaan Pakan') - di-hardcode di
+            //    sini krn cuma dipakai utk skenario intercompany ini, bukan generic spt aslinya.
+            $kode_unit = $this->kodeUnitGudang($kode_gudang_tujuan);
+            $nama_supplier = $this->namaSupplier($kode_supplier);
 
-            $m_det_jurnal_mnj = new \Model\Storage\DetJurnalManajemen_model();
-            $m_det_jurnal_mnj->id_header = $m_jurnal_mnj->id;
-            $m_det_jurnal_mnj->tanggal = $tanggal;
-            $m_det_jurnal_mnj->nominal = !empty($harga) ? ($harga * $jumlah) : 0;
-            $m_det_jurnal_mnj->coa_asal = self::COA_ASAL_DEFAULT;
-            $m_det_jurnal_mnj->coa_tujuan = self::COA_TUJUAN_DEFAULT;
-            $m_det_jurnal_mnj->keterangan = 'Pemakaian pakan intercompany dari ' . $partner_cocok->kode_partner;
-            $m_det_jurnal_mnj->tbl_name = 'intercompany_pakan_log';
-            $m_det_jurnal_mnj->tbl_id = $id_log;
-            $m_det_jurnal_mnj->gudang = !empty($kode_gudang_tujuan) ? (int) $kode_gudang_tujuan : null; // kolom asli INT (FK gudang.id)
-            $m_det_jurnal_mnj->id_intercompany_log = $id_log;
-            $m_det_jurnal_mnj->save();
+            $m_jurnal = new \Model\Storage\Jurnal_model();
+            $m_jurnal->tanggal = $tanggal;
+            $m_jurnal->unit = $kode_unit;
+            $m_jurnal->save();
 
-            return array('id_log' => $id_log, 'id_det_stok' => $m_det_stok->id, 'no_transaksi' => $no_transaksi);
+            $m_det_jurnal = new \Model\Storage\DetJurnal_model();
+            $m_det_jurnal->id_header = $m_jurnal->id;
+            $m_det_jurnal->tanggal = $tanggal;
+            $m_det_jurnal->supplier = $kode_supplier;
+            $m_det_jurnal->perusahaan = $this->defaultKodePerusahaan();
+            $m_det_jurnal->keterangan = 'HUTANG PAKAN ' . strtoupper($nama_supplier);
+            $m_det_jurnal->nominal = !empty($harga) ? ($harga * $jumlah) : 0;
+            $m_det_jurnal->asal = 'Hutang Niaga ORP (Pakan)';
+            $m_det_jurnal->coa_asal = '21180.100';
+            $m_det_jurnal->tujuan = 'Persediaan Pakan';
+            $m_det_jurnal->coa_tujuan = '12030.000';
+            $m_det_jurnal->unit = $kode_unit;
+            $m_det_jurnal->tbl_name = 'terima_pakan';
+            $m_det_jurnal->tbl_id = $m_tp->id;
+            $m_det_jurnal->kode_trans = $m_tp->no_bbm;
+            $m_det_jurnal->gudang = !empty($kode_gudang_tujuan) ? (int) $kode_gudang_tujuan : null;
+            $m_det_jurnal->save();
+
+            // 4) Konfirmasi Pembayaran Pakan - supaya tagihan ini MUNCUL di layar Pengajuan
+            //    Pembayaran (pembayaran/RealisasiPembayaran) di sisi PENERIMA ini. Layar itu
+            //    TIDAK baca jurnal/det_jurnal langsung - dia baca konfirmasi_pembayaran_pakan/
+            //    _det, yg NORMALNYA di-generate oleh PengirimanPenerimaanPakan::insertKonfirmasi()
+            //    saat staff simpan Terima Pakan manual. Krn endpoint ini bikin terima_pakan
+            //    tanpa lewat layar itu, insert-nya direplikasi manual di sini (pakai data yg
+            //    sudah ada di memori, BUKAN query ulang - hindari lagi risiko yg sama dgn NB
+            //    InsertJurnal::exec() di atas). 1 baris konfirmasi per prosesTerima() (per
+            //    barang), sama granularitasnya dgn jurnal riil di atas - beda dgn
+            //    insertKonfirmasi() asli yg agregat semua barang 1 no_order jadi 1 baris.
+            $m_kpp = new \Model\Storage\KonfirmasiPembayaranPakan_model();
+            $nomor_bayar = $m_kpp->getNextNomor();
+
+            $m_kpp->nomor = $nomor_bayar;
+            $m_kpp->tgl_bayar = $tanggal;
+            $m_kpp->periode = $tanggal;
+            $m_kpp->perusahaan = $this->defaultKodePerusahaan();
+            $m_kpp->supplier = $kode_supplier;
+            $m_kpp->total = !empty($harga) ? ($harga * $jumlah) : 0;
+            $m_kpp->invoice = $info_kirim['no_sj'];
+            $m_kpp->save();
+
+            $m_kppd = new \Model\Storage\KonfirmasiPembayaranPakanDet_model();
+            $m_kppd->id_header = $m_kpp->id;
+            $m_kppd->tgl_sj = $tanggal;
+            $m_kppd->kode_unit = $kode_unit;
+            $m_kppd->no_order = $d_order_pakan->no_order;
+            $m_kppd->no_sj = $info_kirim['no_sj'];
+            // NB: kolom jumlah bertipe INT (sama spt det_kirim_pakan/det_terima_pakan) -
+            // wajib di-cast, kalau tidak driver sqlsrv menolak nilai desimal spt '2500.00'.
+            $m_kppd->jumlah = (int) $jumlah;
+            $m_kppd->total = !empty($harga) ? ($harga * $jumlah) : 0;
+            $m_kppd->save();
+
+            return array('id_log' => $id_log, 'id_det_stok_manajemen' => $m_det_stok_mnj->id, 'id_terima_pakan' => $m_tp->id, 'no_transaksi' => $no_transaksi);
     }
 
     private function balas($result)
@@ -290,12 +377,13 @@ class IntercompanyPakanTerima extends API_Controller {
      * Cari order_pakan yg sudah dibuat utk transaksi asal (kode_partner + tbl_name_asal +
      * tbl_id_asal) ini - via intercompany_pakan_log yg tbl_name_tujuan-nya 'order_pakan'
      * (baris pertama dari grup ini). Kalau belum ada, buat order_pakan baru dgn nomor
-     * konvensi SENDIRI (getNextNomor 'OPK/ICP') - PERSIS fungsi yg sama dgn Order Pakan asli,
-     * jadi nomornya konsisten dgn format Order Pakan di instance ini. supplier diisi APA
+     * konvensi SAMA PERSIS dgn Order Pakan asli di instance ini: 'OPK/<kode_unit>/...' via
+     * getNextNomor(), dgn kode_unit diambil dari unit pemilik gudang tujuan (persis pola
+     * ODVP::save_order_pakan()) - BUKAN prefix 'OPK/ICP' buatan sendiri. supplier diisi APA
      * ADANYA dari $kode_supplier (nomor supplier ASLI, sama dgn di sisi pengirim) - TIDAK
      * mendaftarkan instance pengirim sbg supplier baru.
      */
-    private function cariOrBuatOrderPakan($kode_partner, $tbl_name_asal, $tbl_id_asal, $tanggal, $kode_supplier)
+    private function cariOrBuatOrderPakan($kode_partner, $tbl_name_asal, $tbl_id_asal, $tanggal, $kode_supplier, $kode_gudang_tujuan)
     {
         if (!empty($tbl_name_asal) && !empty($tbl_id_asal)) {
             $m_log_pertama = new \Model\Storage\IntercompanyPakanLog_model();
@@ -315,8 +403,10 @@ class IntercompanyPakanTerima extends API_Controller {
             }
         }
 
+        $kode_unit = $this->kodeUnitGudang($kode_gudang_tujuan);
+
         $m_op = new \Model\Storage\OrderPakan_model();
-        $nomor = $m_op->getNextNomor('OPK/ICP');
+        $nomor = $m_op->getNextNomor('OPK/' . $kode_unit);
         $no_po = 'PO/PKN' . str_replace('OPK', '', $nomor);
 
         $m_op->no_order = $nomor;
@@ -327,5 +417,54 @@ class IntercompanyPakanTerima extends API_Controller {
         $m_op->save();
 
         return $m_op;
+    }
+
+    /**
+     * Kode perusahaan default milik instance PENERIMA ini (dipakai utk order_pakan_detail.
+     * perusahaan - lihat NB di prosesTerima()). Kebanyakan instance cuma punya 1 perusahaan
+     * terdaftar (satu kode, versi terbaru diambil via MAX(id) per kode - pola dedup yg sama
+     * spt ODVP::get_data_perusahaan()); kalau ada lebih dari 1, ambil yg pertama - tidak ada
+     * info dari pengirim utk milih yg mana.
+     */
+    private function defaultKodePerusahaan()
+    {
+        $m_prs = new \Model\Storage\Perusahaan_model();
+        $d_prs = $m_prs->orderBy('kode', 'asc')->orderBy('id', 'desc')->first();
+
+        return !empty($d_prs) ? $d_prs->kode : null;
+    }
+
+    /**
+     * Kode unit (wilayah) pemilik gudang TUJUAN (gudang.id milik instance INI) - dipakai utk
+     * nomor Order Pakan ('OPK/<kode_unit>/...') maupun kolom 'unit' di jurnal riil. Fallback
+     * 'ICP' kalau gudang/unit-nya entah kenapa tidak ketemu, supaya tetap dapat nilai valid.
+     */
+    private function kodeUnitGudang($kode_gudang_tujuan)
+    {
+        if (empty($kode_gudang_tujuan)) { return 'ICP'; }
+
+        $m_gdg = new \Model\Storage\Gudang_model();
+        $d_gdg = $m_gdg->where('id', $kode_gudang_tujuan)->with(['dUnit'])->first();
+
+        if (!empty($d_gdg) && !empty($d_gdg->dUnit) && !empty($d_gdg->dUnit->kode)) {
+            return $d_gdg->dUnit->kode;
+        }
+
+        return 'ICP';
+    }
+
+    /**
+     * Nama supplier ASLI (dari $kode_supplier yg diteruskan apa adanya dari pengirim) - dipakai
+     * utk keterangan jurnal riil ('HUTANG PAKAN <NAMA SUPPLIER>'). Null-safe kalau supplier-nya
+     * belum terdaftar dgn nomor yg sama di instance ini.
+     */
+    private function namaSupplier($kode_supplier)
+    {
+        if (empty($kode_supplier)) { return '-'; }
+
+        $m_supplier = new \Model\Storage\Supplier_model();
+        $d_supplier = $m_supplier->where('nomor', $kode_supplier)->where('tipe', 'supplier')->orderBy('id', 'desc')->first();
+
+        return !empty($d_supplier) ? $d_supplier->nama : $kode_supplier;
     }
 }
