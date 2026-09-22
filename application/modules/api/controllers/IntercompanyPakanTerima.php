@@ -49,23 +49,7 @@ class IntercompanyPakanTerima extends API_Controller {
             // kode_partner pengirim; payload TIDAK membawa kode_partner sendiri (sengaja,
             // supaya pengirim tidak bisa mengaku2 jadi partner lain) - signature dicocokkan
             // ke SETIAP shared_secret partner aktif sampai salah satu cocok.
-            $this->load->library('IntercompanyClient');
-
-            $m_partner = new \Model\Storage\IntercompanyPartner_model();
-            $partners = $m_partner->where('status', 1)->get();
-
-            $partner_cocok = null;
-            foreach ($partners as $p) {
-                $cek = IntercompanyClient::verifikasi($raw_body, $timestamp, $signature, $p->shared_secret);
-                if ($cek['valid']) {
-                    $partner_cocok = $p;
-                    break;
-                }
-            }
-
-            if (empty($partner_cocok)) {
-                throw new Exception('Signature tidak valid utk partner manapun yang terdaftar/aktif.');
-            }
+            $partner_cocok = $this->verifikasiPartner($raw_body, $timestamp, $signature);
 
             // Idempotency: kalau referensi ini sudah pernah diproses, balas sukses tanpa
             // memproses ulang (mencegah dobel-catat akibat retry pengirim).
@@ -137,6 +121,336 @@ class IntercompanyPakanTerima extends API_Controller {
         }
 
         return $this->balas($result);
+    }
+
+    /**
+     * Cari peternak AKTIF (rdim_submit.status=1) & belum tutup siklus (tidak ada baris
+     * tutup_siklus utk noreg itu) di unit tertentu - dipanggil live oleh partner via HTTP
+     * (BUKAN nulis apapun, murni lookup) saat staff di sisi pengirim mencari noreg tujuan
+     * utk transfer OPKG (gudang->peternak). Query & kondisi persis meniru inti logic
+     * PengirimanPenerimaanPakan::get_peternak() (rs.status=1, LEFT JOIN tutup_siklus ts
+     * ... ts.id is null), tanpa filter tanggal docin bulan berjalan punya fitur ITU sendiri
+     * (tidak relevan di sini - kita cuma perlu "peternak mana yg masih aktif di unit ini").
+     * Riwayat pakan yg sudah diterima PECAH PER JENIS (bukan 1 angka total gabungan) - lewat
+     * OUTER APPLY: 1 baris peternak x 1 baris per jenis pakan APAPUN yg pernah dia terima
+     * (SEMUA jenis, bukan cuma yg sesuai barang di shipment yg mau ditransfer - staff perlu
+     * lihat riwayat lengkap utk milih peternak yg paling tepat). Kalau belum pernah terima
+     * sama sekali, tetap 1 baris muncul dgn kode_barang/jumlah NULL, spy peternaknya tidak
+     * hilang dari list.
+     *
+     * NB tgl_docin/umur: rdim_submit.tgl_docin cuma tanggal RENCANA (bisa di masa depan,
+     * blm tentu DOC-nya benar2 sudah datang) - dipakai INNER JOIN ke order_doc+terima_doc
+     * (dedup versi terbaru via MAX(id), pola sama spt tabel master lain di app ini) supaya
+     * HANYA peternak yg DOC-nya SUDAH dikonfirmasi diterima (terima_doc.datang not null) yg
+     * muncul, dan tgl_docin/umur dihitung dari tanggal RIIL (td.datang), bukan rs.tgl_docin.
+     */
+    public function cariPeternakAktif()
+    {
+        $raw_body = file_get_contents('php://input');
+        $signature = isset($_SERVER['HTTP_X_SIGNATURE']) ? $_SERVER['HTTP_X_SIGNATURE'] : null;
+        $timestamp = isset($_SERVER['HTTP_X_TIMESTAMP']) ? $_SERVER['HTTP_X_TIMESTAMP'] : null;
+
+        $result = array('status' => 0, 'message' => '');
+
+        try {
+            $this->verifikasiPartner($raw_body, $timestamp, $signature);
+
+            $payload = json_decode($raw_body, true);
+            $kode_unit = isset($payload['kode_unit']) ? $payload['kode_unit'] : null;
+
+            if (empty($kode_unit) || !preg_match('/^[A-Za-z0-9]+$/', $kode_unit)) {
+                throw new Exception('kode_unit tidak valid.');
+            }
+
+            $sql_riwayat = "
+                select
+                    dtp.item as kode_barang,
+                    b.nama as nama_barang,
+                    sum(dtp.jumlah) as jumlah
+                from det_terima_pakan dtp
+                left join
+                    terima_pakan tp
+                    on
+                        dtp.id_header = tp.id
+                left join
+                    kirim_pakan kp
+                    on
+                        tp.id_kirim_pakan = kp.id
+                left join
+                    (
+                        select b1.* from barang b1
+                        right join
+                            (select max(id) as id, kode from barang group by kode) b2
+                            on
+                                b1.id = b2.id
+                    ) b
+                    on
+                        b.kode = dtp.item
+                where
+                    kp.jenis_kirim = 'opkg' and
+                    kp.jenis_tujuan = 'peternak' and
+                    kp.tujuan = rs.noreg
+                group by
+                    dtp.item,
+                    b.nama
+            ";
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    rs.noreg,
+                    m.nama,
+                    cast(td.datang as date) as tgl_docin,
+                    DATEDIFF(day, td.datang, GETDATE()) as umur,
+                    riwayat.kode_barang,
+                    riwayat.nama_barang,
+                    riwayat.jumlah
+                from rdim_submit rs
+                inner join
+                    (
+                        select od1.* from order_doc od1
+                        right join
+                            (select max(id) as id, noreg from order_doc group by noreg) od2
+                            on
+                                od1.id = od2.id
+                    ) od
+                    on
+                        rs.noreg = od.noreg
+                inner join
+                    (
+                        select td1.* from terima_doc td1
+                        right join
+                            (select max(id) as id, no_order from terima_doc group by no_order) td2
+                            on
+                                td1.id = td2.id
+                    ) td
+                    on
+                        od.no_order = td.no_order
+                left join
+                    kandang k
+                    on
+                        rs.kandang = k.id
+                left join
+                    wilayah w
+                    on
+                        w.id = k.unit
+                left join
+                    (
+                        select mm1.* from mitra_mapping mm1
+                        right join
+                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                            on
+                                mm1.id = mm2.id
+                    ) mm
+                    on
+                        rs.nim = mm.nim
+                left join
+                    mitra m
+                    on
+                        m.id = mm.mitra
+                left join
+                    tutup_siklus ts
+                    on
+                        rs.noreg = ts.noreg
+                outer apply
+                    (".$sql_riwayat.") riwayat
+                where
+                    rs.status = 1 and
+                    ts.id is null and
+                    td.datang is not null and
+                    w.kode = '".$kode_unit."'
+                order by
+                    td.datang asc
+            ";
+            $d_conf = $m_conf->hydrateRaw($sql);
+
+            $data = array();
+            if ($d_conf->count() > 0) {
+                $data = $d_conf->toArray();
+            }
+
+            $result['status'] = 1;
+            $result['content'] = $data;
+        } catch (Exception $e) {
+            $result['message'] = $e->getMessage();
+        }
+
+        return $this->balas($result);
+    }
+
+    /**
+     * Terima transfer OPKG (gudang->peternak) dari partner - lihat NB di
+     * TransferTransaksi::transferOpkg(). BEDA dgn terima() (order pakan/supplier): TIDAK
+     * ada stok yg ditulis sama sekali di sini (barangnya sudah fisik di peternak, dicatat
+     * lewat proses normal di instance PENGIRIM) - endpoint ini CUMA bikin dokumen
+     * kirim_pakan+terima_pakan (anchor referensi) + jurnal RIIL, dgn isi jurnal (nominal/
+     * coa/asal/tujuan) disalin APA ADANYA dari payload (yg dikirim dari jurnal riil yg
+     * SUDAH ADA di sisi pengirim) - HANYA kode_trans/tbl_id/unit/perusahaan yg disesuaikan
+     * ke dokumen milik instance ini sendiri.
+     */
+    public function terimaOpkg()
+    {
+        $raw_body = file_get_contents('php://input');
+        $signature = isset($_SERVER['HTTP_X_SIGNATURE']) ? $_SERVER['HTTP_X_SIGNATURE'] : null;
+        $timestamp = isset($_SERVER['HTTP_X_TIMESTAMP']) ? $_SERVER['HTTP_X_TIMESTAMP'] : null;
+
+        $result = array('status' => 0, 'message' => '');
+
+        try {
+            $payload = json_decode($raw_body, true);
+            if (empty($payload) || empty($payload['referensi_idempotency'])) {
+                throw new Exception('Payload tidak valid / referensi_idempotency kosong.');
+            }
+
+            $partner_cocok = $this->verifikasiPartner($raw_body, $timestamp, $signature);
+
+            $m_log = new \Model\Storage\IntercompanyPakanLog_model();
+            $sudah_ada = $m_log->where('referensi_idempotency', $payload['referensi_idempotency'])->first();
+
+            if (!empty($sudah_ada)) {
+                $result['status'] = 1;
+                $result['message'] = 'Sudah pernah diproses sebelumnya (idempotent).';
+                return $this->balas($result);
+            }
+
+            $tbl_name_asal = isset($payload['tbl_name_asal']) ? $payload['tbl_name_asal'] : null;
+            $tbl_id_asal = isset($payload['tbl_id_asal']) ? $payload['tbl_id_asal'] : null;
+            $tanggal = isset($payload['tanggal']) ? $payload['tanggal'] : null;
+            $noreg_tujuan = isset($payload['noreg_tujuan']) ? trim((string) $payload['noreg_tujuan']) : null;
+            $detail = isset($payload['detail']) && is_array($payload['detail']) ? $payload['detail'] : array();
+            $jurnal_items = isset($payload['jurnal']) && is_array($payload['jurnal']) ? $payload['jurnal'] : array();
+            $info_kirim = isset($payload['info_kirim']) && is_array($payload['info_kirim']) ? $payload['info_kirim'] : array();
+            $asal = isset($payload['asal']) ? $payload['asal'] : null;
+
+            if (empty($noreg_tujuan) || empty($tanggal) || empty($detail) || empty($jurnal_items)) {
+                throw new Exception('Payload OPKG tidak lengkap (noreg_tujuan/tanggal/detail/jurnal).');
+            }
+
+            // Validasi ketat SEBELUM dipakai di raw SQL (kodeUnitPeternak()) - noreg cuma
+            // alfanumerik, sama pola dgn validasi kode_unit/kode_barang di cariPeternakAktif().
+            if (!preg_match('/^[A-Za-z0-9]+$/', $noreg_tujuan)) {
+                throw new Exception('noreg_tujuan tidak valid.');
+            }
+
+            $result['content'] = $m_log->getConnection()->transaction(function () use (
+                $partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $m_log
+            ) {
+                return $this->prosesTerimaOpkg($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $m_log);
+            });
+
+            $result['status'] = 1;
+            $result['message'] = 'Jurnal diterima & tercatat.';
+        } catch (Exception $e) {
+            $result['message'] = $e->getMessage();
+        }
+
+        return $this->balas($result);
+    }
+
+    /**
+     * Isi asli terimaOpkg() - dipisah jadi method sendiri spy bisa dibungkus
+     * $connection->transaction(), sama pola dgn prosesTerima()/terima().
+     */
+    private function prosesTerimaOpkg($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $m_log)
+    {
+        $kode_unit = $this->kodeUnitPeternak($noreg_tujuan);
+        $perusahaan = $this->defaultKodePerusahaan();
+
+        // 1) Dokumen kirim_pakan+terima_pakan - CUMA anchor referensi (tbl_id/kode_trans)
+        //    utk jurnal di bawah, TIDAK ada stok yg ditulis sama sekali (lihat NB kelas ini).
+        //    'asal' diisi APA ADANYA sama persis dgn kirim_pakan.asal milik GML (id gudang
+        //    mentah dr instance pengirim, BUKAN di-resolve jadi nama/teks apapun) - kolomnya
+        //    VARCHAR(50) jadi tidak masalah walau nilainya "milik" instance lain. Layar
+        //    Pengiriman/Penerimaan Pakan (PengirimanPenerimaanPakan::load_form()) sudah
+        //    di-null-safe-kan+is_numeric-guard utk kasus id ini tidak match gudang manapun
+        //    di instance ini.
+        $m_kp = new \Model\Storage\KirimPakan_model();
+        $no_order = $m_kp->getNextIdOrder('OP/' . $kode_unit);
+
+        $m_kp->no_order = $no_order;
+        $m_kp->tgl_trans = $tanggal;
+        $m_kp->tgl_kirim = $tanggal;
+        $m_kp->jenis_kirim = 'opkg';
+        $m_kp->jenis_tujuan = 'peternak';
+        $m_kp->asal = $asal;
+        $m_kp->tujuan = $noreg_tujuan;
+        // Info kirim ASLI dari instance pengirim (No SJ, ongkos angkut, ekspedisi, no polisi,
+        // sopir) - diteruskan apa adanya, sama persis dgn yg tercatat di sana.
+        $m_kp->no_sj = isset($info_kirim['no_sj']) ? $info_kirim['no_sj'] : null;
+        $m_kp->ongkos_angkut = isset($info_kirim['ongkos_angkut']) ? $info_kirim['ongkos_angkut'] : null;
+        $m_kp->ekspedisi = isset($info_kirim['ekspedisi']) ? $info_kirim['ekspedisi'] : null;
+        $m_kp->ekspedisi_id = isset($info_kirim['ekspedisi_id']) ? $info_kirim['ekspedisi_id'] : null;
+        $m_kp->no_polisi = isset($info_kirim['no_polisi']) ? $info_kirim['no_polisi'] : null;
+        $m_kp->sopir = isset($info_kirim['sopir']) ? $info_kirim['sopir'] : null;
+        $m_kp->save();
+
+        foreach ($detail as $item) {
+            $m_dkp = new \Model\Storage\KirimPakanDetail_model();
+            $m_dkp->id_header = $m_kp->id;
+            $m_dkp->item = $item['kode_barang'];
+            $m_dkp->jumlah = (int) $item['jumlah'];
+            $m_dkp->kondisi = isset($item['kondisi']) ? $item['kondisi'] : null;
+            $m_dkp->save();
+        }
+
+        $m_tp = new \Model\Storage\TerimaPakan_model();
+        $m_tp->id_kirim_pakan = $m_kp->id;
+        $m_tp->tgl_trans = $tanggal;
+        $m_tp->tgl_terima = $tanggal;
+        $m_tp->no_bbm = 'BBM/PKN/G' . str_replace('OP', '', $no_order);
+        $m_tp->save();
+
+        foreach ($detail as $item) {
+            $m_dtp = new \Model\Storage\TerimaPakanDetail_model();
+            $m_dtp->id_header = $m_tp->id;
+            $m_dtp->item = $item['kode_barang'];
+            $m_dtp->jumlah = (int) $item['jumlah'];
+            $m_dtp->kondisi = isset($item['kondisi']) ? $item['kondisi'] : null;
+            $m_dtp->save();
+        }
+
+        // 2) Log (arah TERIMA)
+        $m_log->arah = 'TERIMA';
+        $m_log->kode_partner = $partner_cocok->kode_partner;
+        $m_log->referensi_idempotency = $payload['referensi_idempotency'];
+        $m_log->kode_barang = $detail[0]['kode_barang'];
+        $m_log->jml_qty = array_sum(array_column($detail, 'jumlah'));
+        $m_log->tbl_name_asal = $tbl_name_asal;
+        $m_log->tbl_id_asal = $tbl_id_asal;
+        $m_log->tbl_name_tujuan = 'kirim_pakan';
+        $m_log->tbl_id_tujuan = $m_kp->id;
+        $m_log->status = 'DITERIMA';
+        $m_log->waktu_terima = date('Y-m-d H:i:s');
+        $m_log->save();
+
+        // 3) Jurnal RIIL - isi (nominal/coa/asal/tujuan) disalin APA ADANYA dari jurnal riil
+        //    yg SUDAH ADA di sisi pengirim (lihat payload['jurnal'], dibangun di
+        //    TransferTransaksi::transferOpkg()) - cuma kode_trans/tbl_id/unit/perusahaan yg
+        //    disesuaikan ke dokumen instance ini sendiri.
+        $m_jurnal = new \Model\Storage\Jurnal_model();
+        $m_jurnal->tanggal = $tanggal;
+        $m_jurnal->unit = $kode_unit;
+        $m_jurnal->save();
+
+        foreach ($jurnal_items as $ji) {
+            $m_det_jurnal = new \Model\Storage\DetJurnal_model();
+            $m_det_jurnal->id_header = $m_jurnal->id;
+            $m_det_jurnal->tanggal = $tanggal;
+            $m_det_jurnal->perusahaan = $perusahaan;
+            $m_det_jurnal->keterangan = $ji['keterangan'];
+            $m_det_jurnal->nominal = $ji['nominal'];
+            $m_det_jurnal->asal = $ji['asal'];
+            $m_det_jurnal->coa_asal = $ji['coa_asal'];
+            $m_det_jurnal->tujuan = $ji['tujuan'];
+            $m_det_jurnal->coa_tujuan = $ji['coa_tujuan'];
+            $m_det_jurnal->unit = $kode_unit;
+            $m_det_jurnal->tbl_name = 'terima_pakan';
+            $m_det_jurnal->tbl_id = $m_tp->id;
+            $m_det_jurnal->kode_trans = $m_tp->no_bbm;
+            $m_det_jurnal->save();
+        }
+
+        return array('id_log' => $m_log->id, 'id_kirim_pakan' => $m_kp->id, 'id_terima_pakan' => $m_tp->id, 'no_transaksi' => $no_order);
     }
 
     /**
@@ -374,6 +688,27 @@ class IntercompanyPakanTerima extends API_Controller {
     }
 
     /**
+     * Verifikasi signature terhadap SEMUA partner aktif (dipakai bersama oleh terima() dan
+     * cariPeternakAktif() - endpoint generic, tidak tahu di muka siapa pengirimnya, lihat NB
+     * di terima()). Melempar Exception kalau tidak ada yg cocok, return \Model\Storage\
+     * IntercompanyPartner_model yg cocok kalau valid.
+     */
+    private function verifikasiPartner($raw_body, $timestamp, $signature)
+    {
+        $this->load->library('IntercompanyClient');
+
+        $m_partner = new \Model\Storage\IntercompanyPartner_model();
+        $partners = $m_partner->where('status', 1)->get();
+
+        foreach ($partners as $p) {
+            $cek = IntercompanyClient::verifikasi($raw_body, $timestamp, $signature, $p->shared_secret);
+            if ($cek['valid']) { return $p; }
+        }
+
+        throw new Exception('Signature tidak valid utk partner manapun yang terdaftar/aktif.');
+    }
+
+    /**
      * Cari order_pakan yg sudah dibuat utk transaksi asal (kode_partner + tbl_name_asal +
      * tbl_id_asal) ini - via intercompany_pakan_log yg tbl_name_tujuan-nya 'order_pakan'
      * (baris pertama dari grup ini). Kalau belum ada, buat order_pakan baru dgn nomor
@@ -448,6 +783,51 @@ class IntercompanyPakanTerima extends API_Controller {
 
         if (!empty($d_gdg) && !empty($d_gdg->dUnit) && !empty($d_gdg->dUnit->kode)) {
             return $d_gdg->dUnit->kode;
+        }
+
+        return 'ICP';
+    }
+
+    /**
+     * Kode unit (wilayah) pemilik kandang peternak $noreg (di instance INI) - dipakai utk
+     * nomor kirim_pakan OPKG ('OP/<kode_unit>/...') & kolom 'unit' jurnal riil di
+     * prosesTerimaOpkg(). Fallback 'ICP' kalau peternak/kandang/unit-nya entah kenapa tidak
+     * ketemu (mis. noreg yg dikirim staff salah ketik) - tetap dapat nilai valid drpd error.
+     */
+    private function kodeUnitPeternak($noreg)
+    {
+        if (empty($noreg)) { return 'ICP'; }
+
+        // NB: $noreg WAJIB sudah divalidasi alfanumerik oleh caller (terimaOpkg()) SEBELUM
+        // sampai sini - dipakai langsung di raw SQL di bawah, tidak di-escape lagi di sini.
+        // Raw SQL (BUKAN relasi Eloquent bersarang kandang->d_unit) - relasi itu sempat
+        // dicoba (termasuk dot-notation 'kandang.d_unit') tapi TERBUKTI tidak pernah
+        // ter-resolve dgn benar (selalu jatuh ke fallback ICP walau datanya ada & query SQL
+        // manual terbukti benar) - entah kenapa, tidak digali lebih jauh, raw SQL lebih
+        // predictable & konsisten dgn pola query lain di app ini (banyak join kompleks di
+        // codebase ini sengaja pakai hydrateRaw(), bukan relasi Eloquent).
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select top 1 w.kode
+            from rdim_submit rs
+            left join
+                kandang k
+                on
+                    rs.kandang = k.id
+            left join
+                wilayah w
+                on
+                    w.id = k.unit
+            where
+                rs.noreg = '".$noreg."'
+            order by
+                rs.id desc
+        ";
+        $d_conf = $m_conf->hydrateRaw($sql);
+
+        if ($d_conf->count() > 0) {
+            $kode = $d_conf->toArray()[0]['kode'];
+            if (!empty($kode)) { return $kode; }
         }
 
         return 'ICP';

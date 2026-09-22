@@ -425,10 +425,19 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
                 $a_content['no_sj_asal'] = $data = $this->getDataSjAsal( $d_kp['asal'] );
             } else if ( $d_kp['jenis_kirim'] == 'opkg' ) {
-                $m_gudang = new \Model\Storage\Gudang_model();
-                $d_gudang = $m_gudang->where('id', $d_kp['asal'])->orderBy('id', 'desc')->first();
+                // Dokumen opkg hasil transfer intercompany (lihat IntercompanyPakanTerima::
+                // prosesTerimaOpkg()) TIDAK punya gudang asal riil milik instance ini - kolom
+                // 'asal' diisi TEKS deskriptif (bukan id numerik) utk kasus itu. is_numeric()
+                // WAJIB dicek dulu SEBELUM query ke Gudang_model - kalau langsung di-where('id',
+                // $teks) ke kolom int, SQL Server error "Conversion failed ... to data type
+                // int" (bukan cuma null-object spt sebelumnya).
+                $asal = $d_kp['asal'];
+                if ( !empty($d_kp['asal']) && is_numeric($d_kp['asal']) ) {
+                    $m_gudang = new \Model\Storage\Gudang_model();
+                    $d_gudang = $m_gudang->where('id', $d_kp['asal'])->orderBy('id', 'desc')->first();
 
-                $asal = $d_gudang->nama;
+                    $asal = !empty($d_gudang) ? $d_gudang->nama : null;
+                }
 
                 if ( $d_kp['jenis_tujuan'] == 'peternak' ) {
                     $m_rs = new \Model\Storage\RdimSubmit_model();
