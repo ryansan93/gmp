@@ -109,7 +109,8 @@ class IntercompanyPakan extends Public_Controller {
                 $this->result['status'] = 1;
                 $this->result['message'] = 'Berhasil dikirim ulang ke ' . $d_partner->nama_partner . '.';
             } else {
-                $m_log->where('id', $id_log)->update(array('pesan_error' => $hasil['error']));
+                // pesan_error VARCHAR(500) - potong dulu, lihat NB sama di TransferTransaksi::transferOpkg().
+                $m_log->where('id', $id_log)->update(array('pesan_error' => substr($hasil['error'], 0, 500)));
                 $this->result['message'] = 'Masih gagal: ' . $hasil['error'];
             }
         } catch (Exception $e) {
@@ -314,7 +315,8 @@ class IntercompanyPakan extends Public_Controller {
                 } else {
                     // GAGAL kirim TIDAK membatalkan pembukuan lokal (stok riil & shadow jurnal
                     // sudah tersimpan sah) - tinggal retry manual lewat layar rekonsiliasi.
-                    $m_log->where('id', $m_log->id)->update(array('status' => 'GAGAL', 'pesan_error' => $kirim['error']));
+                    // pesan_error VARCHAR(500) - potong dulu, bisa jauh lebih panjang dari itu.
+                    $m_log->where('id', $m_log->id)->update(array('status' => 'GAGAL', 'pesan_error' => substr($kirim['error'], 0, 500)));
                 }
             }
 
