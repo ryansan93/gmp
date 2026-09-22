@@ -281,12 +281,14 @@ class IntercompanyPakanTerima extends API_Controller {
     /**
      * Terima transfer OPKG (gudang->peternak) dari partner - lihat NB di
      * TransferTransaksi::transferOpkg(). BEDA dgn terima() (order pakan/supplier): TIDAK
-     * ada stok yg ditulis sama sekali di sini (barangnya sudah fisik di peternak, dicatat
-     * lewat proses normal di instance PENGIRIM) - endpoint ini CUMA bikin dokumen
+     * ada stok GUDANG yg ditulis sama sekali di sini (barangnya sudah fisik di peternak,
+     * dicatat lewat proses normal di instance PENGIRIM) - endpoint ini bikin dokumen
      * kirim_pakan+terima_pakan (anchor referensi) + jurnal RIIL, dgn isi jurnal (nominal/
      * coa/asal/tujuan) disalin APA ADANYA dari payload (yg dikirim dari jurnal riil yg
      * SUDAH ADA di sisi pengirim) - HANYA kode_trans/tbl_id/unit/perusahaan yg disesuaikan
-     * ke dokumen milik instance ini sendiri.
+     * ke dokumen milik instance ini sendiri. det_stok_siklus (per-peternak, RHPP/FCR) BEDA
+     * keputusan - ITU disalin (poin 4 prosesTerimaOpkg()), krn noreg tujuan yg dipilih staff
+     * dianggap merepresentasikan peternak yg sama dgn yg fisik menerima di sisi pengirim.
      */
     public function terimaOpkg()
     {
@@ -321,6 +323,7 @@ class IntercompanyPakanTerima extends API_Controller {
             $jurnal_items = isset($payload['jurnal']) && is_array($payload['jurnal']) ? $payload['jurnal'] : array();
             $info_kirim = isset($payload['info_kirim']) && is_array($payload['info_kirim']) ? $payload['info_kirim'] : array();
             $asal = isset($payload['asal']) ? $payload['asal'] : null;
+            $stok_siklus_items = isset($payload['stok_siklus']) && is_array($payload['stok_siklus']) ? $payload['stok_siklus'] : array();
 
             if (empty($noreg_tujuan) || empty($tanggal) || empty($detail) || empty($jurnal_items)) {
                 throw new Exception('Payload OPKG tidak lengkap (noreg_tujuan/tanggal/detail/jurnal).');
@@ -333,9 +336,9 @@ class IntercompanyPakanTerima extends API_Controller {
             }
 
             $result['content'] = $m_log->getConnection()->transaction(function () use (
-                $partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $m_log
+                $partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $stok_siklus_items, $m_log
             ) {
-                return $this->prosesTerimaOpkg($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $m_log);
+                return $this->prosesTerimaOpkg($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $stok_siklus_items, $m_log);
             });
 
             $result['status'] = 1;
@@ -351,7 +354,7 @@ class IntercompanyPakanTerima extends API_Controller {
      * Isi asli terimaOpkg() - dipisah jadi method sendiri spy bisa dibungkus
      * $connection->transaction(), sama pola dgn prosesTerima()/terima().
      */
-    private function prosesTerimaOpkg($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $m_log)
+    private function prosesTerimaOpkg($partner_cocok, $payload, $tbl_name_asal, $tbl_id_asal, $tanggal, $noreg_tujuan, $detail, $jurnal_items, $info_kirim, $asal, $stok_siklus_items, $m_log)
     {
         $kode_unit = $this->kodeUnitPeternak($noreg_tujuan);
         $perusahaan = $this->defaultKodePerusahaan();
@@ -448,6 +451,45 @@ class IntercompanyPakanTerima extends API_Controller {
             $m_det_jurnal->tbl_id = $m_tp->id;
             $m_det_jurnal->kode_trans = $m_tp->no_bbm;
             $m_det_jurnal->save();
+        }
+
+        // 4) det_stok_siklus_manajemen (konsumsi pakan per siklus/peternak - RHPP/FCR) -
+        //    SHADOW (BUKAN det_stok_siklus RIIL) - $noreg_tujuan adalah peternak yg TERDAFTAR
+        //    SENDIRI di instance ini dgn siklus riilnya sendiri; nulis ke tabel riil akan
+        //    mencemari FCR/RHPP asli peternak itu. Data disalin APA ADANYA dari
+        //    payload['stok_siklus'] (dibangun di TransferTransaksi::transferOpkg() dari
+        //    det_stok_siklus yg SUDAH ADA di GML utk peternak ASLI penerima fisik). Header
+        //    (stok_siklus_manajemen) dicari/dibuat per periode - tabel & pola BARU, terpisah
+        //    dari stok_manajemen (shadow stok gudang), lihat docs/create_stok_siklus_manajemen.sql.
+        if (!empty($stok_siklus_items)) {
+            $m_stok_siklus_mnj = new \Model\Storage\StokSiklusManajemen_model();
+            $d_stok_siklus_mnj = $m_stok_siklus_mnj->where('periode', $tanggal)->first();
+            if (empty($d_stok_siklus_mnj)) {
+                $m_stok_siklus_mnj->periode = $tanggal;
+                $m_stok_siklus_mnj->tgl_proses = date('Y-m-d H:i:s');
+                $m_stok_siklus_mnj->save();
+                $id_header_stok_siklus_mnj = $m_stok_siklus_mnj->id;
+            } else {
+                $id_header_stok_siklus_mnj = $d_stok_siklus_mnj->id;
+            }
+
+            foreach ($stok_siklus_items as $si) {
+                $m_dss_mnj = new \Model\Storage\DetStokSiklusManajemen_model();
+                $m_dss_mnj->id_header = $id_header_stok_siklus_mnj;
+                $m_dss_mnj->tgl_trans = $tanggal;
+                $m_dss_mnj->noreg = $noreg_tujuan;
+                $m_dss_mnj->kode_barang = $si['kode_barang'];
+                $m_dss_mnj->jumlah = $si['jumlah'];
+                $m_dss_mnj->hrg_jual = $si['hrg_jual'];
+                $m_dss_mnj->hrg_beli = $si['hrg_beli'];
+                $m_dss_mnj->oa = $si['oa'];
+                $m_dss_mnj->kode_trans = $no_order;
+                $m_dss_mnj->jenis_barang = $si['jenis_barang'];
+                $m_dss_mnj->jenis_trans = $si['jenis_trans'];
+                $m_dss_mnj->jml_stok = $si['jml_stok'];
+                $m_dss_mnj->id_intercompany_log = $m_log->id;
+                $m_dss_mnj->save();
+            }
         }
 
         return array('id_log' => $m_log->id, 'id_kirim_pakan' => $m_kp->id, 'id_terima_pakan' => $m_tp->id, 'no_transaksi' => $no_order);
