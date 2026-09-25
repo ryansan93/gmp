@@ -112,8 +112,50 @@ class PosisiStok extends Public_Controller {
      */
     public function mappingDataReport($_kode_brg, $_kode_gudang, $_jenis, $_date)
     {
+        // Mode MANAJEMEN (lihat application/config/app_mode.php): sembunyikan
+        // baris det_stok utk order_pakan (OPKS) yg SUDAH ditransfer ke partner
+        // (intercompany_pakan_log.status='DITERIMA') - order itu bukan lagi
+        // tanggung jawab GML, sama pola dgn filter di GeneralLedger.php &
+        // KartuStok.php. Stok yg BELUM ditransfer tetap tampil normal spt
+        // RIIL. det_stok.kode_trans = order_pakan.no_order utk baris OPKS
+        // (lihat IntercompanyPakan::kirimKePartner()), jadi match-nya lewat
+        // itu - HANYA dipakai di titik yg menentukan "supply" (existing_gb &
+        // supply CTE, snapshot + fallback ORDER TERAKHIR) - TIDAK disentuh di
+        // NOT EXISTS anti-dobel-hitung (ds3/dst_chk) atau lookup harga
+        // (hrg/hp/ds2) supaya logika FIFO/gap yg sudah rumit & teruji tidak
+        // ikut berubah perilakunya.
+        $sql_filter_stok_transfer = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        inner join order_pakan op on op.id = ipl.tbl_id_asal
+                        where ipl.tbl_name_asal = 'order_pakan' and op.no_order = ds.kode_trans and ipl.status = 'DITERIMA'
+                    )" : "";
+
         $jenis = ( stristr($_jenis, 'obat') !== false ) ? 'voadip' : $_jenis;
         $next_date = date('Y-m-d', strtotime($_date.' +1 day'));
+
+        // Sama spt di atas, tapi utk sisi KELUAR (OPKG, kirim_pakan) - dokumen
+        // kirim_pakan yg SUDAH ditransfer TIDAK PERNAH nulis det_stok sama
+        // sekali, tapi tetap muncul di $sql_gap_keluar (dibaca dari dokumen
+        // fisik kv/kirim_pakan). HANYA berlaku utk jenis 'pakan' - intercompany
+        // belum ada utk voadip/obat, dan `kv.id` beda ID-space antara
+        // kirim_pakan vs kirim_voadip (hindari kebetulan tabrakan id).
+        $sql_filter_kirim_transfer = (defined('APP_MODE') && APP_MODE === 'manajemen' && $jenis === 'pakan') ? "
+            and not exists (
+                select 1 from intercompany_pakan_log ipl
+                where ipl.tbl_name_asal = 'kirim_pakan' and ipl.tbl_id_asal = kv.id and ipl.status = 'DITERIMA'
+            )" : "";
+
+        // Sisi MASUK (OPKS, order_pakan) versi $sql_gap_masuk - order yg SUDAH
+        // ditransfer tapi belum sempat kebentuk det_stok-nya (masih di jendela
+        // gap) - sama alasan dgn $sql_filter_stok_transfer, cuma match-nya
+        // lewat kv.no_order (bukan ds.kode_trans, beda alias di konteks ini).
+        $sql_filter_order_gap = (defined('APP_MODE') && APP_MODE === 'manajemen' && $jenis === 'pakan') ? "
+            and not exists (
+                select 1 from intercompany_pakan_log ipl
+                inner join order_pakan op on op.id = ipl.tbl_id_asal
+                where ipl.tbl_name_asal = 'order_pakan' and op.no_order = kv.no_order and ipl.status = 'DITERIMA'
+            )" : "";
 
         $m_conf = new \Model\Storage\Conf();
 
@@ -133,6 +175,7 @@ class PosisiStok extends Public_Controller {
             join det_kirim_".$jenis." dkv on dkv.id_header = kv.id
             join terima_".$jenis." tv on tv.id_kirim_".$jenis." = kv.id
             where kv.jenis_tujuan = 'gudang'
+            ".$sql_filter_order_gap."
             group by tv.tgl_terima, kv.tujuan, dkv.item, kv.no_order
 
             union all
@@ -157,6 +200,8 @@ class PosisiStok extends Public_Controller {
             select kv.tgl_kirim as tanggal, try_cast(kv.asal as int) as kode_gudang, dkv.item as kode_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans
             from kirim_".$jenis." kv
             join det_kirim_".$jenis." dkv on dkv.id_header = kv.id
+            where 1=1
+            ".$sql_filter_kirim_transfer."
             group by kv.tgl_kirim, kv.asal, dkv.item, kv.no_order
 
             union all
@@ -198,6 +243,7 @@ class PosisiStok extends Public_Controller {
                     ds.jenis_barang = '".$jenis."' and
                     (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                     (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    ".$sql_filter_stok_transfer."
 
                 union
 
@@ -243,6 +289,7 @@ class PosisiStok extends Public_Controller {
                     ds.jenis_barang = '".$jenis."' and
                     (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                     (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    ".$sql_filter_stok_transfer."
                 group by
                     ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans
 
@@ -335,6 +382,7 @@ class PosisiStok extends Public_Controller {
                             select 1 from existing_gb eg
                             where eg.kode_gudang = ds.kode_gudang and eg.kode_barang = ds.kode_barang
                         )
+                        ".$sql_filter_stok_transfer."
                 ) lst
                 where lst.rn = 1
             ),

@@ -94,6 +94,35 @@ class KartuStok extends Public_Controller {
     {
         // cetak_r( $_jenis );
 
+        // Mode MANAJEMEN (lihat application/config/app_mode.php): sembunyikan
+        // baris det_stok utk order_pakan (OPKS) yg SUDAH ditransfer ke partner
+        // (intercompany_pakan_log.status='DITERIMA') - order itu bukan lagi
+        // tanggung jawab GML, sama pola dgn filter di GeneralLedger.php. Stok
+        // yg BELUM ditransfer tetap tampil normal spt RIIL. det_stok.kode_trans
+        // = order_pakan.no_order utk baris OPKS (lihat
+        // IntercompanyPakan::kirimKePartner()), jadi match-nya lewat itu.
+        $sql_filter_stok_transfer = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                            and not exists (
+                                select 1 from intercompany_pakan_log ipl
+                                inner join order_pakan op on op.id = ipl.tbl_id_asal
+                                where ipl.tbl_name_asal = 'order_pakan' and op.no_order = ds.kode_trans and ipl.status = 'DITERIMA'
+                            )" : "";
+
+        // Sama spt di atas, tapi utk sisi KELUAR/DISTRIBUSI (OPKG, kirim_pakan)
+        // - dokumen kirim_pakan yg SUDAH ditransfer (kirim_pakan.id =
+        // intercompany_pakan_log.tbl_id_asal, tbl_name_asal='kirim_pakan',
+        // status='DITERIMA') TIDAK PERNAH nulis det_stok sama sekali (stok
+        // OPKG memang sengaja tidak dipindah - lihat catatan arsitektur), tapi
+        // baris DISTRIBUSI-nya di laporan ini dibaca LANGSUNG dari dokumen
+        // fisik kirim_pakan (bukan det_stok) - kalau tidak disaring, entry
+        // "hantu" ini bikin saldo manajemen jadi minus tanpa pasangan masuknya
+        // (yg sudah disaring lewat $sql_filter_stok_transfer di atas).
+        $sql_filter_kirim_transfer = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        where ipl.tbl_name_asal = 'kirim_pakan' and ipl.tbl_id_asal = kp.id and ipl.status = 'DITERIMA'
+                    )" : "";
+
         $sql_jenis = null;
         $sql_jenis_trans_masuk = null;
         $sql_jenis_trans_keluar = null;
@@ -153,7 +182,7 @@ class KartuStok extends Public_Controller {
                 // (mis. id_asal retur yang ternyata noreg plasma 11 digit, overflow tipe int) tidak
                 // membuat query error -- cukup jadi NULL dan otomatis tidak match gudang manapun.
                 $sql_jenis_trans_keluar = "
-                    select tp.tgl_terima as tanggal, try_cast(kp.asal as int) as kode_gudang, dkp.item as kode_barang, 'pakan' as jenis_barang, sum(dkp.jumlah) as jumlah, kp.no_order as kode_trans, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id join det_kirim_pakan dkp on dkp.id_header = kp.id group by tp.tgl_terima, kp.asal, dkp.item, kp.no_order
+                    select tp.tgl_terima as tanggal, try_cast(kp.asal as int) as kode_gudang, dkp.item as kode_barang, 'pakan' as jenis_barang, sum(dkp.jumlah) as jumlah, kp.no_order as kode_trans, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id join det_kirim_pakan dkp on dkp.id_header = kp.id where not exists (select 1 from intercompany_pakan_log ipl where ipl.tbl_name_tujuan = 'kirim_pakan' and ipl.tbl_id_tujuan = kp.id) ".$sql_filter_kirim_transfer." group by tp.tgl_terima, kp.asal, dkp.item, kp.no_order
 
                     union all
 
@@ -214,6 +243,7 @@ class KartuStok extends Public_Controller {
                         ds.tgl_trans < '".$_start_date."' and
                         ds.kode_gudang = '".$_kode_gudang."' and
                         (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                        ".$sql_filter_stok_transfer."
                     group by
                         ds.kode_gudang,
                         ds.kode_barang,
@@ -270,6 +300,7 @@ class KartuStok extends Public_Controller {
                                     s.periode between '".$_start_date."' and '".$_end_date."' and
                                     ds.tgl_trans >= '".$_start_date."'
                                     -- ".$sql_jenis."
+                                    ".$sql_filter_stok_transfer."
                                 group by
                                     ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli
                             ) ds2

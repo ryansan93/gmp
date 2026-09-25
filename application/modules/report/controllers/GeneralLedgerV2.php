@@ -104,12 +104,27 @@ class GeneralLedgerV2 extends Public_Controller {
     }
 
     public function getData($start_date, $end_date, $kode_gabung_perusahaan, $unit) {
-        // Mode MANAJEMEN (lihat application/config/app_mode.php) baca dari
-        // shadow det_jurnal_manajemen, BUKAN det_jurnal riil - laporan ini
-        // pakai SQL mentah dgn nama tabel literal, jadi tidak ke-cover
-        // otomatis oleh redirect di Model\Storage\Conf (itu cuma jalan utk
-        // model Eloquent, bukan string SQL yg di-hydrateRaw() di sini).
-        $tbl_det_jurnal = (defined('APP_MODE') && APP_MODE === 'manajemen') ? 'det_jurnal_manajemen' : 'det_jurnal';
+        // Mode MANAJEMEN (lihat application/config/app_mode.php): GL gabungan
+        // (UNION) det_jurnal RIIL + det_jurnal_manajemen yg cuma manual.
+        // det_jurnal RIIL dipakai APA ADANYA tanpa filter tambahan - begitu
+        // sebuah transaksi ditransfer ke partner, baris riilnya SUDAH DIHAPUS
+        // (lihat TransferTransaksi::pindahkanJurnalKeShadow()), jadi tabel
+        // riil secara otomatis/struktural cuma berisi transaksi yg BELUM
+        // ditransfer - tidak perlu exclude apa pun di sini. det_jurnal_manajemen
+        // difilter tbl_name IS NULL supaya HANYA baris manual (accounting/
+        // Jurnal.php, tidak pernah isi tbl_name) yg ikut - baris shadow hasil
+        // transfer (tbl_name='terima_pakan'/'intercompany_pakan_log') sengaja
+        // tidak diulang di sini krn sudah terwakili dari sisi det_jurnal riil
+        // milik PARTNER (bukan urusan laporan GML ini). Laporan ini pakai SQL
+        // mentah dgn nama tabel literal, jadi tidak ke-cover otomatis oleh
+        // redirect di Model\Storage\Conf (itu cuma jalan utk model Eloquent).
+        $tbl_det_jurnal = (defined('APP_MODE') && APP_MODE === 'manajemen')
+            ? "(
+                select tanggal, coa_asal, coa_tujuan, cast(keterangan as varchar(max)) as keterangan, kode_trans, nominal, noreg, perusahaan, tbl_name, unit, unit_tujuan from det_jurnal
+                union all
+                select tanggal, coa_asal, coa_tujuan, cast(keterangan as varchar(max)) as keterangan, kode_trans, nominal, noreg, perusahaan, tbl_name, unit, unit_tujuan from det_jurnal_manajemen where tbl_name is null
+            )"
+            : 'det_jurnal';
 
         $sql_kode_gabung_perusahaan = "and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '".$kode_gabung_perusahaan."')";
         if ( $kode_gabung_perusahaan == 'all' ) {
@@ -493,9 +508,16 @@ class GeneralLedgerV2 extends Public_Controller {
 
     public function getDetail($start_date, $end_date, $unit, $no_coa) {
 
-        // Sama seperti getData() - baca shadow det_jurnal_manajemen di mode
-        // MANAJEMEN (lihat NB di getData()).
-        $tbl_det_jurnal = (defined('APP_MODE') && APP_MODE === 'manajemen') ? 'det_jurnal_manajemen' : 'det_jurnal';
+        // Sama seperti getData() - GL manajemen gabungan det_jurnal riil (yg
+        // belum ditransfer) + det_jurnal_manajemen manual (lihat NB di
+        // getData()).
+        $tbl_det_jurnal = (defined('APP_MODE') && APP_MODE === 'manajemen')
+            ? "(
+                select tanggal, coa_asal, coa_tujuan, cast(keterangan as varchar(max)) as keterangan, kode_trans, nominal, noreg, perusahaan, tbl_name, unit, unit_tujuan from det_jurnal
+                union all
+                select tanggal, coa_asal, coa_tujuan, cast(keterangan as varchar(max)) as keterangan, kode_trans, nominal, noreg, perusahaan, tbl_name, unit, unit_tujuan from det_jurnal_manajemen where tbl_name is null
+            )"
+            : 'det_jurnal';
 
         $m_conf = new \Model\Storage\Conf();
 
