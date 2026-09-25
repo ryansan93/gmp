@@ -103,7 +103,7 @@ $autoload['helper'] = array('core', 'url', 'form', 'language', 'date');
 |
 */
 
-$autoload['config'] = array('env', 'core');
+$autoload['config'] = array('env', 'core', 'company', 'app_mode');
 
 
 /*

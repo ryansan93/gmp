@@ -7,7 +7,30 @@ use \Illuminate\Support\Facades\Facade as Facade;
 class Conf extends Eloquent
 {
 	public $timestamps = false;
+
+	/**
+	 * Tabel yg BOLEH di-redirect ke versi shadow "_manajemen" saat mode
+	 * MANAJEMEN aktif - WAJIB whitelist eksplisit, BUKAN blanket "semua
+	 * tabel", karena mayoritas tabel di app ini adalah master/referensi
+	 * (perusahaan, coa, wilayah, barang, supplier, dst) yang TIDAK PERNAH
+	 * boleh punya versi shadow (dicoba blanket dulu - kejadian nyata:
+	 * Perusahaan_model ikut ke-redirect jadi 'perusahaan_manajemen', BUKAN
+	 * tabel yg ada, GL report crash). Tambah entry baru di sini SATU-SATU
+	 * cuma kalau memang scope fase berikutnya sudah mencakup tabel itu.
+	 */
+	private static $manajemenTables = array('jurnal', 'det_jurnal');
+
+	/**
+	 * Mode MANAJEMEN (lihat application/config/app_mode.php, ditentukan dari
+	 * vhost yg diakses) - model yg tabelnya ada di whitelist
+	 * self::$manajemenTables otomatis baca/tulis tabel shadow "_manajemen"
+	 * bukan tabel riil, TANPA perlu ubah kode di controller mana pun.
+	 */
 	public function __construct(){
+		if (defined('APP_MODE') && APP_MODE === 'manajemen'
+			&& isset($this->table) && in_array($this->table, self::$manajemenTables, true)) {
+			$this->table .= '_manajemen';
+		}
 	}
 
 	public function getCurrConnection(){
