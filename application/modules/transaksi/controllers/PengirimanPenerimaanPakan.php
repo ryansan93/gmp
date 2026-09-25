@@ -155,6 +155,23 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
         $kode_unit = $params['kode_unit'];
 
+        // Mode MANAJEMEN (lihat application/config/app_mode.php) - dokumen
+        // Kirim/Terima Pakan yg SUDAH ditransfer ke partner (baik OPKS lewat
+        // order_pakan-nya, maupun OPKG lewat kirim_pakan-nya sendiri,
+        // intercompany_pakan_log.status='DITERIMA') dianggap bukan lagi
+        // tanggung jawab GML, sama pola dgn filter di GL/stok - jangan ikut
+        // tampil di list ini juga.
+        $sql_filter_transfer_kp = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    inner join order_pakan op on op.id = ipl.tbl_id_asal
+                    where ipl.tbl_name_asal = 'order_pakan' and op.no_order = kp.no_order and ipl.status = 'DITERIMA'
+                )
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    where ipl.tbl_name_asal = 'kirim_pakan' and ipl.tbl_id_asal = kp.id and ipl.status = 'DITERIMA'
+                )" : "";
+
         // $m_kirim_pakan = new \Model\Storage\KirimPakan_model();
         // $d_kirim_pakan = $m_kirim_pakan->whereBetween('tgl_kirim', [$params['start_date'], $params['end_date']])->with(['terima'])->get();
 
@@ -233,7 +250,8 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 on
                     kp.tujuan = tujuan.kode
             where
-                kp.tgl_kirim between '".$params['start_date']."' and '".$params['end_date']."' ";
+                kp.tgl_kirim between '".$params['start_date']."' and '".$params['end_date']."'
+                ".$sql_filter_transfer_kp." ";
 
             if ($kode_unit != 'all'){
                $sql .= " and ((asal.unit = '".$kode_unit."') or (tujuan.unit = '".$kode_unit."')) ";

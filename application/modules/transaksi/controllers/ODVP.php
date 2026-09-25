@@ -1591,9 +1591,19 @@ class ODVP extends Public_Controller {
             $sql_perusahaan = "and prs.kode in ('".implode("', '", $params['perusahaan'])."')";
         }
 
+        // Mode MANAJEMEN (lihat application/config/app_mode.php) - order yg
+        // SUDAH ditransfer ke partner (intercompany_pakan_log.status=
+        // 'DITERIMA') dianggap bukan lagi tanggung jawab GML, sama pola dgn
+        // filter di laporan GL/stok - jangan ikut tampil di list ini juga.
+        $sql_filter_transfer_op = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    where ipl.tbl_name_asal = 'order_pakan' and ipl.tbl_id_asal = op.id and ipl.status = 'DITERIMA'
+                )" : "";
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select 
+            select
                 op.*,
                 supl.nama as nama_supplier,
                 prs.perusahaan as nama_perusahaan,
@@ -1635,6 +1645,7 @@ class ODVP extends Public_Controller {
             where
                 op.tgl_trans between '".$params['start_date']."' and '".$params['end_date']."'
                 ".$sql_perusahaan."
+                ".$sql_filter_transfer_op."
             order by
                 op.tgl_trans desc,
                 supl.nama asc
