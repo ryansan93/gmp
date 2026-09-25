@@ -447,6 +447,12 @@ class IntercompanyPakanTerima extends API_Controller {
             $m_det_jurnal->tujuan = $ji['tujuan'];
             $m_det_jurnal->coa_tujuan = $ji['coa_tujuan'];
             $m_det_jurnal->unit = $kode_unit;
+            // noreg WAJIB diisi $noreg_tujuan (BUKAN noreg asal dari GML - itu identitas
+            // peternak di instance GML, tidak dikenal di sini) - dipakai rule automatic
+            // jurnal Laporan Harian Kandang (lhk) di GMP utk narik saldo "Persediaan Pakan
+            // Di Kandang" PER PETERNAK saat staff lapor pemakaian harian. Kalau NULL, saldo
+            // pakan hasil transfer ini tidak akan ketemu/kepakai rule itu.
+            $m_det_jurnal->noreg = $noreg_tujuan;
             $m_det_jurnal->tbl_name = 'terima_pakan';
             $m_det_jurnal->tbl_id = $m_tp->id;
             $m_det_jurnal->kode_trans = $m_tp->no_bbm;
@@ -473,6 +479,8 @@ class IntercompanyPakanTerima extends API_Controller {
                 $id_header_stok_siklus_mnj = $d_stok_siklus_mnj->id;
             }
 
+            $dss_mnj_pakan = array();
+
             foreach ($stok_siklus_items as $si) {
                 $m_dss_mnj = new \Model\Storage\DetStokSiklusManajemen_model();
                 $m_dss_mnj->id_header = $id_header_stok_siklus_mnj;
@@ -489,6 +497,85 @@ class IntercompanyPakanTerima extends API_Controller {
                 $m_dss_mnj->jml_stok = $si['jml_stok'];
                 $m_dss_mnj->id_intercompany_log = $m_log->id;
                 $m_dss_mnj->save();
+
+                // Dipakai lagi di langkah 5 (jurnal pemakaian pakan otomatis) - cuma barang
+                // jenis 'pakan' yg relevan (RHPP/FCR punya jenis lain jg, mis. 'doc', yg
+                // tidak ada rule automatic jurnal-nya).
+                if ($si['jenis_barang'] === 'pakan') {
+                    $dss_mnj_pakan[] = array(
+                        'jumlah' => $si['jumlah'],
+                        'hrg_beli' => $si['hrg_beli'],
+                    );
+                }
+            }
+
+            // 5) Jurnal PEMAKAIAN PAKAN otomatis - keputusan: noreg_tujuan cuma representasi
+            //    billing, BUKAN kandang yg benar2 dipelihara staff GMP - jadi TIDAK ADA
+            //    Laporan Harian Kandang manual utk peternak ini, dan TIDAK PERLU tabel
+            //    audit-trail terpisah (lhk_manajemen dkk) - pakan yg baru ditulis ke shadow
+            //    siklus di atas dianggap LANGSUNG habis dipakai saat diterima, jadi cukup
+            //    posting jurnalnya sekali di sini. Nominal & COA meniru PERSIS rule
+            //    setting_automatic_jurnal id=7 (tbl_name='lhk' di GMP, 2 baris/urut dari 1
+            //    header yg sama, jalan bareng dgn nominal yg SAMA - nilai pakan yg dipakai):
+            //      urut 1: 12041.000 Persediaan Pakan Di Kandang -> 71101.000 Pemakaian Pakan
+            //      urut 2: 71400.000 Pemindahbukuan Biaya Produksi -> 12020.000 Persediaan
+            //              Ayam Dalam Pemeliharaan (biaya pakan dikapitalisasi ke nilai ayam)
+            //    diposting LANGSUNG lewat kode (bukan lewat mesin generic itu krn dia cuma
+            //    baca tabel RIIL). Referensi tbl_name/tbl_id/kode_trans pakai terima_pakan yg
+            //    sama dgn 2 baris jurnal lain di atas - tidak perlu tabel baru.
+            if (!empty($dss_mnj_pakan)) {
+                $nama_peternak = $this->namaPeternak($noreg_tujuan);
+
+                $nominal_pakai = 0;
+                foreach ($dss_mnj_pakan as $dp) {
+                    $nominal_pakai += $dp['jumlah'] * $dp['hrg_beli'];
+                }
+                $nominal_pakai = round($nominal_pakai, 2);
+                $keterangan_pakai = 'PEMAKAIAN PAKAN ' . strtoupper($nama_peternak);
+                // kode_trans meniru persis konvensi lhk riil ('LHK/<noreg>/<umur>') - umur
+                // dihitung dari selisih tgl_docin (RIIL, terima_doc.datang) ke tanggal
+                // transaksi ini ($tanggal/tgl_terima), BUKAN ke tanggal sistem skrg (beda dgn
+                // umur di cariPeternakAktif() yg dipakai utk tampilan pencarian, bukan jurnal).
+                $kode_trans_pakai = 'LHK/' . $noreg_tujuan . '/' . $this->umurLhk($noreg_tujuan, $tanggal);
+
+                $m_jurnal_pakai = new \Model\Storage\Jurnal_model();
+                $m_jurnal_pakai->tanggal = $tanggal;
+                $m_jurnal_pakai->unit = $kode_unit;
+                $m_jurnal_pakai->save();
+
+                $m_det_jurnal_pakai = new \Model\Storage\DetJurnal_model();
+                $m_det_jurnal_pakai->id_header = $m_jurnal_pakai->id;
+                $m_det_jurnal_pakai->tanggal = $tanggal;
+                $m_det_jurnal_pakai->perusahaan = $perusahaan;
+                $m_det_jurnal_pakai->keterangan = $keterangan_pakai;
+                $m_det_jurnal_pakai->nominal = $nominal_pakai;
+                $m_det_jurnal_pakai->asal = 'Persediaan Pakan Di Kandang';
+                $m_det_jurnal_pakai->coa_asal = '12041.000';
+                $m_det_jurnal_pakai->tujuan = 'Pemakaian Pakan';
+                $m_det_jurnal_pakai->coa_tujuan = '71101.000';
+                $m_det_jurnal_pakai->unit = $kode_unit;
+                $m_det_jurnal_pakai->noreg = $noreg_tujuan;
+                $m_det_jurnal_pakai->tbl_name = 'terima_pakan';
+                $m_det_jurnal_pakai->tbl_id = $m_tp->id;
+                $m_det_jurnal_pakai->kode_trans = $kode_trans_pakai;
+                $m_det_jurnal_pakai->save();
+
+                $m_det_jurnal_pindah = new \Model\Storage\DetJurnal_model();
+                $m_det_jurnal_pindah->id_header = $m_jurnal_pakai->id;
+                $m_det_jurnal_pindah->tanggal = $tanggal;
+                $m_det_jurnal_pindah->perusahaan = $perusahaan;
+                $m_det_jurnal_pindah->keterangan = $keterangan_pakai;
+                $m_det_jurnal_pindah->nominal = $nominal_pakai;
+                $m_det_jurnal_pindah->asal = 'Pemindahbukuan Biaya Produksi';
+                $m_det_jurnal_pindah->coa_asal = '71400.000';
+                $m_det_jurnal_pindah->tujuan = 'Persediaan Ayam Dalam Pemeliharaan';
+                $m_det_jurnal_pindah->coa_tujuan = '12020.000';
+                $m_det_jurnal_pindah->unit = $kode_unit;
+                $m_det_jurnal_pindah->noreg = $noreg_tujuan;
+                $m_det_jurnal_pindah->tbl_name = 'terima_pakan';
+                $m_det_jurnal_pindah->tbl_id = $m_tp->id;
+                $m_det_jurnal_pindah->kode_trans = $kode_trans_pakai;
+                $m_det_jurnal_pindah->save();
             }
         }
 
@@ -873,6 +960,106 @@ class IntercompanyPakanTerima extends API_Controller {
         }
 
         return 'ICP';
+    }
+
+    /**
+     * Nama peternak (mitra) dari $noreg - dipakai utk keterangan jurnal PEMAKAIAN PAKAN
+     * ('PEMAKAIAN PAKAN <NAMA>'), meniru persis join rdim_submit->mitra_mapping->mitra yg
+     * dipakai query setting_automatic_jurnal id=7 (tbl_name='lhk') & cariPeternakAktif().
+     * Null-safe (fallback ke $noreg sendiri) kalau data mitra-nya entah kenapa tidak lengkap.
+     */
+    private function namaPeternak($noreg)
+    {
+        if (empty($noreg)) { return '-'; }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select top 1 m.nama
+            from rdim_submit rs
+            left join
+                (
+                    select mm1.* from mitra_mapping mm1
+                    right join
+                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        on
+                            mm1.id = mm2.id
+                ) mm
+                on
+                    rs.nim = mm.nim
+            left join
+                mitra m
+                on
+                    m.id = mm.mitra
+            where
+                rs.noreg = '".$noreg."'
+            order by
+                rs.id desc
+        ";
+        $d_conf = $m_conf->hydrateRaw($sql);
+
+        if ($d_conf->count() > 0) {
+            $nama = $d_conf->toArray()[0]['nama'];
+            if (!empty($nama)) { return $nama; }
+        }
+
+        return $noreg;
+    }
+
+    /**
+     * Umur (hari) peternak $noreg pada tanggal $tgl_acuan - selisih dari tgl_docin RIIL
+     * (terima_doc.datang, BUKAN rdim_submit.tgl_docin yg cuma rencana - sama pola dgn
+     * cariPeternakAktif()) ke $tgl_acuan (tanggal transaksi, BUKAN tanggal sistem skrg).
+     * Dipakai bikin kode_trans jurnal PEMAKAIAN PAKAN/PINDAH BUKU meniru konvensi lhk riil
+     * ('LHK/<noreg>/<umur>' - lihat setting_automatic_jurnal id=7). Null-safe (fallback '0')
+     * kalau DOC peternak ini entah kenapa belum/tidak pernah tercatat diterima.
+     */
+    private function umurLhk($noreg, $tgl_acuan)
+    {
+        if (empty($noreg) || empty($tgl_acuan)) { return 0; }
+
+        // $tgl_acuan belum divalidasi formatnya oleh caller (cuma dicek empty()) - beda dgn
+        // $noreg yg sudah wajib alfanumerik (lihat NB di namaPeternak()) - jadi dinormalisasi
+        // dulu di sini sblm masuk raw SQL, bukan diteruskan mentah2 apa adanya.
+        $tgl_acuan_aman = date('Y-m-d', strtotime($tgl_acuan));
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select top 1 DATEDIFF(day, td.datang, '".$tgl_acuan_aman."') as umur
+            from rdim_submit rs
+            inner join
+                (
+                    select od1.* from order_doc od1
+                    right join
+                        (select max(id) as id, noreg from order_doc group by noreg) od2
+                        on
+                            od1.id = od2.id
+                ) od
+                on
+                    rs.noreg = od.noreg
+            inner join
+                (
+                    select td1.* from terima_doc td1
+                    right join
+                        (select max(id) as id, no_order from terima_doc group by no_order) td2
+                        on
+                            td1.id = td2.id
+                ) td
+                on
+                    od.no_order = td.no_order
+            where
+                rs.noreg = '".$noreg."' and
+                td.datang is not null
+            order by
+                rs.id desc
+        ";
+        $d_conf = $m_conf->hydrateRaw($sql);
+
+        if ($d_conf->count() > 0) {
+            $umur = $d_conf->toArray()[0]['umur'];
+            if ($umur !== null) { return (int) $umur; }
+        }
+
+        return 0;
     }
 
     /**
