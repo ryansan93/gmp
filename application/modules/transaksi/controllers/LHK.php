@@ -1099,7 +1099,7 @@ class LHK extends Public_Controller
 
                                     if ( ($d_conf_stok['stok']/50) < $v_dp['jumlah'] ) {
                                         $status = 0;
-    
+
                                         if ( empty($message) ) {
                                             $message = '<span style="color: red;">Data pakai pakan dan sisa pakan yang anda masukkan tidak sesuai dengan stok !!!</span>';
                                         }
@@ -1108,10 +1108,12 @@ class LHK extends Public_Controller
                                         $message .= '<b><u>'.$v_dp['kode'].' - '.$v_dp['nama'].'</u></b><br>';
                                         $message .= 'SISA STOK : '.angkaRibuan($d_conf_stok['stok']/50).' Zak<br>';
                                         $message .= 'JUMLAH ANDA : '.angkaRibuan($v_dp['jumlah']).' Zak<br>';
+
+                                        $message .= $this->keteranganMutasiPakanBelakangan($noreg, $tanggal, $v_dp['kode']);
                                     }
                                 } else {
                                     $status = 0;
-    
+
                                     if ( empty($message) ) {
                                         $message = '<span style="color: red;">Data pakai pakan dan sisa pakan yang anda masukkan tidak sesuai dengan stok !!!</span>';
                                     }
@@ -1120,6 +1122,8 @@ class LHK extends Public_Controller
                                     $message .= '<b><u>'.$v_dp['kode'].' - '.$v_dp['nama'].'</u></b><br>';
                                     $message .= 'SISA STOK : 0 Zak<br>';
                                     $message .= 'JUMLAH ANDA : '.angkaRibuan($v_dp['jumlah']).' Zak<br>';
+
+                                    $message .= $this->keteranganMutasiPakanBelakangan($noreg, $tanggal, $v_dp['kode']);
                                 }
                             }
                         }
@@ -1190,7 +1194,7 @@ class LHK extends Public_Controller
 
                             if ( (($d_conf['stok']/50)-$tot_pakan) <> $sisa_pakan ) {
                                 $status = 0;
-    
+
                                 if ( empty($message) ) {
                                     $message = '<span style="color: red;">Data sisa pakan anda masukkan tidak sesuai dengan stok !!!</span>';
                                 }
@@ -1198,6 +1202,8 @@ class LHK extends Public_Controller
                                 $message .= '<br>';
                                 $message .= 'SISA STOK : '.angkaRibuan(($d_conf['stok']/50)-$tot_pakan).' Zak<br>';
                                 $message .= 'JUMLAH ANDA : '.angkaRibuan($sisa_pakan).' Zak<br>';
+
+                                $message .= $this->keteranganMutasiPakanBelakangan($noreg, $tanggal, null);
                             }
                         }
                         /* END - CEK SISA PAKAN */
@@ -1437,6 +1443,59 @@ class LHK extends Public_Controller
         }
 
         display_json( $this->result );
+    }
+
+    /**
+     * Cek apakah ada mutasi det_stok_trans_siklus (pindah pakan, retur, dst) yang tanggalnya
+     * SETELAH $tanggal - saldo det_stok_siklus.jml_stok itu live (bukan snapshot per-tanggal),
+     * jadi mutasi belakangan bisa bikin "SISA STOK" yg dihitung cekDataPrev() kelihatan salah
+     * padahal datanya benar. Dipanggil dari CEK JUMLAH PAKAN & CEK SISA PAKAN murni utk
+     * menjelaskan KEMUNGKINAN PENYEBAB di pesan warning - tidak mengubah hasil $status (tetap blok).
+     */
+    private function keteranganMutasiPakanBelakangan($noreg, $tanggal, $kode_barang = null)
+    {
+        $sql_kode_barang = !empty($kode_barang) ? " and dsts.kode_barang = '".$kode_barang."'" : "";
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                dsts.tgl_trans,
+                dsts.kode_trans,
+                dsts.tbl_name,
+                sum(dsts.jumlah) as jumlah
+            from det_stok_trans_siklus dsts
+            left join
+                det_stok_siklus dss
+                on
+                    dsts.id_header = dss.id
+            where
+                dss.noreg = '".$noreg."' and
+                dss.jenis_barang = 'pakan' and
+                dss.tgl_trans <= '".$tanggal."' and
+                dsts.tgl_trans > '".$tanggal."'".$sql_kode_barang."
+            group by
+                dsts.tgl_trans,
+                dsts.kode_trans,
+                dsts.tbl_name
+            order by
+                dsts.tgl_trans asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        $ket = '';
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            $ket .= '<br>';
+            $ket .= '<b><u>KEMUNGKINAN PENYEBAB</u></b><br>';
+            $ket .= 'Ada mutasi pakan (pindah pakan / retur / dll) tercatat SETELAH tanggal LHK ini, sehingga mempengaruhi perhitungan sisa stok di atas :<br>';
+            foreach ($d_conf as $key => $v) {
+                $ket .= '- '.tglIndonesia($v['tgl_trans'], '-', ' ').' ('.$v['tbl_name'].' '.$v['kode_trans'].') : '.angkaRibuan($v['jumlah']/50).' Zak<br>';
+            }
+            $ket .= 'Cek ke Admin / laporan Kartu Stok Siklus untuk memastikan.';
+        }
+
+        return $ket;
     }
 
     public function save()
