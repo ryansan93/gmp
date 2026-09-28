@@ -282,6 +282,138 @@ class IntercompanyPakanTerima extends API_Controller {
     }
 
     /**
+     * Info 1 peternak spesifik (nama, umur, riwayat pakan) by noreg - dipanggil dari
+     * TransferTransaksi::infoPeternakPartner() (GML) utk tab Transaksi nampilkan info
+     * peternak tujuan pada baris OPKG yg SUDAH ditransfer. BEDA dgn cariPeternakAktif(): TIDAK
+     * ada filter status=1/belum tutup siklus - noreg yg dicari di sini SUDAH PASTI valid (baru
+     * dipakai transfer sebelumnya), tujuannya murni histori/tampilan, siklus peternak itu bisa
+     * saja sudah tutup sejak saat itu.
+     */
+    public function infoPeternak()
+    {
+        $raw_body = file_get_contents('php://input');
+        $signature = isset($_SERVER['HTTP_X_SIGNATURE']) ? $_SERVER['HTTP_X_SIGNATURE'] : null;
+        $timestamp = isset($_SERVER['HTTP_X_TIMESTAMP']) ? $_SERVER['HTTP_X_TIMESTAMP'] : null;
+
+        $result = array('status' => 0, 'message' => '');
+
+        try {
+            $this->verifikasiPartner($raw_body, $timestamp, $signature);
+
+            $payload = json_decode($raw_body, true);
+            $noreg = isset($payload['noreg']) ? $payload['noreg'] : null;
+
+            if (empty($noreg) || !preg_match('/^[A-Za-z0-9]+$/', $noreg)) {
+                throw new Exception('noreg tidak valid.');
+            }
+
+            $sql_riwayat = "
+                select
+                    dtp.item as kode_barang,
+                    b.nama as nama_barang,
+                    sum(dtp.jumlah) as jumlah
+                from det_terima_pakan dtp
+                left join
+                    terima_pakan tp
+                    on
+                        dtp.id_header = tp.id
+                left join
+                    kirim_pakan kp
+                    on
+                        tp.id_kirim_pakan = kp.id
+                left join
+                    (
+                        select b1.* from barang b1
+                        right join
+                            (select max(id) as id, kode from barang group by kode) b2
+                            on
+                                b1.id = b2.id
+                    ) b
+                    on
+                        b.kode = dtp.item
+                where
+                    kp.jenis_kirim = 'opkg' and
+                    kp.jenis_tujuan = 'peternak' and
+                    kp.tujuan = rs.noreg
+                group by
+                    dtp.item,
+                    b.nama
+            ";
+
+            $m_conf = new \Model\Storage\Conf();
+            $sql = "
+                select
+                    rs.noreg,
+                    m.nama,
+                    cast(td.datang as date) as tgl_docin,
+                    DATEDIFF(day, td.datang, GETDATE()) as umur,
+                    riwayat.kode_barang,
+                    riwayat.nama_barang,
+                    riwayat.jumlah
+                from
+                    (
+                        select rs1.* from rdim_submit rs1
+                        right join
+                            (select max(id) as id, noreg from rdim_submit group by noreg) rs2
+                            on
+                                rs1.id = rs2.id
+                    ) rs
+                inner join
+                    (
+                        select od1.* from order_doc od1
+                        right join
+                            (select max(id) as id, noreg from order_doc group by noreg) od2
+                            on
+                                od1.id = od2.id
+                    ) od
+                    on
+                        rs.noreg = od.noreg
+                inner join
+                    (
+                        select td1.* from terima_doc td1
+                        right join
+                            (select max(id) as id, no_order from terima_doc group by no_order) td2
+                            on
+                                td1.id = td2.id
+                    ) td
+                    on
+                        od.no_order = td.no_order
+                left join
+                    (
+                        select mm1.* from mitra_mapping mm1
+                        right join
+                            (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                            on
+                                mm1.id = mm2.id
+                    ) mm
+                    on
+                        rs.nim = mm.nim
+                left join
+                    mitra m
+                    on
+                        m.id = mm.mitra
+                outer apply
+                    (".$sql_riwayat.") riwayat
+                where
+                    rs.noreg = '".$noreg."'
+            ";
+            $d_conf = $m_conf->hydrateRaw($sql);
+
+            $data = array();
+            if ($d_conf->count() > 0) {
+                $data = $d_conf->toArray();
+            }
+
+            $result['status'] = 1;
+            $result['content'] = $data;
+        } catch (Exception $e) {
+            $result['message'] = $e->getMessage();
+        }
+
+        return $this->balas($result);
+    }
+
+    /**
      * Terima transfer OPKG (gudang->peternak) dari partner - lihat NB di
      * TransferTransaksi::transferOpkg(). BEDA dgn terima() (order pakan/supplier): TIDAK
      * ada stok GUDANG yg ditulis sama sekali di sini (barangnya sudah fisik di peternak,
