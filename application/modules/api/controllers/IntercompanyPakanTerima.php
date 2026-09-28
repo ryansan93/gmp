@@ -414,6 +414,244 @@ class IntercompanyPakanTerima extends API_Controller {
     }
 
     /**
+     * Info LENGKAP 1 transaksi (semua barang) SEPERTI TERCATAT DI INSTANCE INI (nama/kode
+     * asal-tujuan, populasi/umur, total, No SJ, barang+tonase+zak) - dipanggil dari
+     * TransferTransaksi::infoTransaksiPartner() (GML) utk Laporan Transfer Transaksi nampilkan
+     * blok "Perusahaan Tujuan" (catatan GMP) di samping blok "Perusahaan Asal" (catatan GML) -
+     * dokumen/nomor/harga BISA beda dari punya GML krn masing2 instance catat sendiri2 (lihat
+     * NB no_sj di prosesTerima()/prosesTerimaOpkg()).
+     */
+    public function infoTransaksiTerima()
+    {
+        $raw_body = file_get_contents('php://input');
+        $signature = isset($_SERVER['HTTP_X_SIGNATURE']) ? $_SERVER['HTTP_X_SIGNATURE'] : null;
+        $timestamp = isset($_SERVER['HTTP_X_TIMESTAMP']) ? $_SERVER['HTTP_X_TIMESTAMP'] : null;
+
+        $result = array('status' => 0, 'message' => '');
+
+        try {
+            $this->verifikasiPartner($raw_body, $timestamp, $signature);
+
+            $payload = json_decode($raw_body, true);
+            $tbl_name_asal = isset($payload['tbl_name_asal']) ? $payload['tbl_name_asal'] : null;
+            $tbl_id_asal = isset($payload['tbl_id_asal']) ? $payload['tbl_id_asal'] : null;
+
+            if (empty($tbl_name_asal) || empty($tbl_id_asal)) {
+                throw new Exception('Payload tidak valid.');
+            }
+
+            $m_log = new \Model\Storage\IntercompanyPakanLog_model();
+            $d_log = $m_log->where('arah', 'TERIMA')->where('tbl_name_asal', $tbl_name_asal)
+                            ->where('tbl_id_asal', $tbl_id_asal)->where('status', 'DITERIMA')->get()->toArray();
+
+            $rows = array();
+            if (!empty($d_log)) {
+                if ($tbl_name_asal === 'order_pakan') {
+                    $rows = $this->infoTransaksiOpks($d_log);
+                } else if ($tbl_name_asal === 'kirim_pakan') {
+                    $rows = $this->infoTransaksiOpkg($d_log);
+                }
+            }
+
+            $result['status'] = 1;
+            $result['content'] = $rows;
+        } catch (Exception $e) {
+            $result['message'] = $e->getMessage();
+        }
+
+        return $this->balas($result);
+    }
+
+    /**
+     * Catatan OPKS di instance ini - semua baris log dari 1 transaksi asal yg sama menunjuk ke
+     * 1 order_pakan yg sama (tbl_name_tujuan='order_pakan', lihat prosesTerima()).
+     */
+    private function infoTransaksiOpks($d_log)
+    {
+        $id_order_pakan = null;
+        foreach ($d_log as $lg) {
+            if ($lg['tbl_name_tujuan'] === 'order_pakan' && !empty($lg['tbl_id_tujuan'])) {
+                $id_order_pakan = $lg['tbl_id_tujuan'];
+                break;
+            }
+        }
+        if (empty($id_order_pakan)) { return array(); }
+
+        $m_op = new \Model\Storage\OrderPakan_model();
+        $d_op = $m_op->with(['detail.d_barang'])->where('id', $id_order_pakan)->first();
+        if (empty($d_op)) { return array(); }
+
+        $m_kp = new \Model\Storage\KirimPakan_model();
+        $d_kp = $m_kp->where('no_order', $d_op->no_order)->orderBy('id', 'desc')->first();
+        $no_sj = !empty($d_kp) ? $d_kp->no_sj : null;
+
+        $nama_supplier = $this->namaSupplier($d_op->supplier);
+
+        $nama_gudang = null;
+        $kode_gudang = null;
+        foreach ($d_op->detail as $od) {
+            if ($od->tujuan_kirim == 'gudang' && !empty($od->id_tujuan_kirim)) {
+                $m_gdg = new \Model\Storage\Gudang_model();
+                $d_gdg = $m_gdg->where('id', $od->id_tujuan_kirim)->first();
+                $nama_gudang = !empty($d_gdg) ? $d_gdg->nama : null;
+                $kode_gudang = $od->id_tujuan_kirim;
+                break;
+            }
+        }
+
+        $rows = array();
+        foreach ($d_op->detail as $od) {
+            $tonase = (float) $od->jumlah;
+            $harga = (float) $od->harga;
+
+            $rows[] = array(
+                'nama_asal' => $nama_supplier,
+                'kode_asal' => $d_op->supplier,
+                'nama_tujuan' => $nama_gudang,
+                'kode_tujuan' => $kode_gudang,
+                'populasi' => null,
+                'umur' => null,
+                'total' => $tonase * $harga,
+                'no' => $no_sj,
+                'kode_barang' => $od->barang,
+                'jenis_pakan' => !empty($od->d_barang['nama']) ? strtoupper($od->d_barang['nama']) : $od->barang,
+                'tonase' => $tonase,
+                'zak' => $tonase / 50,
+            );
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Catatan OPKG di instance ini - 1 baris log per transfer, tbl_id_tujuan langsung id
+     * kirim_pakan (lihat prosesTerimaOpkg()). Harga dari det_stok_siklus_manajemen (SHADOW -
+     * OPKG tidak pernah nulis stok riil di sini, lihat NB kelas ini).
+     */
+    private function infoTransaksiOpkg($d_log)
+    {
+        $lg = $d_log[0];
+        if ($lg['tbl_name_tujuan'] !== 'kirim_pakan' || empty($lg['tbl_id_tujuan'])) { return array(); }
+
+        $m_kp = new \Model\Storage\KirimPakan_model();
+        $d_kp = $m_kp->with(['detail.d_barang'])->where('id', $lg['tbl_id_tujuan'])->first();
+        if (empty($d_kp)) { return array(); }
+
+        $nama_asal = $d_kp->asal;
+        $kode_asal = $d_kp->asal;
+        if (!empty($d_kp->asal)) {
+            $m_gdg = new \Model\Storage\Gudang_model();
+            $d_gdg = $m_gdg->where('id', $d_kp->asal)->first();
+            if (!empty($d_gdg)) { $nama_asal = $d_gdg->nama; }
+        }
+
+        $info_tujuan = $this->populasiUmurPeternak($d_kp->tujuan, $d_kp->tgl_kirim);
+
+        $rows = array();
+        foreach ($d_kp->detail as $d) {
+            $tonase = (float) $d->jumlah;
+
+            $m_dssm = new \Model\Storage\DetStokSiklusManajemen_model();
+            $d_dssm = $m_dssm->where('kode_trans', $d_kp->no_order)->where('kode_barang', $d->item)
+                              ->orderBy('id', 'desc')->first();
+            $harga = !empty($d_dssm) ? (float) $d_dssm->hrg_beli : 0;
+
+            $rows[] = array(
+                'nama_asal' => $nama_asal,
+                'kode_asal' => $kode_asal,
+                'nama_tujuan' => $info_tujuan['nama'],
+                'kode_tujuan' => $d_kp->tujuan,
+                'populasi' => $info_tujuan['populasi'],
+                'umur' => $info_tujuan['umur'],
+                'total' => $tonase * $harga,
+                'no' => $d_kp->no_sj,
+                'kode_barang' => $d->item,
+                'jenis_pakan' => !empty($d->d_barang['nama']) ? strtoupper($d->d_barang['nama']) : $d->item,
+                'tonase' => $tonase,
+                'zak' => $tonase / 50,
+            );
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Nama peternak + Populasi ("penerimaan DOC" = jml_ekor chick-in + adjin_doc) + Umur
+     * (DATEDIFF dari tgl chick-in ke $tgl_acuan - tanggal TRANSAKSI, bukan hari ini) utk 1
+     * noreg - sama pola persis dgn TransferTransaksi::infoPeternakLokal() di sisi GML, dipakai
+     * di sini krn endpoint ini jalan LANGSUNG di instance yg datanya dicari (tidak perlu HTTP
+     * hop lagi).
+     */
+    private function populasiUmurPeternak($noreg, $tgl_acuan)
+    {
+        $hasil = array('nama' => $noreg, 'populasi' => null, 'umur' => null);
+
+        if (empty($noreg)) { return $hasil; }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select top 1
+                m.nama,
+                td.jml_ekor,
+                isnull(ad.jumlah, 0) as adjin,
+                td.datang
+            from
+                (
+                    select rs1.* from rdim_submit rs1
+                    right join
+                        (select max(id) as id, noreg from rdim_submit group by noreg) rs2
+                        on rs1.id = rs2.id
+                ) rs
+            inner join
+                (
+                    select od1.* from order_doc od1
+                    right join
+                        (select max(id) as id, noreg from order_doc group by noreg) od2
+                        on od1.id = od2.id
+                ) od
+                on rs.noreg = od.noreg
+            inner join
+                (
+                    select td1.* from terima_doc td1
+                    right join
+                        (select max(id) as id, no_order from terima_doc group by no_order) td2
+                        on td1.id = td2.id
+                ) td
+                on od.no_order = td.no_order
+            left join
+                (
+                    select mm1.* from mitra_mapping mm1
+                    right join
+                        (select max(id) as id, nim from mitra_mapping group by nim) mm2
+                        on mm1.id = mm2.id
+                ) mm
+                on rs.nim = mm.nim
+            left join
+                mitra m
+                on m.id = mm.mitra
+            left join
+                (
+                    select noreg, sum(jumlah) as jumlah from adjin_doc group by noreg
+                ) ad
+                on ad.noreg = rs.noreg
+            where
+                rs.noreg = '" . $noreg . "'
+            order by
+                rs.id desc
+        ";
+        $d_conf = $m_conf->hydrateRaw($sql);
+
+        if ($d_conf->count() > 0) {
+            $r = $d_conf->toArray()[0];
+            $hasil['nama'] = !empty($r['nama']) ? $r['nama'] : $noreg;
+            $hasil['populasi'] = (float) $r['jml_ekor'] + (float) $r['adjin'];
+            $hasil['umur'] = !empty($r['datang']) ? (int) floor((strtotime($tgl_acuan) - strtotime($r['datang'])) / 86400) : null;
+        }
+
+        return $hasil;
+    }
+
+    /**
      * Terima transfer OPKG (gudang->peternak) dari partner - lihat NB di
      * TransferTransaksi::transferOpkg(). BEDA dgn terima() (order pakan/supplier): TIDAK
      * ada stok GUDANG yg ditulis sama sekali di sini (barangnya sudah fisik di peternak,
