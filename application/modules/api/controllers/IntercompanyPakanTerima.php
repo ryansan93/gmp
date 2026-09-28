@@ -82,7 +82,10 @@ class IntercompanyPakanTerima extends API_Controller {
             $kode_gudang_tujuan = isset($payload['kode_gudang_tujuan']) ? $payload['kode_gudang_tujuan'] : null;
 
             // Info kirim_pakan ASLI dari instance pengirim (kalau ada) - diteruskan apa adanya,
-            // BUKAN digenerate ulang di sisi partner.
+            // BUKAN digenerate ulang di sisi partner. KHUSUS utk OPKS: No SJ jg diteruskan apa
+            // adanya (dipakai prosesTerima()) - itu nomor SJ fisik asli dari supplier, bukan
+            // nomor internal. Utk OPKG, payload['no_sj'] di sini TIDAK dipakai - prosesTerimaOpkg()
+            // generate No SJ sendiri (lihat NB no_sj di fungsi itu, keputusan eksplisit beda dgn OPKS).
             $info_kirim = array(
                 'no_sj' => isset($payload['no_sj']) ? $payload['no_sj'] : null,
                 'ongkos_angkut' => isset($payload['ongkos_angkut']) ? $payload['ongkos_angkut'] : null,
@@ -369,6 +372,10 @@ class IntercompanyPakanTerima extends API_Controller {
         //    di instance ini.
         $m_kp = new \Model\Storage\KirimPakan_model();
         $no_order = $m_kp->getNextIdOrder('OP/' . $kode_unit);
+        // No SJ DIGENERATE ULANG di instance ini (sama pola dgn no_order di atas), BUKAN
+        // diteruskan apa adanya dari pengirim - keputusan eksplisit supaya nomor SJ konsisten
+        // dgn konvensi/sequence lokal instance ini sendiri.
+        $no_sj = $m_kp->getNextIdSj('SJ/' . $kode_unit);
 
         $m_kp->no_order = $no_order;
         $m_kp->tgl_trans = $tanggal;
@@ -377,9 +384,10 @@ class IntercompanyPakanTerima extends API_Controller {
         $m_kp->jenis_tujuan = 'peternak';
         $m_kp->asal = $asal;
         $m_kp->tujuan = $noreg_tujuan;
-        // Info kirim ASLI dari instance pengirim (No SJ, ongkos angkut, ekspedisi, no polisi,
-        // sopir) - diteruskan apa adanya, sama persis dgn yg tercatat di sana.
-        $m_kp->no_sj = isset($info_kirim['no_sj']) ? $info_kirim['no_sj'] : null;
+        // Info kirim ASLI dari instance pengirim (ongkos angkut, ekspedisi, no polisi, sopir) -
+        // diteruskan apa adanya, sama persis dgn yg tercatat di sana. No SJ TIDAK termasuk -
+        // lihat $no_sj di atas.
+        $m_kp->no_sj = $no_sj;
         $m_kp->ongkos_angkut = isset($info_kirim['ongkos_angkut']) ? $info_kirim['ongkos_angkut'] : null;
         $m_kp->ekspedisi = isset($info_kirim['ekspedisi']) ? $info_kirim['ekspedisi'] : null;
         $m_kp->ekspedisi_id = isset($info_kirim['ekspedisi_id']) ? $info_kirim['ekspedisi_id'] : null;
@@ -630,8 +638,9 @@ class IntercompanyPakanTerima extends API_Controller {
             // cari Supplier_model WHERE nomor = kirim_pakan.asal - HARUS nomor supplier asli,
             // bukan teks bebas, kalau tidak jadi non-object & "Asal" tampil kosong.
             $m_kp->asal = $kode_supplier;
-            // Info kirim ASLI dari instance pengirim (No SJ, ongkos angkut, ekspedisi, no
-            // polisi, sopir) - diteruskan apa adanya, sama persis dgn yg tercatat di sana.
+            // No SJ - KHUSUS OPKS diteruskan apa adanya dari pengirim (itu nomor SJ fisik asli
+            // dari supplier, bukan nomor internal instance ini - beda keputusan dgn OPKG, lihat
+            // NB no_sj di prosesTerimaOpkg()).
             $m_kp->no_sj = $info_kirim['no_sj'];
             $m_kp->ongkos_angkut = $info_kirim['ongkos_angkut'];
             $m_kp->ekspedisi = $info_kirim['ekspedisi'];
@@ -1075,5 +1084,204 @@ class IntercompanyPakanTerima extends API_Controller {
         $d_supplier = $m_supplier->where('nomor', $kode_supplier)->where('tipe', 'supplier')->orderBy('id', 'desc')->first();
 
         return !empty($d_supplier) ? $d_supplier->nama : $kode_supplier;
+    }
+
+    /**
+     * Reset (undo) 1 transaksi intercompany PAKAN DI INSTANCE INI (sisi PENERIMA) - dipanggil
+     * oleh TransferTransaksi::resetTransfer()/resetTransferOpkg() di sisi PENGIRIM. SEMATA-MATA
+     * utk kebutuhan testing (supaya transaksi asal yg sama bisa ditransfer ulang tanpa harus
+     * bikin data baru tiap kali ada perubahan kode) - menghapus SEMUA dokumen/jurnal/stok
+     * shadow/konfirmasi pembayaran yg terbentuk dari transaksi ini di instance ini, plus baris
+     * log (arah TERIMA) miliknya sendiri. TIDAK menyentuh apapun di sisi pengirim (jurnal
+     * shadow GML utk OPKG dikembalikan terpisah oleh TransferTransaksi::resetTransferOpkg()
+     * SETELAH endpoint ini sukses).
+     */
+    public function resetTerima()
+    {
+        $raw_body = file_get_contents('php://input');
+        $signature = isset($_SERVER['HTTP_X_SIGNATURE']) ? $_SERVER['HTTP_X_SIGNATURE'] : null;
+        $timestamp = isset($_SERVER['HTTP_X_TIMESTAMP']) ? $_SERVER['HTTP_X_TIMESTAMP'] : null;
+
+        $result = array('status' => 0, 'message' => '');
+
+        try {
+            $payload = json_decode($raw_body, true);
+            if (empty($payload) || empty($payload['tbl_name_asal']) || empty($payload['tbl_id_asal'])) {
+                throw new Exception('Payload tidak valid.');
+            }
+
+            $this->verifikasiPartner($raw_body, $timestamp, $signature);
+
+            $tbl_name_asal = $payload['tbl_name_asal'];
+            $tbl_id_asal = $payload['tbl_id_asal'];
+
+            if (!in_array($tbl_name_asal, array('order_pakan', 'kirim_pakan'), true)) {
+                throw new Exception('tbl_name_asal tidak valid.');
+            }
+
+            $m_log = new \Model\Storage\IntercompanyPakanLog_model();
+            $d_log_list = $m_log->where('arah', 'TERIMA')
+                                 ->where('tbl_name_asal', $tbl_name_asal)
+                                 ->where('tbl_id_asal', $tbl_id_asal)
+                                 ->get()->toArray();
+
+            if (empty($d_log_list)) {
+                $result['status'] = 1;
+                $result['message'] = 'Tidak ada data di sisi ini utk direset (mungkin belum pernah diterima, atau sudah pernah direset sebelumnya).';
+                return $this->balas($result);
+            }
+
+            $m_log->getConnection()->transaction(function () use ($tbl_name_asal, $d_log_list) {
+                $this->prosesResetTerima($tbl_name_asal, $d_log_list);
+            });
+
+            $result['status'] = 1;
+            $result['message'] = 'Data intercompany di sisi ini berhasil direset.';
+        } catch (Exception $e) {
+            $result['message'] = $e->getMessage();
+        }
+
+        return $this->balas($result);
+    }
+
+    /**
+     * Isi asli resetTerima() - dipisah spy bisa dibungkus $connection->transaction(), sama
+     * pola dgn prosesTerima()/prosesTerimaOpkg(). Urutan hapus: anak dulu baru induk, supaya
+     * aman thd FK. Header bersama (jurnal/stok_manajemen/stok_siklus_manajemen - BISA dipakai
+     * bareng transaksi lain krn dikelompokkan per hari/periode) cuma dihapus kalau sudah tidak
+     * ada baris detail LAIN yg masih menumpang di header yg sama.
+     */
+    private function prosesResetTerima($tbl_name_asal, $d_log_list)
+    {
+        $log_ids = array_column($d_log_list, 'id');
+
+        $kirim_pakan_ids = array();
+        $d_op = null;
+
+        if ($tbl_name_asal === 'order_pakan') {
+            // OPKS: semua baris log utk transaksi asal yg sama menunjuk ke 1 order_pakan yg
+            // sama (tbl_name_tujuan='order_pakan') - cari baris pertama yg PUNYA tujuan (baris
+            // GAGAL tidak punya tbl_id_tujuan).
+            $id_order_pakan = null;
+            foreach ($d_log_list as $lg) {
+                if ($lg['tbl_name_tujuan'] === 'order_pakan' && !empty($lg['tbl_id_tujuan'])) {
+                    $id_order_pakan = $lg['tbl_id_tujuan'];
+                    break;
+                }
+            }
+
+            if (!empty($id_order_pakan)) {
+                $m_op = new \Model\Storage\OrderPakan_model();
+                $d_op = $m_op->where('id', $id_order_pakan)->first();
+
+                if (!empty($d_op)) {
+                    $m_kp = new \Model\Storage\KirimPakan_model();
+                    $kirim_pakan_ids = $m_kp->where('no_order', $d_op->no_order)->lists('id');
+                }
+            }
+        } else {
+            // OPKG: 1 baris log per transfer, tbl_id_tujuan langsung id kirim_pakan.
+            foreach ($d_log_list as $lg) {
+                if ($lg['tbl_name_tujuan'] === 'kirim_pakan' && !empty($lg['tbl_id_tujuan'])) {
+                    $kirim_pakan_ids[] = $lg['tbl_id_tujuan'];
+                }
+            }
+            $kirim_pakan_ids = array_values(array_unique($kirim_pakan_ids));
+        }
+
+        $terima_pakan_ids = array();
+        if (!empty($kirim_pakan_ids)) {
+            $m_tp = new \Model\Storage\TerimaPakan_model();
+            $terima_pakan_ids = $m_tp->whereIn('id_kirim_pakan', $kirim_pakan_ids)->lists('id');
+        }
+
+        // 1) det_terima_pakan
+        if (!empty($terima_pakan_ids)) {
+            (new \Model\Storage\TerimaPakanDetail_model())->whereIn('id_header', $terima_pakan_ids)->delete();
+        }
+
+        // 2) Jurnal RIIL di instance ini (tbl_name='terima_pakan', tbl_id di terima_pakan_ids)
+        //    + header jurnal-nya, KALAU sudah tidak ada det_jurnal lain yg menumpang di situ.
+        if (!empty($terima_pakan_ids)) {
+            $m_dj = new \Model\Storage\DetJurnal_model();
+            $jurnal_header_ids = array_values(array_unique($m_dj->where('tbl_name', 'terima_pakan')->whereIn('tbl_id', $terima_pakan_ids)->lists('id_header')));
+
+            (new \Model\Storage\DetJurnal_model())->where('tbl_name', 'terima_pakan')->whereIn('tbl_id', $terima_pakan_ids)->delete();
+
+            foreach ($jurnal_header_ids as $id_header_jurnal) {
+                $masih_ada = (new \Model\Storage\DetJurnal_model())->where('id_header', $id_header_jurnal)->count();
+                if ($masih_ada == 0) {
+                    (new \Model\Storage\Jurnal_model())->where('id', $id_header_jurnal)->delete();
+                }
+            }
+        }
+
+        // 3) Stok SHADOW OPKS (det_stok_manajemen/det_stok_trans_manajemen, via
+        //    id_intercompany_log) + header stok_manajemen-nya kalau sudah kosong.
+        $m_dsm = new \Model\Storage\DetStokManajemen_model();
+        $dsm_ids = $m_dsm->whereIn('id_intercompany_log', $log_ids)->lists('id');
+
+        if (!empty($dsm_ids)) {
+            $header_stok_mnj_ids = array_values(array_unique((new \Model\Storage\DetStokManajemen_model())->whereIn('id', $dsm_ids)->lists('id_header')));
+
+            (new \Model\Storage\DetStokTransManajemen_model())->whereIn('id_header', $dsm_ids)->delete();
+            (new \Model\Storage\DetStokManajemen_model())->whereIn('id', $dsm_ids)->delete();
+
+            foreach ($header_stok_mnj_ids as $id_header_stok) {
+                $masih_ada = (new \Model\Storage\DetStokManajemen_model())->where('id_header', $id_header_stok)->count();
+                if ($masih_ada == 0) {
+                    (new \Model\Storage\StokManajemen_model())->where('id', $id_header_stok)->delete();
+                }
+            }
+        }
+
+        // 4) Stok siklus SHADOW OPKG (det_stok_siklus_manajemen, via id_intercompany_log) +
+        //    header stok_siklus_manajemen-nya kalau sudah kosong.
+        $m_dssm = new \Model\Storage\DetStokSiklusManajemen_model();
+        $header_siklus_ids = array_values(array_unique($m_dssm->whereIn('id_intercompany_log', $log_ids)->lists('id_header')));
+
+        if (!empty($header_siklus_ids)) {
+            (new \Model\Storage\DetStokSiklusManajemen_model())->whereIn('id_intercompany_log', $log_ids)->delete();
+
+            foreach ($header_siklus_ids as $id_header_siklus) {
+                $masih_ada = (new \Model\Storage\DetStokSiklusManajemen_model())->where('id_header', $id_header_siklus)->count();
+                if ($masih_ada == 0) {
+                    (new \Model\Storage\StokSiklusManajemen_model())->where('id', $id_header_siklus)->delete();
+                }
+            }
+        }
+
+        // 5) Konfirmasi Pembayaran Pakan (OPKS saja, via no_order - dibuat 1 baris per barang
+        //    di prosesTerima(), semuanya menumpang di no_order yg sama).
+        if (!empty($d_op)) {
+            $m_kppd = new \Model\Storage\KonfirmasiPembayaranPakanDet_model();
+            $kpp_header_ids = array_values(array_unique($m_kppd->where('no_order', $d_op->no_order)->lists('id_header')));
+
+            if (!empty($kpp_header_ids)) {
+                (new \Model\Storage\KonfirmasiPembayaranPakanDet_model())->where('no_order', $d_op->no_order)->delete();
+                (new \Model\Storage\KonfirmasiPembayaranPakan_model())->whereIn('id', $kpp_header_ids)->delete();
+            }
+        }
+
+        // 6) Dokumen kirim_pakan/terima_pakan itu sendiri.
+        if (!empty($kirim_pakan_ids)) {
+            (new \Model\Storage\KirimPakanDetail_model())->whereIn('id_header', $kirim_pakan_ids)->delete();
+        }
+        if (!empty($terima_pakan_ids)) {
+            (new \Model\Storage\TerimaPakan_model())->whereIn('id', $terima_pakan_ids)->delete();
+        }
+        if (!empty($kirim_pakan_ids)) {
+            (new \Model\Storage\KirimPakan_model())->whereIn('id', $kirim_pakan_ids)->delete();
+        }
+
+        // 7) order_pakan (OPKS saja - dibuat khusus utk transaksi ini oleh
+        //    cariOrBuatOrderPakan(), aman dihapus penuh).
+        if (!empty($d_op)) {
+            (new \Model\Storage\OrderPakanDetail_model())->where('id_header', $d_op->id)->delete();
+            (new \Model\Storage\OrderPakan_model())->where('id', $d_op->id)->delete();
+        }
+
+        // 8) Baris log (arah TERIMA) milik instance ini sendiri.
+        (new \Model\Storage\IntercompanyPakanLog_model())->whereIn('id', $log_ids)->delete();
     }
 }
