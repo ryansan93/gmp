@@ -50,9 +50,11 @@ var dn = {
                     }
                 }
 
-                var tot_dn = !empty(data.tot_dn) ? data.tot_dn : (!empty(dataset) ? dataset.totDn : null);
+                var tot_dn = !empty(data.tot_dn) ? data.tot_dn : (!empty(dataset) ? dataset.totdn : null);
 
-                $(data.element).attr('data-totdn', data.tot_dn);
+                if ( !empty(data.tot_dn) ) {
+                    $(data.element).attr('data-totdn', data.tot_dn);
+                }
 
                 $('.nilai_dn').val(numeral.formatDec(tot_dn));
 
