@@ -377,7 +377,7 @@ class RhppGroup extends Public_Controller {
                 $d_rhpp_plasma = !empty($d_rhpp_plasma) ? $d_rhpp_plasma->toArray() : null;
 
                 if ( $manajemen_mode ) {
-                    $snap_mnj = Modules::run( 'transaksi/TSDRHPP/snapshotPerNoregUntukGroup', $v['noreg'] );
+                    $snap_mnj = Modules::run( 'transaksi/TSDRHPP/snapshotPerNoregUntukGroup', $v['noreg'], true );
                     if ( !empty($snap_mnj['inti']) ) {
                         $d_rhpp_inti = $snap_mnj['inti'];
                         $d_rhpp_plasma = $snap_mnj['plasma'];
@@ -1741,10 +1741,12 @@ class RhppGroup extends Public_Controller {
     {
         $params = $this->input->post('params');
 
-        // Data tersimpan = versi RIIL (tanpa pakan kiriman intercompany). Payload
-        // dari vhost MANAJEMEN memuat pakan lengkap, jadi simpan hanya dari riil.
-        if ( defined('APP_MODE') && APP_MODE === 'manajemen' ) {
-            $this->result['message'] = 'RHPP Group hanya bisa disimpan dari vhost RIIL (data tersimpan = versi tanpa pakan transfer intercompany).';
+        // Data tersimpan = versi RIIL (tanpa pakan kiriman intercompany). Payload dari
+        // vhost MANAJEMEN memuat pakan lengkap -> dikoreksi server-side ke versi riil.
+        try {
+            $this->_koreksiPayloadGroupKeRiil( $params );
+        } catch (\Exception $e) {
+            $this->result['message'] = 'Gagal : ' . $e->getMessage();
             display_json($this->result);
             return;
         }
@@ -2046,6 +2048,9 @@ class RhppGroup extends Public_Controller {
 
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, null, 1);
 
+            // Tabel RHPP versi manajemen - lihat docs/create_rhpp_manajemen.sql
+            $this->refreshManajemenGroup( $id_header );
+
             // $m_conf = new \Model\Storage\Conf();
             // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'rhpp_group_header', ".$id_header.", NULL, 1";
             // $d_conf = $m_conf->hydrateRaw( $sql );
@@ -2200,8 +2205,11 @@ class RhppGroup extends Public_Controller {
         $params = $this->input->post('params');
         $keterangan = trim((string) $this->input->post('keterangan'));
 
-        if ( defined('APP_MODE') && APP_MODE === 'manajemen' ) {
-            $this->result['message'] = 'Hitung Ulang RHPP Group hanya bisa disimpan dari vhost RIIL (data tersimpan = versi tanpa pakan transfer intercompany).';
+        // Sama dgn save(): payload dari vhost MANAJEMEN dikoreksi ke versi RIIL sebelum disimpan.
+        try {
+            $this->_koreksiPayloadGroupKeRiil( $params );
+        } catch (\Exception $e) {
+            $this->result['message'] = 'Gagal : ' . $e->getMessage();
             display_json($this->result);
             return;
         }
@@ -2377,6 +2385,9 @@ class RhppGroup extends Public_Controller {
 
             Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, $id_plasma, 2 );
 
+            // Tabel RHPP versi manajemen - lihat docs/create_rhpp_manajemen.sql
+            $this->refreshManajemenGroup( $id );
+
             if ( !empty($keterangan) ) {
                 $m_rgh->where('id', $id)->update(
                     array(
@@ -2466,6 +2477,9 @@ class RhppGroup extends Public_Controller {
             if ( $delete == 1 ) {
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, $id_plasma, 3);
 
+                // Hapus baris tabel RHPP versi manajemen (harus SEBELUM baris rhpp_group dihapus)
+                Modules::run( 'transaksi/TSDRHPP/hapusTabelManajemen', 'group', $id );
+
                 $m_rg = new \Model\Storage\RhppGroup_model();
                 $id_rg = $m_rg->select('id')->where('id_header', $id)->get()->toArray();
     
@@ -2527,9 +2541,9 @@ class RhppGroup extends Public_Controller {
      * snapshot. Di vhost RIIL tdk melakukan apa2. Array diubah by-reference
      * (bentuk toArray() dgn relasi) jadi kode export tdk perlu tahu ada koreksi ini.
      */
-    private function _timpaGroupUntukManajemen(&$d_plasma, &$d_inti)
+    private function _timpaGroupUntukManajemen(&$d_plasma, &$d_inti, $paksa = false, $lengkap = true)
     {
-        if ( !(defined('APP_MODE') && APP_MODE === 'manajemen') || (empty($d_plasma) && empty($d_inti)) ) {
+        if ( (!$paksa && !(defined('APP_MODE') && APP_MODE === 'manajemen')) || (empty($d_plasma) && empty($d_inti)) ) {
             return;
         }
 
@@ -2539,7 +2553,8 @@ class RhppGroup extends Public_Controller {
             $list_noreg[] = array('noreg' => $v_ln['noreg']);
         }
 
-        $f = $this->_hitungUlangGrupFresh($list_noreg, true);
+        // $lengkap true = versi MANAJEMEN (pakan transfer diakui), false = versi RIIL
+        $f = $this->_hitungUlangGrupFresh($list_noreg, $lengkap);
 
         $sum = function($rows, $kolom) {
             $t = 0;
@@ -2669,6 +2684,179 @@ class RhppGroup extends Public_Controller {
             $d_inti['pindah_pakan'] = $ke_pakan($f['data_pindah_pakan_inti']);
             $d_inti['oa_pindah_pakan'] = $ke_pakan($f['data_oa_pindah_pakan_inti']);
             $d_inti['penjualan'] = $ke_penjualan($f['data_rpah_inti']);
+        }
+    }
+
+    /**
+     * Vhost MANAJEMEN: payload save()/hitungUlang() berasal dari layar versi LENGKAP
+     * (pakan transfer diakui), padahal data tersimpan harus versi RIIL. Hitung ulang
+     * server-side dgn snapshot per-noreg riil (rumus sama dgn _timpaGroupUntukManajemen)
+     * lalu timpa angka turunan & baris pakan/OA/penjualan di payload. Field manual
+     * (materai, % pajak, biaya opr, cn, total bonus/potongan) tetap dari payload.
+     * Di vhost RIIL tdk melakukan apa2.
+     */
+    private function _koreksiPayloadGroupKeRiil(&$params)
+    {
+        if ( !(defined('APP_MODE') && APP_MODE === 'manajemen') || empty($params['data_rhpp']) ) {
+            return;
+        }
+
+        $list_noreg = null;
+        $idx_plasma = null;
+        $idx_inti = null;
+        foreach ($params['data_rhpp'] as $k => $v) {
+            if ( stristr($v['jenis'], 'plasma') !== false ) {
+                $idx_plasma = $k;
+            } else {
+                $idx_inti = $k;
+            }
+            if ( empty($list_noreg) && !empty($v['data_list_noreg']) ) {
+                $list_noreg = $v['data_list_noreg'];
+            }
+        }
+
+        if ( empty($list_noreg) ) {
+            throw new \Exception('Daftar noreg grup tidak ditemukan pada data yang dikirim.');
+        }
+
+        $d_plasma = ( $idx_plasma !== null ) ? array_merge($params['data_rhpp'][$idx_plasma], array('list_noreg' => $list_noreg)) : null;
+        $d_inti = ( $idx_inti !== null ) ? array_merge($params['data_rhpp'][$idx_inti], array('list_noreg' => $list_noreg)) : null;
+
+        $this->_timpaGroupUntukManajemen($d_plasma, $d_inti, true, false);
+
+        $skalar = array('jml_panen_ekor', 'jml_panen_kg', 'bb', 'fcr', 'deplesi', 'rata_umur', 'ip', 'tot_penjualan_ayam', 'tot_pembelian_sapronak', 'bonus_pasar', 'persen_bonus_pasar', 'bonus_kematian', 'bonus_insentif_fcr', 'total_bonus_insentif_listrik', 'pdpt_peternak_belum_pajak', 'potongan_pajak', 'pdpt_peternak_sudah_pajak', 'lr_inti');
+        $baris_pakan = array('pakan' => 'data_pakan', 'pindah_pakan' => 'data_pindah_pakan', 'oa_pakan' => 'data_oa_pakan', 'oa_pindah_pakan' => 'data_oa_pindah_pakan');
+
+        foreach (array(array($idx_plasma, $d_plasma), array($idx_inti, $d_inti)) as $pasangan) {
+            list($idx, $d) = $pasangan;
+            if ( $idx === null || empty($d) ) {
+                continue;
+            }
+
+            foreach ($skalar as $f) {
+                if ( array_key_exists($f, $d) ) {
+                    $params['data_rhpp'][$idx][$f] = $d[$f];
+                }
+            }
+
+            foreach ($baris_pakan as $sumber => $tujuan) {
+                if ( !array_key_exists($sumber, $d) ) {
+                    continue;
+                }
+                $rows = array();
+                foreach ((array) $d[$sumber] as $r) {
+                    $r['box_zak'] = isset($r['zak']) ? $r['zak'] : 0;
+                    $rows[] = $r;
+                }
+                $params['data_rhpp'][$idx][$tujuan] = $rows;
+            }
+
+            if ( array_key_exists('penjualan', $d) ) {
+                $rows = array();
+                foreach ((array) $d['penjualan'] as $r) {
+                    unset($r['id']);
+                    $rows[] = $r;
+                }
+                $params['data_rhpp'][$idx]['data_penjualan'] = $rows;
+            }
+        }
+    }
+
+    /**
+     * Ringkasan angka grup (plasma & inti) versi LENGKAP utk vhost MANAJEMEN, dipakai
+     * laporan (LaporanRhpp/RhppV2) lewat Modules::run. Snapshot grup tersimpan (versi
+     * riil) ditimpa lewat _timpaGroupUntukManajemen(); di vhost riil dikembalikan apa adanya.
+     */
+    public function ringkasanGroupManajemen($id_header)
+    {
+        // Tabel simpanan dulu (docs/create_rhpp_manajemen.sql), fallback hitung ulang lengkap.
+        $baca = Modules::run( 'transaksi/TSDRHPP/bacaRingkasanManajemen', 'group', $id_header );
+        if ( !empty($baca) ) {
+            return $baca;
+        }
+
+        $lengkap = $this->_hitungGroupLengkap($id_header);
+
+        // Self-heal: simpan hasil hitung supaya pembacaan berikutnya cepat.
+        try {
+            Modules::run( 'transaksi/TSDRHPP/tulisTabelManajemen', 'group', $id_header, $lengkap['plasma'], $lengkap['inti'] );
+        } catch (\Exception $e) {
+            log_message('error', 'self-heal rhpp_group_manajemen('.$id_header.') gagal: '.$e->getMessage());
+        }
+
+        $kolom = array('jml_panen_ekor', 'jml_panen_kg', 'bb', 'fcr', 'deplesi', 'rata_umur', 'ip', 'tot_penjualan_ayam', 'tot_pembelian_sapronak', 'biaya_materai', 'bonus_pasar', 'bonus_kematian', 'bonus_insentif_fcr', 'total_bonus_insentif_listrik', 'pdpt_peternak_belum_pajak', 'lr_inti');
+        $ambil = function($d) use ($kolom) {
+            if ( empty($d) ) {
+                return null;
+            }
+            $out = array();
+            foreach ($kolom as $k) {
+                $out[$k] = isset($d[$k]) ? $d[$k] : null;
+            }
+            $out['pakan'] = array();
+            if ( !empty($d['pakan']) ) {
+                foreach ($d['pakan'] as $p) {
+                    $out['pakan'][] = array('barang' => $p['barang'], 'harga' => $p['harga']);
+                }
+            }
+            return $out;
+        };
+
+        return array('plasma' => $ambil($lengkap['plasma']), 'inti' => $ambil($lengkap['inti']));
+    }
+
+    /**
+     * Snapshot grup (plasma & inti) versi LENGKAP (pakan transfer diakui), dihitung
+     * ulang, TERLEPAS dari vhost yg memanggil. Bentuk toArray() dgn relasi.
+     */
+    private function _hitungGroupLengkap($id_header)
+    {
+        $m_rgh = new \Model\Storage\RhppGroupHeader_model();
+        $d_rgh = $m_rgh->where('id', $id_header)->with(['rhpp'])->first();
+
+        $d_plasma = null;
+        $d_inti = null;
+        if ( !empty($d_rgh) ) {
+            foreach ($d_rgh->toArray()['rhpp'] as $v_rgh) {
+                if ( $v_rgh['jenis'] == 'rhpp_inti' ) {
+                    $d_inti = $v_rgh;
+                } else {
+                    $d_plasma = $v_rgh;
+                }
+            }
+        }
+
+        $this->_timpaGroupUntukManajemen($d_plasma, $d_inti, true);
+
+        return array('plasma' => $d_plasma, 'inti' => $d_inti);
+    }
+
+    /**
+     * Segarkan tabel manajemen utk grup $id_header (rhpp_group_header.id) setelah grup
+     * disimpan/dihitung ulang atau pakan transfer anggotanya berubah. Kegagalan TIDAK
+     * boleh menggagalkan proses utama (cuma dicatat di log).
+     */
+    public function refreshManajemenGroup($id_header)
+    {
+        try {
+            if ( !Modules::run( 'transaksi/TSDRHPP/tabelManajemenAda' ) ) {
+                return;
+            }
+
+            $noreg = array();
+            foreach ($this->_ambilNoregGroup($id_header) as $v) {
+                $noreg[] = $v['noreg'];
+            }
+
+            $ada = Modules::run( 'transaksi/TSDRHPP/noregDenganPakanTransfer', $noreg );
+            if ( !empty($ada) ) {
+                $lengkap = $this->_hitungGroupLengkap($id_header);
+                Modules::run( 'transaksi/TSDRHPP/tulisTabelManajemen', 'group', $id_header, $lengkap['plasma'], $lengkap['inti'] );
+            } else {
+                Modules::run( 'transaksi/TSDRHPP/tulisTabelManajemen', 'group', $id_header, null, null );
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'refreshManajemenGroup('.$id_header.') gagal: '.$e->getMessage());
         }
     }
 

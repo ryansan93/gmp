@@ -82,7 +82,9 @@ class RhppV2 extends Public_Controller {
                     r.total_bonus_insentif_listrik,
                     isnull(lpg.jumlah, 0) as insentif_lpg,
                     r.pdpt_peternak_belum_pajak as total_pendapatan_plasma,
-                    r_inti.lr_inti as total_pendapatan_inti
+                    r_inti.lr_inti as total_pendapatan_inti,
+                    cast(null as int) as id_group,
+                    isnull(td.bb, 0) as bb_awal
                 from rhpp r
                 left join
                     tutup_siklus ts
@@ -159,7 +161,9 @@ class RhppV2 extends Public_Controller {
                     rg.total_bonus_insentif_listrik,
                     isnull(lpg.jumlah, 0) as insentif_lpg,
                     rg.pdpt_peternak_belum_pajak as total_pendapatan_plasma,
-                    rg_inti.lr_inti as total_pendapatan_inti
+                    rg_inti.lr_inti as total_pendapatan_inti,
+                    rg.id_header as id_group,
+                    isnull(rgn.bb_first, 0) as bb_awal
                 from rhpp_group rg
                 left join
                     rhpp_group_header rgh
@@ -250,7 +254,93 @@ class RhppV2 extends Public_Controller {
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );
 
-        return $d_conf->count() > 0 ? $d_conf->toArray() : [];
+        $rows = $d_conf->count() > 0 ? $d_conf->toArray() : [];
+
+        // GMP: vhost MANAJEMEN mengakui pakan kiriman intercompany (snapshot rhpp
+        // tersimpan = versi riil tanpa itu) -> baris terdampak dihitung ulang lengkap.
+        if ( defined('APP_MODE') && APP_MODE === 'manajemen' ) {
+            $this->_timpaManajemen( $rows );
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Vhost MANAJEMEN: timpa angka baris yg noreg-nya punya pakan kiriman
+     * intercompany dgn hasil hitung ulang LENGKAP (baris lain = snapshot).
+     */
+    private function _timpaManajemen(&$rows)
+    {
+        if ( empty($rows) ) {
+            return;
+        }
+
+        $noreg_grup = array();
+        $id_group = array();
+        $semua_noreg = array();
+        foreach ($rows as $v) {
+            if ( !empty($v['id_group']) ) {
+                $id_group[ $v['id_group'] ] = $v['id_group'];
+            } elseif ( !empty($v['noreg']) ) {
+                $semua_noreg[] = $v['noreg'];
+            }
+        }
+
+        if ( !empty($id_group) ) {
+            $m_conf = new \Model\Storage\Conf();
+            $d_conf = $m_conf->hydrateRaw( "select rg.id_header as id_group, rgn.noreg from rhpp_group_noreg rgn left join rhpp_group rg on rgn.id_header = rg.id where rg.id_header in (".implode(', ', array_map('intval', $id_group)).")" );
+            if ( $d_conf->count() > 0 ) {
+                foreach ($d_conf->toArray() as $v) {
+                    $noreg_grup[ $v['id_group'] ][] = $v['noreg'];
+                    $semua_noreg[] = $v['noreg'];
+                }
+            }
+        }
+
+        $ada_transfer = array_flip( (array) Modules::run( 'transaksi/TSDRHPP/noregDenganPakanTransfer', array_values(array_unique($semua_noreg)) ) );
+        if ( empty($ada_transfer) ) {
+            return;
+        }
+
+        foreach ($rows as $k => $v) {
+            if ( !empty($v['id_group']) ) {
+                $ada = false;
+                foreach ((array) (isset($noreg_grup[ $v['id_group'] ]) ? $noreg_grup[ $v['id_group'] ] : array()) as $n) {
+                    if ( isset($ada_transfer[ $n ]) ) { $ada = true; }
+                }
+                if ( !$ada ) { continue; }
+
+                $ring = Modules::run( 'transaksi/RhppGroup/ringkasanGroupManajemen', $v['id_group'] );
+                $inti = $ring['inti'];
+                $plasma = $ring['plasma'];
+            } elseif ( !empty($v['noreg']) && isset($ada_transfer[ $v['noreg'] ]) ) {
+                $snap = Modules::run( 'transaksi/TSDRHPP/ringkasanNoregManajemen', $v['noreg'] );
+                $inti = $snap['inti'];
+                $plasma = $snap['plasma'];
+            } else {
+                continue;
+            }
+
+            if ( empty($plasma) ) { continue; }
+
+            $rows[$k]['jml_panen_ekor'] = $plasma['jml_panen_ekor'];
+            $rows[$k]['jml_panen_kg'] = $plasma['jml_panen_kg'];
+            $rows[$k]['bb'] = $plasma['bb'];
+            $rows[$k]['fcr'] = $plasma['fcr'];
+            $rows[$k]['deplesi'] = $plasma['deplesi'];
+            $rows[$k]['rata_umur'] = $plasma['rata_umur'];
+            $rows[$k]['adg'] = ( $plasma['rata_umur'] > 0 ) ? (($plasma['bb'] - $v['bb_awal']) * 1000) / $plasma['rata_umur'] : 0;
+            $rows[$k]['ip'] = $plasma['ip'];
+            $rows[$k]['selisih_budidaya'] = (!empty($plasma['tot_penjualan_ayam']) ? $plasma['tot_penjualan_ayam'] : 0) - (!empty($plasma['tot_pembelian_sapronak']) ? $plasma['tot_pembelian_sapronak'] : 0);
+            $rows[$k]['bonus_pasar'] = $plasma['bonus_pasar'];
+            $rows[$k]['bonus_kematian'] = $plasma['bonus_kematian'];
+            $rows[$k]['bonus_insentif_fcr'] = $plasma['bonus_insentif_fcr'];
+            $rows[$k]['total_bonus_insentif_listrik'] = $plasma['total_bonus_insentif_listrik'];
+            $rows[$k]['total_pendapatan_plasma'] = $plasma['pdpt_peternak_belum_pajak'];
+            if ( !empty($inti) ) {
+                $rows[$k]['total_pendapatan_inti'] = $inti['lr_inti'];
+            }
+        }
     }
 
     public function getLists()
