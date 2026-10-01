@@ -66,7 +66,7 @@
 			?>
 			<select class="form-control no_order <?php echo $hide; ?>" data-jenis="opks" <?php echo $data_required; ?> onchange="pv.get_asal(this)">
 				<option value="">-- Pilih No. Order --</option>
-				<option value="<?php echo $data['no_order']; ?>" data-supplier="<?php echo $data_ov['supl_nama']; ?>" data-idsupplier="<?php echo $data_ov['supl_nomor']; ?>" selected ><?php echo $data['no_order']; ?></option>
+				<option value="<?php echo $data['no_order']; ?>" data-supplier="<?php echo $data_ov['supl_nama']; ?>" data-idsupplier="<?php echo $data_ov['supl_nomor']; ?>" data-namaprs="<?php echo $data_ov['nama_prs']; ?>" selected ><?php echo $data['no_order']; ?></option>
 				<?php
 					$supplier = $data_ov['supl_nama'];
 					$id_supplier = $data_ov['supl_nomor'];
