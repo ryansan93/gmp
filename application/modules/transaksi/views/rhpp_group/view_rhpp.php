@@ -1670,8 +1670,12 @@
 															$ip = $data_inti['detail']['ip'];
 														?>
 														<?php
-															$bonus_kematian = ($deplesi <= 5) ? $data['bonus_kematian'] * $total_tonase : 0;
-															$bonus_insentif_fcr = $data['bonus_insentif_fcr'];
+															if ( isset($data['nilai_bonus_kematian']) && !empty($data['nilai_bonus_kematian']) ) {
+																$bonus_kematian = $data['nilai_bonus_kematian'];
+															} else {
+																$bonus_kematian = ($deplesi <= 5 && isset($data['bonus_kematian'])) ? $data['bonus_kematian'] * $total_tonase : 0;
+															}
+															$bonus_insentif_fcr = isset($data['bonus_insentif_fcr']) ? $data['bonus_insentif_fcr'] : 0;
 														?>
 													<?php else: ?>
 														<tr class="text-center" colspan="13">Data tidak ditemukan.</tr>
