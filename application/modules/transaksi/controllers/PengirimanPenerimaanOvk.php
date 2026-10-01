@@ -438,8 +438,11 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     $tujuan = $d_gudang->nama;
                 }
             } else {
+                $m_ov = new \Model\Storage\OrderVoadip_model();
+                $d_ov = $m_ov->where('no_order', $d_kv['no_order'])->first()->toArray();
+
                 $m_supplier = new \Model\Storage\Supplier_model();
-                $d_supplier = $m_supplier->where('nomor', $d_kv['asal'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('id', 'desc')->first();
+                $d_supplier = $m_supplier->where('nomor', $d_ov['supplier'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('id', 'desc')->first();
                 $asal = $d_supplier->nama;
 
                 if ( $d_kv['jenis_tujuan'] == 'peternak' ) {
