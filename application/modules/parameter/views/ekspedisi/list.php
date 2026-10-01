@@ -30,9 +30,13 @@
 					<?php echo $v_ekspedisi['nip']; ?>
 				</a> 
 				<?php if ( $akses['a_submit'] == 1 ): ?>
-					|| 
+					||
 					<a class="cursor-p" title="Edit Mitra" data-href="action" data-id="<?php echo $v_ekspedisi['id']; ?>" data-resubmit="<?php echo 'EDIT'; ?>" onclick="ekspedisi.changeTabActive(this)" >
-						<i class="fa fa-edit" aria-hidden="true"></i> 
+						<i class="fa fa-edit" aria-hidden="true"></i>
+					</a>
+					||
+					<a class="cursor-p" title="Clone Ekspedisi ke GML" data-nomor="<?php echo $v_ekspedisi['nip']; ?>" data-nama="<?php echo $v_ekspedisi['nama']; ?>" onclick="ekspedisi.cloneToGml(this)" >
+						<i class="fa fa-clone" aria-hidden="true"></i>
 					</a>
 				<?php endif ?>
 			</td>

@@ -2,9 +2,9 @@
 namespace Model\Storage;
 use \Model\Storage\Conf as Conf;
 
-class MasterSewa_model extends Conf{
+class PenyusutanFiskalAset_model extends Conf{
 	
-	public $table = 'ms_sewa';
+	public $table = 'penyusutan_fiskal_aset';
 	protected $primaryKey = 'id';
 	public $timestamps = false;
 

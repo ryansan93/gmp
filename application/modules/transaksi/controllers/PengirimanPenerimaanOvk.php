@@ -1858,26 +1858,12 @@ class PengirimanPenerimaanOvk extends Public_Controller {
             $m_terima_voadip = new \Model\Storage\TerimaVoadip_model();
             $d_terima_voadip = $m_terima_voadip->where('id_kirim_voadip', $params['id'])->with(['detail'])->first();
 
-            // if ($d_terima_voadip) {
+            if ($d_terima_voadip) {
+                Modules::run('base/event/delete', $d_terima_voadip, 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser']);
 
-            //     Modules::run('base/event/update',$d_terima_voadip,'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser']);
-
-            //     // $m_terima_voadip_detail->where('id_header', $d_terima_voadip->id)->delete();
-            //     // $m_terima_voadip->where('id', $d_terima_voadip->id)->delete();
-            // }
-
-
-            // $m_kirim = new \Model\Storage\KirimVoadip_model();
-            // $m_kirim_detail = new \Model\Storage\KirimVoadipDetail_model();
-
-            // $d_kirim = $m_kirim->where('id', $params['id'])->first();
-            // if ($d_kirim) {
-            //     // throw new \Exception("Data kirim tidak ditemukan.");
-            //     Modules::run('base/event/update', $d_kirim, 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser']);
-    
-            //     $m_kirim_detail->where('id_header', $params['id'])->delete();
-            //     $m_kirim->where('id', $params['id'])->delete();
-            // }
+                // $m_terima_voadip_detail->where('id_header', $d_terima_voadip->id)->delete();
+                // $m_terima_voadip->where('id', $d_terima_voadip->id)->delete();
+            }
 
             $noreg1 = null;
             $noreg2 = null;
@@ -1945,6 +1931,13 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $id, $id_old, $status_jurnal);
             } else {
+                $m_kirim = new \Model\Storage\KirimVoadip_model();
+                $d_kirim = $m_kirim->where('id', $params['id'])->with(['detail'])->first();
+
+                if ($d_kirim) {
+                    Modules::run('base/event/delete', $d_kirim, 'di-delete oleh ' . $this->userdata['detail_user']['nama_detuser']);
+                }
+
                 $m_kirim_detail = new \Model\Storage\KirimVoadipDetail_model();
                 $m_kirim_detail->where('id_header', $params['id'])->delete();
 
@@ -2432,6 +2425,8 @@ class PengirimanPenerimaanOvk extends Public_Controller {
     }
 
     public function tes() {
-        $data = $this->get_unit();
+        // $data = $this->get_unit();
+
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 16051, 16051, 2);
     }
 }

@@ -55,9 +55,10 @@ class PostingUlang extends Public_Controller {
             $bulan = $params['bulan'];
             $tahun = substr($params['tahun'], 0, 4);
             $jenis = $params['jenis'];
-            
+            $tanggal = isset($params['tanggal']) ? $params['tanggal'] : null;
+
             $angka_bulan = (strlen($bulan) == 1) ? '0'.$bulan : $bulan;
-            
+
             $date = $tahun.'-'.$angka_bulan.'-01';
             $start_date = date("Y-m-d", strtotime($date));
             $end_date = date("Y-m-t", strtotime($date));
@@ -68,32 +69,39 @@ class PostingUlang extends Public_Controller {
             if ( $d_conf->count() > 0 ) {
                 $this->result['message'] = '<span class="red">Periode fiskal sudah di tutup, tidak bisa melakukan posting ulang !!!</span>';
             } else {
+                /* Kalau ada parameter tanggal (posting ulang per-hari -- dipakai jenis Bakul via
+                   loop di frontend supaya tidak memproses 1 bulan sekaligus dalam 1 request),
+                   pakai tanggal itu sbg start & end date pemrosesan. Pengecekan periode fiskal
+                   di atas tetap berbasis 1 bulan penuh ($start_date/$end_date asli). */
+                $proc_start = !empty($tanggal) ? $tanggal : $start_date;
+                $proc_end = !empty($tanggal) ? $tanggal : $end_date;
+
                 if ( $jenis == 'doc' ) {
-                    $status = $this->postingUlangDoc($start_date, $end_date);
+                    $status = $this->postingUlangDoc($proc_start, $proc_end);
                 }
-    
+
                 if ( $jenis == 'pakan' ) {
-                    $status = $this->postingUlangPakan($start_date, $end_date);
+                    $status = $this->postingUlangPakan($proc_start, $proc_end);
                 }
-    
+
                 if ( $jenis == 'voadip' ) {
-                    $status = $this->postingUlangVoadip($start_date, $end_date);
+                    $status = $this->postingUlangVoadip($proc_start, $proc_end);
                 }
 
                 if ( $jenis == 'bank' ) {
-                    $status = $this->postingUlangBank($start_date, $end_date);
+                    $status = $this->postingUlangBank($proc_start, $proc_end);
                 }
 
                 if ( $jenis == 'kas' ) {
-                    $status = $this->postingUlangKas($start_date, $end_date);
+                    $status = $this->postingUlangKas($proc_start, $proc_end);
                 }
 
                 if ( $jenis == 'bakul' ) {
-                    $status = $this->postingUlangBakul($start_date, $end_date);
+                    $status = $this->postingUlangBakul($proc_start, $proc_end);
                 }
 
                 if ( $jenis == 'pembayaran' ) {
-                    $status = $this->postingUlangPembayaran($start_date, $end_date);
+                    $status = $this->postingUlangPembayaran($proc_start, $proc_end);
                 }
 
                 $this->result['status'] = $status;
@@ -942,7 +950,6 @@ class PostingUlang extends Public_Controller {
             select pp.id from pembayaran_pelanggan pp
             where
                 pp.tgl_bayar between '".$start_date."' and '".$end_date."'
-                and pp.id = 37509
                 and (pp.bad_debt is null or pp.bad_debt = 0)
         ";
         $d_conf = $m_conf->hydrateRaw( $sql );

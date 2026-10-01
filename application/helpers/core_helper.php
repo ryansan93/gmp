@@ -710,10 +710,8 @@ if (! function_exists ( 'send_email' )) {
 		$CI =& get_instance();
 		//$CI->load->model("employee/m_employee");
 
-		$from_name = "Wonokoyo";
-
-		$from_name = "Tim MUS-Premi Ekspedisi";
-		$from_address = "itos@wonokoyo.co.id";
+		$from_name = $CI->config->item('email_sender_name');
+		$from_address = $CI->config->item('email_sender_address');
 
 		$CI->load->library('email');
 		$CI->email->set_newline("\r\n");

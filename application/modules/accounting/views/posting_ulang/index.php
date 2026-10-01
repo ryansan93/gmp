@@ -53,6 +53,10 @@
 								<option value="doc">DOC</option>
 								<option value="pakan">PAKAN</option>
 								<option value="voadip">OVK</option>
+								<option value="bank">BANK (MASUK & KELUAR)</option>
+								<option value="kas">KAS (MASUK & KELUAR)</option>
+								<option value="bakul">PEMBAYARAN BAKUL</option>
+								<option value="pembayaran">PEMBAYARAN VENDOR</option>
 							</select>
 						</div>
 					</div>

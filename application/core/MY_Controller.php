@@ -100,7 +100,11 @@ class MY_Controller extends DB_Controller
     // get settings
     //  $settings = $this->settings_model->get_settings();
     $settings = array(
-      array('name' => 'site_name', 'value' => 'Ekspedisi Ayam Hidup'),
+      array('name' => 'site_name', 'value' => $this->config->item('company_name')),
+      array('name' => 'company_name', 'value' => $this->config->item('company_name')),
+      array('name' => 'login_heading', 'value' => $this->config->item('login_heading')),
+      array('name' => 'logo_path', 'value' => $this->config->item('logo_path')),
+      array('name' => 'favicon_path', 'value' => $this->config->item('favicon_path')),
       array('name' => 'timezones' , 'value' =>  'UP7'),
       array('name' => 'meta_keywords' , 'value' =>  ''),
       array('name' => 'meta_description' , 'value' =>  ''),

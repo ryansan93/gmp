@@ -50,6 +50,43 @@ var nrc = {
             });
 		}
 	}, // end - getData
+
+	formDetail: function(elm) {
+		var tr = $(elm).closest('tr');
+
+		$('.neraca-item-row').removeClass('neraca-row-selected');
+		$(tr).addClass('neraca-row-selected');
+
+		var params = {
+			'id_header': $(tr).attr('data-id-header'),
+			'item_report_id': $(tr).attr('data-item-report-id'),
+			'item_report_nama': $(tr).attr('data-item-report-nama'),
+			'bulan': $('.bulan').select2().val(),
+			'tahun': dateSQL($('#tahun').data('DateTimePicker').date()),
+			'perusahaan': $('.perusahaan').select2().val()
+		};
+
+		showLoading();
+
+		$.get('report/Neraca/formDetail', {
+				'params': params
+			}, function(data) {
+			hideLoading();
+
+			var _options = {
+				className: 'veryWidth',
+				message: data,
+				size: 'large',
+			};
+			bootbox.dialog(_options).bind('shown.bs.modal', function() {
+				$(this).find('.modal-dialog').css({'max-width': '100%', 'width': '70%'});
+
+				$(this).find('button.close').click(function() {
+					$('div.modal.show').css({'overflow': 'auto'});
+				});
+			});
+		}, 'html');
+	}, // end - formDetail
 };
 
 nrc.startUp();

@@ -88,12 +88,12 @@
 			<table class="table table-bordered tbl_laporan" width="100%" cellspacing="0" style="margin-bottom: 0px;">
 				<thead>
 					<tr>
-						<th colspan="4" class="text-center" style="background-color: #ffcd8c;">LAPORAN NERACA</th>
+						<th colspan="2" class="text-center" style="background-color: #ffcd8c;">LAPORAN NERACA</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
-						<td colspan="3">Data tidak ditemukan.</td>
+						<td colspan="2">Data tidak ditemukan.</td>
 					</tr>
 				</tbody>
 			</table>

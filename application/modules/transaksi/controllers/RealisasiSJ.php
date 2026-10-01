@@ -501,12 +501,35 @@ class RealisasiSJ extends Public_Controller
 
     public function tes()
     {
-        // $arr = array(4753,4805,4804);
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            -- select * from real_sj where tgl_panen between '2026-08-22' and '2026-08-23'
+            select * from real_sj where id in (
+            14522,
+            14550,
+            14554,
+            14591,
+            14592,
+            14639,
+            14644,
+            14695,
+            14740,
+            14742,
+            14780,
+            14833,
+            15490
+            )
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
 
-        // foreach ($arr as $key => $value) {
-        //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
-        // }
-        
-        Modules::run( 'base/InsertJurnal/exec', $this->url, 10940, 10940, 2);
+        if ( $d_conf->count() > 0 ) {
+            $d_conf = $d_conf->toArray();
+
+            foreach ($d_conf as $key => $value) {
+                Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+            }
+        }
+
+        // Modules::run( 'base/InsertJurnal/exec', $this->url, 14053, 14053, 2);
     }
 }

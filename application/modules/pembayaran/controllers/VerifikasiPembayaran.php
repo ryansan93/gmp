@@ -1655,10 +1655,11 @@ class VerifikasiPembayaran extends Public_Controller
         // cetak_r( $data );
 
         $arr = array(
-            array('2026-08-13', 'bayar_peralatan', '22'),
-            array('2026-08-13', 'bayar_peralatan', '23'),
-            array('2026-08-13', 'bayar_peralatan', '24'),
-            array('2026-08-13', 'bayar_peralatan', '25'),
+            array('2026-08-21', 'realisasi_pembayaran', '6037'),
+            // array('2026-08-13', 'bayar_peralatan', '23'),
+            // array('2026-08-13', 'bayar_peralatan', '24'),
+            // array('2026-08-13', 'bayar_peralatan', '25'),
+            // array('2026-08-13', 'bayar_peralatan', '25'),
         );
 
         foreach ($arr as $key => $value) {

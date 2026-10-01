@@ -54,3 +54,11 @@ span.select2-selection {
 .has-error .select2-selection {
 	border-color: rgb(185, 74, 72) !important;
 }
+
+.neraca-item-row.neraca-row-selected {
+	background-color: #d9ecf9 !important;
+}
+.neraca-item-row.neraca-row-selected td {
+	color: #0a4c7a !important;
+	font-weight: bold;
+}

@@ -359,7 +359,14 @@ $config['encryption_key'] = 'Ñ`╣ò╕n~Å╪‼╘♀Vσ≤♫';
 |
 */
 $config['sess_driver'] = 'files';
-$config['sess_cookie_name'] = 'gmp_session';
+// Prefix nama cookie session diambil dari application/config/company.php agar
+// mudah diganti saat clone aplikasi untuk perusahaan lain (lihat 'sess_cookie_prefix').
+// config.php dimuat sebelum autoload config lain, jadi company.php di-include manual
+// di sini (mengisi array $config yang sama karena company.php juga menulis ke $config).
+if (file_exists(APPPATH . 'config/company.php')) {
+	include APPPATH . 'config/company.php';
+}
+$config['sess_cookie_name'] = (isset($config['sess_cookie_prefix']) ? $config['sess_cookie_prefix'] : 'gmp') . '_session';
 $config['sess_expiration'] = 7200;
 $config['sess_save_path'] = APPPATH . 'cache/sessions/';
 $config['sess_match_ip'] = FALSE;

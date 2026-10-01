@@ -3264,12 +3264,22 @@ class RealisasiPembayaran extends Public_Controller
         //     echo 'Email sending failed.';
         // }
 
-        $array = array(
-            array(160, '2025-10-28'),
-        );
-        
-        foreach ($array as $key => $value) {
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $value[0], $value[0], 2, null, $value[1]);
-        }
+        // $array = array(
+        //     array(5764),
+        // );
+
+        // $m_conf = new \Model\Storage\Conf();
+        // $sql = "
+        //     select * from real_sj where tgl_panen between '2026-07-22' and '2026-07-23'
+        // ";
+        // $d_djt = $m_conf->hydrateRaw( $sql );
+
+        // if ( $d_djt->count() > 0 ) {
+        //     $d_djt = $d_djt->toArray();
+
+        //     foreach ($d_djt as $key => $value) {
+        //         Modules::run( 'base/InsertJurnal/exec', $this->url, $value['id'], $value['id'], 2);
+        //     }
+        // }
     }
 }

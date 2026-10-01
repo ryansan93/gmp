@@ -670,6 +670,14 @@ class ReturVoadip extends Public_Controller
             $m_rv = new \Model\Storage\ReturVoadip_model();
             $d_rv_old = $m_rv->where('id', $id_rv)->first();
 
+            // Snapshot kode_barang LAMA sebelum baris detail dihapus di bawah --
+            // hitung_stok_voadip_by_transaksi menurunkan daftar barang yg perlu
+            // dihitung ulang dari det_retur_voadip TERKINI, jadi barang yg hilang/
+            // diganti saat edit tidak akan pernah kena rebuild otomatis kecuali
+            // dipaksa manual pakai daftar ini (lihat kode_barang_hilang di bawah).
+            $m_drv_old = new \Model\Storage\DetReturVoadip_model();
+            $kode_barang_lama = $m_drv_old->where('id_header', $id_rv)->get()->pluck('item')->unique()->values()->toArray();
+
             $m_rv->where('id', $id_rv)->update(
                 array(
                     'tgl_retur' => $params['tgl_retur'],
@@ -687,6 +695,7 @@ class ReturVoadip extends Public_Controller
             $m_drv = new \Model\Storage\DetReturVoadip_model;
             $m_drv->where('id_header', $id_rv)->delete();
 
+            $kode_barang_baru = [];
             if ( !empty($params['data_detail']) ) {
                 foreach ($params['data_detail'] as $k_det => $v_det) {
                     $m_drv = new \Model\Storage\DetReturVoadip_model();
@@ -696,8 +705,16 @@ class ReturVoadip extends Public_Controller
                     $m_drv->kondisi = $v_det['kondisi'];
                     $m_drv->nilai_retur = $v_det['nilai_retur'];
                     $m_drv->save();
+
+                    $kode_barang_baru[] = $v_det['kode_brg'];
                 }
             }
+
+            // Barang yg ada di data lama tapi sudah tidak ada di data baru (dihapus
+            // atau diganti kode barangnya) -- stok gudangnya dipaksa dihitung ulang
+            // terpisah di hitungStokByTransaksi(), krn tidak lagi otomatis tersentuh.
+            $kode_barang_hilang = array_values(array_diff($kode_barang_lama, $kode_barang_baru));
+            $kode_gudang_old = ($d_rv_old->asal == 'gudang') ? $d_rv_old->id_asal : $d_rv_old->id_tujuan;
 
             $d_rv = $m_rv->where('id', $id_rv)->with(['det_retur_voadip'])->first();
 
@@ -726,7 +743,9 @@ class ReturVoadip extends Public_Controller
                 'delete' => 0,
                 'message' => 'Data berhasil di update',
                 'status_jurnal' => 2,
-                'id_asal_old' => $id_asal_old
+                'id_asal_old' => $id_asal_old,
+                'kode_barang_hilang' => $kode_barang_hilang,
+                'kode_gudang_old' => $kode_gudang_old
             );
         } catch (\Illuminate\Database\QueryException $e) {
             $this->result['message'] = "Gagal : " . $e->getMessage();
@@ -779,6 +798,8 @@ class ReturVoadip extends Public_Controller
         $message = $params['message'];
         $status_jurnal = $params['status_jurnal'];
         $id_asal_old = !empty($params['id_asal_old']) ? $params['id_asal_old'] : null;
+        $kode_barang_hilang = !empty($params['kode_barang_hilang']) ? $params['kode_barang_hilang'] : [];
+        $kode_gudang_old = !empty($params['kode_gudang_old']) ? $params['kode_gudang_old'] : null;
 
         try {
             $noreg1 = null;
@@ -810,6 +831,20 @@ class ReturVoadip extends Public_Controller
             $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_voadip_by_transaksi 'retur_voadip', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal;
             $d_conf = $conf->hydrateRaw($sql);
+
+            // Barang yg dihapus/diganti saat edit (dikirim dari edit() lewat
+            // kode_barang_hilang) tidak lagi ikut ke-rebuild oleh EXEC di atas --
+            // SP-nya menurunkan daftar barang dari det_retur_voadip TERKINI, jadi
+            // barang lama yg sudah tidak ada di situ dipaksa recompute manual di
+            // sini lewat parameter override @_kode_gudang/@_kode_barang (cabang
+            // ELSE generik di hitung_stok_voadip_by_transaksi).
+            if ( !empty($kode_barang_hilang) && !empty($kode_gudang_old) ) {
+                foreach ( $kode_barang_hilang as $kb ) {
+                    $conf = new \Model\Storage\Conf();
+                    $sql = "EXEC hitung_stok_voadip_by_transaksi '', '', '".$tanggal."', 0, ".$status_jurnal.", 0, '".$kb."', ".$kode_gudang_old;
+                    $d_conf = $conf->hydrateRaw($sql);
+                }
+            }
 
             $conf = new \Model\Storage\Conf();
             $sql = "EXEC hitung_stok_siklus 'voadip', 'retur_voadip', '".$id."', '".$tanggal."', ".$delete.", '".$noreg1."', '".$noreg2."'";
