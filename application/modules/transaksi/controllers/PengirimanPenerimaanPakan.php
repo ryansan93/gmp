@@ -1307,19 +1307,44 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                                         select * from det_stok_trans_siklus dsts
                                         where dsts.kode_trans = kp.no_order and dsts.kode_barang = dkp.item
                                     )
-                            ), 0) as jml_reserved
+                            ), 0) as jml_reserved,
+                            /*
+                             * NOTE (fix 2026-10-01): saat EDIT, kirim ini sendiri sudah tercatat
+                             * memotong lot SJ asal (det_stok_trans_siklus, id_header = det_stok_siklus.id),
+                             * jadi sisa lot terlihat 0 dan edit ditolak. Kembalikan dulu jumlah yang
+                             * sudah dipotong oleh kirim ini sendiri.
+                             */
+                            isnull((
+                                select sum(dsts.jumlah)
+                                from det_stok_trans_siklus dsts
+                                where
+                                    '".$id."' <> '' and
+                                    dsts.kode_trans = (select top 1 kp0.no_order from kirim_pakan kp0 where kp0.id = '".$id."') and
+                                    dsts.kode_barang = '".$v_det['barang']."' and
+                                    dsts.id_header in (
+                                        select dss.id
+                                        from det_stok_siklus dss
+                                        where
+                                            dss.noreg = '".$asal."' and
+                                            dss.jenis_barang = 'pakan' and
+                                            dss.kode_trans = REPLACE('".$v_det['no_sj_asal']."', 'SJ', 'OP') and
+                                            dss.kode_barang = '".$v_det['barang']."'
+                                    )
+                            ), 0) as jml_dipakai_sendiri
                     ";
                     $d_stok = $m_conf->hydrateRaw( $sql );
 
                     $jml_stok = 0;
                     $jml_reserved = 0;
+                    $jml_dipakai_sendiri = 0;
                     if ( $d_stok->count() > 0 ) {
                         $row_stok = $d_stok->toArray()[0];
                         $jml_stok = (float) $row_stok['jml_stok'];
                         $jml_reserved = (float) $row_stok['jml_reserved'];
+                        $jml_dipakai_sendiri = (float) $row_stok['jml_dipakai_sendiri'];
                     }
 
-                    $jml_tersedia = $jml_stok - $jml_reserved;
+                    $jml_tersedia = ($jml_stok + $jml_dipakai_sendiri) - $jml_reserved;
 
                     if ( $v_det['jumlah'] > $jml_tersedia ) {
                         $status = 0;
