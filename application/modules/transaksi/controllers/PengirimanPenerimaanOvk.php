@@ -439,7 +439,7 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                 }
             } else {
                 $m_ov = new \Model\Storage\OrderVoadip_model();
-                $d_ov = $m_ov->where('no_order', $d_kv['no_order'])->first()->toArray();
+                $d_ov = $m_ov->where('no_order', $d_kv['no_order'])->orderBy('id', 'desc')->first()->toArray();
 
                 $m_supplier = new \Model\Storage\Supplier_model();
                 $d_supplier = $m_supplier->where('nomor', $d_ov['supplier'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('id', 'desc')->first();
@@ -478,7 +478,14 @@ class PengirimanPenerimaanOvk extends Public_Controller {
                     supl.nama as supl_nama,
                     ovd.perusahaan as kode_prs,
                     prs.perusahaan as nama_prs
-                from order_voadip ov
+                from
+                    (
+                        select ov1.* from order_voadip ov1
+                        right join
+                            (select max(id) as id, no_order from order_voadip group by no_order) ov2
+                            on
+                                ov1.id = ov2.id
+                    ) ov
                 left join
                     (select id_order, perusahaan from order_voadip_detail group by id_order, perusahaan) ovd
                     on
