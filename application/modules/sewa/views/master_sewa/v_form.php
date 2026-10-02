@@ -1,7 +1,7 @@
 <input type="hidden" id="config-form" value="<?php echo (($data['is_locked'] ?? 0) == 1 || $cek_amortisasi == 1) ? 1 : 0; ?>">
 
 <fieldset>
-    <legend>Form Sewa</legend>
+    <legend>Form Sewa</legend> 
 
     <div class="row" style="padding-left:30px; padding-right:30px">
         <div class="col-xs-12 col-sm-12 col-md-12" style="padding-left:0; padding-right:0;">

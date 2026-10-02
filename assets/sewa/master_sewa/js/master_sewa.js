@@ -159,7 +159,7 @@ let ms = {
         ms.init_select2();
         ms.init_datepickers();
         ms.init_nominal_sewa();
-        ms.configJumlah($('#jumlah_bulan'), null);
+        ms.configJumlah();
         $('a[href="#action"]').trigger('click');
 
         ms.config_form();
@@ -847,23 +847,47 @@ let ms = {
     },
 
 
-    configJumlah: function (elm, e) {
-        let init = $(elm).closest('.config-jumlah');
+    configJumlah: function () {
+    var $jumlahBulan = $('#jumlah_bulan');
+    var $jumlahSiklus = $('#jumlah_siklus');
 
-        let jumlahBulan = init.find('#jumlah_bulan');
-        let jumlahSiklus = init.find('#jumlah_siklus');
+    if (!$jumlahBulan.length || !$jumlahSiklus.length) return;
 
-        if (jumlahBulan.val() !== '') {
-            jumlahBulan.prop('disabled', false);
-            jumlahSiklus.prop('disabled', true);
-        } else if (jumlahSiklus.val() !== '') {
-            jumlahSiklus.prop('disabled', false);
-            jumlahBulan.prop('disabled', true);
-        } else {
-            jumlahBulan.prop('disabled', false);
-            jumlahSiklus.prop('disabled', false);
+    var checkState = function () {
+
+        var valBulan = parseInt($jumlahBulan.val()) || 0;
+        var valSiklus = parseInt($jumlahSiklus.val()) || 0;
+
+        // Reset disabled state
+        $jumlahBulan.prop('disabled', false).css('background-color', '');
+        $jumlahSiklus.prop('disabled', false).css('background-color', '');
+
+        // Logika: Jika salah satu > 0, maka yang lain disabled
+        if (valBulan > 0) {
+            $jumlahSiklus.prop('disabled', true).css('background-color', '#eee');
+        } else if (valSiklus > 0) {
+            $jumlahBulan.prop('disabled', true).css('background-color', '#eee');
         }
-    },
+    };
+
+    // Jalankan saat load
+    checkState();
+
+    // Event listener untuk perubahan real-time
+    $jumlahBulan.off('input.siklusBulan change.siklusBulan').on('input.siklusBulan change.siklusBulan', function () {
+        if (parseInt($(this).val()) > 0) {
+            $jumlahSiklus.val('');
+        }
+        checkState();
+    });
+
+    $jumlahSiklus.off('input.siklusBulan change.siklusBulan').on('input.siklusBulan change.siklusBulan', function () {
+        if (parseInt($(this).val()) > 0) {
+            $jumlahBulan.val('');
+        }
+        checkState();
+    });
+},
 
 
     hitungCicilan: function () {

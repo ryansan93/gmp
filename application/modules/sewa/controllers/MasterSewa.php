@@ -136,6 +136,8 @@ class MasterSewa extends Public_Controller {
         $data['jenis_sewa'] = $this->get_jenis_sewa_list();
         $data['supplier']   = $this->get_supplier_list();
         $data['unit']       = $this->get_unit_list();
+
+        $data['cek_amortisasi'] = 0;
         $this->load->view($this->pathView . 'v_form', $data);
     }
 
