@@ -980,7 +980,8 @@ class RealisasiPembayaran extends Public_Controller
 
                 if ( $v_kpd['tgl_bayar'] >= '2026-01-01' ) {
                     $_netto = (($v_kpd['total'] + $dn) - $cn);
-                    $pph = ($_netto * (0.25/100));
+                    // PPh dibulatkan per invoice ke rupiah (round half up) agar detail, header & jurnal sama-sama bulat
+                    $pph = round($_netto * (0.25/100), 0);
                     $netto = $_netto - $pph;
                     $jumlah = (($netto) > $bayar) ? ($netto) - $bayar : 0;
                 } else {

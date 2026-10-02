@@ -523,7 +523,7 @@ class VerifikasiPembayaran extends Public_Controller
                                 end as bruto,
                                 case
                                     when kpd.tgl_bayar >= '2026-01-01' then
-                                        ((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0)) * (0.25/100)
+                                        round(((kpdd.total + isnull(_dn.nilai, 0)) - isnull(_cn.nilai, 0)) * (0.25/100), 0)
                                     else
                                         kpdd.total * (0.25/100)
                                 end as pph,
