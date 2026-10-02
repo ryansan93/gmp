@@ -681,6 +681,19 @@ class VerifikasiPembayaran extends Public_Controller
                                 (select nomor, sum(pakai) as nilai from dn_post_det group by nomor) _dn
                                 on
                                     _dn.nomor = kpp.nomor
+
+                            union all
+
+                            select
+                                t.tgl_jatuh_tempo as tanggal,
+                                t.no_sewa + '-T' + cast(t.no_termin as varchar(10)) as kode_trans,
+                                cast(null as varchar(50)) as no_inv,
+                                cast(null as varchar(50)) as no_sj,
+                                t.nominal as bruto,
+                                0 as pph,
+                                '' as lampiran,
+                                'SEWA' as jenis
+                            from ms_sewa_termin t
                         ) konfir_pembayaran
                         on
                             rpd.no_bayar = konfir_pembayaran.kode_trans
@@ -1174,7 +1187,15 @@ class VerifikasiPembayaran extends Public_Controller
                     )
                 );
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, $data['tbl_name'], $data['tgl_bayar']);
+                // SEWA: perbarui nominal_terbayar & status termin (ms_sewa_termin).
+                // Jurnal otomatis SEWA BELUM ada (COA menunggu tim akuntansi) -> realisasi yang
+                // isinya HANYA sewa tidak diposting jurnal agar tidak terbentuk jurnal sepihak
+                // (kredit bank tanpa lawan). Hapus kondisi hanyaSewa() setelah setting jurnal dibuat.
+                \Model\Storage\MsSewaTermin_model::terapkanDariRealisasi($data['id'], 1);
+
+                if ( !\Model\Storage\MsSewaTermin_model::hanyaSewa($data['id']) ) {
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, $data['tbl_name'], $data['tgl_bayar']);
+                }
 
                 $_d_rp = $m_rp->where('id', $data['id'])->first();
                 $deskripsi_log = 'di-bayar oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -1369,7 +1390,9 @@ class VerifikasiPembayaran extends Public_Controller
                     $tgl_bayar = $data['tgl_bayar'];
                 }
 
-                Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $tgl_bayar);
+                if ( !\Model\Storage\MsSewaTermin_model::hanyaSewa($data['id']) ) {
+                    Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $tgl_bayar);
+                }
 
                 $_d_rp = $m_rp->where('id', $data['id'])->first();
                 $deskripsi_log = 'update pembayaran oleh ' . $this->userdata['detail_user']['nama_detuser'];
@@ -1449,6 +1472,9 @@ class VerifikasiPembayaran extends Public_Controller
                 $d_rp = $m_rp->where('id', $params['id'])->first();
     
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $params['id'], $params['id'], 3, $params['tbl_name'], $d_rp->tgl_realisasi);
+
+                // SEWA: kembalikan nominal_terbayar & status termin
+                \Model\Storage\MsSewaTermin_model::terapkanDariRealisasi($params['id'], -1);
     
                 $m_nbbk = new \Model\Storage\NoBbk_model();
                 $m_nbbk->where('tbl_name', $m_rp->getTable())->where('tbl_id', $d_rp->nomor)->delete();

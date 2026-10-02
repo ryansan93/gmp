@@ -28,6 +28,7 @@
 				<option data-tokens="plasma" value="plasma">PLASMA</option>
 				<option data-tokens="supplier" value="supplier">SUPPLIER</option>
 				<option data-tokens="ekspedisi" value="ekspedisi">EKSPEDISI</option>
+				<option data-tokens="sewa" value="sewa">SEWA</option>
 			</select>
 		</div>
 	</div>
@@ -111,6 +112,37 @@
 				<select class="ekspedisi" width="100%" data-required="1">
 					<?php foreach ($ekspedisi as $k => $val): ?>
 						<option data-tokens="<?php echo $val['nama']; ?>" value="<?php echo $val['nomor']; ?>"><?php echo strtoupper($val['nama']); ?></option>
+					<?php endforeach ?>
+				</select>
+			</div>
+		</div>
+	</div>
+	<div class="col-xs-12 no-padding jenis sewa">
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px; padding: 0px 5px 0px 0px;">
+			<div class="col-xs-12 no-padding"><label class="control-label text-left">Jenis Transaksi</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="jenis_transaksi" multiple="multiple" width="100%" data-required="1">
+					<option data-tokens="sewa" value="sewa" selected>SEWA</option>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px; padding: 0px 5px 0px 0px;">
+			<div class="col-xs-12 no-padding"><label class="control-label text-left">Supplier</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="supplier_sewa" width="100%" data-required="1">
+					<?php foreach ($supplier as $k => $val): ?>
+						<option data-tokens="<?php echo $val['nama']; ?>" value="<?php echo $val['nomor']; ?>"><?php echo strtoupper($val['nama']); ?></option>
+					<?php endforeach ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px; padding: 0px 5px 0px 0px;">
+			<div class="col-xs-12 no-padding"><label class="control-label text-left">Unit</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="unit_sewa" multiple="multiple" width="100%">
+					<option value="all">All</option>
+					<?php foreach ($unit as $key => $v_unit): ?>
+						<option value="<?php echo $v_unit['kode']; ?>" > <?php echo strtoupper($v_unit['nama']); ?> </option>
 					<?php endforeach ?>
 				</select>
 			</div>

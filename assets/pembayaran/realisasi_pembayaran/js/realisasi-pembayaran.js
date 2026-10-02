@@ -26,6 +26,7 @@ var rp = {
             
         $('select.jenis_pembayaran').select2();
         $('select.supplier').select2({placeholder: 'Pilih Supplier'});
+        $('select.supplier_sewa').select2({placeholder: 'Pilih Supplier'});
         $('select.ekspedisi').select2({placeholder: 'Pilih Supplier'});
         $('select.mitra').select2({placeholder: 'Pilih Plasma'});
         $('select.perusahaan_non_multiple').select2({placeholder: 'Pilih Perusahaan'});
@@ -77,6 +78,27 @@ var rp = {
             $('select.unit_ovk').next('span.select2').css('width', '100%');
         });
         $('select.unit_ovk').next('span.select2').css('width', '100%');
+
+        $('select.unit_sewa').select2({placeholder: 'Pilih Unit'}).on("select2:select", function (e) {
+            var last_select = e.params.data.id;
+            var unit = $('select.unit_sewa').select2('val');
+
+            if ( last_select == 'all' ) {
+                $('select.unit_sewa').select2().val(['all']).trigger('change');
+            } else {
+                var kode_unit = [];
+                for (var i = 0; i < unit.length; i++) {
+                    if ( unit[i] != 'all' ) {
+                        kode_unit.push( unit[i] );
+                    }
+                }
+
+                $('select.unit_sewa').select2().val(kode_unit).trigger('change');
+            }
+
+            $('select.unit_sewa').next('span.select2').css('width', '100%');
+        });
+        $('select.unit_sewa').next('span.select2').css('width', '100%');
 
         $('select.perusahaan').select2({placeholder: 'Pilih Perusahaan'}).on("select2:select", function (e) {
             var option = $(e);
@@ -371,10 +393,10 @@ var rp = {
                 'id': $(elm).attr('data-id'),
                 'jenis_pembayaran': jenis_pembayaran,
                 'jenis_transaksi': $(div).find('div.'+jenis_pembayaran+' select.jenis_transaksi').select2('val'),
-                'kode_unit_ovk': $(div).find('select.unit_ovk').select2('val'),
+                'kode_unit_ovk': (jenis_pembayaran == 'sewa') ? $(div).find('select.unit_sewa').select2('val') : $(div).find('select.unit_ovk').select2('val'),
                 'kode_unit': $(div).find('select.unit').select2('val'),
                 'mitra': $(div).find('select.mitra').select2('val'),
-                'supplier': $(div).find('select.supplier').select2('val'),
+                'supplier': (jenis_pembayaran == 'sewa') ? $(div).find('select.supplier_sewa').select2('val') : $(div).find('select.supplier').select2('val'),
                 'ekspedisi': $(div).find('select.ekspedisi').select2('val'),
                 'perusahaan': $(div).find('select.perusahaan_non_multiple').val(),
                 'start_date': dateSQL($(div).find('#start_date_bayar').data('DateTimePicker').date()),
@@ -466,7 +488,7 @@ var rp = {
         var jenis_pembayaran = $(div).find('select.jenis_pembayaran').select2('val');
         var jenis_transaksi = $(div).find('div.'+jenis_pembayaran+' select.jenis_transaksi').select2('val');
         var peternak = $(div).find('select.mitra').select2('val');
-        var supplier = $(div).find('select.supplier').select2('val');
+        var supplier = (jenis_pembayaran == 'sewa') ? $(div).find('select.supplier_sewa').select2('val') : $(div).find('select.supplier').select2('val');
         var ekspedisi = $(div).find('select.ekspedisi').select2('val');
         var perusahaan = $(div).find('.perusahaan_non_multiple').val();
 

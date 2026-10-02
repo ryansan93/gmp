@@ -719,6 +719,8 @@ class RealisasiPembayaran extends Public_Controller
             }
         } else if ( $params['jenis_pembayaran'] == 'ekspedisi' ) {
             $data = $this->get_rencana_pembayaran_ekspedisi( $params, $id );
+        } else if ( $params['jenis_pembayaran'] == 'sewa' ) {
+            $data = $this->get_rencana_pembayaran_sewa( $params, $id );
         }
         
         $content['data'] = $data;
@@ -729,6 +731,122 @@ class RealisasiPembayaran extends Public_Controller
         display_json( $this->result );
     }
 
+    /*
+     * SEWA: ambil termin sewa (ms_sewa_termin) yang jatuh tempo di periode & belum lunas.
+     * 1 termin = 1 baris pengajuan; kunci no_bayar = "<no_sewa>-T<no_termin>"
+     * (lihat MsSewaTermin_model). Nilai terbayar diperbarui saat realisasi DIBAYAR
+     * (VerifikasiPembayaran::save) dan dikembalikan saat pembayaran dihapus.
+     */
+    public function get_rencana_pembayaran_sewa($params, $id)
+    {
+        $data = array();
+
+        $id = !empty($id) ? (int) $id : 0;
+
+        $sql_unit = "";
+        if ( !empty($params['kode_unit_ovk']) && !in_array('all', $params['kode_unit_ovk']) ) {
+            $sql_unit = "and s.unit in ('".implode("', '", $params['kode_unit_ovk'])."')";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                t.no_sewa,
+                t.no_termin,
+                t.jenis_termin,
+                t.tgl_jatuh_tempo,
+                t.nominal,
+                isnull(t.nominal_terbayar, 0) as nominal_terbayar,
+                s.nama_sewa,
+                s.unit,
+                supl.nama as nama_supplier
+            from ms_sewa_termin t
+            left join
+                ms_sewa s
+                on
+                    s.no_sewa = t.no_sewa
+            left join
+                (
+                    select plg1.* from pelanggan plg1
+                    right join
+                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' group by nomor) plg2
+                        on
+                            plg1.id = plg2.id
+                ) supl
+                on
+                    supl.nomor = s.no_supplier
+            where
+                s.no_supplier = '".$params['supplier']."' and
+                t.nominal > 0 and
+                t.tgl_jatuh_tempo between '".$params['start_date']."' and '".$params['end_date']."'
+                ".$sql_unit." and
+                (
+                    (t.status = 0 and t.nominal > isnull(t.nominal_terbayar, 0))
+                    or exists (
+                        select 1 from realisasi_pembayaran_det rpd0
+                        where
+                            rpd0.id_header = ".$id." and
+                            rpd0.no_bayar = t.no_sewa + '-T' + cast(t.no_termin as varchar(10))
+                    )
+                ) and
+                not exists (
+                    select 1 from realisasi_pembayaran_det rpd1
+                    left join
+                        realisasi_pembayaran rp1
+                        on
+                            rp1.id = rpd1.id_header
+                    where
+                        rpd1.no_bayar = t.no_sewa + '-T' + cast(t.no_termin as varchar(10)) and
+                        rp1.status = 1 and
+                        rp1.id <> ".$id."
+                )
+            order by
+                t.tgl_jatuh_tempo asc,
+                t.no_sewa asc,
+                t.no_termin asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_conf->count() > 0 ) {
+            foreach ( $d_conf->toArray() as $v_termin ) {
+                $no_bayar = \Model\Storage\MsSewaTermin_model::buatNoBayar($v_termin['no_sewa'], $v_termin['no_termin']);
+
+                $d_rpd = null;
+                if ( $id > 0 ) {
+                    $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
+                    $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $no_bayar)->first();
+                }
+
+                $nominal = (float) $v_termin['nominal'];
+                $terbayar = (float) $v_termin['nominal_terbayar'];
+                $sisa = ($nominal > $terbayar) ? $nominal - $terbayar : 0;
+
+                $label_termin = (strtolower($v_termin['jenis_termin']) == 'dp') ? 'DP' : 'Cicilan '.$v_termin['no_termin'];
+
+                $data[] = array(
+                    'tgl_bayar' => substr($v_termin['tgl_jatuh_tempo'], 0, 10),
+                    'transaksi' => 'SEWA',
+                    'no_bayar' => $no_bayar,
+                    'no_invoice' => $v_termin['no_sewa'].' - '.$label_termin,
+                    'periode' => substr($v_termin['tgl_jatuh_tempo'], 0, 7),
+                    'nama_penerima' => $v_termin['nama_supplier'],
+                    'tagihan' => $nominal,
+                    'dn' => 0,
+                    'cn' => 0,
+                    'pph' => 0,
+                    'netto' => $nominal,
+                    'transfer' => $terbayar,
+                    'bayar' => $terbayar,
+                    'jumlah' => $sisa,
+                    'kode_unit' => $v_termin['unit'],
+                    'checked' => ($d_rpd) ? true : false,
+                    'lampiran' => null
+                );
+            }
+        }
+
+        return $data;
+    }
     public function get_rencana_pembayaran_doc($params, $id)
     {
         $data = array();
@@ -1551,6 +1669,10 @@ class RealisasiPembayaran extends Public_Controller
                 $jenis_pembayaran = 'EKSPEDISI';
             }
 
+            if ( !empty($jenis_transaksi) && $jenis_transaksi[0] == 'SEWA' ) {
+                $jenis_pembayaran = 'SUPPLIER (SEWA)';
+            }
+
             $detail = null;
             foreach ($d_rp['detail'] as $k_det => $v_det) {
                 $kode_unit = $this->getKodeUnit($v_det['transaksi'], $v_det['no_bayar']);
@@ -1698,6 +1820,8 @@ class RealisasiPembayaran extends Public_Controller
                         'supplier'
                     when rpd.transaksi like 'plasma' then
                         'plasma'
+                    when rpd.transaksi like 'sewa' then
+                        'sewa'
                     else
                         'ekspedisi'
                 end as jenis_pembayaran,
@@ -1746,6 +1870,27 @@ class RealisasiPembayaran extends Public_Controller
         $kode_unit = null;
         if ( $d_conf->count() > 0 ) {
             $data = $d_conf->toArray()[0];
+
+            if ( $data['jenis_pembayaran'] == 'sewa' ) {
+                // Sewa tidak punya tabel konfirmasi: rentang tanggal diambil dari jatuh tempo termin
+                $tgl_termin = array();
+                foreach ( \Model\Storage\MsSewaTermin_model::detailSewa($id) as $v_sewa ) {
+                    $kunci = \Model\Storage\MsSewaTermin_model::parseNoBayar($v_sewa['no_bayar']);
+                    if ( !empty($kunci) ) {
+                        $m_termin = new \Model\Storage\MsSewaTermin_model();
+                        $d_termin = $m_termin->where('no_sewa', $kunci[0])->where('no_termin', $kunci[1])->first();
+                        if ( $d_termin ) {
+                            $tgl_termin[] = substr($d_termin->tgl_jatuh_tempo, 0, 10);
+                        }
+                    }
+                }
+
+                if ( !empty($tgl_termin) ) {
+                    sort($tgl_termin);
+                    $data['start_date'] = $tgl_termin[0];
+                    $data['end_date'] = $tgl_termin[count($tgl_termin)-1];
+                }
+            }
 
             if ( $data['jenis_transaksi'] == 'peternak' ) {
                 $m_conf = new \Model\Storage\Conf();
@@ -1893,6 +2038,19 @@ class RealisasiPembayaran extends Public_Controller
             $sql = null;
         }
 
+        if ( stristr($transaksi, 'sewa') !== false ) {
+            $kunci = \Model\Storage\MsSewaTermin_model::parseNoBayar($no_bayar);
+            if ( !empty($kunci) ) {
+                $m_sewa = new \Model\Storage\MsSewa_model();
+                $d_sewa = $m_sewa->where('no_sewa', $kunci[0])->first();
+                if ( $d_sewa ) {
+                    $kode_unit = $d_sewa->unit;
+                }
+            }
+
+            $sql = null;
+        }
+
         if ( !empty($sql) ) {
             $m_conf = new \Model\Storage\Conf();
             $d_data = $m_conf->hydrateRaw( $sql );
@@ -2017,7 +2175,7 @@ class RealisasiPembayaran extends Public_Controller
             $d_mitra = null;
             $ekspedisi = null;
             $bank_ekspedisi = null;
-            if ( stristr($params['jenis_pembayaran'], 'supplier') !== false ) {
+            if ( stristr($params['jenis_pembayaran'], 'supplier') !== false || $params['jenis_pembayaran'] == 'sewa' ) {
                 $m_supplier = new \Model\Storage\Supplier_model();
                 $d_supplier = $m_supplier->where('nomor', $params['supplier'])->where('tipe', 'supplier')->where('jenis', '<>', 'ekspedisi')->orderBy('version', 'desc')->with(['banks'])->first();
             } else if ( stristr($params['jenis_pembayaran'], 'plasma') !== false ) {
@@ -2076,7 +2234,8 @@ class RealisasiPembayaran extends Public_Controller
 
             $data = array(
                 'id' => !empty($id) ? $id : null,
-                'jenis_pembayaran' => $params['jenis_pembayaran'],
+                // SEWA diperlakukan seperti pembayaran ke supplier di form realisasi (rekening tujuan dst)
+                'jenis_pembayaran' => ($params['jenis_pembayaran'] == 'sewa') ? 'supplier' : $params['jenis_pembayaran'],
                 'uang_muka' => $uang_muka,
                 'jml_transfer' => $jml_transfer,
                 'total_dn' => $total_dn,
@@ -2132,6 +2291,29 @@ class RealisasiPembayaran extends Public_Controller
             $message = '';
 
             foreach ($params['detail'] as $k_det => $v_det) {
+                // SEWA tidak punya tabel konfirmasi: cukup pastikan termin sewanya masih ada
+                if ( isset($v_det['transaksi']) && $v_det['transaksi'] == 'SEWA' ) {
+                    $kunci = \Model\Storage\MsSewaTermin_model::parseNoBayar($v_det['no_bayar']);
+
+                    $ada = false;
+                    if ( !empty($kunci) ) {
+                        $m_termin = new \Model\Storage\MsSewaTermin_model();
+                        $ada = ($m_termin->where('no_sewa', $kunci[0])->where('no_termin', $kunci[1])->count() > 0);
+                    }
+
+                    if ( !$ada ) {
+                        $status = 0;
+
+                        if ( empty($message) ) {
+                            $message = 'Ada data termin sewa yang tidak di temukan, harap konfirmasi ke admin yang bersangkutan !!!<br>';
+                        }
+
+                        $message .= '<br>'.$v_det['no_bayar'];
+                    }
+
+                    continue;
+                }
+
                 $m_conf = new \Model\Storage\Conf();
                 $sql = "
                     select * from (

@@ -33,6 +33,7 @@
 				<option value="oa pakan">OA PAKAN</option>
 				<option value="piutang plasma">PIUTANG PLASMA</option>
 				<option value="peralatan">PERALATAN</option>
+				<option value="sewa">SEWA</option>
 			</select>
 		</div>
 	</div>
