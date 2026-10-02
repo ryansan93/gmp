@@ -214,6 +214,19 @@ class PosisiStokSiklus extends Public_Controller {
 
         $data = null;
 
+        // Mode MANAJEMEN (lihat application/config/app_mode.php): pakan kiriman intercompany (OPKG)
+        // sengaja TIDAK ditulis ke det_stok_siklus riil, tapi ke shadow det_stok_siklus_manajemen
+        // (IntercompanyPakanTerima::prosesTerimaOpkg) supaya FCR/RHPP riil tdk tercemar. Jadi sisi MASUK
+        // (saldo awal & mutasi masuk) vhost manajemen = det_stok_siklus UNION shadow (khusus pakan),
+        // sama dgn KartuStokSiklus & TSDRHPP::_sqlSumberStokSiklusPakan. Mode RIIL: det_stok_siklus saja
+        // (tdk berubah). Sisi KELUAR tdk diubah: shadow tdk punya trans keluar (pemakaian LHK atas pakan
+        // transfer belum tercatat -- keterbatasan yg sama dgn RHPP manajemen).
+        $kolom_masuk = "tgl_trans, noreg, kode_barang, jumlah, hrg_beli, kode_trans, jenis_barang, jenis_trans";
+        $sumber_masuk = "det_stok_siklus";
+        if ( defined('APP_MODE') && APP_MODE === 'manajemen' ) {
+            $sumber_masuk = "(select ".$kolom_masuk." from det_stok_siklus union all select ".$kolom_masuk." from det_stok_siklus_manajemen where jenis_barang = 'pakan')";
+        }
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
@@ -287,8 +300,8 @@ class PosisiStokSiklus extends Public_Controller {
                             (dss.jumlah * dss.hrg_beli) as debet,
                             0 as jml_kredit,
                             0 as kredit
-                        from det_stok_siklus dss 
-                        
+                        from ".$sumber_masuk." dss
+
                         union all
                         
                         select
@@ -368,7 +381,7 @@ class PosisiStokSiklus extends Public_Controller {
                         0 as jml_kredit,
                         0 as kredit,
                         2 as urut
-                    from det_stok_siklus dss
+                    from ".$sumber_masuk." dss
                     left join
                         rdim_submit rs
                         on
