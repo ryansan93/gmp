@@ -5050,6 +5050,43 @@ class TSDRHPP extends Public_Controller {
         return $hasil;
     }
 
+    /**
+     * Kunci (application lock SQL Server) per noreg utk menyimpan RHPP. Tidak menunggu: kalau kunci sudah
+     * dipegang request lain return false. Kunci DILEPAS EKSPLISIT di akhir request (shutdown function) --
+     * jangan andalkan penutupan koneksi: koneksi ODBC bisa di-pool sehingga sesi (dan kunci Session-nya) bertahan.
+     */
+    private function _ambilKunciSimpanRhpp($noreg)
+    {
+        $conn = (new \Model\Storage\Conf())->getConnection();
+        $resource = 'tsdrhpp_simpan_'.$noreg;
+
+        $row = $conn->selectOne("
+            SET NOCOUNT ON;
+            DECLARE @hasil int;
+            EXEC @hasil = sp_getapplock @Resource = ?, @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 0;
+            SELECT @hasil AS hasil;
+        ", array($resource));
+
+        $berhasil = ( !empty($row) && (int) $row['hasil'] >= 0 );
+
+        if ( $berhasil ) {
+            register_shutdown_function(function() use ($conn, $resource) {
+                try {
+                    $conn->select("
+                        SET NOCOUNT ON;
+                        DECLARE @hasil int;
+                        EXEC @hasil = sp_releaseapplock @Resource = ?, @LockOwner = 'Session';
+                        SELECT @hasil AS hasil;
+                    ", array($resource));
+                } catch ( \Exception $e ) {
+                    // abaikan: kunci tetap lepas saat sesi database berakhir
+                }
+            });
+        }
+
+        return $berhasil;
+    }
+
     public function tutup_siklus()
     {
         $params = $this->input->post('params');
@@ -5226,6 +5263,25 @@ class TSDRHPP extends Public_Controller {
             }
 
             if ( $tutup == 1 ) {
+                // PENGAMAN KLIK GANDA / DOBEL SAVE: klik ganda (atau 2 request hampir bersamaan) pernah
+                // membuat 2 set baris rhpp + 2 jurnal utk noreg yg sama (mis. 25091460601: invoice 0047 & 0048).
+                // 1) kunci per noreg (sp_getapplock, tanpa menunggu) -> request ke-2 yg datang selagi yg pertama
+                //    masih jalan langsung ditolak; kunci dilepas eksplisit di akhir request (lihat _ambilKunciSimpanRhpp).
+                // 2) kalau RHPP noreg ini SUDAH tersimpan, tolak - jangan insert lagi.
+                if ( !$this->_ambilKunciSimpanRhpp( $params['noreg'] ) ) {
+                    $this->result['message'] = 'Proses simpan RHPP untuk noreg ini sedang berjalan, harap tunggu dan jangan klik dua kali.';
+                    display_json( $this->result );
+                    return;
+                }
+
+                $m_rhpp_cek = new \Model\Storage\Rhpp_model();
+                $d_rhpp_cek = $m_rhpp_cek->where('noreg', $params['noreg'])->whereIn('jenis', array('rhpp_plasma', 'rhpp_inti'))->first();
+                if ( !empty($d_rhpp_cek) ) {
+                    $this->result['message'] = 'Data RHPP untuk noreg ini sudah tersimpan'.( !empty($d_rhpp_cek->invoice) ? ' (No. Invoice '.$d_rhpp_cek->invoice.')' : '' ).'. Cek Riwayat RHPP; kalau perlu perbaikan gunakan Hitung Ulang.';
+                    display_json( $this->result );
+                    return;
+                }
+
                 $m_ts = new \Model\Storage\TutupSiklus_model();
 
                 $invoice = null;
