@@ -155,6 +155,37 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
         $kode_unit = $params['kode_unit'];
 
+        // Mode RIIL (lihat application/config/app_mode.php) - dokumen
+        // Kirim/Terima Pakan yg SUDAH ditransfer ke partner (baik OPKS lewat
+        // order_pakan-nya, maupun OPKG lewat kirim_pakan-nya sendiri,
+        // intercompany_pakan_log.status='DITERIMA') dianggap bukan lagi
+        // tanggung jawab GML di buku RIIL - jangan ikut tampil di list ini.
+        // Mode MANAJEMEN sengaja TIDAK difilter - tetap perlu terlihat sbg
+        // riwayat/tracking di situ. Dicek DUA arah utk order_pakan MAUPUN
+        // kirim_pakan: sisi asal (dokumen ini yg DIKIRIM keluar, id lokal ada
+        // di tbl_id_asal) & sisi tujuan (dokumen ini hasil DITERIMA dari
+        // partner, id lokal ada di tbl_id_tujuan - tbl_id_asal di kasus ini
+        // cuma id milik partner, tidak berarti apa2 di DB lokal).
+        $sql_filter_transfer_kp = (defined('APP_MODE') && APP_MODE === 'riil') ? "
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    inner join order_pakan op on op.id = ipl.tbl_id_asal
+                    where ipl.tbl_name_asal = 'order_pakan' and op.no_order = kp.no_order and ipl.status = 'DITERIMA'
+                )
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    inner join order_pakan op on op.id = ipl.tbl_id_tujuan
+                    where ipl.tbl_name_tujuan = 'order_pakan' and op.no_order = kp.no_order and ipl.status = 'DITERIMA'
+                )
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    where ipl.tbl_name_asal = 'kirim_pakan' and ipl.tbl_id_asal = kp.id and ipl.status = 'DITERIMA'
+                )
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    where ipl.tbl_name_tujuan = 'kirim_pakan' and ipl.tbl_id_tujuan = kp.id and ipl.status = 'DITERIMA'
+                )" : "";
+
         // $m_kirim_pakan = new \Model\Storage\KirimPakan_model();
         // $d_kirim_pakan = $m_kirim_pakan->whereBetween('tgl_kirim', [$params['start_date'], $params['end_date']])->with(['terima'])->get();
 
@@ -233,7 +264,8 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 on
                     kp.tujuan = tujuan.kode
             where
-                kp.tgl_kirim between '".$params['start_date']."' and '".$params['end_date']."' ";
+                kp.tgl_kirim between '".$params['start_date']."' and '".$params['end_date']."'
+                ".$sql_filter_transfer_kp." ";
 
             if ($kode_unit != 'all'){
                $sql .= " and ((asal.unit = '".$kode_unit."') or (tujuan.unit = '".$kode_unit."')) ";
@@ -425,10 +457,19 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
                 $a_content['no_sj_asal'] = $data = $this->getDataSjAsal( $d_kp['asal'] );
             } else if ( $d_kp['jenis_kirim'] == 'opkg' ) {
-                $m_gudang = new \Model\Storage\Gudang_model();
-                $d_gudang = $m_gudang->where('id', $d_kp['asal'])->orderBy('id', 'desc')->first();
+                // Dokumen opkg hasil transfer intercompany (lihat IntercompanyPakanTerima::
+                // prosesTerimaOpkg()) TIDAK punya gudang asal riil milik instance ini - kolom
+                // 'asal' diisi TEKS deskriptif (bukan id numerik) utk kasus itu. is_numeric()
+                // WAJIB dicek dulu SEBELUM query ke Gudang_model - kalau langsung di-where('id',
+                // $teks) ke kolom int, SQL Server error "Conversion failed ... to data type
+                // int" (bukan cuma null-object spt sebelumnya).
+                $asal = $d_kp['asal'];
+                if ( !empty($d_kp['asal']) && is_numeric($d_kp['asal']) ) {
+                    $m_gudang = new \Model\Storage\Gudang_model();
+                    $d_gudang = $m_gudang->where('id', $d_kp['asal'])->orderBy('id', 'desc')->first();
 
-                $asal = $d_gudang->nama;
+                    $asal = !empty($d_gudang) ? $d_gudang->nama : null;
+                }
 
                 if ( $d_kp['jenis_tujuan'] == 'peternak' ) {
                     $m_rs = new \Model\Storage\RdimSubmit_model();
@@ -1592,8 +1633,67 @@ class PengirimanPenerimaanPakan extends Public_Controller {
 
                 $this->insertKonfirmasi( $id, $delete );
 
-                $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
-                $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                /* INTERCOMPANY PAKAN - lihat plan "intercompany pakan - stok rill vs jurnal
+                   manajemen lintas-GMP". Kalau staff menandai tujuan sebagai gudang milik
+                   perusahaan/instance GMP lain (bukan gudang/kandang lokal), instance INI
+                   (pemilik finansial) TIDAK memposting stok fisik asli - barangnya memang
+                   tidak ada di gudang sendiri. Jurnal/hutang tetap diposting NORMAL di bawah
+                   (InsertJurnal::exec, tidak berubah) karena hutang ke supplier tetap nyata
+                   di sini. Stok dicatat sbg shadow (stok_manajemen) + dikirim ke partner lewat
+                   IntercompanyPakan::kirimKePartner(). Default (tujuan_lintas_gmp kosong) =
+                   perilaku lama, tidak berubah sama sekali. */
+                $tujuan_lintas_gmp = !empty($params['tujuan_lintas_gmp']) ? $params['tujuan_lintas_gmp'] : null;
+
+                if ( !empty($tujuan_lintas_gmp) ) {
+                    // Harga diambil dari order_pakan_detail.harga (kolom harga beli, dikonfirmasi
+                    // via INFORMATION_SCHEMA ke DB live 2026-09-17: order_pakan_detail punya kolom
+                    // 'harga' int & 'harga_jual' int). Hanya didukung utk jenis_kirim='opks' (order
+                    // pabrik/supplier langsung) karena cuma jalur itu yang punya order_pakan induk -
+                    // 'opkg'/'opkp' (transfer antar gudang/dari peternak lokal) tidak relevan utk
+                    // kasus lintas-GMP (barang sudah lebih dulu ada di sistem sendiri, bukan
+                    // pembelian baru dari luar) dan TIDAK didukung fitur ini.
+                    if ( $d_kp->jenis_kirim !== 'opks' ) {
+                        throw new Exception('Tujuan lintas perusahaan hanya didukung utk jenis kirim "Order Pabrik" (opks).');
+                    }
+
+                    $m_order_pakan = new \Model\Storage\OrderPakan_model();
+                    $d_order_pakan = $m_order_pakan->where('no_order', $d_kp->no_order)->with(['detail'])->first();
+
+                    if ( empty($d_order_pakan) ) {
+                        throw new Exception('order_pakan dgn no_order '.$d_kp->no_order.' tidak ditemukan, harga tidak bisa dihitung.');
+                    }
+
+                    $harga_per_barang = array();
+                    foreach ( $d_order_pakan->detail as $od ) {
+                        $harga_per_barang[$od->barang] = $od->harga;
+                    }
+
+                    $detail_intercompany = array();
+                    foreach ($detail_merge as $v_detail) {
+                        if ( !isset($harga_per_barang[$v_detail['barang']]) ) {
+                            throw new Exception('Harga utk barang '.$v_detail['barang'].' tidak ditemukan di order_pakan_detail no_order '.$d_kp->no_order.'.');
+                        }
+
+                        $detail_intercompany[] = array(
+                            'kode_barang' => $v_detail['barang'],
+                            'jumlah' => $v_detail['jumlah'],
+                            'harga' => $harga_per_barang[$v_detail['barang']],
+                        );
+                    }
+
+                    Modules::run(
+                        'intercompany/IntercompanyPakan/kirimKePartner',
+                        'terima_pakan',
+                        $id,
+                        $tanggal,
+                        $detail_intercompany,
+                        $params['kode_partner_tujuan'],
+                        $params['kode_gudang_partner_tujuan']
+                    );
+                } else {
+                    $sql = "EXEC hitung_stok_pakan_by_transaksi 'terima_pakan', '".$id."', '".$tanggal."', ".$delete.", ".$status_jurnal."";
+                    $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
+                }
 
                 $sql = "EXEC hitung_stok_siklus 'pakan', 'terima_pakan', '".$id."', '".$tanggal."', ".$status.", '".$noreg1."', '".$noreg2."'";
                 $return = Modules::run( 'base/ExecStoredProcedure/exec', $sql);
@@ -1637,6 +1737,11 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 $this->result['message'] = 'Kode unit masih kosong, harap lengkapi kode unit terlebih dahulu.';
             }
         } catch (\Illuminate\Database\QueryException $e) {
+            $this->result['message'] = "Gagal : " . $e->getMessage();
+        } catch (\Exception $e) {
+            // Diperlebar (semula hanya QueryException) utk menangkap validasi baru di blok
+            // INTERCOMPANY PAKAN di atas (mis. jenis_kirim bukan 'opks', harga tidak
+            // ditemukan) - tidak mengubah penanganan QueryException yang sudah ada.
             $this->result['message'] = "Gagal : " . $e->getMessage();
         }
 

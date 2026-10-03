@@ -53,6 +53,9 @@
 			</td>
 			<td>
 				<button type="button" class="col-xs-12 btn btn-primary" onclick="pegawai.modalGaji(this)" data-nik="<?php echo $v_data['nik']; ?>"><i class="fa fa-usd"></i></button>
+				<?php if ( isset($akses['a_submit']) && $akses['a_submit'] == 1 ): ?>
+					<button type="button" class="col-xs-12 btn btn-default" title="Clone Pegawai ke GML" onclick="pegawai.cloneToGml(this)" data-nik="<?php echo $v_data['nik']; ?>" data-nama="<?php echo $v_data['nama']; ?>"><i class="fa fa-clone"></i></button>
+				<?php endif ?>
 			</td>
 		</tr>
 	<?php endforeach ?>

@@ -3,13 +3,15 @@
 
 <head>
   <base href="<?php echo base_url() ?>" />
-  <link rel="shortcut icon" type="image/x-icon" href="assets/images/logo-mgb.jpg">
+  <?php if (!empty($this->settings->favicon_path)) : ?>
+  <link rel="shortcut icon" type="image/x-icon" href="<?php echo $this->settings->favicon_path; ?>">
+  <?php endif; ?>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="">
   <meta name="author" content="Dashboard">
   <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
-  <title>GMP ERP</title>
+  <title><?php echo $this->settings->company_name; ?></title>
 
   <!-- Favicons -->
   <!-- <link href="assets/themes/img/favicon.png" rel="icon">
@@ -40,7 +42,7 @@
     <div class="container">
       <div class="form-login">
         <div class="login-heading text-center">
-          <h2 class="form-login-heading">GMP ERP</h2>
+          <h2 class="form-login-heading"><?php echo $this->settings->login_heading; ?></h2>
         </div>
         <!-- <div class="dropdown-divider no-padding"></div> -->
         <div class="login-contain">

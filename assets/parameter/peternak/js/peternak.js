@@ -1360,6 +1360,45 @@ var ptk = {
 		});
 	}, // end - deleteMitra
 
+	cloneToGml : function(elm) {
+		var nomor = $(elm).data('nomor');
+		var nama = $(elm).data('nama');
+
+		bootbox.confirm('Clone data peternak <b>' + nama + '</b> (' + nomor + ') ke database GML? Aksi ini tidak bisa dibatalkan kalau sudah berhasil.', function (result) {
+			if ( result ) {
+				ptk.executeCloneToGml(nomor, 0);
+			}
+		});
+	}, // end - cloneToGml
+
+	executeCloneToGml : function(nomor, force) {
+		$.ajax({
+			url :'parameter/Peternak/cloneToGml',
+			type : 'post',
+			dataType : 'json',
+			data : {'nomor': nomor, 'force': force},
+			beforeSend : function(){
+				showLoading('Meng-clone data ke GML . . .');
+			},
+			success : function(data){
+				hideLoading();
+				if ( data.need_confirm ) {
+					bootbox.confirm(data.message, function(result2){
+						if ( result2 ) {
+							ptk.executeCloneToGml(nomor, 1);
+						}
+					});
+				} else {
+					bootbox.alert(data.message);
+				}
+			},
+			error : function(){
+				hideLoading();
+				bootbox.alert('Gagal menghubungi server, segera hubungi tim IT.');
+			}
+		});
+	}, // end - executeCloneToGml
+
 	ack_reject : function (elm) {
 		var action = $(elm).attr('data-action');
 		// collect id mitra

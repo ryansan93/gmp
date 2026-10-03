@@ -1512,18 +1512,18 @@ class Bakul extends Public_Controller
 
 	public function tes()
 	{
-        $arr = array(
-            32370
-        );
+        // $arr = array(
+        //     32370
+        // );
 
-        foreach ($arr as $key => $value) {
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
-            // Modules::run( 'base/InsertJurnal/exec', $this->url, 13188, 13188, 3);
-        }
+        // foreach ($arr as $key => $value) {
+        //     Modules::run( 'base/InsertJurnal/exec', $this->url, $value, $value, 2);
+        //     // Modules::run( 'base/InsertJurnal/exec', $this->url, 13188, 13188, 3);
+        // }
 
         // $m_conf = new \Model\Storage\Conf();
         // $sql = "
-        //     select * from pembayaran_pelanggan pp where no_pelanggan = '21B201' and tgl_bayar >= '2026-03-01'
+        //     select * from real_sj where tgl_panen between '2026-08-22' and '2026-08-23'
         // ";
         // $d_conf = $m_conf->hydrateRaw( $sql );
 
@@ -1535,6 +1535,6 @@ class Bakul extends Public_Controller
         //     }
         // }
 
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 19471, 19471, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 41921, 41921, 2);
 	}
 }

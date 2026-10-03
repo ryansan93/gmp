@@ -4,7 +4,8 @@ use \Model\Storage\Conf as Conf;
 
 class Kk_model extends Conf{
 	public $table = 'kk';
-	protected $primaryKey = 'no_kk';
+	public $primaryKey = 'no_kk';
+	public $id = 'no_kk';
 	public $timestamps = false;
 
 	public function getKode($kode){

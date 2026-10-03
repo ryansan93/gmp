@@ -85,6 +85,28 @@ class GeneralLedger extends Public_Controller {
     }
 
     public function getData($start_date, $end_date, $kode_gabung_perusahaan, $unit) {
+        // Mode MANAJEMEN (lihat application/config/app_mode.php): GL gabungan
+        // (UNION ALL) det_jurnal RIIL + SELURUH det_jurnal_manajemen (manual
+        // MAUPUN baris shadow hasil transfer intercompany, tbl_name apapun) -
+        // MANAJEMEN sengaja menampilkan semua supaya transaksi yg sudah
+        // ditransfer ke partner tetap terlihat sbg riwayat/tracking di sini.
+        // det_jurnal RIIL dipakai APA ADANYA tanpa filter tambahan - begitu
+        // sebuah transaksi ditransfer ke partner, baris riilnya SUDAH DIHAPUS
+        // (lihat TransferTransaksi::pindahkanJurnalKeShadow()), jadi tabel
+        // riil secara otomatis/struktural cuma berisi transaksi yg BELUM
+        // ditransfer - tidak perlu exclude apa pun di sini (mode RIIL dgn
+        // sendirinya sudah "menyembunyikan" data yg sudah ditransfer). Laporan
+        // ini pakai SQL mentah dgn nama tabel literal, jadi tidak ke-cover
+        // otomatis oleh redirect di Model\Storage\Conf (itu cuma jalan utk
+        // model Eloquent).
+        $tbl_det_jurnal = (defined('APP_MODE') && APP_MODE === 'manajemen')
+            ? "(
+                select tanggal, coa_asal, coa_tujuan, cast(keterangan as varchar(max)) as keterangan, kode_trans, nominal, noreg, perusahaan, tbl_name, unit, unit_tujuan from det_jurnal
+                union all
+                select tanggal, coa_asal, coa_tujuan, cast(keterangan as varchar(max)) as keterangan, kode_trans, nominal, noreg, perusahaan, tbl_name, unit, unit_tujuan from det_jurnal_manajemen
+            )"
+            : 'det_jurnal';
+
         $sql_kode_gabung_perusahaan = "and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '".$kode_gabung_perusahaan."')";
         if ( $kode_gabung_perusahaan == 'all' ) {
             $sql_kode_gabung_perusahaan = null;
@@ -287,7 +309,7 @@ class GeneralLedger extends Public_Controller {
                                     sum(dj.nominal) as kredit, 
                                     0 as debet, 
                                     dj.unit
-                                from det_jurnal dj 
+                                from ".$tbl_det_jurnal." dj 
                                 where 
                                     dj.tanggal between '".$start_date_new."' and '".$end_date_new."'
                                     -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
@@ -305,7 +327,7 @@ class GeneralLedger extends Public_Controller {
                                         else
                                             dj.unit
                                     end as unit
-                                from det_jurnal dj 
+                                from ".$tbl_det_jurnal." dj 
                                 where 
                                     dj.tanggal between '".$start_date_new."' and '".$end_date_new."'
                                     -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
@@ -453,7 +475,7 @@ class GeneralLedger extends Public_Controller {
                                 sum(dj.nominal) as kredit, 
                                 0 as debet, 
                                 dj.unit
-                            from det_jurnal dj 
+                            from ".$tbl_det_jurnal." dj 
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
                                 -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
@@ -471,7 +493,7 @@ class GeneralLedger extends Public_Controller {
                                     else
                                         dj.unit
                                 end as unit
-                            from det_jurnal dj 
+                            from ".$tbl_det_jurnal." dj 
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
                                 -- and dj.perusahaan in (select kode from perusahaan where kode_gabung_perusahaan = '1')
@@ -509,7 +531,18 @@ class GeneralLedger extends Public_Controller {
     public function getDetail($periode, $unit, $no_coa) {
         $start_date = $periode;
         $end_date = date("Y-m-t", strtotime($start_date));
-        
+
+        // Sama seperti getData() - GL manajemen gabungan det_jurnal riil (yg
+        // belum ditransfer) + SELURUH det_jurnal_manajemen (lihat NB di
+        // getData()).
+        $tbl_det_jurnal = (defined('APP_MODE') && APP_MODE === 'manajemen')
+            ? "(
+                select tanggal, coa_asal, coa_tujuan, cast(keterangan as varchar(max)) as keterangan, kode_trans, nominal, noreg, perusahaan, tbl_name, unit, unit_tujuan from det_jurnal
+                union all
+                select tanggal, coa_asal, coa_tujuan, cast(keterangan as varchar(max)) as keterangan, kode_trans, nominal, noreg, perusahaan, tbl_name, unit, unit_tujuan from det_jurnal_manajemen
+            )"
+            : 'det_jurnal';
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
             select
@@ -693,7 +726,7 @@ class GeneralLedger extends Public_Controller {
                                 0 as debet, 
                                 dj.unit,
                                 dj.noreg
-                            from det_jurnal dj 
+                            from ".$tbl_det_jurnal." dj 
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
                             group by
@@ -720,7 +753,7 @@ class GeneralLedger extends Public_Controller {
                                         dj.unit
                                 end as unit,
                                 dj.noreg
-                            from det_jurnal dj 
+                            from ".$tbl_det_jurnal." dj 
                             where 
                                 dj.tanggal between '".$start_date."' and '".$end_date."'
                             group by

@@ -1591,9 +1591,28 @@ class ODVP extends Public_Controller {
             $sql_perusahaan = "and prs.kode in ('".implode("', '", $params['perusahaan'])."')";
         }
 
+        // Mode RIIL (lihat application/config/app_mode.php) - order yg SUDAH
+        // ditransfer ke partner (intercompany_pakan_log.status='DITERIMA')
+        // dianggap bukan lagi tanggung jawab GML di buku RIIL (sudah jadi
+        // urusan MANAJEMEN/shadow) - jangan ikut tampil di list ini. Mode
+        // MANAJEMEN sengaja TIDAK difilter - di situ order yg sudah
+        // ditransfer justru tetap perlu terlihat sbg riwayat/tracking.
+        // Dicek DUA arah: tbl_id_asal (order ini yg DIKIRIM keluar - id lokal
+        // ada di sisi asal) MAUPUN tbl_id_tujuan (order ini hasil DITERIMA
+        // dari partner - id lokal ada di sisi tujuan, tbl_id_asal cuma id
+        // milik partner yg tidak berarti apa2 di DB lokal ini).
+        $sql_filter_transfer_op = (defined('APP_MODE') && APP_MODE === 'riil') ? "
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    where ipl.status = 'DITERIMA' and (
+                        (ipl.tbl_name_asal = 'order_pakan' and ipl.tbl_id_asal = op.id)
+                        or (ipl.tbl_name_tujuan = 'order_pakan' and ipl.tbl_id_tujuan = op.id)
+                    )
+                )" : "";
+
         $m_conf = new \Model\Storage\Conf();
         $sql = "
-            select 
+            select
                 op.*,
                 supl.nama as nama_supplier,
                 prs.perusahaan as nama_perusahaan,
@@ -1635,6 +1654,7 @@ class ODVP extends Public_Controller {
             where
                 op.tgl_trans between '".$params['start_date']."' and '".$params['end_date']."'
                 ".$sql_perusahaan."
+                ".$sql_filter_transfer_op."
             order by
                 op.tgl_trans desc,
                 supl.nama asc

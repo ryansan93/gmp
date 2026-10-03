@@ -28,6 +28,7 @@
 				<option data-tokens="plasma" value="plasma" <?php echo $data['jenis_pembayaran'] == 'plasma' ? 'selected' : null; ?> >PLASMA</option>
 				<option data-tokens="supplier" value="supplier" <?php echo $data['jenis_pembayaran'] == 'supplier' ? 'selected' : null; ?> >SUPPLIER</option>
 				<option data-tokens="ekspedisi" value="ekspedisi" <?php echo $data['jenis_pembayaran'] == 'ekspedisi' ? 'selected' : null; ?> >EKSPEDISI</option>
+				<option data-tokens="sewa" value="sewa" <?php echo $data['jenis_pembayaran'] == 'sewa' ? 'selected' : null; ?> >SEWA</option>
 			</select>
 		</div>
 	</div>
@@ -38,6 +39,8 @@
 		$required_supplier = 0;
 		$hide_ekspedisi = 'hide';
 		$required_ekspedisi = 0;
+		$hide_sewa = 'hide';
+		$required_sewa = 0;
 
 		if ($data['jenis_pembayaran'] == 'plasma') {
 			$hide_plasma = null;
@@ -52,6 +55,11 @@
 		if ($data['jenis_pembayaran'] == 'ekspedisi') {
 			$hide_ekspedisi = null;
 			$required_ekspedisi = 1;
+		}
+
+		if ($data['jenis_pembayaran'] == 'sewa') {
+			$hide_sewa = null;
+			$required_sewa = 1;
 		}
 	?>
 	<div class="col-xs-12 search left-inner-addon no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
@@ -166,6 +174,43 @@
 			</div>
 		</div>
 	</div>
+	<div class="col-xs-12 no-padding jenis sewa <?php echo $hide_sewa; ?>">
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px; padding: 0px 5px 0px 0px;">
+			<div class="col-xs-12 no-padding"><label class="control-label text-left">Jenis Transaksi</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="jenis_transaksi" multiple="multiple" width="100%" data-required="<?php echo $required_sewa; ?>">
+					<option data-tokens="sewa" value="sewa" selected>SEWA</option>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px; padding: 0px 5px 0px 0px;">
+			<div class="col-xs-12 no-padding"><label class="control-label text-left">Supplier</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="supplier_sewa" width="100%" data-required="<?php echo $required_sewa; ?>">
+					<?php foreach ($supplier as $k => $val): ?>
+						<?php
+							$selected = null;
+							if ( $val['nomor'] == $data['supplier'] ) {
+								$selected = 'selected';
+							}
+						?>
+						<option data-tokens="<?php echo $val['nama']; ?>" value="<?php echo $val['nomor']; ?>" <?php echo $selected; ?> ><?php echo strtoupper($val['nama']); ?></option>
+					<?php endforeach ?>
+				</select>
+			</div>
+		</div>
+		<div class="col-xs-12 no-padding" style="margin-bottom: 5px; padding: 0px 5px 0px 0px;">
+			<div class="col-xs-12 no-padding"><label class="control-label text-left">Unit</label></div>
+			<div class="col-xs-12 no-padding">
+				<select class="unit_sewa" multiple="multiple" width="100%">
+					<option value="all" selected>All</option>
+					<?php foreach ($unit as $key => $v_unit): ?>
+						<option value="<?php echo $v_unit['kode']; ?>" > <?php echo strtoupper($v_unit['nama']); ?> </option>
+					<?php endforeach ?>
+				</select>
+			</div>
+		</div>
+	</div>
 	<div class="col-xs-12 search left-inner-addon no-padding"><hr style="margin-top: 5px; margin-bottom: 5px;"></div>
 	<div class="col-xs-12 no-padding" style="margin-bottom: 5px;">
 		<div class="col-xs-12 no-padding"><label class="control-label text-left">Perusahaan</label></div>
@@ -199,10 +244,10 @@
 			<tr>
 				<td colspan="6"><b>Total</b></td>
 				<td class="text-right total_tagihan"><b>0</b></td>
+				<td class="text-right total_dn"><b>0</b></td>
+				<td class="text-right total_cn"><b>0</b></td>
 				<td class="text-right total_potongan_pph"><b>0</b></td>
 				<td class="text-right total_netto"><b>0</b></td>
-				<td class="text-right total_dn hide"><b>0</b></td>
-				<td class="text-right total_cn hide"><b>0</b></td>
 				<td class="text-right total_transfer"><b>0</b></td>
 				<td class="text-right total_bayar"><b>0</b></td>
 				<td class="text-right total_sisa"><b>0</b></td>
@@ -216,10 +261,10 @@
 				<th style="width: 6%;">Periode</th>
 				<th class="col-xs-2">Nama Penerima</th>
 				<th class="col-xs-1">Bruto</th>
-				<th class="col-xs-1">Potongan PPH</th>
+				<th style="width: 5%;">DN</th>
+				<th style="width: 5%;">CN</th>
+				<th style="width: 5%;">Potongan PPH</th>
 				<th class="col-xs-1">Netto</th>
-				<th class="col-xs-1 hide">DN</th>
-				<th class="col-xs-1">CN</th>
 				<th class="col-xs-1">Transfer</th>
 				<th class="col-xs-1">Bayar</th>
 				<th class="col-xs-1">Sisa</th>
@@ -230,7 +275,7 @@
 		</thead>
 		<tbody>
 			<tr>
-				<td colspan="13">Data tidak ditemukan.</td>
+				<td colspan="15">Data tidak ditemukan.</td>
 			</tr>
 		</tbody>
 	</table>

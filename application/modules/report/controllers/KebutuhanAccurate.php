@@ -957,6 +957,41 @@ class KebutuhanAccurate extends Public_Controller {
         return $data;
     }
 
+    /*
+     * Mode RIIL vs MANAJEMEN (lihat application/config/app_mode.php) utk tab PAKAN & Dist PAKAN:
+     * dokumen kirim_pakan yg SUDAH ditransfer intercompany (intercompany_pakan_log.status =
+     * DITERIMA) dianggap bukan lagi transaksi buku RIIL -> disaring di mode RIIL. Mode MANAJEMEN
+     * sengaja TIDAK difilter (tetap tampil sbg riwayat/tracking). Dicek DUA arah, baik utk order_pakan
+     * maupun kirim_pakan: sisi asal (id lokal di tbl_id_asal) & sisi tujuan (id lokal di tbl_id_tujuan).
+     * Pola sama dgn PengirimanPenerimaanPakan::get_lists() & KartuStok. Alias tabel di query: kp = kirim_pakan.
+     */
+    private function _sqlFilterTransferPakan()
+    {
+        if ( !(defined('APP_MODE') && APP_MODE === 'riil') ) {
+            return "";
+        }
+
+        return "
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        inner join order_pakan opx on opx.id = ipl.tbl_id_asal
+                        where ipl.tbl_name_asal = 'order_pakan' and opx.no_order = kp.no_order and ipl.status = 'DITERIMA'
+                    )
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        inner join order_pakan opx on opx.id = ipl.tbl_id_tujuan
+                        where ipl.tbl_name_tujuan = 'order_pakan' and opx.no_order = kp.no_order and ipl.status = 'DITERIMA'
+                    )
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        where ipl.tbl_name_asal = 'kirim_pakan' and ipl.tbl_id_asal = kp.id and ipl.status = 'DITERIMA'
+                    )
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        where ipl.tbl_name_tujuan = 'kirim_pakan' and ipl.tbl_id_tujuan = kp.id and ipl.status = 'DITERIMA'
+                    )";
+    }
+
     public function getDataPembelianPakan( $params ) {
         $start_date = $params['start_date'];
         $end_date = $params['end_date'];
@@ -1127,6 +1162,7 @@ class KebutuhanAccurate extends Public_Controller {
                     op.tgl_trans between '".$start_date."' and '".$end_date."' -- JIKA BERDASARKAN TANGGAL ORDER
                     ".$sql_perusahaan."
                     ".$sql_unit."
+                    ".$this->_sqlFilterTransferPakan()."
             ) data
             group by
                 data.tanggal,
@@ -1656,6 +1692,7 @@ class KebutuhanAccurate extends Public_Controller {
                     ".$sql_perusahaan."
                     ".$sql_unit."
                     ".$sql_tutup_siklus."
+                    ".$this->_sqlFilterTransferPakan()."
             ) data
             group by
                 data.no_batch,

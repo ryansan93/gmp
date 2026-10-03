@@ -2750,10 +2750,10 @@ class LHK extends Public_Controller
         // $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '59708', '2026-05-18', 2, null, null";
         // $d_conf = $conf->hydrateRaw($sql);
 
-        $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '60369', '2026-05-17', 2, null, null";
-        Modules::run('base/ExecStoredProcedure/exec', $sql);
+        // $sql = "EXEC hitung_stok_siklus 'doc', 'lhk', '60369', '2026-05-17', 2, null, null";
+        // Modules::run('base/ExecStoredProcedure/exec', $sql);
 
-        $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '60369', '2026-05-17', 2, null, null";
+        $sql = "EXEC hitung_stok_siklus 'pakan', 'lhk', '109620', '2026-09-15', 2, null, null";
         Modules::run('base/ExecStoredProcedure/exec', $sql);
 
         // Modules::run( 'base/InsertJurnal/exec', $this->url, 23543, 23543, 2);

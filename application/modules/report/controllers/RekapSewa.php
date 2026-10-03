@@ -90,7 +90,7 @@ class RekapSewa extends Public_Controller {
         $status    = isset($params['status']) ? trim($params['status']) : '';
         $search    = isset($params['search']) ? trim($params['search']) : '';
 
-        $m_sewa = new \Model\Storage\MasterSewa_model();
+        $m_sewa = new \Model\Storage\MsSewa_model();
         $query = $m_sewa
             ->select('ms_sewa.*', 'ms_jenis_sewa.nama_jenis_sewa', 'p.nama as nama_supplier')
             ->leftJoin('ms_jenis_sewa', 'ms_jenis_sewa.kode_jenis_sewa', '=', 'ms_sewa.jenis_sewa')

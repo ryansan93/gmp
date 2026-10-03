@@ -50,9 +50,15 @@
 					</a>
 				<?php endif ?>
 				<?php if ( $akses['a_delete'] == 1 ) : ?>
-					|| 
+					||
 					<a class="cursor-p" title="Hapus Mitra" data-href="action" data-id="<?php echo $mitra['id']; ?>" data-resubmit="<?php echo 'EDIT'; ?>" onclick="ptk.deleteMitra(this)" style="color: red;" >
-						<i class="fa fa-trash" aria-hidden="true"></i> 
+						<i class="fa fa-trash" aria-hidden="true"></i>
+					</a>
+				<?php endif ?>
+				<?php if ( $akses['a_submit'] == 1 ) : ?>
+					||
+					<a class="cursor-p" title="Clone Peternak ke GML" data-nomor="<?php echo $mitra['nomor']; ?>" data-nama="<?php echo $mitra['nama']; ?>" onclick="ptk.cloneToGml(this)" >
+						<i class="fa fa-clone" aria-hidden="true"></i>
 					</a>
 				<?php endif ?>
 			</td>

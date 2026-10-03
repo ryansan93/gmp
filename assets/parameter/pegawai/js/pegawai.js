@@ -441,6 +441,45 @@ var pegawai = {
             });
         },'html');
 	}, // end - edit_form
+
+	cloneToGml : function(elm) {
+		var nik = $(elm).data('nik');
+		var nama = $(elm).data('nama');
+
+		bootbox.confirm('Clone data pegawai <b>' + nama + '</b> (' + nik + ') ke database GML? Aksi ini tidak bisa dibatalkan kalau sudah berhasil.', function (result) {
+			if ( result ) {
+				pegawai.executeCloneToGml(nik, 0);
+			}
+		});
+	}, // end - cloneToGml
+
+	executeCloneToGml : function(nik, force) {
+		$.ajax({
+			url :'parameter/Pegawai/cloneToGml',
+			type : 'post',
+			dataType : 'json',
+			data : {'nik': nik, 'force': force},
+			beforeSend : function(){
+				showLoading('Meng-clone data ke GML . . .');
+			},
+			success : function(data){
+				hideLoading();
+				if ( data.need_confirm ) {
+					bootbox.confirm(data.message, function(result2){
+						if ( result2 ) {
+							pegawai.executeCloneToGml(nik, 1);
+						}
+					});
+				} else {
+					bootbox.alert(data.message);
+				}
+			},
+			error : function(){
+				hideLoading();
+				bootbox.alert('Gagal menghubungi server, segera hubungi tim IT.');
+			}
+		});
+	}, // end - executeCloneToGml
 };
 
 pegawai.start_up();

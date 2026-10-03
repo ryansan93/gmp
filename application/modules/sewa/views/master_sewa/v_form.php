@@ -1,7 +1,7 @@
-<input type="hidden" id="config-form" value="<?php echo $data['is_locked'] ?? 0; ?>">
+<input type="hidden" id="config-form" value="<?php echo (($data['is_locked'] ?? 0) == 1 || $cek_amortisasi == 1) ? 1 : 0; ?>">
 
 <fieldset>
-    <legend>Form Sewa</legend>
+    <legend>Form Sewa</legend> 
 
     <div class="row" style="padding-left:30px; padding-right:30px">
         <div class="col-xs-12 col-sm-12 col-md-12" style="padding-left:0; padding-right:0;">
@@ -46,7 +46,7 @@
                                 <?php $kode_unit = isset($row['kode']) ? trim($row['kode']) : ''; ?>
                                 <?php $nama_unit = isset($row['nama']) ? trim($row['nama']) : ''; ?>
                                 <option value="<?php echo htmlspecialchars($kode_unit); ?>" <?php echo (isset($data['unit']) && strtoupper(trim($data['unit'])) == strtoupper($kode_unit)) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($kode_unit . ' - ' . $nama_unit); ?>
+                                    <?php echo htmlspecialchars($kode_unit . ' - ' . str_replace(['KAB ', 'KOTA '], '', strtoupper($nama_unit))); ?>
                                 </option>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -187,7 +187,7 @@
                             </button>
                             
                             <?php if ( isset($data['id']) ) : ?>
-                                <?php if($data['is_locked'] == 0 ){?>
+                                <?php if($data['is_locked'] == 0 && $cek_amortisasi == 0){?>
                                     <button type="button" class="btn btn-primary" onclick="ms.edit_data()">
                                         <i class="fa fa-save"></i> Simpan Perubahan
                                     </button>

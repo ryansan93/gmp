@@ -163,23 +163,7 @@ class LabaRugiSummaryBulanan extends Public_Controller {
                             select
                                 srgi.item_report_id as item_report_id,
                                 srgi.item_report_nama as item_report_nama,
-                                case
-                                    when srgi.posisi like 'debet' then
-                                        case
-                                            when round(sum(dj.debet) - sum(dj.kredit), 0) < 0 then
-                                                abs(round(sum(dj.debet) - sum(dj.kredit), 0))
-                                            else
-                                                0-round(sum(dj.debet) - sum(dj.kredit), 0)
-                                        end
-                                    else
-                                        case
-                                            when round(sum(dj.debet) - sum(dj.kredit), 0) > 0 then
-                                                0-round(sum(dj.debet) - sum(dj.kredit), 0)
-                                            else
-                                                abs(round(sum(dj.debet) - sum(dj.kredit), 0))
-                                        end
-                                end as nominal,
-                                -- round(sum(dj.debet) - sum(dj.kredit), 0) as nominal,
+                                (0 - round(sum(dj.debet) - sum(dj.kredit), 0)) as nominal,
                                 srgi.urut
                             from
                                 (
@@ -250,7 +234,6 @@ class LabaRugiSummaryBulanan extends Public_Controller {
                             group by
                                 srgi.item_report_id,
                                 srgi.item_report_nama,
-                                srgi.posisi,
                                 srgi.urut
                             order by
                                 srgi.urut asc

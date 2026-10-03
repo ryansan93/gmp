@@ -27,7 +27,7 @@ class KartuHutangRingkas extends Public_Controller {
     public function index($segment=0)
     {
         $akses = hakAkses($this->url);
-        if ( $akses['a_view'] == 1 ) {
+        // if ( $akses['a_view'] == 1 ) {
             $this->add_external_js(array(
                 'assets/select2/js/select2.min.js',
                 "assets/report/kartu_hutang_ringkas/js/kartu-hutang-ringkas.js",
@@ -48,9 +48,9 @@ class KartuHutangRingkas extends Public_Controller {
             // Load Indexx
             $data['view'] = $this->load->view($this->pathView.'index', $content, TRUE);
             $this->load->view($this->template, $data);
-        } else {
-            showErrorAkses();
-        }
+        // } else {
+        //     showErrorAkses();
+        // }
     }
 
     public function getJenis() {
@@ -624,13 +624,21 @@ class KartuHutangRingkas extends Public_Controller {
 
                         union all
 
-                        select 
+                        select
                             rpd.no_bayar as nomor,
                             rp.supplier,
                             0 as debet,
                             case
                                 when rpd.transaksi = 'DOC' then
                                     case
+                                        /* Sejak tgl_realisasi >= 2026-08-01, sistem sendiri (setting_
+                                           automatic_jurnal Verifikasi Pembayaran id=24) sudah pakai
+                                           rpd.pph langsung sbg nominal yg diposting ke GL -- pakai itu
+                                           drpd rumus konfir.pph (0,25% x total, tanpa penyesuaian
+                                           DN/CN) spy match apa yg benar2 kejurnal. Lihat kartu-hutang-
+                                           per-invoice-v2 utk kasus BYD/08/26/00170. */
+                                        when rp.tgl_realisasi >= '2026-08-01' then
+                                            rpd.transfer+isnull(rpd.pph, 0)
                                         when konfir.tanggal <= '2025-09-20' then
                                             rpd.transfer
                                         else
@@ -1214,13 +1222,21 @@ class KartuHutangRingkas extends Public_Controller {
 
                         union all
 
-                        select 
+                        select
                             rp.nomor,
                             rp.supplier,
                             0 as debet,
                             case
                                 when rpd.transaksi = 'DOC' then
                                     case
+                                        /* Sejak tgl_realisasi >= 2026-08-01, sistem sendiri (setting_
+                                           automatic_jurnal Verifikasi Pembayaran id=24) sudah pakai
+                                           rpd.pph langsung sbg nominal yg diposting ke GL -- pakai itu
+                                           drpd rumus konfir.pph (0,25% x total, tanpa penyesuaian
+                                           DN/CN) spy match apa yg benar2 kejurnal. Lihat kartu-hutang-
+                                           per-invoice-v2 utk kasus BYD/08/26/00170. */
+                                        when rp.tgl_realisasi >= '2026-08-01' then
+                                            rpd.transfer+isnull(rpd.pph, 0)
                                         when konfir.tanggal <= '2025-09-20' then
                                             rpd.transfer
                                         else

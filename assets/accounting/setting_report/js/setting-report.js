@@ -2,364 +2,369 @@ var sr = {
 	startUp: function () {
 		sr.getLists();
 		sr.settingUp();
-	}, // end - startUp
+	},
 
 	settingUp: function () {
-		$('.item').select2();
-		$('.nama_coa').select2().on('select2:select', function(e) {
-			var _tr = $(this).closest('tr');
+		var div = $('div#action');
 
-			var no_coa = e.params.data.id;
-			$(_tr).find('td.coa').text( no_coa );
+		$(div).find('.item').select2();
+		$(div).find('.nama_coa').select2().on('select2:select', function (e) {
+			$(this).closest('tr').find('td.coa').text(e.params.data.id);
 		});
-		$('.posisi').select2();
-		$('.posisi_jurnal').select2();
-		$('.posisi_data').select2();
-	}, // end - settingUp
+		$(div).find('.sign').select2();
+		$(div).find('.tipe_group').select2().on('select2:select', function (e) {
+			sr.toggleTipeGroup($(this).closest('tr.group'), e.params.data.id);
+		});
+
+		// Re-apply toggle state for already-rendered groups
+		$(div).find('tr.group').each(function () {
+			var tipe = $(this).find('.tipe_group').val();
+			if (tipe) sr.toggleTipeGroup($(this), tipe);
+		});
+	},
+
+	toggleTipeGroup: function (row_group, tipe) {
+		var row_item_group = $(row_group).next('tr.item-group');
+		var ref_wrapper    = $(row_group).find('.ref-group-wrapper');
+
+		if (tipe === 'subtotal') {
+			$(row_item_group).hide();
+			$(ref_wrapper).show();
+		} else {
+			$(row_item_group).show();
+			$(ref_wrapper).hide();
+		}
+	},
+
+	updateGroupBadges: function () {
+		var n = 1;
+		$('div#action tr.group').each(function () {
+			$(this).find('.group-badge').text(n++);
+		});
+	},
 
 	addRowGroup: function (elm) {
-		let row_group = $(elm).closest('tr.group');
-		let row_item_group = $(row_group).next('tr.item-group');
+		var row_group      = $(elm).closest('tr.group');
+		var row_item_group = $(row_group).next('tr.item-group');
+		var tbody          = $(row_group).closest('tbody');
 
-        let tbody = $(row_group).closest('tbody');
+		// Ambil HTML opsi bersih dari row pertama item group sebelum select2 di-destroy
+		var $firstItemRow = $(row_item_group).find('tbody tr:first');
+		var itemHtml = '', coaHtml = '';
+		$firstItemRow.find('select.item option').each(function () {
+			itemHtml += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+		});
+		$firstItemRow.find('select.nama_coa option').each(function () {
+			coaHtml += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+		});
+		var signHtml = '<option value="">-- Pilih --</option><option value="1">+1 (Normal)</option><option value="-1">-1 (Balik Saldo)</option>';
 
-        $(row_item_group).find('select.item, select.nama_coa, select.posisi, select.posisi_jurnal, select.posisi_data').select2('destroy')
-                                   .removeAttr('data-live-search')
-                                   .removeAttr('data-select2-id')
-                                   .removeAttr('aria-hidden')
-                                   .removeAttr('tabindex');
-        $(row_item_group).find('select.item option, select.nama_coa option, select.posisi option, select.posisi_jurnal option, select.posisi_data option').removeAttr('data-select2-id');
+		// Destroy select2 before cloning
+		var selects = 'select.item, select.nama_coa, select.sign, select.tipe_group';
+		$(row_item_group).find(selects).add($(row_group).find('select.tipe_group'))
+			.select2('destroy')
+			.removeAttr('data-live-search data-select2-id aria-hidden tabindex');
 
-        let newRowGroup = row_group.clone();
-        let newRowItemGroup = row_item_group.clone();
+		var newRowGroup     = row_group.clone();
+		var newRowItemGroup = row_item_group.clone();
 
-        newRowGroup.find('input, select, textarea').val('');
-        newRowItemGroup.find('input, select, textarea').val('');
-        newRowItemGroup.find('td.coa').text('-');
+		row_item_group.after(newRowItemGroup);
+		row_item_group.after(newRowGroup);
 
-        $(newRowItemGroup).find('tbody tr:not(:first)').remove();
+		// Reset newRowGroup
+		newRowGroup.find('input.nama_group, input.ref_group_ids, input.urut_group').val('');
+		newRowGroup.find('select.tipe_group').html('<option value="data">DATA</option><option value="subtotal">SUBTOTAL</option>');
+		newRowGroup.find('.ref-group-wrapper').hide();
 
-        row_item_group.after(newRowItemGroup);
-        row_item_group.after(newRowGroup);
+		// Reset newRowItemGroup — rebuild select HTML dari nol agar tidak ada selected state
+		newRowItemGroup.find('tbody tr:not(:first)').remove();
+		var $newFirstRow = newRowItemGroup.find('tbody tr:first');
+		$newFirstRow.find('input, textarea').val('');
+		$newFirstRow.find('td.coa').text('-');
+		$newFirstRow.find('select.item').html(itemHtml);
+		$newFirstRow.find('select.nama_coa').html(coaHtml);
+		$newFirstRow.find('select.sign').html(signHtml);
+		newRowItemGroup.show();
 
-        $.map( $(tbody).find('tr'), function(tr) {
-            $(tr).find('.item').select2();
-			$(tr).find('.nama_coa').select2().on('select2:select', function(e) {
-				var _tr = $(this).closest('tr');
+		sr._initRow(row_group);
+		$(row_item_group).find('tbody tr').each(function () { sr._initRow(this); });
+		sr._initRow(newRowGroup);
+		$(newRowItemGroup).find('tbody tr').each(function () { sr._initRow(this); });
+		sr.updateGroupBadges();
 
-				var no_coa = e.params.data.id;
-				$(_tr).find('td.coa').text( no_coa );
-			});
-			$(tr).find('.posisi').select2();
-			$(tr).find('.posisi_jurnal').select2();
-			$(tr).find('.posisi_data').select2();
-        });
-
-        $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+		$('[data-tipe=integer]').each(function () {
 			$(this).priceFormat(Config[$(this).data('tipe')]);
 		});
-	}, // end - addRowGroup
+	},
 
 	removeRowGroup: function (elm) {
-		let row_group = $(elm).closest('tr.group');
-		let row_item_group = $(row_group).next('tr.item-group');
+		var row_group      = $(elm).closest('tr.group');
+		var row_item_group = $(row_group).next('tr.item-group');
+		var tbody          = $(row_group).closest('tbody');
 
-		let tbody = $(row_group).closest('tbody');
-
-		if ( $(tbody).find('tr.group').length > 1 ) {
+		if ($(tbody).find('tr.group').length > 1) {
 			$(row_group).remove();
 			$(row_item_group).remove();
+			sr.updateGroupBadges();
 		}
-	}, // end - removeRowGroup
+	},
 
 	addRowItemGroup: function (elm) {
-		let row = $(elm).closest('tr');
+		var row   = $(elm).closest('tr');
+		var tbody = $(row).closest('tbody');
 
-        let tbody = $(row).closest('tbody');
+		// Ambil HTML opsi bersih sebelum select2 di-destroy
+		var itemHtml = '', coaHtml = '';
+		$(row).find('select.item option').each(function () {
+			itemHtml += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+		});
+		$(row).find('select.nama_coa option').each(function () {
+			coaHtml += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+		});
+		var signHtml = '<option value="">-- Pilih --</option><option value="1">+1 (Normal)</option><option value="-1">-1 (Balik Saldo)</option>';
 
-        $(row).find('select.item, select.nama_coa, select.posisi, select.posisi_jurnal, select.posisi_data').select2('destroy')
-                                   .removeAttr('data-live-search')
-                                   .removeAttr('data-select2-id')
-                                   .removeAttr('aria-hidden')
-                                   .removeAttr('tabindex');
-        $(row).find('select.item option, select.nama_coa option, select.posisi option, select.posisi_jurnal option, select.posisi_data option').removeAttr('data-select2-id');
+		var selects = 'select.item, select.nama_coa, select.sign';
+		$(row).find(selects)
+			.select2('destroy')
+			.removeAttr('data-live-search data-select2-id aria-hidden tabindex');
 
-        let newRow = row.clone();
+		var newRow = row.clone();
+		row.after(newRow);
 
-        newRow.find('input, select, textarea').val('');
-        newRow.find('td.coa').text('-');
+		// Rebuild HTML opsi dari nol — tidak ada selected state
+		newRow.find('input, textarea').val('');
+		newRow.find('td.coa').text('-');
+		newRow.find('select.item').html(itemHtml);
+		newRow.find('select.nama_coa').html(coaHtml);
+		newRow.find('select.sign').html(signHtml);
 
-        row.after(newRow);
+		sr._initRow(row);
+		sr._initRow(newRow);
 
-        $.map( $(tbody).find('tr'), function(tr) {
-            $(tr).find('.item').select2();
-			$(tr).find('.nama_coa').select2().on('select2:select', function(e) {
-				var _tr = $(this).closest('tr');
-
-				var no_coa = e.params.data.id;
-				$(_tr).find('td.coa').text( no_coa );
-			});
-			$(tr).find('.posisi').select2();
-			$(tr).find('.posisi_jurnal').select2();
-			$(tr).find('.posisi_data').select2();
-        });
-
-        $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
+		$('[data-tipe=integer]').each(function () {
 			$(this).priceFormat(Config[$(this).data('tipe')]);
 		});
-	}, // end - addRowItemGroup
+	},
 
 	removeRowItemGroup: function (elm) {
-		let row = $(elm).closest('tr');
+		var row   = $(elm).closest('tr');
+		var tbody = $(row).closest('tbody');
 
-		let tbody = $(row).closest('tbody');
-
-		if ( $(tbody).find('tr').length > 1 ) {
+		if ($(tbody).find('tr').length > 1) {
 			$(row).remove();
 		}
-	}, // end - removeRowItemGroup
+	},
 
-	changeTabActive: function(elm) {
-        var href = $(elm).data('href');
-        var edit = $(elm).data('edit');
-        // change tab-menu
-        $('.nav-tabs').find('a').removeClass('active');
-        $('.nav-tabs').find('a').removeClass('show');
-        $('.nav-tabs').find('li a[data-tab='+href+']').addClass('show');
-        $('.nav-tabs').find('li a[data-tab='+href+']').addClass('active');
+	_initRow: function (tr) {
+		$(tr).find('.item').select2();
+		$(tr).find('.nama_coa').select2().on('select2:select', function (e) {
+			$(this).closest('tr').find('td.coa').text(e.params.data.id);
+		});
+		$(tr).find('.sign').select2();
+		$(tr).find('.tipe_group').select2().on('select2:select', function (e) {
+			sr.toggleTipeGroup($(this).closest('tr.group'), e.params.data.id);
+		});
+	},
 
-        // change tab-content
-        $('.tab-pane').removeClass('show');
-        $('.tab-pane').removeClass('active');
-        $('div#'+href).addClass('show');
-        $('div#'+href).addClass('active');
+	changeTabActive: function (elm) {
+		var href = $(elm).data('href');
+		var edit = $(elm).data('edit');
 
-        var id = $(elm).attr('data-id');
+		$('.nav-tabs').find('a').removeClass('active show');
+		$('.nav-tabs').find('li a[data-tab=' + href + ']').addClass('show active');
+		$('.tab-pane').removeClass('show active');
+		$('div#' + href).addClass('show active');
 
-        sr.loadForm(id, edit, href);
-    }, // end - changeTabActive
+		sr.loadForm($(elm).attr('data-id'), edit, href);
+	},
 
-    loadForm: function(id, edit = null, href = null) {
-        var dcontent = $('div#'+href);
+	loadForm: function (id, edit, href) {
+		href = href || 'action';
+		var dcontent = $('div#' + href);
+		var params   = { 'id': id };
 
-        var params = {
-            'id': id
-        };
-
-        $.ajax({
-            url : 'accounting/SettingReport/loadForm',
-            data : {
-                'params' :  params,
-                'edit' :  edit
-            },
-            type : 'GET',
-            dataType : 'HTML',
-            beforeSend : function(){ App.showLoaderInContent(dcontent); },
-            success : function(html){
-                App.hideLoaderInContent(dcontent, html);
-
-                sr.settingUp();
-            },
-        });
-    }, // end - loadForm
+		$.ajax({
+			url      : 'accounting/SettingReport/loadForm',
+			data     : { 'params': params, 'edit': edit },
+			type     : 'GET',
+			dataType : 'HTML',
+			beforeSend: function () { App.showLoaderInContent(dcontent); },
+			success  : function (html) {
+				App.hideLoaderInContent(dcontent, html);
+				sr.settingUp();
+			}
+		});
+	},
 
 	getLists: function () {
 		var div = $('div#riwayat');
-
 		$.ajax({
-            url : 'accounting/SettingReport/getLists',
-            data : {},
-            type : 'GET',
-            dataType : 'HTML',
-            beforeSend : function(){ App.showLoaderInContent( $(div).find('tbody') ); },
-            success : function(html){
-                App.hideLoaderInContent( $(div).find('tbody'), $(html) );
-            },
-        });
-	}, // end - getLists
+			url      : 'accounting/SettingReport/getLists',
+			data     : {},
+			type     : 'GET',
+			dataType : 'HTML',
+			beforeSend: function () { App.showLoaderInContent($(div).find('tbody')); },
+			success  : function (html) { App.hideLoaderInContent($(div).find('tbody'), $(html)); }
+		});
+	},
+
+	_collectGroups: function (div) {
+		return $.map($(div).find('tr.group'), function (tr_group) {
+			var tipe_group  = $(tr_group).find('select.tipe_group').val() || 'data';
+			var ref_ids_val = $(tr_group).find('input.ref_group_ids').val();
+			var detail      = [];
+
+			if (tipe_group === 'data') {
+				var tr_item = $(tr_group).next('tr.item-group');
+				detail = $.map($(tr_item).find('tbody tr'), function (tr) {
+					var item_val = $(tr).find('select.item').val();
+					var coa_val  = $.trim($(tr).find('td.coa').text());
+					if ( !item_val || !coa_val || coa_val === '-' ) return null;
+					return {
+						'item' : item_val,
+						'coa'  : coa_val,
+						'sign' : $(tr).find('select.sign').val() || '1',
+						'urut' : numeral.unformat($(tr).find('input.urut').val())
+					};
+				});
+			}
+
+			return {
+				'nama_group'    : $(tr_group).find('.nama_group').val(),
+				'tipe_group'    : tipe_group,
+				'ref_group_ids' : ref_ids_val,
+				'urut_group'    : numeral.unformat($(tr_group).find('input.urut_group').val()),
+				'detail'        : detail
+			};
+		});
+	},
 
 	save: function () {
 		var div = $('div#action');
-
 		var err = 0;
-		$.map( $(div).find('[data-required=1]'), function (ipt) {
-			if ( empty( $(ipt).val() ) ) {
-				$(ipt).parent().addClass('has-error');
-				err++;
+
+		$.map($(div).find('[data-required=1]'), function (ipt) {
+			// skip field di dalam elemen tersembunyi (misal: item-group subtotal)
+			if ( !$(ipt).is(':visible') ) {
+				$(ipt).parent().removeClass('has-error');
+				return;
+			}
+			if (empty($(ipt).val())) {
+				$(ipt).parent().addClass('has-error'); err++;
 			} else {
 				$(ipt).parent().removeClass('has-error');
 			}
 		});
 
-		if ( err > 0 ) {
-			bootbox.alert('Harap lengkapi data terlebih dahulu.');
-		} else {
-			bootbox.confirm('Apakah anda yakin ingin menyimpan data setting report ?', function (result) {
-				if ( result ) {
-					var data_group = $.map( $(div).find('tr.group'), function (tr_group) {
-						var tr_item_group = $(tr_group).next('tr.item-group');
-						var data_item_group = $.map( $(tr_item_group).find('tbody tr'), function (tr) {
-							var _data_item_group = {
-								'item': $(tr).find('select.item').select2('val'),
-								'coa': $(tr).find('td.coa').text(),
-								'posisi': $(tr).find('select.posisi').select2('val'),
-								'posisi_jurnal': $(tr).find('select.posisi_jurnal').select2('val'),
-								'posisi_data': $(tr).find('select.posisi_data').select2('val'),
-								'urut': numeral.unformat($(tr).find('input.urut').val())
-							};
+		if (err > 0) { bootbox.alert('Harap lengkapi data terlebih dahulu.'); return; }
 
-							return _data_item_group;
+		bootbox.confirm('Apakah anda yakin ingin menyimpan data setting report?', function (result) {
+			if (!result) return;
+
+			var params = {
+				'nama_laporan' : $(div).find('.nama_laporan').val(),
+				'data_group'   : sr._collectGroups(div)
+			};
+
+			$.ajax({
+				url      : 'accounting/SettingReport/save',
+				data     : { 'params': params },
+				type     : 'POST',
+				dataType : 'JSON',
+				beforeSend: function () { showLoading(); },
+				success  : function (data) {
+					hideLoading();
+					if (data.status == 1) {
+						bootbox.alert(data.message, function () {
+							sr.loadForm(data.content.id, null, 'action');
+							sr.getLists();
 						});
-
-						var _data_group = {
-							'nama_group': $(tr_group).find('.nama_group').val(),
-							'detail': data_item_group
-						};
-
-						return _data_group;
-					});
-
-					var nama_laporan = $(div).find('.nama_laporan').val();
-
-					var params = {
-						'nama_laporan': nama_laporan,
-						'data_group': data_group
-					};
-
-					$.ajax({
-			            url : 'accounting/SettingReport/save',
-			            data : {
-			                'params' :  params
-			            },
-			            type : 'POST',
-			            dataType : 'JSON',
-			            beforeSend : function(){ showLoading(); },
-			            success : function(data){
-			                hideLoading();
-
-			                if ( data.status == 1 ) {
-			                	bootbox.alert(data.message, function () {
-			                		sr.loadForm(data.content.id, null, 'action');
-			                		sr.getLists();
-			                	});
-			                } else {
-			                	bootbox.alert(data.message);
-			                }
-			            },
-			        });
+					} else {
+						bootbox.alert(data.message);
+					}
 				}
 			});
-		}
-	}, // end - save
+		});
+	},
 
 	edit: function (elm) {
 		var div = $('div#action');
-
 		var err = 0;
-		$.map( $(div).find('[data-required=1]'), function (ipt) {
-			if ( empty( $(ipt).val() ) ) {
-				$(ipt).parent().addClass('has-error');
-				err++;
+
+		$.map($(div).find('[data-required=1]'), function (ipt) {
+			// skip field di dalam elemen tersembunyi (misal: item-group subtotal)
+			if ( !$(ipt).is(':visible') ) {
+				$(ipt).parent().removeClass('has-error');
+				return;
+			}
+			if (empty($(ipt).val())) {
+				$(ipt).parent().addClass('has-error'); err++;
 			} else {
 				$(ipt).parent().removeClass('has-error');
 			}
 		});
 
-		if ( err > 0 ) {
-			bootbox.alert('Harap lengkapi data terlebih dahulu.');
-		} else {
-			bootbox.confirm('Apakah anda yakin ingin menyimpan data setting report ?', function (result) {
-				if ( result ) {
-					var data_group = $.map( $(div).find('tr.group'), function (tr_group) {
-						var tr_item_group = $(tr_group).next('tr.item-group');
-						var data_item_group = $.map( $(tr_item_group).find('tbody tr'), function (tr) {
-							var _data_item_group = {
-								'item': $(tr).find('select.item').select2('val'),
-								'coa': $(tr).find('td.coa').text(),
-								'posisi': $(tr).find('select.posisi').select2('val'),
-								'posisi_jurnal': $(tr).find('select.posisi_jurnal').select2('val'),
-								'posisi_data': $(tr).find('select.posisi_data').select2('val'),
-								'urut': numeral.unformat($(tr).find('input.urut').val())
-							};
+		if (err > 0) { bootbox.alert('Harap lengkapi data terlebih dahulu.'); return; }
 
-							return _data_item_group;
+		bootbox.confirm('Apakah anda yakin ingin menyimpan perubahan?', function (result) {
+			if (!result) return;
+
+			var params = {
+				'id'           : $(elm).attr('data-id'),
+				'nama_laporan' : $(div).find('.nama_laporan').val(),
+				'data_group'   : sr._collectGroups(div)
+			};
+
+			$.ajax({
+				url      : 'accounting/SettingReport/edit',
+				data     : { 'params': params },
+				type     : 'POST',
+				dataType : 'JSON',
+				beforeSend: function () { showLoading(); },
+				success  : function (data) {
+					hideLoading();
+					if (data.status == 1) {
+						bootbox.alert(data.message, function () {
+							sr.loadForm(data.content.id, null, 'action');
+							sr.getLists();
 						});
-
-						var _data_group = {
-							'nama_group': $(tr_group).find('.nama_group').val(),
-							'detail': data_item_group
-						};
-
-						return _data_group;
-					});
-
-					var nama_laporan = $(div).find('.nama_laporan').val();
-
-					var params = {
-						'id': $(elm).attr('data-id'),
-						'nama_laporan': nama_laporan,
-						'data_group': data_group
-					};
-
-					$.ajax({
-			            url : 'accounting/SettingReport/edit',
-			            data : {
-			                'params' :  params
-			            },
-			            type : 'POST',
-			            dataType : 'JSON',
-			            beforeSend : function(){ showLoading(); },
-			            success : function(data){
-			                hideLoading();
-
-			                if ( data.status == 1 ) {
-			                	bootbox.alert(data.message, function () {
-			                		sr.loadForm(data.content.id, null, 'action');
-			                		sr.getLists();
-			                	});
-			                } else {
-			                	bootbox.alert(data.message);
-			                }
-			            },
-			        });
+					} else {
+						bootbox.alert(data.message);
+					}
 				}
 			});
-		}
-	}, // end - edit
+		});
+	},
+
+	exportExcel: function (elm) {
+		var id = $(elm).attr('data-id');
+		goToURL('accounting/SettingReport/exportExcel/' + id);
+	},
 
 	delete: function (elm) {
-		var div = $('div#action');
+		bootbox.confirm('Apakah anda yakin ingin menghapus data setting report?', function (result) {
+			if (!result) return;
 
-		bootbox.confirm('Apakah anda yakin ingin meng-hapus data setting report ?', function (result) {
-			if ( result ) {
-				var params = {
-					'id': $(elm).attr('data-id')
-				};
-
-				$.ajax({
-		            url : 'accounting/SettingReport/delete',
-		            data : {
-		                'params' :  params
-		            },
-		            type : 'POST',
-		            dataType : 'JSON',
-		            beforeSend : function(){ showLoading(); },
-		            success : function(data){
-		                hideLoading();
-
-		                if ( data.status == 1 ) {
-		                	bootbox.alert(data.message, function () {
-		                		sr.loadForm(null, null, 'action');
-		                		sr.getLists();
-		                	});
-		                } else {
-		                	bootbox.alert(data.message);
-		                }
-		            },
-		        });
-			}
+			$.ajax({
+				url      : 'accounting/SettingReport/delete',
+				data     : { 'params': { 'id': $(elm).attr('data-id') } },
+				type     : 'POST',
+				dataType : 'JSON',
+				beforeSend: function () { showLoading(); },
+				success  : function (data) {
+					hideLoading();
+					if (data.status == 1) {
+						bootbox.alert(data.message, function () {
+							sr.loadForm(null, null, 'action');
+							sr.getLists();
+						});
+					} else {
+						bootbox.alert(data.message);
+					}
+				}
+			});
 		});
-	}, // end - delete
+	}
 };
 
 sr.startUp();

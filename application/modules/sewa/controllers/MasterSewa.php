@@ -60,7 +60,7 @@ class MasterSewa extends Public_Controller {
     public function list_data()
     {
         $akses              = hakAkses($this->url);
-        $m_sewa             = new \Model\Storage\MasterSewa_model();
+        $m_sewa             = new \Model\Storage\MsSewa_model();
         $jenisSewa          = trim($this->input->post('jenis_sewa'));
         $tanggalMulai       = trim($this->input->post('tanggal_mulai'));
         $search             = trim($this->input->post('search'));
@@ -80,7 +80,7 @@ class MasterSewa extends Public_Controller {
             'ms_sewa.*', 
             'ms_jenis_sewa.nama_jenis_sewa', 
             'p.nama as nama_supplier', 
-            // Ganti LIMIT 1 menjadi TOP 1 untuk SQL Server
+         
             new \Illuminate\Database\Query\Expression('(SELECT TOP 1 nama FROM wilayah WHERE kode = ms_sewa.unit) as nama_unit')
         )
         ->leftJoin('ms_jenis_sewa', 'ms_jenis_sewa.kode_jenis_sewa', '=', 'ms_sewa.jenis_sewa')
@@ -136,6 +136,8 @@ class MasterSewa extends Public_Controller {
         $data['jenis_sewa'] = $this->get_jenis_sewa_list();
         $data['supplier']   = $this->get_supplier_list();
         $data['unit']       = $this->get_unit_list();
+
+        $data['cek_amortisasi'] = 0;
         $this->load->view($this->pathView . 'v_form', $data);
     }
 
@@ -157,7 +159,11 @@ class MasterSewa extends Public_Controller {
     public function get_unit_list()
     {
         $m_conf     = new \Model\Storage\Conf();
-        $sql = " select kode, nama from wilayah where jenis = 'UN' order by nama asc ";
+        $sql = " SELECT kode, MAX(nama) AS nama
+                    FROM wilayah
+                    WHERE jenis = 'UN'
+                    GROUP BY kode
+                    ORDER BY kode ASC; ";
 
         $d_conf     = $m_conf->hydrateRaw( $sql );
         
@@ -173,7 +179,7 @@ class MasterSewa extends Public_Controller {
     {
         $id = $this->input->get('id');
 
-        $m_sewa = new \Model\Storage\MasterSewa_model();
+        $m_sewa = new \Model\Storage\MsSewa_model();
         $d_sewa = $m_sewa->where('id', $id)->first();
 
         $data['data']       = $d_sewa;
@@ -181,7 +187,7 @@ class MasterSewa extends Public_Controller {
         $data['supplier']   = $this->get_supplier_list();
         $data['unit']       = $this->get_unit_list();
 
-        // $data['cek_amortisasi'] = $this->check_status_amortisasi($d_sewa->no_sewa);
+        $data['cek_amortisasi'] = $this->check_status_amortisasi($d_sewa->no_sewa);
         // cetak_r($data['cek_amortisasi'], 1);
 
         $this->load->view($this->pathView . 'v_form', $data);
@@ -213,7 +219,7 @@ class MasterSewa extends Public_Controller {
         $year = !empty($tanggal_mulai) ? date('Y', strtotime($tanggal_mulai)) : date('Y');
         $month = !empty($tanggal_mulai) ? date('m', strtotime($tanggal_mulai)) : date('m');
 
-        $m_sewa = new \Model\Storage\MasterSewa_model();
+        $m_sewa = new \Model\Storage\MsSewa_model();
         $rows = $m_sewa
             ->whereRaw('UPPER(jenis_sewa) = ?', [$jenis])
             ->get();
@@ -287,9 +293,11 @@ class MasterSewa extends Public_Controller {
     
         $termin->where('no_sewa', $noSewa)->delete();
 
-        if ($durasi <= 0) {
-            return; 
-        }
+        // if ($durasi <= 0) {
+        //     return; 
+        // }
+
+        // cetak_r($dp, 1);
 
         if ($dp > 0) {
             $rowDp = new \Model\Storage\MsSewaTermin_model();
@@ -321,12 +329,14 @@ class MasterSewa extends Public_Controller {
         }
     }
 
+
+
     public function save_data()
     {
         $params = $this->input->post('params');
 
         try {
-            $m_sewa = new \Model\Storage\MasterSewa_model();
+            $m_sewa = new \Model\Storage\MsSewa_model();
 
             $namaSewa     = trim($params['nama_sewa']);
             $noKontrak    = trim($params['no_kontrak']);
@@ -392,6 +402,8 @@ class MasterSewa extends Public_Controller {
                 }
 
                 if ($durasiTermin > 0 && !empty($noSewa)) {
+                // if (!empty($noSewa)) {
+
                     $tglJatuhTempo = $m_sewa->tgl_jatuh_tempo > 0 ? $m_sewa->tgl_jatuh_tempo : 1;
                     
                     $this->syncTermin(
@@ -423,7 +435,7 @@ class MasterSewa extends Public_Controller {
         $params = $this->input->post('params');
 
         try {
-            $m_sewa = new \Model\Storage\MasterSewa_model();
+            $m_sewa = new \Model\Storage\MsSewa_model();
             
             $namaSewa     = trim($params['nama_sewa']);
             $noKontrak    = trim($params['no_kontrak']);
@@ -440,10 +452,10 @@ class MasterSewa extends Public_Controller {
                 display_json($this->result); return;
             }
 
-            if ($dp > 0 && $durasiCicilan <= 0) {
-                $this->result['message'] = 'Jika ada DP, Durasi Cicilan wajib diisi.';
-                display_json($this->result); return;
-            }
+            // if ($dp > 0 && $durasiCicilan <= 0) {
+            //     $this->result['message'] = 'Jika ada DP, Durasi Cicilan wajib diisi.';
+            //     display_json($this->result); return;
+            // }
 
             $current = $m_sewa->where('id', $params['id'])->first();
             if (!$current) {
@@ -566,7 +578,7 @@ class MasterSewa extends Public_Controller {
         $supplier = trim($this->input->get('supplier'));
         $search = trim($this->input->get('search'));
 
-        $m_sewa = new \Model\Storage\MasterSewa_model();
+        $m_sewa = new \Model\Storage\MsSewa_model();
         $query = $m_sewa
             ->select('ms_sewa.*', 'ms_jenis_sewa.nama_jenis_sewa', 'p.nama as nama_supplier')
             ->leftJoin('ms_jenis_sewa', 'ms_jenis_sewa.kode_jenis_sewa', '=', 'ms_sewa.jenis_sewa')
@@ -712,7 +724,7 @@ class MasterSewa extends Public_Controller {
     //     $id = $this->input->post('params');
 
     //     try {
-    //         $m_sewa = new \Model\Storage\MasterSewa_model();
+    //         $m_sewa = new \Model\Storage\MsSewa_model();
     //         $current = $m_sewa->where('id', $id)->first();
             
     //         // Validasi: Pastikan data ada sebelum diproses
@@ -778,7 +790,7 @@ class MasterSewa extends Public_Controller {
         $id = $this->input->post('params');
 
         try {
-            $m_sewa = new \Model\Storage\MasterSewa_model();
+            $m_sewa = new \Model\Storage\MsSewa_model();
             
             // 1. AMBIL DATA DULU (Wajib, agar object punya properti 'id' untuk Event controller)
             $current = $m_sewa->where('id', $id)->first();
@@ -852,7 +864,7 @@ class MasterSewa extends Public_Controller {
         ];
 
         try {
-            $m_sewa = new \Model\Storage\MasterSewa_model();
+            $m_sewa = new \Model\Storage\MsSewa_model();
             $d_sewa = $m_sewa->where('id', $id)->first();
 
             if ( $d_sewa ) {
@@ -913,7 +925,7 @@ class MasterSewa extends Public_Controller {
         ];
 
         try {
-            $m_sewa = new \Model\Storage\MasterSewa_model();
+            $m_sewa = new \Model\Storage\MsSewa_model();
             $d_sewa = $m_sewa->where('id', $id)->first();
 
             if ($d_sewa) {
@@ -980,7 +992,7 @@ class MasterSewa extends Public_Controller {
             }
 
             // Kunci ms_swa 
-                $m_sewa = new \Model\Storage\MasterSewa_model();
+                $m_sewa = new \Model\Storage\MsSewa_model();
                 $data_update = [
                     'is_locked'      => 1,
                 ];
@@ -990,7 +1002,7 @@ class MasterSewa extends Public_Controller {
 
             // // Log Event
             // if ($updatedCount > 0 || $deletedCount > 0) {
-            //     $m_sewa = new \Model\Storage\MasterSewa_model();
+            //     $m_sewa = new \Model\Storage\MsSewa_model();
             //     $d_sewa = $m_sewa->where('id', $idSewa)->first();
             //     if ($d_sewa) {
             //         $deskripsi_log = 'amortisasi di-update (' . $updatedCount . ' data) dan dihapus (' . $deletedCount . ' data) oleh ' . $this->userdata['detail_user']['nama_detuser'];

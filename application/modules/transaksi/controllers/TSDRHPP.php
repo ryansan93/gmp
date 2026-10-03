@@ -424,6 +424,13 @@ class TSDRHPP extends Public_Controller {
 
     public function view($_noreg, $force_fresh = false)
     {
+        // GMP: vhost RIIL menyembunyikan pakan yg sudah ditransfer intercompany,
+        // vhost MANAJEMEN mengakuinya. Snapshot RHPP tersimpan = versi RIIL
+        // (tanpa pakan transfer), jadi vhost MANAJEMEN wajib live-recompute
+        // (versi lengkap), sedangkan RIIL cukup baca snapshot apa adanya.
+        $manajemen_mode = $this->_isManajemenMode();
+        $hide_transferred = !$manajemen_mode;
+
         $data_rhpp_plasma = null;
         $data_rhpp_int = null;
         $data = null;
@@ -543,7 +550,7 @@ class TSDRHPP extends Public_Controller {
         $m_rhpp_cek = new \Model\Storage\Rhpp_model();
         $rhpp_sudah_ada = $m_rhpp_cek->where('noreg', $_noreg)->where('jenis', 'rhpp_inti')->count() > 0;
 
-        if ( $force_fresh && $d_ts && $rhpp_sudah_ada ) {
+        if ( ($force_fresh || $manajemen_mode) && $d_ts && $rhpp_sudah_ada ) {
             // Preview "Hitung Ulang": pakai mesin hitung yang sama dengan proses
             // hitungUlang() (recompute dari sumber), TAPI render lewat template
             // yang sama seperti tampilan RHPP normal supaya user bisa lihat
@@ -555,7 +562,7 @@ class TSDRHPP extends Public_Controller {
             $d_rhpp_inti_obj = $m_rhpp->where('noreg', $_noreg)->where('jenis', 'rhpp_inti')->orderBy('id', 'desc')->first();
 
             $manual = $this->_ambilFieldManual($d_rhpp_plasma_obj, $d_rhpp_inti_obj, $d_ts);
-            $fresh = $this->_hitungUlangFresh( $_noreg );
+            $fresh = $this->_hitungUlangFresh( $_noreg, $hide_transferred );
             $lengkap = $this->_lengkapiTurunanFinansial( $fresh['plasma'], $fresh['inti'], $manual );
 
             $v_plasma = $lengkap['plasma'];
@@ -1138,8 +1145,8 @@ class TSDRHPP extends Public_Controller {
             $populasi = $get_data_doc['plasma']['doc']['jumlah'];
             $populasi_bonus_insentif_listrik = $populasi;
             
-            $get_data_pakan = $this->get_data_pakan( $_noreg );
-            $get_data_pindah_pakan = $this->get_data_pindah_pakan( $_noreg, $get_data_pakan );
+            $get_data_pakan = $this->get_data_pakan( $_noreg, $hide_transferred );
+            $get_data_pindah_pakan = $this->get_data_pindah_pakan( $_noreg, $get_data_pakan, $hide_transferred );
             // cetak_r( $get_data_pindah_pakan, 1 );
             $get_data_retur_pakan = $this->get_data_retur_pakan( $_noreg );
             
@@ -1933,7 +1940,53 @@ class TSDRHPP extends Public_Controller {
         return $data;
     }
 
-    public function get_data_pakan($noreg)
+    /**
+     * Klausa SQL pengecualian pakan yg SUDAH ditransfer intercompany
+     * (intercompany_pakan_log.status='DITERIMA', dicek DUA arah spt
+     * PosisiStok::mappingDataReport). $alias_kp = alias tabel kirim_pakan.
+     * Aturan GMP: vhost RIIL menyembunyikan, vhost MANAJEMEN mengakui --
+     * pemanggil yg menentukan lewat $hide_transferred (fungsi inti tdk
+     * baca APP_MODE sendiri).
+     */
+    private function _sqlFilterPakanTransfer($alias_kp = 'kp')
+    {
+        return "
+                and not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    where ipl.status = 'DITERIMA' and (
+                        (ipl.tbl_name_asal = 'kirim_pakan' and ipl.tbl_id_asal = ".$alias_kp.".id)
+                        or (ipl.tbl_name_tujuan = 'kirim_pakan' and ipl.tbl_id_tujuan = ".$alias_kp.".id)
+                    )
+                )";
+    }
+
+    /** true kalau sedang di vhost MANAJEMEN */
+    private function _isManajemenMode()
+    {
+        return defined('APP_MODE') && APP_MODE === 'manajemen';
+    }
+
+    /**
+     * Sumber baris stok siklus utk get_data_pakan(). Pakan kiriman intercompany
+     * (OPKG dari partner) SENGAJA tdk ditulis ke det_stok_siklus riil, tapi ke
+     * shadow det_stok_siklus_manajemen (lihat IntercompanyPakanTerima::prosesTerimaOpkg)
+     * supaya FCR/RHPP riil peternak tdk tercemar. Jadi versi LENGKAP (dipakai
+     * vhost manajemen) = det_stok_siklus UNION det_stok_siklus_manajemen; versi
+     * RIIL ($hide_transferred=true) = det_stok_siklus saja (+ filter log DITERIMA).
+     */
+    private function _sqlSumberStokSiklusPakan($noreg, $hide_transferred)
+    {
+        $kolom = "tgl_trans, noreg, kode_barang, jumlah, hrg_jual, hrg_beli, oa, kode_trans, jenis_barang, jenis_trans, jml_stok";
+        $sql = "select ".$kolom." from det_stok_siklus where noreg = '".$noreg."' and jenis_barang = 'pakan'";
+
+        if ( !$hide_transferred ) {
+            $sql .= " union all select ".$kolom." from det_stok_siklus_manajemen where noreg = '".$noreg."' and jenis_barang = 'pakan'";
+        }
+
+        return "(".$sql.") dss";
+    }
+
+    public function get_data_pakan($noreg, $hide_transferred = false)
     {
         $sapronak_kesepakatan = $this->get_harga_kontrak( $noreg );
 
@@ -1958,7 +2011,7 @@ class TSDRHPP extends Public_Controller {
                 dss.jenis_trans,
                 sum(dss.jml_stok) as jml_stok,
                 kp.no_sj, brg.nama as nama_barang, kp.ekspedisi, kp.no_polisi, kp.jenis_kirim 
-            from det_stok_siklus dss 
+            from ".$this->_sqlSumberStokSiklusPakan($noreg, $hide_transferred)." 
             left join
                 kirim_pakan kp 
                 on
@@ -1976,6 +2029,7 @@ class TSDRHPP extends Public_Controller {
             where 
                 dss.jenis_barang = 'pakan' and
                 dss.noreg = '".$noreg."'
+                ".($hide_transferred ? $this->_sqlFilterPakanTransfer('kp') : '')."
             group by
                 dss.tgl_trans,
                 dss.noreg,
@@ -2072,7 +2126,7 @@ class TSDRHPP extends Public_Controller {
         return $data;
     }
 
-    public function get_data_pindah_pakan($noreg)
+    public function get_data_pindah_pakan($noreg, $get_data_pakan = null, $hide_transferred = false)
     {
         $sapronak_kesepakatan = $this->get_harga_kontrak( $noreg );
 
@@ -2114,6 +2168,7 @@ class TSDRHPP extends Public_Controller {
                 (dsts.tbl_name <> 'lhk' and dsts.tbl_name <> 'retur_pakan') and
                 dss.jenis_barang = 'pakan' and
                 dss.noreg = '".$noreg."'
+                ".($hide_transferred ? $this->_sqlFilterPakanTransfer('kp') : '')."
             group by
                 dsts.tgl_trans,
                 dsts.kode_trans,
@@ -4546,6 +4601,7 @@ class TSDRHPP extends Public_Controller {
             $status = 1;
             $message = null;
 
+            /*
             $tgl_lhk = null;
             $tgl_panen = null;
             if ( $d_conf->count() > 0 ) {
@@ -4585,43 +4641,42 @@ class TSDRHPP extends Public_Controller {
                         $message .= '<br>';
                         $message .= 'Cek data di laporan kartu stok siklus, dan segera perbaiki data.';
                     } else {
-                        /*
-                        if ($d_conf['jml_pindah_akhir_siklus'] != $d_conf['sisa_pakan']) {
-                            $status = 0;
+                        // if ($d_conf['jml_pindah_akhir_siklus'] != $d_conf['sisa_pakan']) {
+                        //     $status = 0;
     
-                            $message = 'Data pindah pakan dan sisa pakan tidak sama dengan distribusi. Harap hubungi PPL cross check data sisa pakan.';
-                            $message .= '<br>';
-                            $message .= '<b><u>Pakan</u></b><br>';
-                            $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah_akhir_siklus']).'<br>';
-                            $message .= 'Sisa Pakan : '.angkaRibuan($d_conf['sisa_pakan']).'<br>';
-                            $message .= 'Selisih Pindah Pakan dan Sisa Pakan : '.angkaRibuan(($d_conf['jml_pindah_akhir_siklus']-$d_conf['sisa_pakan'])).'<br>';
-                            $message .= '<br>';
-                            $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
-                        } else {
-                            if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah']-$d_conf['jml_retur'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
-                                $status = 0;
+                        //     $message = 'Data pindah pakan dan sisa pakan tidak sama dengan distribusi. Harap hubungi PPL cross check data sisa pakan.';
+                        //     $message .= '<br>';
+                        //     $message .= '<b><u>Pakan</u></b><br>';
+                        //     $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah_akhir_siklus']).'<br>';
+                        //     $message .= 'Sisa Pakan : '.angkaRibuan($d_conf['sisa_pakan']).'<br>';
+                        //     $message .= 'Selisih Pindah Pakan dan Sisa Pakan : '.angkaRibuan(($d_conf['jml_pindah_akhir_siklus']-$d_conf['sisa_pakan'])).'<br>';
+                        //     $message .= '<br>';
+                        //     $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
+                        // } else {
+                        //     if ( ($d_conf['pakai_pakan'] != ($d_conf['jml_terima']-$d_conf['jml_pindah']-$d_conf['jml_retur'])) || ($d_conf['ekor_mati'] < ($d_conf['populasi']-$d_conf['jml_panen'])) ) {
+                        //         $status = 0;
         
-                                $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
-                                $message .= '<br>';
-                                $message .= '<b><u>Pakan</u></b><br>';
-                                $message .= 'Terima Pakan : '.angkaRibuan($d_conf['jml_terima']).'<br>';
-                                $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']+$d_conf['jml_retur']).'<br>';
-                                $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-($d_conf['jml_pindah']+$d_conf['jml_retur']))).'<br>';
-                                $message .= 'Pemakaian Pakan LHK : '.angkaRibuan($d_conf['pakai_pakan']).'<br>';
-                                $message .= '<br>';
-                                $message .= '<b><u>Kematian</u></b><br>';
-                                $message .= 'Populasi : '.angkaRibuan($d_conf['populasi']).'<br>';
-                                $message .= 'Jumlah Panen : '.angkaRibuan($d_conf['jml_panen']).'<br>';
-                                $message .= 'Selisih Populasi dan Jumlah Panen : '.angkaRibuan(($d_conf['populasi']-$d_conf['jml_panen'])).'<br>';
-                                $message .= 'Jumlah Kematian LHK : '.angkaRibuan($d_conf['ekor_mati']).'<br>';
-                                $message .= '<br>';
-                                $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
-                            }
-                        }
-                        */
+                        //         $message = 'Data LHK tidak sama dengan distribusi. Harap hubungi PPL/Marketing/Penimbang untuk melakukan cross check data pemakaian pakan dan kematian.';
+                        //         $message .= '<br>';
+                        //         $message .= '<b><u>Pakan</u></b><br>';
+                        //         $message .= 'Terima Pakan : '.angkaRibuan($d_conf['jml_terima']).'<br>';
+                        //         $message .= 'Pindah Pakan : '.angkaRibuan($d_conf['jml_pindah']+$d_conf['jml_retur']).'<br>';
+                        //         $message .= 'Selisih Terima Pakan dan Pindah Pakan : '.angkaRibuan(($d_conf['jml_terima']-($d_conf['jml_pindah']+$d_conf['jml_retur']))).'<br>';
+                        //         $message .= 'Pemakaian Pakan LHK : '.angkaRibuan($d_conf['pakai_pakan']).'<br>';
+                        //         $message .= '<br>';
+                        //         $message .= '<b><u>Kematian</u></b><br>';
+                        //         $message .= 'Populasi : '.angkaRibuan($d_conf['populasi']).'<br>';
+                        //         $message .= 'Jumlah Panen : '.angkaRibuan($d_conf['jml_panen']).'<br>';
+                        //         $message .= 'Selisih Populasi dan Jumlah Panen : '.angkaRibuan(($d_conf['populasi']-$d_conf['jml_panen'])).'<br>';
+                        //         $message .= 'Jumlah Kematian LHK : '.angkaRibuan($d_conf['ekor_mati']).'<br>';
+                        //         $message .= '<br>';
+                        //         $message .= 'Segera lakukan pembenahan data untuk melakukan proses tutup siklus.';
+                        //     }
+                        // }
                     }
                 }
             }
+            */
 
             $this->result['status'] = $status;
             $this->result['message'] = $message;
@@ -4806,13 +4861,13 @@ class TSDRHPP extends Public_Controller {
      * Return: ['plasma' => [...] atau null, 'inti' => [...] atau null] -- null kalau data
      * sumbernya memang kosong untuk sisi itu (mis. noreg tanpa DOC plasma).
      */
-    private function _hitungUlangFresh($noreg)
+    private function _hitungUlangFresh($noreg, $hide_transferred = false)
     {
         $sk = $this->get_harga_kontrak( $noreg );
 
         $get_data_doc = $this->get_data_doc( $noreg );
-        $get_data_pakan = $this->get_data_pakan( $noreg );
-        $get_data_pindah_pakan = $this->get_data_pindah_pakan( $noreg );
+        $get_data_pakan = $this->get_data_pakan( $noreg, $hide_transferred );
+        $get_data_pindah_pakan = $this->get_data_pindah_pakan( $noreg, $get_data_pakan, $hide_transferred );
         $get_data_retur_pakan = $this->get_data_retur_pakan( $noreg );
         $get_data_voadip = $this->get_data_voadip( $noreg );
         $get_data_retur_voadip = $this->get_data_retur_voadip( $noreg, $get_data_voadip );
@@ -5003,6 +5058,61 @@ class TSDRHPP extends Public_Controller {
             // cetak_r( $params, 1 );
 
             $id_plasma = null;
+
+            // Dropdown Potongan Pajak yg masih "Pilih" terkirim sbg NaN dari browser
+            // (numeral.unformat) dan ditolak SQL Server -- tolak dgn pesan yg jelas.
+            if ( !empty($params['data_rhpp']) ) {
+                foreach ($params['data_rhpp'] as $v_rhpp) {
+                    if ( !isset($v_rhpp['prs_potongan_pajak']) || !is_numeric($v_rhpp['prs_potongan_pajak']) ) {
+                        $this->result['message'] = 'Potongan Pajak belum dipilih, harap pilih persentase Potongan Pajak terlebih dahulu.';
+                        display_json($this->result);
+                        return;
+                    }
+                }
+            }
+
+            // Data yg TERSIMPAN = versi RIIL (tanpa pakan yg sudah ditransfer
+            // intercompany), apapun vhost pemicunya. Payload browser dari vhost
+            // MANAJEMEN memuat pakan lengkap, jadi hitung ulang server-side
+            // (hide_transferred=true, hardcoded) lalu timpa field2 turunannya.
+            // Field manual murni (materai, % pajak, biaya opr, cn, total_bonus,
+            // total_potongan, populasi bonus listrik) tetap dari client.
+            if ( !empty($params['data_rhpp']) ) {
+                $fresh_riil = $this->_hitungUlangFresh( $params['noreg'], true );
+
+                $manual_client = array(
+                    'biaya_materai' => 0, 'prs_potongan_pajak' => 0, 'total_bonus' => 0, 'total_potongan' => 0,
+                    'biaya_operasional' => 0, 'cn' => null, 'populasi_bonus_insentif_listrik' => 0,
+                );
+                foreach ($params['data_rhpp'] as $v_rhpp) {
+                    if ( stristr($v_rhpp['jenis'], 'plasma') !== false ) {
+                        foreach (array('biaya_materai', 'prs_potongan_pajak', 'total_bonus', 'total_potongan', 'populasi_bonus_insentif_listrik') as $f) {
+                            $manual_client[$f] = isset($v_rhpp[$f]) ? $v_rhpp[$f] : 0;
+                        }
+                    } else {
+                        $manual_client['biaya_operasional'] = !empty($v_rhpp['biaya_operasional']) ? $v_rhpp['biaya_operasional'] : 0;
+                        $manual_client['cn'] = !empty($v_rhpp['cn']) ? $v_rhpp['cn'] : null;
+                        if ( empty($manual_client['biaya_materai']) && !empty($v_rhpp['biaya_materai']) ) {
+                            $manual_client['biaya_materai'] = $v_rhpp['biaya_materai'];
+                        }
+                    }
+                }
+
+                $lengkap_riil = $this->_lengkapiTurunanFinansial( $fresh_riil['plasma'], $fresh_riil['inti'], $manual_client );
+                $field_manual = array('jenis', 'biaya_materai', 'prs_potongan_pajak', 'total_bonus', 'total_potongan', 'biaya_operasional', 'cn', 'populasi_bonus_insentif_listrik');
+
+                foreach ($params['data_rhpp'] as $k_rhpp => $v_rhpp) {
+                    $sisi = ( stristr($v_rhpp['jenis'], 'plasma') !== false ) ? 'plasma' : 'inti';
+
+                    if ( !empty($lengkap_riil[$sisi]) ) {
+                        foreach ($lengkap_riil[$sisi] as $f => $v) {
+                            if ( !in_array($f, $field_manual) ) {
+                                $params['data_rhpp'][$k_rhpp][$f] = $v;
+                            }
+                        }
+                    }
+                }
+            }
 
             // Koreksi harga jual & seluruh turunannya (bonus_pasar, pendapatan
             // peternak, potongan pajak, lr_inti) pakai data det_real_sj TERKINI,
@@ -5466,6 +5576,9 @@ class TSDRHPP extends Public_Controller {
 
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, null, 1);
 
+                // Tabel RHPP versi manajemen (pakan transfer diakui) - lihat docs/create_rhpp_manajemen.sql
+                $this->refreshManajemenNoreg( $params['noreg'] );
+
                 // $m_conf = new \Model\Storage\Conf();
                 // $sql = "exec insert_jurnal 'RHPP', NULL, NULL, 0, 'tutup_siklus', ".$id.", NULL, 1";
                 // $d_conf = $m_conf->hydrateRaw( $sql );
@@ -5824,6 +5937,11 @@ class TSDRHPP extends Public_Controller {
                     }
 
                     Modules::run( 'base/InsertJurnal/exec', $this->url, $id_plasma, $id_plasma, 3);
+
+                    // Hapus baris tabel RHPP versi manajemen (harus SEBELUM baris rhpp dihapus)
+                    if ( !empty($_d_rhpp_inti) ) {
+                        $this->hapusTabelManajemen( 'noreg', $_d_rhpp_inti->noreg );
+                    }
     
                     $id_rhpp = $m_rhpp->select('id')->where('id_ts', $params['id'])->get()->toArray();
     
@@ -5895,6 +6013,437 @@ class TSDRHPP extends Public_Controller {
         display_json($this->result);
     }
 
+    /**
+     * Export (Excel/PDF) baca snapshot rhpp tersimpan = versi RIIL (tanpa pakan
+     * yg sudah ditransfer intercompany). Di vhost MANAJEMEN (yg mengakui pakan
+     * transfer, lihat view()) snapshot itu ditimpa hasil hitung ulang versi
+     * LENGKAP supaya export konsisten dgn layar: baris pakan/pindah pakan/OA/
+     * penjualan + semua angka turunan. Field manual (materai, % pajak, biaya opr,
+     * cn, total bonus/potongan, populasi bonus listrik) tetap dari snapshot.
+     * Di vhost RIIL tdk melakukan apa2. Array diubah by-reference (bentuk toArray()
+     * dgn relasi), jadi kode export di bawahnya tdk perlu tahu ada koreksi ini.
+     */
+    private function _timpaSnapshotUntukManajemen(&$d_rhpp_plasma, &$d_rhpp_inti, $noreg, $paksa = false)
+    {
+        if ( (!$paksa && !$this->_isManajemenMode()) || (empty($d_rhpp_plasma) && empty($d_rhpp_inti)) ) {
+            return;
+        }
+
+        $manual = array(
+            'biaya_materai' => !empty($d_rhpp_plasma) ? $d_rhpp_plasma['biaya_materai'] : (!empty($d_rhpp_inti) ? $d_rhpp_inti['biaya_materai'] : 0),
+            'prs_potongan_pajak' => !empty($d_rhpp_plasma) ? $d_rhpp_plasma['prs_potongan_pajak'] : 0,
+            'total_bonus' => !empty($d_rhpp_plasma) ? $d_rhpp_plasma['total_bonus'] : 0,
+            'total_potongan' => !empty($d_rhpp_plasma) ? $d_rhpp_plasma['total_potongan'] : 0,
+            'biaya_operasional' => !empty($d_rhpp_inti) ? $d_rhpp_inti['biaya_operasional'] : 0,
+            'cn' => !empty($d_rhpp_inti) ? $d_rhpp_inti['cn'] : null,
+            'populasi_bonus_insentif_listrik' => !empty($d_rhpp_plasma) ? $d_rhpp_plasma['populasi_bonus_insentif_listrik'] : 0,
+        );
+
+        $fresh = $this->_hitungUlangFresh( $noreg, false );
+        $lengkap = $this->_lengkapiTurunanFinansial( $fresh['plasma'], $fresh['inti'], $manual );
+
+        // box_zak (skema hasil hitung) -> zak (skema tabel rhpp_*), plus id urut
+        $ke_snapshot = function($rows) {
+            $out = array();
+            foreach ((array) $rows as $i => $r) {
+                $r['zak'] = isset($r['box_zak']) ? $r['box_zak'] : 0;
+                $r['id'] = $i + 1;
+                $out[] = $r;
+            }
+            return $out;
+        };
+
+        $lewati = array('jenis', 'biaya_materai', 'prs_potongan_pajak', 'total_bonus', 'total_potongan', 'biaya_operasional', 'cn', 'populasi_bonus_insentif_listrik');
+
+        $timpa = function(&$d_rhpp, $v) use ($ke_snapshot, $lewati) {
+            foreach ($v as $f => $nilai) {
+                if ( !in_array($f, $lewati) && strpos($f, 'data_') !== 0 ) {
+                    $d_rhpp[$f] = $nilai;
+                }
+            }
+
+            $d_rhpp['pakan'] = $ke_snapshot($v['data_pakan']);
+            $d_rhpp['pindah_pakan'] = $ke_snapshot($v['data_pindah_pakan']);
+            $d_rhpp['oa_pakan'] = $ke_snapshot($v['data_oa_pakan']);
+            $d_rhpp['oa_pindah_pakan'] = $ke_snapshot($v['data_oa_pindah_pakan']);
+
+            $penjualan = array();
+            foreach ($v['data_penjualan'] as $i => $pj) {
+                $pj['id'] = $i + 1;
+                $penjualan[] = $pj;
+            }
+            $d_rhpp['penjualan'] = $penjualan;
+        };
+
+        if ( !empty($d_rhpp_plasma) && !empty($lengkap['plasma']) ) {
+            $timpa($d_rhpp_plasma, $lengkap['plasma']);
+        }
+        if ( !empty($d_rhpp_inti) && !empty($lengkap['inti']) ) {
+            $timpa($d_rhpp_inti, $lengkap['inti']);
+        }
+    }
+
+    /**
+     * Dipakai RhppGroup::proses_hitung() (lewat Modules::run) di vhost MANAJEMEN:
+     * snapshot rhpp per-noreg (plasma & inti, bentuk toArray() dgn relasi yg sama
+     * seperti yg dibaca RhppGroup) yg sudah ditimpa versi LENGKAP (termasuk pakan
+     * kiriman intercompany). Di vhost RIIL mengembalikan snapshot apa adanya.
+     */
+    /**
+     * Tabel RHPP versi MANAJEMEN (lihat docs/create_rhpp_manajemen.sql) sudah dibuat?
+     * Dicek sekali per request supaya kode tetap aman dijalankan sebelum SQL-nya dieksekusi.
+     */
+    public function tabelManajemenAda()
+    {
+        static $ada = null;
+
+        if ( $ada === null ) {
+            try {
+                $m_conf = new \Model\Storage\Conf();
+                $d_conf = $m_conf->hydrateRaw( "select count(*) as jml from sys.tables where name in ('rhpp_manajemen', 'rhpp_group_manajemen', 'rhpp_pakan_manajemen', 'rhpp_group_pakan_manajemen', 'rhpp_oa_pakan_manajemen', 'rhpp_group_oa_pakan_manajemen')" );
+                $ada = ( $d_conf->count() > 0 && $d_conf->toArray()[0]['jml'] == 6 );
+            } catch (\Exception $e) {
+                $ada = false;
+            }
+        }
+
+        return $ada;
+    }
+
+    /**
+     * Sidik jari pakan transfer utk daftar noreg: jumlah baris pakan di
+     * det_stok_siklus_manajemen + waktu terima terakhir. Dipakai mendeteksi tabel
+     * manajemen yg sudah usang (transfer baru masuk / di-reset setelah dihitung).
+     */
+    private function _sidikJariTransfer($list_noreg)
+    {
+        $list_noreg = array_values(array_filter((array) $list_noreg));
+        if ( empty($list_noreg) ) {
+            return array('jml' => 0, 'terakhir' => null);
+        }
+
+        $in = "'".implode("', '", array_map(function($n) { return str_replace("'", "''", $n); }, $list_noreg))."'";
+
+        $m_conf = new \Model\Storage\Conf();
+        $d_conf = $m_conf->hydrateRaw( "
+            select count(*) as jml, max(l.waktu_terima) as terakhir
+            from det_stok_siklus_manajemen d
+            left join intercompany_pakan_log l on l.id = d.id_intercompany_log
+            where d.jenis_barang = 'pakan' and d.noreg in (".$in.")
+        " );
+
+        $r = $d_conf->count() > 0 ? $d_conf->toArray()[0] : array('jml' => 0, 'terakhir' => null);
+
+        return array('jml' => (int) $r['jml'], 'terakhir' => $r['terakhir']);
+    }
+
+    /** noreg anggota rhpp_group_header $id_header */
+    private function _noregGroupHeader($id_header)
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $d_conf = $m_conf->hydrateRaw( "select distinct rgn.noreg from rhpp_group_noreg rgn left join rhpp_group rg on rgn.id_header = rg.id where rg.id_header = ".intval($id_header) );
+
+        $hasil = array();
+        if ( $d_conf->count() > 0 ) {
+            foreach ($d_conf->toArray() as $v) {
+                $hasil[] = $v['noreg'];
+            }
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Baca ringkasan versi manajemen dari tabel simpanan. $mode 'noreg' ($kunci = noreg)
+     * atau 'group' ($kunci = id rhpp_group_header). Return ['plasma'=>..., 'inti'=>...]
+     * (angka ringkasan + daftar 'pakan' [barang, harga]) atau null kalau belum ada /
+     * tabel belum dibuat / baris tsb sudah tdk cocok lagi dgn rhpp terbaru (mis. RHPP
+     * dihapus lalu disimpan ulang) -> pemanggil fallback ke hitung ulang.
+     */
+    public function bacaRingkasanManajemen($mode, $kunci)
+    {
+        if ( !$this->tabelManajemenAda() ) {
+            return null;
+        }
+
+        $kolom = array('jml_panen_ekor', 'jml_panen_kg', 'bb', 'fcr', 'deplesi', 'rata_umur', 'ip', 'tot_penjualan_ayam', 'tot_pembelian_sapronak', 'biaya_materai', 'bonus_pasar', 'bonus_kematian', 'bonus_insentif_fcr', 'total_bonus_insentif_listrik', 'pdpt_peternak_belum_pajak', 'lr_inti');
+        $kunci = str_replace("'", "''", $kunci);
+        $m_conf = new \Model\Storage\Conf();
+
+        if ( $mode === 'group' ) {
+            $sql = "
+                select m.* from rhpp_group_manajemen m
+                inner join rhpp_group rg on rg.id = m.id_rhpp_group and rg.id_header = m.id_header
+                where m.id_header = ".intval($kunci)."
+            ";
+            $tabel_pakan = 'rhpp_group_pakan_manajemen';
+        } else {
+            $sql = "
+                select m.* from rhpp_manajemen m
+                inner join
+                    (select max(id) as id, jenis from rhpp where noreg = '".$kunci."' group by jenis) r
+                    on r.id = m.id_rhpp and r.jenis = m.jenis
+                where m.noreg = '".$kunci."'
+            ";
+            $tabel_pakan = 'rhpp_pakan_manajemen';
+        }
+
+        $d_conf = $m_conf->hydrateRaw( $sql );
+        if ( $d_conf->count() == 0 ) {
+            return null;
+        }
+
+        $rows = $d_conf->toArray();
+
+        // usang? (jumlah pakan transfer berubah, atau ada transfer baru sesudah dihitung)
+        $sidik = $this->_sidikJariTransfer( ($mode === 'group') ? $this->_noregGroupHeader($kunci) : array($kunci) );
+        foreach ($rows as $row) {
+            if ( (int) $row['jml_transfer'] !== $sidik['jml'] || (!empty($sidik['terakhir']) && !empty($row['tgl_hitung']) && strtotime($sidik['terakhir']) > strtotime($row['tgl_hitung'])) ) {
+                return null;
+            }
+        }
+
+        $hasil = array('plasma' => null, 'inti' => null);
+        foreach ($rows as $row) {
+            $out = array();
+            foreach ($kolom as $k) {
+                $out[$k] = isset($row[$k]) ? $row[$k] : null;
+            }
+
+            $out['pakan'] = array();
+            $d_pakan = $m_conf->hydrateRaw( "select barang, harga from ".$tabel_pakan." where id_header = ".intval($row['id'])." and tipe = 'pakan'" );
+            if ( $d_pakan->count() > 0 ) {
+                foreach ($d_pakan->toArray() as $p) {
+                    $out['pakan'][] = array('barang' => $p['barang'], 'harga' => $p['harga']);
+                }
+            }
+
+            $hasil[ ($row['jenis'] == 'rhpp_inti') ? 'inti' : 'plasma' ] = $out;
+        }
+
+        return !empty($hasil['inti']) ? $hasil : null;
+    }
+
+    /**
+     * Ringkasan versi manajemen utk 1 noreg (dipakai laporan): dari tabel simpanan,
+     * fallback ke hitung ulang lengkap kalau baris belum ada.
+     */
+    public function ringkasanNoregManajemen($noreg)
+    {
+        $baca = $this->bacaRingkasanManajemen('noreg', $noreg);
+        if ( !empty($baca) ) {
+            return $baca;
+        }
+
+        $snap = $this->snapshotPerNoregUntukGroup($noreg, true);
+
+        // Self-heal: simpan hasil hitung supaya pembacaan berikutnya cepat.
+        try {
+            $this->tulisTabelManajemen('noreg', $noreg, $snap['plasma'], $snap['inti']);
+        } catch (\Exception $e) {
+            log_message('error', 'self-heal rhpp_manajemen('.$noreg.') gagal: '.$e->getMessage());
+        }
+
+        $kolom = array('jml_panen_ekor', 'jml_panen_kg', 'bb', 'fcr', 'deplesi', 'rata_umur', 'ip', 'tot_penjualan_ayam', 'tot_pembelian_sapronak', 'biaya_materai', 'bonus_pasar', 'bonus_kematian', 'bonus_insentif_fcr', 'total_bonus_insentif_listrik', 'pdpt_peternak_belum_pajak', 'lr_inti');
+        $ambil = function($d) use ($kolom) {
+            if ( empty($d) ) {
+                return null;
+            }
+            $out = array();
+            foreach ($kolom as $k) {
+                $out[$k] = isset($d[$k]) ? $d[$k] : null;
+            }
+            $out['pakan'] = array();
+            if ( !empty($d['pakan']) ) {
+                foreach ($d['pakan'] as $p) {
+                    $out['pakan'][] = array('barang' => $p['barang'], 'harga' => $p['harga']);
+                }
+            }
+            return $out;
+        };
+
+        return array('plasma' => $ambil($snap['plasma']), 'inti' => $ambil($snap['inti']));
+    }
+
+    /**
+     * Tulis (ganti) baris tabel manajemen utk noreg ($mode 'noreg') atau utk grup
+     * ($mode 'group', $kunci = id rhpp_group_header) dari array plasma/inti versi
+     * LENGKAP (bentuk toArray() + hasil _timpa*: 'pakan', 'pindah_pakan', 'oa_pakan',
+     * 'oa_pindah_pakan'). Array null = hapus baris manajemen sisi itu.
+     */
+    public function tulisTabelManajemen($mode, $kunci, $d_plasma, $d_inti)
+    {
+        if ( !$this->tabelManajemenAda() ) {
+            return;
+        }
+
+        $kolom = array('jml_panen_ekor', 'jml_panen_kg', 'bb', 'fcr', 'deplesi', 'rata_umur', 'ip', 'tot_penjualan_ayam', 'tot_pembelian_sapronak', 'biaya_materai', 'bonus_pasar', 'bonus_kematian', 'bonus_insentif_fcr', 'total_bonus_insentif_listrik', 'pdpt_peternak_belum_pajak', 'lr_inti');
+        $group = ( $mode === 'group' );
+        $sidik_tulis = $this->_sidikJariTransfer( $group ? $this->_noregGroupHeader($kunci) : array($kunci) );
+        $now = date('Y-m-d H:i:s');
+
+        // baris induk (rhpp / rhpp_group) terbaru per jenis
+        $m_conf = new \Model\Storage\Conf();
+        if ( $group ) {
+            $d_induk = $m_conf->hydrateRaw( "select id, jenis from rhpp_group where id_header = ".intval($kunci) );
+        } else {
+            $d_induk = $m_conf->hydrateRaw( "select max(id) as id, jenis from rhpp where noreg = '".str_replace("'", "''", $kunci)."' group by jenis" );
+        }
+
+        $induk = array();
+        if ( $d_induk->count() > 0 ) {
+            foreach ($d_induk->toArray() as $v) {
+                $induk[ $v['jenis'] ] = $v['id'];
+            }
+        }
+
+        foreach (array('rhpp_plasma' => $d_plasma, 'rhpp_inti' => $d_inti) as $jenis => $d) {
+            if ( empty($induk[ $jenis ]) ) {
+                continue;
+            }
+            $id_induk = $induk[ $jenis ];
+
+            // hapus baris lama (header + detail)
+            $m_hdr = $group ? new \Model\Storage\RhppGroupManajemen_model() : new \Model\Storage\RhppManajemen_model();
+            $kol_induk = $group ? 'id_rhpp_group' : 'id_rhpp';
+            $lama = $m_hdr->where($kol_induk, $id_induk)->get();
+            foreach ($lama as $v_lama) {
+                ($group ? new \Model\Storage\RhppGroupPakanManajemen_model() : new \Model\Storage\RhppPakanManajemen_model())->where('id_header', $v_lama->id)->delete();
+                ($group ? new \Model\Storage\RhppGroupOaPakanManajemen_model() : new \Model\Storage\RhppOaPakanManajemen_model())->where('id_header', $v_lama->id)->delete();
+            }
+            ($group ? new \Model\Storage\RhppGroupManajemen_model() : new \Model\Storage\RhppManajemen_model())->where($kol_induk, $id_induk)->delete();
+
+            if ( empty($d) ) {
+                continue;
+            }
+
+            $m_baru = $group ? new \Model\Storage\RhppGroupManajemen_model() : new \Model\Storage\RhppManajemen_model();
+            $m_baru->$kol_induk = $id_induk;
+            if ( $group ) {
+                $m_baru->id_header = intval($kunci);
+            } else {
+                $m_baru->noreg = $kunci;
+            }
+            $m_baru->jenis = $jenis;
+            foreach ($kolom as $k) {
+                $m_baru->$k = isset($d[$k]) ? $d[$k] : null;
+            }
+            $m_baru->jml_transfer = $sidik_tulis['jml'];
+            $m_baru->tgl_hitung = $now;
+            $m_baru->save();
+
+            foreach (array('pakan' => 'pakan', 'pindah_pakan' => 'pakan') as $sumber => $tabel) {
+                if ( empty($d[ $sumber ]) ) { continue; }
+                foreach ($d[ $sumber ] as $r) {
+                    $m_p = $group ? new \Model\Storage\RhppGroupPakanManajemen_model() : new \Model\Storage\RhppPakanManajemen_model();
+                    $m_p->id_header = $m_baru->id;
+                    $m_p->tipe = $sumber;
+                    $m_p->tanggal = !empty($r['tanggal']) ? substr($r['tanggal'], 0, 10) : null;
+                    $m_p->nota = isset($r['nota']) ? $r['nota'] : (isset($r['sj']) ? $r['sj'] : null);
+                    $m_p->barang = isset($r['barang']) ? $r['barang'] : null;
+                    $m_p->zak = isset($r['zak']) ? $r['zak'] : null;
+                    $m_p->jumlah = isset($r['jumlah']) ? $r['jumlah'] : null;
+                    $m_p->harga = isset($r['harga']) ? $r['harga'] : null;
+                    $m_p->total = isset($r['total']) ? $r['total'] : null;
+                    $m_p->save();
+                }
+            }
+
+            foreach (array('oa_pakan', 'oa_pindah_pakan') as $sumber) {
+                if ( empty($d[ $sumber ]) ) { continue; }
+                foreach ($d[ $sumber ] as $r) {
+                    $m_o = $group ? new \Model\Storage\RhppGroupOaPakanManajemen_model() : new \Model\Storage\RhppOaPakanManajemen_model();
+                    $m_o->id_header = $m_baru->id;
+                    $m_o->tipe = $sumber;
+                    $m_o->tanggal = !empty($r['tanggal']) ? substr($r['tanggal'], 0, 10) : null;
+                    $m_o->nota = isset($r['nota']) ? $r['nota'] : null;
+                    $m_o->nopol = isset($r['nopol']) ? $r['nopol'] : null;
+                    $m_o->barang = isset($r['barang']) ? $r['barang'] : null;
+                    $m_o->zak = isset($r['zak']) ? $r['zak'] : null;
+                    $m_o->jumlah = isset($r['jumlah']) ? $r['jumlah'] : null;
+                    $m_o->harga = isset($r['harga']) ? $r['harga'] : null;
+                    $m_o->total = isset($r['total']) ? $r['total'] : null;
+                    $m_o->save();
+                }
+            }
+        }
+    }
+
+    /**
+     * Hapus baris tabel manajemen milik RHPP / RHPP Group yg dihapus.
+     * $mode 'noreg' ($kunci = noreg) / 'group' ($kunci = id rhpp_group_header).
+     */
+    public function hapusTabelManajemen($mode, $kunci)
+    {
+        $this->tulisTabelManajemen($mode, $kunci, null, null);
+    }
+
+    /**
+     * Segarkan tabel manajemen utk 1 noreg setelah RHPP-nya disimpan/dihitung ulang
+     * atau pakan transfernya berubah: kalau noreg punya pakan transfer -> hitung
+     * lengkap & tulis, kalau tidak -> hapus baris manajemen yg mungkin sudah usang.
+     * Kegagalan di sini TIDAK boleh menggagalkan proses utama (cuma dicatat di log).
+     */
+    public function refreshManajemenNoreg($noreg)
+    {
+        try {
+            if ( !$this->tabelManajemenAda() ) {
+                return;
+            }
+
+            if ( count($this->noregDenganPakanTransfer( array($noreg) )) > 0 ) {
+                $snap = $this->snapshotPerNoregUntukGroup($noreg, true);
+                $this->tulisTabelManajemen('noreg', $noreg, $snap['plasma'], $snap['inti']);
+            } else {
+                $this->tulisTabelManajemen('noreg', $noreg, null, null);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'refreshManajemenNoreg('.$noreg.') gagal: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Dari $list_noreg (array string), noreg mana saja yg punya pakan kiriman
+     * intercompany (baris pakan di det_stok_siklus_manajemen). Dipakai laporan
+     * (LaporanRhpp/RhppV2) di vhost MANAJEMEN supaya hitung ulang lengkap cuma
+     * dijalankan utk noreg yg memang beda dgn snapshot riil.
+     */
+    public function noregDenganPakanTransfer($list_noreg)
+    {
+        $list_noreg = array_values(array_filter((array) $list_noreg));
+        if ( empty($list_noreg) ) {
+            return array();
+        }
+
+        $in = "'".implode("', '", array_map(function($n) { return str_replace("'", "''", $n); }, $list_noreg))."'";
+
+        $m_conf = new \Model\Storage\Conf();
+        $d_conf = $m_conf->hydrateRaw( "select distinct noreg from det_stok_siklus_manajemen where jenis_barang = 'pakan' and noreg in (".$in.")" );
+
+        $hasil = array();
+        if ( $d_conf->count() > 0 ) {
+            foreach ($d_conf->toArray() as $v) {
+                $hasil[] = $v['noreg'];
+            }
+        }
+
+        return $hasil;
+    }
+
+    public function snapshotPerNoregUntukGroup($noreg, $paksa = false)
+    {
+        $m_rhpp = new \Model\Storage\Rhpp_model();
+        $d_inti = $m_rhpp->where('noreg', $noreg)->where('jenis', 'rhpp_inti')->with(['doc', 'pakan', 'oa_pakan', 'pindah_pakan', 'oa_pindah_pakan', 'retur_pakan', 'oa_retur_pakan', 'voadip', 'retur_voadip', 'penjualan'])->orderBy('id', 'desc')->first();
+        $d_plasma = $m_rhpp->where('noreg', $noreg)->where('jenis', 'rhpp_plasma')->with(['doc', 'pakan', 'oa_pakan', 'pindah_pakan', 'oa_pindah_pakan', 'retur_pakan', 'oa_retur_pakan', 'voadip', 'retur_voadip', 'penjualan', 'potongan', 'bonus', 'piutang'])->orderBy('id', 'desc')->first();
+
+        $d_inti = !empty($d_inti) ? $d_inti->toArray() : null;
+        $d_plasma = !empty($d_plasma) ? $d_plasma->toArray() : null;
+
+        $this->_timpaSnapshotUntukManajemen($d_plasma, $d_inti, $noreg, $paksa);
+
+        return array('plasma' => $d_plasma, 'inti' => $d_inti);
+    }
+
     public function export_excel($_noreg)
     {
         $noreg = exDecrypt( $_noreg );
@@ -5909,6 +6458,8 @@ class TSDRHPP extends Public_Controller {
         $d_rhpp_plasma = $m_rhpp->where('noreg', $noreg)->where('jenis', 'rhpp_plasma')->with(['doc', 'pakan', 'oa_pakan', 'pindah_pakan', 'oa_pindah_pakan', 'retur_pakan', 'oa_retur_pakan', 'voadip', 'retur_voadip', 'penjualan', 'potongan', 'bonus', 'piutang'])->orderBy('id', 'desc')->first();
 
         $d_rhpp_plasma = !empty($d_rhpp_plasma) ? $d_rhpp_plasma->toArray() : null;
+        $_d_rhpp_inti_null = null;
+        $this->_timpaSnapshotUntukManajemen($d_rhpp_plasma, $_d_rhpp_inti_null, $noreg);
 
         $id_tutup_siklus = $d_rhpp_plasma['id_ts'];
         $mitra = $d_rhpp_plasma['mitra'];
@@ -6131,6 +6682,7 @@ class TSDRHPP extends Public_Controller {
 
         $d_rhpp_inti = !empty($d_rhpp_inti) ? $d_rhpp_inti->toArray() : null;
         $d_rhpp_plasma = !empty($d_rhpp_plasma) ? $d_rhpp_plasma->toArray() : null;
+        $this->_timpaSnapshotUntukManajemen($d_rhpp_plasma, $d_rhpp_inti, $noreg);
 
         $jenis_mitra = $d_rs['mitra']['d_mitra']['jenis'];
 
@@ -6398,6 +6950,8 @@ class TSDRHPP extends Public_Controller {
         $d_rhpp_plasma = $m_rhpp->where('noreg', $noreg)->where('jenis', 'rhpp_plasma')->with(['doc', 'pakan', 'oa_pakan', 'pindah_pakan', 'oa_pindah_pakan', 'retur_pakan', 'oa_retur_pakan', 'voadip', 'retur_voadip', 'penjualan', 'potongan', 'bonus', 'piutang'])->orderBy('id', 'desc')->first();
 
         $d_rhpp_plasma = !empty($d_rhpp_plasma) ? $d_rhpp_plasma->toArray() : null;
+        $_d_rhpp_inti_null = null;
+        $this->_timpaSnapshotUntukManajemen($d_rhpp_plasma, $_d_rhpp_inti_null, $noreg);
 
         $id_tutup_siklus = $d_rhpp_plasma['id_ts'];
         $mitra = $d_rhpp_plasma['mitra'];
@@ -7304,7 +7858,7 @@ class TSDRHPP extends Public_Controller {
             );
 
             $manual = $this->_ambilFieldManual($d_rhpp_plasma, $d_rhpp_inti, $d_ts);
-            $fresh = $this->_hitungUlangFresh( $d_ts->noreg );
+            $fresh = $this->_hitungUlangFresh( $d_ts->noreg, true );
             $lengkap = $this->_lengkapiTurunanFinansial($fresh['plasma'], $fresh['inti'], $manual);
 
             $baru = array(
@@ -7368,7 +7922,8 @@ class TSDRHPP extends Public_Controller {
             $d_rhpp_inti = $m_rhpp->where('id_ts', $id)->where('jenis', 'rhpp_inti')->first();
 
             $manual = $this->_ambilFieldManual($d_rhpp_plasma, $d_rhpp_inti, $d_ts, $prs_potongan_pajak);
-            $fresh = $this->_hitungUlangFresh( $d_ts->noreg );
+            // SIMPAN: selalu versi RIIL (tanpa pakan transfer), hardcoded, tdk peduli vhost pemicu.
+            $fresh = $this->_hitungUlangFresh( $d_ts->noreg, true );
             $lengkap = $this->_lengkapiTurunanFinansial($fresh['plasma'], $fresh['inti'], $manual);
 
             foreach (array('plasma' => $d_rhpp_plasma, 'inti' => $d_rhpp_inti) as $sisi => $d_rhpp_row) {
@@ -7495,6 +8050,9 @@ class TSDRHPP extends Public_Controller {
             if ( !empty($d_rhpp_plasma) ) {
                 Modules::run( 'base/InsertJurnal/exec', $this->url, $d_rhpp_plasma->id, $d_rhpp_plasma->id, 2 );
             }
+
+            // Tabel RHPP versi manajemen - lihat docs/create_rhpp_manajemen.sql
+            $this->refreshManajemenNoreg( $d_ts->noreg );
 
             $deskripsi_log = 'hitung ulang RHPP oleh ' . $this->userdata['detail_user']['nama_detuser'];
             if ( !empty($keterangan) ) {

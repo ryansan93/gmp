@@ -112,8 +112,180 @@ class PosisiStok extends Public_Controller {
      */
     public function mappingDataReport($_kode_brg, $_kode_gudang, $_jenis, $_date)
     {
+        // Mode RIIL (lihat application/config/app_mode.php): sembunyikan
+        // baris det_stok utk order_pakan (OPKS) yg SUDAH ditransfer ke partner
+        // (intercompany_pakan_log.status='DITERIMA') - order itu bukan lagi
+        // tanggung jawab GML di buku RIIL. Stok yg BELUM ditransfer tetap
+        // tampil normal. det_stok.kode_trans = order_pakan.no_order utk baris
+        // OPKS (lihat IntercompanyPakan::kirimKePartner()), jadi match-nya
+        // lewat itu - HANYA dipakai di titik yg menentukan "supply"
+        // (existing_gb & supply CTE, snapshot + fallback ORDER TERAKHIR) -
+        // TIDAK disentuh di NOT EXISTS anti-dobel-hitung (ds3/dst_chk) atau
+        // lookup harga (hrg/hp/ds2) supaya logika FIFO/gap yg sudah rumit &
+        // teruji tidak ikut berubah perilakunya. Mode MANAJEMEN sengaja TIDAK
+        // difilter (tetap perlu terlihat sbg riwayat/tracking). Dicek DUA
+        // arah: order ini yg DIKIRIM keluar (id lokal di tbl_id_asal) MAUPUN
+        // hasil DITERIMA dari partner (id lokal di tbl_id_tujuan).
+        $sql_filter_stok_transfer = (defined('APP_MODE') && APP_MODE === 'riil') ? "
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        inner join order_pakan op on op.id = ipl.tbl_id_asal
+                        where ipl.tbl_name_asal = 'order_pakan' and op.no_order = ds.kode_trans and ipl.status = 'DITERIMA'
+                    )
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        inner join order_pakan op on op.id = ipl.tbl_id_tujuan
+                        where ipl.tbl_name_tujuan = 'order_pakan' and op.no_order = ds.kode_trans and ipl.status = 'DITERIMA'
+                    )" : "";
+
         $jenis = ( stristr($_jenis, 'obat') !== false ) ? 'voadip' : $_jenis;
         $next_date = date('Y-m-d', strtotime($_date.' +1 day'));
+
+        // Sama spt di atas, tapi utk sisi KELUAR (OPKG, kirim_pakan) - dokumen
+        // kirim_pakan yg SUDAH ditransfer TIDAK PERNAH nulis det_stok sama
+        // sekali, tapi tetap muncul di $sql_gap_keluar (dibaca dari dokumen
+        // fisik kv/kirim_pakan). HANYA berlaku utk jenis 'pakan' - intercompany
+        // belum ada utk voadip/obat, dan `kv.id` beda ID-space antara
+        // kirim_pakan vs kirim_voadip (hindari kebetulan tabrakan id). Dicek
+        // DUA arah spt di atas.
+        $sql_filter_kirim_transfer = (defined('APP_MODE') && APP_MODE === 'riil' && $jenis === 'pakan') ? "
+            and not exists (
+                select 1 from intercompany_pakan_log ipl
+                where ipl.status = 'DITERIMA' and (
+                    (ipl.tbl_name_asal = 'kirim_pakan' and ipl.tbl_id_asal = kv.id)
+                    or (ipl.tbl_name_tujuan = 'kirim_pakan' and ipl.tbl_id_tujuan = kv.id)
+                )
+            )" : "";
+
+        // Sisi MASUK (OPKS, order_pakan) versi $sql_gap_masuk - order yg SUDAH
+        // ditransfer tapi belum sempat kebentuk det_stok-nya (masih di jendela
+        // gap) - sama alasan dgn $sql_filter_stok_transfer, cuma match-nya
+        // lewat kv.no_order (bukan ds.kode_trans, beda alias di konteks ini).
+        // Dicek DUA arah spt di atas.
+        $sql_filter_order_gap = (defined('APP_MODE') && APP_MODE === 'riil' && $jenis === 'pakan') ? "
+            and not exists (
+                select 1 from intercompany_pakan_log ipl
+                inner join order_pakan op on op.id = ipl.tbl_id_asal
+                where ipl.tbl_name_asal = 'order_pakan' and op.no_order = kv.no_order and ipl.status = 'DITERIMA'
+            )
+            and not exists (
+                select 1 from intercompany_pakan_log ipl
+                inner join order_pakan op on op.id = ipl.tbl_id_tujuan
+                where ipl.tbl_name_tujuan = 'order_pakan' and op.no_order = kv.no_order and ipl.status = 'DITERIMA'
+            )" : "";
+
+        // Mode MANAJEMEN: stok hasil TERIMA dari partner (intercompany) HANYA
+        // ditulis ke det_stok_manajemen/stok_manajemen (shadow) - TIDAK PERNAH
+        // ke det_stok riil (lihat IntercompanyPakanTerima::terima()). Supaya
+        // ikut muncul di laporan MANAJEMEN, snapshot det_stok di existing_gb &
+        // supply (+ fallback ORDER TERAKHIR) di-UNION dgn versi shadow-nya,
+        // masing2 pakai periode "eff" SENDIRI (dihitung dari stok_manajemen,
+        // BUKAN eff.p yg dihitung dari stok riil - batch riil & manajemen bisa
+        // beda kecepatan). SENGAJA TIDAK menyentuh cabang GAP (baca dokumen
+        // fisik kirim_pakan langsung, bukan det_stok, jadi sumbernya sudah sama
+        // utk riil/manajemen) atau lookup harga (hrg/hp) atau NOT EXISTS
+        // anti-dobel-hitung (ds3/dst_chk) - sama alasan spt
+        // $sql_filter_stok_transfer di atas (logika FIFO/gap sudah rumit &
+        // teruji). CATATAN RISIKO: krn cabang gap tidak disentuh, transaksi
+        // manajemen yg KEBETULAN jatuh di jendela gap (blm sempat ke-snapshot)
+        // DAN transaksi yg sudah ke-snapshot scr teori bisa dobel-hitung dlm
+        // skenario tertentu - blm ditangani, cukup jarang terjadi (baru
+        // relevan kalau lihat laporan persis di hari yg sama batch berjalan).
+        $sql_manajemen_existing_gb = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+
+                union
+
+                select ds.kode_gudang, ds.kode_barang
+                from det_stok_manajemen ds
+                left join stok_manajemen s on ds.id_header = s.id
+                cross join
+                    (select max(periode) as p from stok_manajemen where periode <= '".$next_date."') eff_mnj
+                where
+                    s.periode = eff_mnj.p and
+                    ds.jenis_barang = '".$jenis."' and
+                    (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                    (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')" : "";
+
+        $sql_manajemen_supply_snapshot = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+
+                union all
+
+                select
+                    ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans as tanggal,
+                    sum(isnull(ds.jml_stok, 0)) as jumlah
+                from det_stok_manajemen ds
+                left join
+                    stok_manajemen s
+                    on
+                        ds.id_header = s.id
+                cross join
+                    (select max(periode) as p from stok_manajemen where periode <= '".$next_date."') eff_mnj
+                where
+                    s.periode = eff_mnj.p and
+                    ds.jenis_barang = '".$jenis."' and
+                    (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                    (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                group by
+                    ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans" : "";
+
+        // Guard tambahan (2026-09-28) - dipasang di NOT EXISTS anti-dobel-hitung cabang gap
+        // (ds3 di 'supply' & dst_chk di 'demand') - kode_trans yg SUDAH tercatat sbg layer
+        // di det_stok_manajemen (shadow, periode eff_mnj sendiri) jangan direkonstruksi lagi
+        // dari dokumen fisik gap. TANPA ini, order intercompany yg diterima (cuma ada di
+        // shadow, bukan det_stok riil) lolos dari guard ds3/dst_chk (yg cuma cek det_stok
+        // riil) & muncul DOBEL: 1x dari $sql_manajemen_supply_snapshot (harga asli, benar)
+        // + 1x lagi dari cabang gap (harga hasil fallback lookup, salah) - kejadian nyata di
+        // laporan Posisi Stok mode MANAJEMEN utk OPK/MLG/26/09213 (2 baris beda harga).
+        $sql_manajemen_guard_supply = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                        and not exists (
+                            select 1 from det_stok_manajemen ds3m
+                            left join stok_manajemen s3m on ds3m.id_header = s3m.id
+                            cross join
+                                (select max(periode) as p from stok_manajemen where periode <= '".$next_date."') eff_mnj3
+                            where
+                                s3m.periode = eff_mnj3.p and
+                                ds3m.kode_gudang = g.kode_gudang and
+                                ds3m.kode_barang = g.kode_barang and
+                                ds3m.kode_trans = g.no_order_asal
+                        )" : "";
+
+        $sql_manajemen_guard_demand = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                        and not exists (
+                            select 1 from det_stok_trans_manajemen dst_chkm
+                            left join det_stok_manajemen ds_chkm on ds_chkm.id = dst_chkm.id_header
+                            left join stok_manajemen s_chkm on ds_chkm.id_header = s_chkm.id
+                            cross join
+                                (select max(periode) as p from stok_manajemen where periode <= '".$next_date."') eff_mnj4
+                            where
+                                s_chkm.periode = eff_mnj4.p and
+                                ds_chkm.kode_gudang = k.kode_gudang and
+                                ds_chkm.kode_barang = k.kode_barang and
+                                dst_chkm.kode_trans = k.kode_trans
+                        )" : "";
+
+        $sql_manajemen_order_terakhir = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+
+                union all
+
+                select
+                    lst.kode_gudang, lst.kode_barang, lst.kode_trans, lst.hrg_beli, lst.tanggal, 0 as jumlah
+                from
+                (
+                    select
+                        ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans as tanggal,
+                        row_number() over (partition by ds.kode_gudang, ds.kode_barang order by ds.tgl_trans desc, ds.kode_trans desc) as rn
+                    from det_stok_manajemen ds
+                    where
+                        ds.jenis_barang = '".$jenis."' and
+                        ds.tgl_trans <= '".$_date."' and
+                        (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all') and
+                        not exists (
+                            select 1 from existing_gb eg
+                            where eg.kode_gudang = ds.kode_gudang and eg.kode_barang = ds.kode_barang
+                        )
+                ) lst
+                where lst.rn = 1" : "";
 
         $m_conf = new \Model\Storage\Conf();
 
@@ -133,6 +305,7 @@ class PosisiStok extends Public_Controller {
             join det_kirim_".$jenis." dkv on dkv.id_header = kv.id
             join terima_".$jenis." tv on tv.id_kirim_".$jenis." = kv.id
             where kv.jenis_tujuan = 'gudang'
+            ".$sql_filter_order_gap."
             group by tv.tgl_terima, kv.tujuan, dkv.item, kv.no_order
 
             union all
@@ -153,10 +326,32 @@ class PosisiStok extends Public_Controller {
             from adjin_".$jenis." av
         ";
 
+        // Guard tambahan (2026-09-28, direvisi setelah klarifikasi user) - dokumen anchor
+        // kirim_pakan sisi PENERIMA intercompany ADA 2 jenis, kv.asal-nya beda makna:
+        //   - jenis_kirim='opks' (IntercompanyPakanTerima::prosesTerima()): asal diisi KODE
+        //     SUPPLIER (bukan gudang) - kalau ikut di-join ke tabel gudang, itu salah sasaran
+        //     (beda skema ID), HARUS dikecualikan dari gap keluar gudang.
+        //   - jenis_kirim='opkg' (IntercompanyPakanTerima::prosesTerimaOpkg()): asal diisi KODE
+        //     GUDANG, dan ID gudang memang disinkronkan antar-instance (konfirmasi user) - jadi
+        //     ini betul2 penarikan stok riil dari gudang tsb, JANGAN dikecualikan.
+        // Guard versi lama (2026-09-28 pagi) salah - mengecualikan KEDUANYA tanpa bedakan
+        // jenis_kirim, jadi transaksi OPKG intercompany ikut hilang dari perhitungan stok.
+        $sql_guard_intercompany_masuk = ($jenis === 'pakan') ? "
+            and (
+                kv.jenis_kirim = 'opkg' or
+                not exists (
+                    select 1 from intercompany_pakan_log ipl
+                    where ipl.tbl_name_tujuan = 'kirim_pakan' and ipl.tbl_id_tujuan = kv.id
+                )
+            )" : "";
+
         $sql_gap_keluar = "
             select kv.tgl_kirim as tanggal, try_cast(kv.asal as int) as kode_gudang, dkv.item as kode_barang, sum(dkv.jumlah) as jumlah, kv.no_order as kode_trans
             from kirim_".$jenis." kv
             join det_kirim_".$jenis." dkv on dkv.id_header = kv.id
+            where 1=1
+            ".$sql_filter_kirim_transfer."
+            ".$sql_guard_intercompany_masuk."
             group by kv.tgl_kirim, kv.asal, dkv.item, kv.no_order
 
             union all
@@ -198,6 +393,8 @@ class PosisiStok extends Public_Controller {
                     ds.jenis_barang = '".$jenis."' and
                     (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                     (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    ".$sql_filter_stok_transfer."
+                    ".$sql_manajemen_existing_gb."
 
                 union
 
@@ -243,8 +440,10 @@ class PosisiStok extends Public_Controller {
                     ds.jenis_barang = '".$jenis."' and
                     (ds.kode_gudang = '".$_kode_gudang."' or '".$_kode_gudang."' = 'all') and
                     (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    ".$sql_filter_stok_transfer."
                 group by
                     ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.hrg_beli, ds.tgl_trans
+                    ".$sql_manajemen_supply_snapshot."
 
                 union all
 
@@ -309,7 +508,7 @@ class PosisiStok extends Public_Controller {
                             ds3.kode_gudang = g.kode_gudang and
                             ds3.kode_barang = g.kode_barang and
                             ds3.kode_trans = g.no_order_asal
-                    )
+                    )".$sql_manajemen_guard_supply."
 
                 union all
 
@@ -335,8 +534,10 @@ class PosisiStok extends Public_Controller {
                             select 1 from existing_gb eg
                             where eg.kode_gudang = ds.kode_gudang and eg.kode_barang = ds.kode_barang
                         )
+                        ".$sql_filter_stok_transfer."
                 ) lst
                 where lst.rn = 1
+                ".$sql_manajemen_order_terakhir."
             ),
             demand as (
                 -- total keluar di masa gap per gudang+barang -- dipakai (bukan ditampilkan)
@@ -365,7 +566,7 @@ class PosisiStok extends Public_Controller {
                             ds_chk.kode_gudang = k.kode_gudang and
                             ds_chk.kode_barang = k.kode_barang and
                             dst_chk.kode_trans = k.kode_trans
-                    )
+                    )".$sql_manajemen_guard_demand."
                 group by kode_gudang, kode_barang
             ),
             fifo as (

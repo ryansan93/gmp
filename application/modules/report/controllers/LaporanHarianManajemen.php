@@ -699,9 +699,140 @@ class LaporanHarianManajemen extends Public_Controller {
             $data = $d_conf->toArray();
         }
 
+        // GMP: vhost MANAJEMEN mengakui pakan kiriman intercompany (snapshot rhpp
+        // tersimpan = versi riil tanpa itu) -> LR Inti RHPP terdampak dikoreksi
+        // dgn selisih hasil hitung ulang lengkap vs snapshot, turunannya dihitung ulang.
+        if ( !empty($data) && defined('APP_MODE') && APP_MODE === 'manajemen' ) {
+            $delta = $this->_deltaLrIntiManajemen( $tanggal, $tgl_awal_tahun, $tgl_prev );
+
+            if ( !empty($delta['hari_ini']) || !empty($delta['sebelumnya']) ) {
+                $d = $data[0];
+
+                $d['lr_inti'] = (isset($d['lr_inti']) ? $d['lr_inti'] : 0) + $delta['hari_ini'];
+                if ( $tanggal > $tgl_awal_tahun ) {
+                    $d['lr_inti_prev'] = (isset($d['lr_inti_prev']) ? $d['lr_inti_prev'] : 0) + $delta['sebelumnya'];
+                }
+
+                $d['lr_total'] = (isset($d['lr_inti_prev']) ? $d['lr_inti_prev'] : 0) + (isset($d['lr_inti']) ? $d['lr_inti'] : 0);
+                $d['lr_per_ekor'] = ( $d['lr_inti'] != 0 && $d['jml_doc'] != 0 ) ? $d['lr_inti'] / $d['jml_doc'] : 0;
+                $d['lr_per_kg'] = ( $d['lr_inti'] != 0 && $d['tonase'] != 0 ) ? $d['lr_inti'] / $d['tonase'] : 0;
+
+                $data[0] = $d;
+            }
+        }
+
         // cetak_r( $data, 1 );
 
         return $data;
+    }
+
+    /**
+     * Vhost MANAJEMEN: daftar RHPP (individual & grup) yg noreg-nya punya pakan
+     * kiriman intercompany, beserta snapshot lengkapnya. $rows = baris dgn kunci
+     * id_group (header grup, atau null), noreg (individual, atau null), + kolom lain
+     * dibawa apa adanya. Mengembalikan baris terdampak sbg: baris asli + 'inti' &
+     * 'plasma' (hasil hitung ulang lengkap).
+     */
+    private function _rhppTerdampakManajemen($rows)
+    {
+        if ( empty($rows) ) {
+            return array();
+        }
+
+        $id_group = array();
+        $semua_noreg = array();
+        foreach ($rows as $v) {
+            if ( !empty($v['id_group']) ) {
+                $id_group[ $v['id_group'] ] = $v['id_group'];
+            } elseif ( !empty($v['noreg']) ) {
+                $semua_noreg[] = $v['noreg'];
+            }
+        }
+
+        $noreg_grup = array();
+        if ( !empty($id_group) ) {
+            $m_conf = new \Model\Storage\Conf();
+            $d_conf = $m_conf->hydrateRaw( "select rg.id_header as id_group, rgn.noreg from rhpp_group_noreg rgn left join rhpp_group rg on rgn.id_header = rg.id where rg.id_header in (".implode(', ', array_map('intval', $id_group)).")" );
+            if ( $d_conf->count() > 0 ) {
+                foreach ($d_conf->toArray() as $v) {
+                    $noreg_grup[ $v['id_group'] ][] = $v['noreg'];
+                    $semua_noreg[] = $v['noreg'];
+                }
+            }
+        }
+
+        $ada_transfer = array_flip( (array) Modules::run( 'transaksi/TSDRHPP/noregDenganPakanTransfer', array_values(array_unique($semua_noreg)) ) );
+        if ( empty($ada_transfer) ) {
+            return array();
+        }
+
+        $hasil = array();
+        foreach ($rows as $k => $v) {
+            if ( !empty($v['id_group']) ) {
+                $ada = false;
+                foreach ((array) (isset($noreg_grup[ $v['id_group'] ]) ? $noreg_grup[ $v['id_group'] ] : array()) as $n) {
+                    if ( isset($ada_transfer[ $n ]) ) { $ada = true; }
+                }
+                if ( !$ada ) { continue; }
+
+                $ring = Modules::run( 'transaksi/RhppGroup/ringkasanGroupManajemen', $v['id_group'] );
+            } elseif ( !empty($v['noreg']) && isset($ada_transfer[ $v['noreg'] ]) ) {
+                $snap = Modules::run( 'transaksi/TSDRHPP/ringkasanNoregManajemen', $v['noreg'] );
+                $ring = array('inti' => $snap['inti'], 'plasma' => $snap['plasma']);
+            } else {
+                continue;
+            }
+
+            if ( empty($ring['inti']) ) { continue; }
+
+            $v['inti'] = $ring['inti'];
+            $v['plasma'] = $ring['plasma'];
+            $hasil[ $k ] = $v;
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Selisih LR Inti (lengkap - snapshot) utk RHPP terdampak, dipisah: yg
+     * ditutup tepat di $tanggal ('hari_ini') dan YTD sampai hari sebelumnya ('sebelumnya').
+     */
+    private function _deltaLrIntiManajemen($tanggal, $tgl_awal_tahun, $tgl_prev)
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select r.noreg, cast(null as int) as id_group, r.lr_inti, ts.tgl_tutup as tgl
+            from rhpp r
+            left join tutup_siklus ts on r.id_ts = ts.id
+            where
+                r.jenis = 'rhpp_inti' and
+                not exists (select * from rhpp_group_noreg where noreg = r.noreg) and
+                ts.tgl_tutup between '".$tgl_awal_tahun."' and '".$tanggal."'
+
+            union all
+
+            select cast(null as varchar(20)) as noreg, rg.id_header as id_group, rg.lr_inti, rgh.tgl_submit as tgl
+            from rhpp_group rg
+            left join rhpp_group_header rgh on rg.id_header = rgh.id
+            where
+                rg.jenis = 'rhpp_inti' and
+                rgh.tgl_submit between '".$tgl_awal_tahun."' and '".$tanggal."'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+        $rows = $d_conf->count() > 0 ? $d_conf->toArray() : array();
+
+        $delta = array('hari_ini' => 0, 'sebelumnya' => 0);
+        foreach ($this->_rhppTerdampakManajemen($rows) as $v) {
+            $selisih = $v['inti']['lr_inti'] - $v['lr_inti'];
+
+            if ( $v['tgl'] == $tanggal ) {
+                $delta['hari_ini'] += $selisih;
+            } elseif ( $tanggal > $tgl_awal_tahun && $v['tgl'] <= $tgl_prev ) {
+                $delta['sebelumnya'] += $selisih;
+            }
+        }
+
+        return $delta;
     }
 
     public function getDataHarga( $tanggal ) {
@@ -824,12 +955,91 @@ class LaporanHarianManajemen extends Public_Controller {
             }
         }
 
+        // Vhost MANAJEMEN: RHPP hari ini yg punya pakan kiriman intercompany
+        // dihitung ulang lengkap -> daftar (barang, harga) pakannya diganti versi lengkap.
+        if ( defined('APP_MODE') && APP_MODE === 'manajemen' ) {
+            $pakan = $this->_pakanManajemen( $tanggal );
+        }
+
         $data = array(
             'doc' => $doc,
             'pakan' => $pakan
         );
 
         return $data;
+    }
+
+    /**
+     * Sama dgn query pakan di getDataHarga() tapi per-RHPP (tanpa group by), lalu
+     * baris terdampak diganti daftar pakan versi lengkap, baru diagregat.
+     */
+    private function _pakanManajemen($tanggal)
+    {
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select 'RHPP' as jenis, r.id as rid, r.noreg, cast(null as int) as id_group, rp.harga as hrg_pkn, rp.barang as barang_pkn
+            from rhpp r
+            left join
+                (select id_header, barang, harga from rhpp_pakan group by id_header, barang, harga) rp
+                on r.id = rp.id_header
+            left join tutup_siklus ts on r.id_ts = ts.id
+            where
+                r.jenis = 'rhpp_inti' and
+                not exists (select * from rhpp_group_noreg where noreg = r.noreg) and
+                ts.tgl_tutup = '".$tanggal."'
+
+            union all
+
+            select 'RHPP GROUP' as jenis, rg.id as rid, cast(null as varchar(20)) as noreg, rg.id_header as id_group, rgp.harga as hrg_pkn, rgp.barang as barang_pkn
+            from rhpp_group rg
+            left join
+                (select id_header, barang, harga from rhpp_group_pakan group by id_header, barang, harga) rgp
+                on rg.id = rgp.id_header
+            left join rhpp_group_header rgh on rg.id_header = rgh.id
+            where
+                rg.jenis = 'rhpp_inti' and
+                rgh.tgl_submit = '".$tanggal."'
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+        $rows = $d_conf->count() > 0 ? $d_conf->toArray() : array();
+
+        // kunci baris terdampak = jenis|rid (satu RHPP bisa punya banyak baris pakan)
+        $per_rhpp = array();
+        foreach ($rows as $v) {
+            $per_rhpp[ $v['jenis'].'|'.$v['rid'] ] = array('noreg' => $v['noreg'], 'id_group' => $v['id_group']);
+        }
+        $terdampak = $this->_rhppTerdampakManajemen( $per_rhpp );
+
+        $daftar = array();   // jenis|rid => [ 'barang|harga' => [barang, harga] ]
+        foreach ($rows as $v) {
+            $kunci = $v['jenis'].'|'.$v['rid'];
+            if ( isset($terdampak[ $kunci ]) ) {
+                continue;
+            }
+            $daftar[ $kunci ][ $v['barang_pkn'].'|'.$v['hrg_pkn'] ] = array($v['barang_pkn'], $v['hrg_pkn']);
+        }
+        foreach ($terdampak as $kunci => $v) {
+            $daftar[ $kunci ] = array();
+            foreach ($v['inti']['pakan'] as $p) {
+                $daftar[ $kunci ][ $p['barang'].'|'.$p['harga'] ] = array($p['barang'], $p['harga']);
+            }
+            if ( empty($daftar[ $kunci ]) ) {
+                $daftar[ $kunci ][ '|' ] = array(null, null);
+            }
+        }
+
+        $pakan = null;
+        foreach ($daftar as $item) {
+            foreach ($item as $x) {
+                if ( isset($pakan[ $x[0] ]['harga'][ $x[1] ]) ) {
+                    $pakan[ $x[0] ]['harga'][ $x[1] ]['jumlah']++;
+                } else {
+                    $pakan[ $x[0] ]['harga'][ $x[1] ] = array('harga' => $x[1], 'jumlah' => 1);
+                }
+            }
+        }
+
+        return $pakan;
     }
 
     public function getLists()

@@ -1105,6 +1105,45 @@ var plg = {
 			});
 		}
 	}, // end - verifikasi_export_excel
+
+	cloneToGml : function(elm) {
+		var nomor = $(elm).data('nomor');
+		var nama = $(elm).data('nama');
+
+		bootbox.confirm('Clone data pelanggan <b>' + nama + '</b> (' + nomor + ') ke database GML? Aksi ini tidak bisa dibatalkan kalau sudah berhasil.', function (result) {
+			if ( result ) {
+				plg.executeCloneToGml(nomor, 0);
+			}
+		});
+	}, // end - cloneToGml
+
+	executeCloneToGml : function(nomor, force) {
+		$.ajax({
+			url :'parameter/Pelanggan/cloneToGml',
+			type : 'post',
+			dataType : 'json',
+			data : {'nomor': nomor, 'force': force},
+			beforeSend : function(){
+				showLoading('Meng-clone data ke GML . . .');
+			},
+			success : function(data){
+				hideLoading();
+				if ( data.need_confirm ) {
+					bootbox.confirm(data.message, function(result2){
+						if ( result2 ) {
+							plg.executeCloneToGml(nomor, 1);
+						}
+					});
+				} else {
+					bootbox.alert(data.message);
+				}
+			},
+			error : function(){
+				hideLoading();
+				bootbox.alert('Gagal menghubungi server, segera hubungi tim IT.');
+			}
+		});
+	}, // end - executeCloneToGml
 };
 
 plg.start_up();

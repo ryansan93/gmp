@@ -30,9 +30,13 @@
 					<?php echo $v_supl['nip']; ?>
 				</a> 
 				<?php if ( $akses['a_submit'] == 1 ): ?>
-					|| 
+					||
 					<a class="cursor-p" title="Edit Mitra" data-href="action" data-id="<?php echo $v_supl['id']; ?>" data-resubmit="<?php echo 'EDIT'; ?>" onclick="supl.changeTabActive(this)" >
-						<i class="fa fa-edit" aria-hidden="true"></i> 
+						<i class="fa fa-edit" aria-hidden="true"></i>
+					</a>
+					||
+					<a class="cursor-p" title="Clone Supplier ke GML" data-nomor="<?php echo $v_supl['nip']; ?>" data-nama="<?php echo $v_supl['nama']; ?>" onclick="supl.cloneToGml(this)" >
+						<i class="fa fa-clone" aria-hidden="true"></i>
 					</a>
 				<?php endif ?>
 			</td>

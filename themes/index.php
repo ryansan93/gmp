@@ -3,14 +3,16 @@
 
 <head>
   <base href="<?php echo base_url() ?>" />
-  <link rel="shortcut icon" type="image/x-icon" href="assets/images/logo-mgb.jpg">
+  <?php if (!empty($this->settings->favicon_path)) : ?>
+  <link rel="shortcut icon" type="image/x-icon" href="<?php echo $this->settings->favicon_path; ?>">
+  <?php endif; ?>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="">
   <meta name="author" content="Dashboard">
   <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
 
-  <title>GMP ERP</title>
+  <title><?php echo $this->settings->company_name; ?></title>
 
   <?php // CSS files ?>
   <?php if (isset($css_files) && is_array($css_files)) : ?>
@@ -33,7 +35,7 @@
       <div class="sidebar-heading">
         <!-- <img src="https://d3ki9tyy5l5ruj.cloudfront.net/obj/3ac85a538c3fc5bb08d0206ede04ae8aa13c20b2/inapp__logo_color_ondark_horizontal.svg" width="80%" height="80%"> -->
         <!-- <img src="assets/images/logo-mgb.jpg" width="20%" height="20%"> -->
-        <a href="<?php echo base_url(); ?>" title="Dashboard" style="color: inherit; text-decoration: none;">GMP ERP</a>
+        <a href="<?php echo base_url(); ?>" title="Dashboard" style="color: inherit; text-decoration: none;"><?php echo $this->settings->company_name; ?></a>
       </div>
       <div class="divider-heading" style="padding: 0rem 1rem;">
         <div class="dropdown-divider" style="margin-top: 0rem;"></div>

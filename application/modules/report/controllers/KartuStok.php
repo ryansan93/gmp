@@ -94,6 +94,152 @@ class KartuStok extends Public_Controller {
     {
         // cetak_r( $_jenis );
 
+        // Mode RIIL (lihat application/config/app_mode.php): sembunyikan
+        // baris det_stok utk order_pakan (OPKS) yg SUDAH ditransfer ke partner
+        // (intercompany_pakan_log.status='DITERIMA') - order itu bukan lagi
+        // tanggung jawab GML di buku RIIL. Stok yg BELUM ditransfer tetap
+        // tampil normal. Mode MANAJEMEN sengaja TIDAK difilter (tetap perlu
+        // terlihat sbg riwayat/tracking) - CATATAN RISIKO: krn stok OPKG yg
+        // ditransfer tidak pernah dpt pasangan baris masuk (lihat catatan di
+        // $sql_filter_kirim_transfer di bawah), menampilkannya di MANAJEMEN
+        // bisa bikin saldo tampak minus utk kombinasi gudang/barang itu -
+        // diterima sbg trade-off atas permintaan eksplisit. det_stok.kode_trans
+        // = order_pakan.no_order utk baris OPKS (lihat
+        // IntercompanyPakan::kirimKePartner()), jadi match-nya lewat itu.
+        // Dicek DUA arah: order ini yg DIKIRIM keluar (id lokal di tbl_id_asal)
+        // MAUPUN order ini hasil DITERIMA dari partner (id lokal di
+        // tbl_id_tujuan, tbl_id_asal cuma id milik partner).
+        $sql_filter_stok_transfer = (defined('APP_MODE') && APP_MODE === 'riil') ? "
+                            and not exists (
+                                select 1 from intercompany_pakan_log ipl
+                                inner join order_pakan op on op.id = ipl.tbl_id_asal
+                                where ipl.tbl_name_asal = 'order_pakan' and op.no_order = ds.kode_trans and ipl.status = 'DITERIMA'
+                            )
+                            and not exists (
+                                select 1 from intercompany_pakan_log ipl
+                                inner join order_pakan op on op.id = ipl.tbl_id_tujuan
+                                where ipl.tbl_name_tujuan = 'order_pakan' and op.no_order = ds.kode_trans and ipl.status = 'DITERIMA'
+                            )" : "";
+
+        // Sama spt di atas, tapi utk sisi KELUAR/DISTRIBUSI (OPKG, kirim_pakan)
+        // - dokumen kirim_pakan yg SUDAH ditransfer (kirim_pakan.id =
+        // intercompany_pakan_log.tbl_id_asal, tbl_name_asal='kirim_pakan',
+        // status='DITERIMA') TIDAK PERNAH nulis det_stok sama sekali (stok
+        // OPKG memang sengaja tidak dipindah - lihat catatan arsitektur), tapi
+        // baris DISTRIBUSI-nya di laporan ini dibaca LANGSUNG dari dokumen
+        // fisik kirim_pakan (bukan det_stok) - kalau tidak disaring, entry
+        // "hantu" ini bikin saldo RIIL jadi minus tanpa pasangan masuknya
+        // (yg sudah disaring lewat $sql_filter_stok_transfer di atas).
+        $sql_filter_kirim_transfer = (defined('APP_MODE') && APP_MODE === 'riil') ? "
+                    and not exists (
+                        select 1 from intercompany_pakan_log ipl
+                        where ipl.status = 'DITERIMA' and (
+                            (ipl.tbl_name_asal = 'kirim_pakan' and ipl.tbl_id_asal = kp.id)
+                            or (ipl.tbl_name_tujuan = 'kirim_pakan' and ipl.tbl_id_tujuan = kp.id)
+                        )
+                    )" : "";
+
+        // Mode MANAJEMEN: stok hasil TERIMA dari partner (intercompany) HANYA
+        // ditulis ke det_stok_manajemen/det_stok_trans_manajemen/stok_manajemen
+        // (shadow) - TIDAK PERNAH ke det_stok riil sama sekali (lihat
+        // IntercompanyPakanTerima::terima()). Supaya ikut muncul di laporan
+        // MANAJEMEN, ds1/ds2/sa di bawah di-UNION ALL dgn versi shadow-nya -
+        // HANYA di titik yg menentukan SALDO/JUMLAH (SALDO AWAL & MASUK),
+        // TIDAK disentuh di lookup harga (hrg/hp) supaya logika FIFO/fallback
+        // harga yg sudah teruji tidak ikut berubah (skema shadow sengaja
+        // dibuat identik kolom demi kolom dgn versi riil, jadi UNION ALL aman
+        // scr tipe data).
+        $sql_saldo_awal_manajemen = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                    union all
+                    select
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.hrg_beli,
+                        sum(isnull(ds.jml_stok, 0) + isnull(dst.jumlah, 0)) as jumlah
+                    from det_stok_manajemen ds
+                    left join
+                        (select id_header, sum(jumlah) as jumlah from det_stok_trans_manajemen group by id_header) dst
+                        on
+                            ds.id = dst.id_header
+                    left join
+                        stok_manajemen s
+                        on
+                            ds.id_header = s.id
+                    where
+                        s.periode = '".$_start_date."' and
+                        ds.tgl_trans < '".$_start_date."' and
+                        ds.kode_gudang = '".$_kode_gudang."' and
+                        (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        ds.kode_gudang,
+                        ds.kode_barang,
+                        ds.jenis_barang,
+                        ds.hrg_beli" : "";
+
+        // NOTE: UNION ALL di sini dilakukan di level BLOK LENGKAP (dedup ds1/ds2 +
+        // join stok + group by), BUKAN cuma di level ds1/ds2 mentah - krn
+        // det_stok.id_header & det_stok_manajemen.id_header masing2 auto-increment
+        // SENDIRI2 (bisa kebetulan sama angkanya utk baris yg SAMA SEKALI beda),
+        // jadi tidak aman digabung dulu baru di-join belakangan ke satu tabel
+        // `stok` bersama - blok riil & shadow HARUS tetap join ke tabel
+        // header-nya (stok/stok_manajemen) masing2 sendiri2, baru hasil AKHIRNYA
+        // yg di-UNION ALL.
+        $sql_masuk_manajemen = (defined('APP_MODE') && APP_MODE === 'manajemen') ? "
+                    union all
+                    select
+                        dsm.tgl_trans as tanggal,
+                        dsm.kode_gudang,
+                        dsm.kode_barang,
+                        dsm.jenis_barang,
+                        dsm.kode_trans,
+                        dsm.jenis_trans,
+                        dsm.hrg_beli,
+                        sum(isnull(dsm.jumlah, 0)) as jumlah
+                    from
+                    (
+                        select dsm1.* from det_stok_manajemen dsm1
+                        right join
+                            (
+                                select min(dsm.id_header) as id_header, dsm.tgl_trans, dsm.kode_gudang, dsm.kode_barang, dsm.kode_trans, dsm.jenis_barang, dsm.jenis_trans, dsm.hrg_beli from det_stok_manajemen dsm
+                                left join
+                                    stok_manajemen s
+                                    on
+                                        dsm.id_header = s.id
+                                where
+                                    s.periode between '".$_start_date."' and '".$_end_date."' and
+                                    dsm.tgl_trans >= '".$_start_date."'
+                                group by
+                                    dsm.tgl_trans, dsm.kode_gudang, dsm.kode_barang, dsm.kode_trans, dsm.jenis_barang, dsm.jenis_trans, dsm.hrg_beli
+                            ) dsm2
+                            on
+                                dsm1.id_header = dsm2.id_header and
+                                dsm1.tgl_trans = dsm2.tgl_trans and
+                                dsm1.kode_gudang = dsm2.kode_gudang and
+                                dsm1.kode_barang = dsm2.kode_barang and
+                                dsm1.kode_trans = dsm2.kode_trans and
+                                dsm1.jenis_barang = dsm2.jenis_barang and
+                                dsm1.jenis_trans = dsm2.jenis_trans and
+                                dsm1.hrg_beli = dsm2.hrg_beli
+                    ) dsm
+                    left join
+                        stok_manajemen s
+                        on
+                            dsm.id_header = s.id
+                    where
+                        s.periode between '".$_start_date."' and '".$_end_date."' and
+                        dsm.tgl_trans between '".$_start_date."' and '".$_end_date."' and
+                        dsm.kode_gudang = '".$_kode_gudang."' and
+                        (dsm.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                    group by
+                        dsm.tgl_trans,
+                        dsm.kode_gudang,
+                        dsm.kode_barang,
+                        dsm.jenis_barang,
+                        dsm.kode_trans,
+                        dsm.jenis_trans,
+                        dsm.hrg_beli" : "";
+
         $sql_jenis = null;
         $sql_jenis_trans_masuk = null;
         $sql_jenis_trans_keluar = null;
@@ -152,8 +298,13 @@ class KartuStok extends Public_Controller {
                 // try_cast (bukan cast biasa) supaya kode gudang legacy yang tidak numerik/kepanjangan
                 // (mis. id_asal retur yang ternyata noreg plasma 11 digit, overflow tipe int) tidak
                 // membuat query error -- cukup jadi NULL dan otomatis tidak match gudang manapun.
+                // NOTE (2026-09-28, revisi): dokumen anchor kirim_pakan sisi PENERIMA intercompany
+                // ada 2 jenis - jenis_kirim='opks' (asal = KODE SUPPLIER, salah kalau dianggap
+                // gudang, harus dikecualikan) vs jenis_kirim='opkg' (asal = KODE GUDANG, id-nya
+                // disinkronkan antar-instance, JANGAN dikecualikan - itu penarikan stok riil).
+                // Guard versi lama mengecualikan keduanya tanpa bedakan jenis_kirim.
                 $sql_jenis_trans_keluar = "
-                    select tp.tgl_terima as tanggal, try_cast(kp.asal as int) as kode_gudang, dkp.item as kode_barang, 'pakan' as jenis_barang, sum(dkp.jumlah) as jumlah, kp.no_order as kode_trans, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id join det_kirim_pakan dkp on dkp.id_header = kp.id group by tp.tgl_terima, kp.asal, dkp.item, kp.no_order
+                    select tp.tgl_terima as tanggal, try_cast(kp.asal as int) as kode_gudang, dkp.item as kode_barang, 'pakan' as jenis_barang, sum(dkp.jumlah) as jumlah, kp.no_order as kode_trans, 'DISTRIBUSI' as jenis_trans from kirim_pakan kp left join terima_pakan tp on tp.id_kirim_pakan = kp.id join det_kirim_pakan dkp on dkp.id_header = kp.id where (kp.jenis_kirim = 'opkg' or not exists (select 1 from intercompany_pakan_log ipl where ipl.tbl_name_tujuan = 'kirim_pakan' and ipl.tbl_id_tujuan = kp.id)) ".$sql_filter_kirim_transfer." group by tp.tgl_terima, kp.asal, dkp.item, kp.no_order
 
                     union all
 
@@ -214,11 +365,13 @@ class KartuStok extends Public_Controller {
                         ds.tgl_trans < '".$_start_date."' and
                         ds.kode_gudang = '".$_kode_gudang."' and
                         (ds.kode_barang = '".$_kode_brg."' or '".$_kode_brg."' = 'all')
+                        ".$sql_filter_stok_transfer."
                     group by
                         ds.kode_gudang,
                         ds.kode_barang,
                         ds.jenis_barang,
                         ds.hrg_beli
+                    ".$sql_saldo_awal_manajemen."
                 ) sa
                 group by
                     sa.kode_gudang,
@@ -270,6 +423,7 @@ class KartuStok extends Public_Controller {
                                     s.periode between '".$_start_date."' and '".$_end_date."' and
                                     ds.tgl_trans >= '".$_start_date."'
                                     -- ".$sql_jenis."
+                                    ".$sql_filter_stok_transfer."
                                 group by
                                     ds.tgl_trans, ds.kode_gudang, ds.kode_barang, ds.kode_trans, ds.jenis_barang, ds.jenis_trans, ds.hrg_beli
                             ) ds2
@@ -300,6 +454,7 @@ class KartuStok extends Public_Controller {
                         ds.kode_trans,
                         ds.jenis_trans,
                         ds.hrg_beli
+                    ".$sql_masuk_manajemen."
                 ) msk
                 left join
                     (
@@ -326,8 +481,13 @@ class KartuStok extends Public_Controller {
                     isnull(hrg.hrg_beli, hp.hrg_beli) as hrg_beli,
                     0 as jml_debet,
                     0 as debet,
-                    hrg.jumlah as jml_kredit,
-                    (hrg.jumlah * isnull(hrg.hrg_beli, hp.hrg_beli)) as kredit,
+                    -- Fallback (2026-09-28): kalau det_stok_trans TIDAK punya baris potongan sama
+                    -- sekali (hrg.jumlah null) - bukan cuma krn oversell, tapi jg dokumen anchor
+                    -- OPKG intercompany (IntercompanyPakanTerima::prosesTerimaOpkg()) yg memang
+                    -- sengaja tidak pernah menulis det_stok_trans - pakai jumlah mentah dari
+                    -- dokumen fisik (klwr.jumlah), sesuai komentar asli di atas, bukan hilang jadi 0.
+                    isnull(hrg.jumlah, klwr.jumlah) as jml_kredit,
+                    (isnull(hrg.jumlah, klwr.jumlah) * isnull(hrg.hrg_beli, hp.hrg_beli)) as kredit,
                     klwr.kode_trans as kode_trans,
                     klwr.jenis_trans,
                     3 as urut

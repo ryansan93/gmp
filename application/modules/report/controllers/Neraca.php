@@ -85,6 +85,8 @@ class Neraca extends Public_Controller {
                     srg.id_header = sr.id
             where
                 sr.nama = 'LAPORAN NERACA'
+            order by
+                isnull(srg.urut, srg.id) asc
         ";
         $d_srg = $m_conf->hydrateRaw( $sql );
 
@@ -96,288 +98,428 @@ class Neraca extends Public_Controller {
         return $data;
     }
 
-    public function getSettingReportGroupItem($srg_id)
+    /**
+     * Neraca = snapshot per tanggal (saldo kumulatif sejak awal histori s/d End Date), bukan rentang
+     * periode. Filter di layar tetap BULAN/TAHUN (konvensi lama gmperp) -- cuma dipakai untuk tentukan
+     * End Date (akhir bulan terpilih, atau akhir Desember kalau BULAN = ALL).
+     */
+    private function resolveEndDate($bulan, $tahun)
+    {
+        $b = ($bulan != 'all') ? $bulan : 12;
+        $angka_bulan = (strlen($b) == 1) ? '0'.$b : $b;
+        $date = $tahun.'-'.$angka_bulan.'-01';
+
+        return date("Y-m-t", strtotime($date)).' 23:59:59';
+    }
+
+    /**
+     * Opsi B (anchor + roll-forward, pola sama dengan fix General Ledger di project bagia_sinar_jaya_corp):
+     * kalau ada snapshot `saldo_bulanan` <= End Date, pakai snapshot TERAKHIR itu sebagai saldo dasar,
+     * lalu roll-forward mutasi det_jurnal cuma dari (anchor, End Date] -- bukan scan seluruh histori.
+     * Kalau saldo_bulanan kosong sama sekali, balik ke cara lama (hitung penuh dari awal histori).
+     * Anchor GLOBAL (bukan per-COA/unit) karena Tutup Bulan menutup semua akun+unit bersamaan tiap bulan.
+     */
+    private function getAnchorDate($end_date)
     {
         $m_conf = new \Model\Storage\Conf();
-        $sql = "
-            select srg.* from setting_report_group srg
-            right join
-                setting_report sr
-                on
-                    srg.id_header = sr.id
-            where
-                sr.nama = 'LAPORAN NERACA'
-        ";
-        $d_srg = $m_conf->hydrateRaw( $sql );
+        $d_anchor = $m_conf->hydrateRaw("select max(tanggal) as anchor from saldo_bulanan where tanggal <= '".$end_date."'");
 
-        $data = null;
-        if ( $d_srg->count() > 0 ) {
-            $data = $d_srg->toArray();
+        if ( $d_anchor->count() > 0 ) {
+            $row = $d_anchor->toArray()[0];
+            if ( !empty($row['anchor']) ) {
+                return substr($row['anchor'], 0, 10);
+            }
         }
 
-        return $data;
+        return null;
+    }
+
+    private function buildPrsJoin($perusahaan, $alias_unit)
+    {
+        $sql_prs_join  = "";
+        $sql_prs_where = "";
+        if ( !empty($perusahaan) && $perusahaan != 'all' ) {
+            $m_conf   = new \Model\Storage\Conf();
+            $d_kode   = $m_conf->hydrateRaw("select top 1 kode from perusahaan where kode_gabung_perusahaan = '".$perusahaan."'");
+            $kode_prs = ($d_kode->count() > 0) ? $d_kode->toArray()[0]['kode'] : null;
+
+            if ( !empty($kode_prs) ) {
+                $sql_prs_join  = "inner join (select kode, perusahaan from wilayah group by kode, perusahaan) w on ".$alias_unit." = w.kode
+                        inner join (select kode, induk from perusahaan group by kode, induk) prs on w.perusahaan = prs.kode";
+                $sql_prs_where = "and (prs.kode = '".$kode_prs."' or prs.induk = '".$kode_prs."')";
+            }
+        }
+
+        return array($sql_prs_join, $sql_prs_where);
+    }
+
+    /**
+     * Bangun query gabungan DEBET (coa_tujuan) + KREDIT (coa_asal) dari det_jurnal untuk daftar
+     * id_header (setting_report_group) tertentu, plus baris SNAPSHOT saldo_bulanan (anchor) kalau ada --
+     * supaya rentang det_jurnal yang di-scan cuma (anchor, end_date], bukan sepanjang histori.
+     */
+    private function buildPass1Sql($in_ids, $end_date, $anchor_date, $sql_prs_join, $sql_prs_where)
+    {
+        $sql_tgl_bawah = !empty($anchor_date) ? "and dj.tanggal > '".$anchor_date." 23:59:59'" : "";
+
+        $sql_snapshot = "";
+        if ( !empty($anchor_date) ) {
+            $sql_snapshot = "
+                union all
+
+                -- SNAPSHOT: saldo_bulanan sbg anchor (saldo_akhir = net debet-kredit kumulatif s/d anchor_date)
+                select
+                    srgi.id_header,
+                    srgi.item_report_id,
+                    ir.nama                        as item_report_nama,
+                    isnull(ir.tipe, 'item')        as item_tipe,
+                    isnull(sb.saldo_akhir, 0)      as debet,
+                    0                               as kredit,
+                    null                            as perusahaan,
+                    srgi.urut,
+                    isnull(srgi.sign, 1)           as sign_val,
+                    sb.unit
+                from saldo_bulanan sb
+                inner join
+                    (select id_header, no_coa, item_report_id, urut, sign from setting_report_group_item where id_header in (".$in_ids.")) srgi
+                    on sb.coa = srgi.no_coa
+                inner join item_report ir on srgi.item_report_id = ir.id
+                where
+                    sb.tanggal = '".$anchor_date."'
+            ";
+        }
+
+        return "
+            select
+                id_header,
+                item_report_id,
+                item_report_nama,
+                item_tipe,
+                sum(debet)  as debet,
+                sum(kredit) as kredit,
+                urut,
+                sign_val
+            from (
+
+                -- Sisi DEBET: coa_tujuan, unit filter -> isnull(unit_tujuan, unit)
+                select
+                    srgi.id_header,
+                    srgi.item_report_id,
+                    ir.nama                        as item_report_nama,
+                    isnull(ir.tipe, 'item')        as item_tipe,
+                    dj.nominal                     as debet,
+                    0                              as kredit,
+                    dj.perusahaan,
+                    srgi.urut,
+                    isnull(srgi.sign, 1)           as sign_val,
+                    case
+                        when dj.unit_tujuan is not null then dj.unit_tujuan
+                        else dj.unit
+                    end as unit
+                from det_jurnal dj
+                inner join
+                    (select id_header, no_coa, item_report_id, urut, sign from setting_report_group_item where id_header in (".$in_ids.")) srgi
+                    on dj.coa_tujuan = srgi.no_coa
+                inner join item_report ir on srgi.item_report_id = ir.id
+                where
+                    dj.tanggal <= '".$end_date."'
+                    ".$sql_tgl_bawah."
+
+                union all
+
+                -- Sisi KREDIT: coa_asal, unit filter -> unit
+                select
+                    srgi.id_header,
+                    srgi.item_report_id,
+                    ir.nama                        as item_report_nama,
+                    isnull(ir.tipe, 'item')        as item_tipe,
+                    0                              as debet,
+                    dj.nominal                     as kredit,
+                    dj.perusahaan,
+                    srgi.urut,
+                    isnull(srgi.sign, 1)           as sign_val,
+                    dj.unit
+                from det_jurnal dj
+                inner join
+                    (select id_header, no_coa, item_report_id, urut, sign from setting_report_group_item where id_header in (".$in_ids.")) srgi
+                    on dj.coa_asal = srgi.no_coa
+                inner join item_report ir on srgi.item_report_id = ir.id
+                where
+                    dj.tanggal <= '".$end_date."'
+                    ".$sql_tgl_bawah."
+                ".$sql_snapshot."
+
+            ) combined
+            ".$sql_prs_join."
+            where 1=1 ".$sql_prs_where."
+            group by id_header, item_report_id, item_report_nama, item_tipe, urut, sign_val
+            order by id_header, urut asc
+        ";
     }
 
     public function getData()
     {
-        $params = $this->input->get('params');
-
-        // cetak_r( $params, 1);
-
+        $params     = $this->input->get('params');
         $perusahaan = $params['perusahaan'];
-        $bulan = $params['bulan'];
-        $tahun = substr($params['tahun'], 0, 4);
+        $bulan      = $params['bulan'];
+        $tahun      = substr($params['tahun'], 0, 4);
 
-        // $sql_unit = "rdim_submit.kode_unit = '".$unit."' and";
-        // if ( $unit == 'all' ) {
-        //     $sql_unit = null;
-        // }
+        $end_date    = $this->resolveEndDate($bulan, $tahun);
+        $anchor_date = $this->getAnchorDate($end_date);
 
-        $bulan_awal = 1;
-        $bulan_akhir = 12;
+        list($sql_prs_join, $sql_prs_where) = $this->buildPrsJoin($perusahaan, 'combined.unit');
 
-        if ( $bulan != 'all' ) {
-            $bulan_awal = $bulan;
-            $bulan_akhir = $bulan;
-        }
-
-        $angka_bulan_awal = (strlen($bulan_awal) == 1) ? '0'.$bulan_awal : $bulan_awal;
-        $angka_bulan_akhir = (strlen($bulan_akhir) == 1) ? '0'.$bulan_akhir : $bulan_akhir;
-
-        $date_awal = $tahun.'-'.$angka_bulan_awal.'-01';
-        $date_akhir = $tahun.'-'.$angka_bulan_akhir.'-01';
-
-        $start_date = date("Y-m-d", strtotime($date_awal)).' 00:00:00';
-        $end_date = date("Y-m-t", strtotime($date_akhir)).' 23:59:59';
-
-        $srg = $this->getSettingReportGroup();
-
+        $srg  = $this->getSettingReportGroup();
         $data = null;
+
         if ( !empty($srg) ) {
-            foreach ($srg as $k_srg => $v_srg) {
-                $m_conf = new \Model\Storage\Conf();
-                $sql = "
-                    select 
-                        srgi.*,
-                        ir.nama as item_report_nama
-                    from setting_report_group_item srgi 
-                    left join
-                        item_report ir
-                        on
-                            srgi.item_report_id = ir.id
-                    where 
-                        srgi.id_header = '".$v_srg['id']."'
+            // Inisialisasi semua group sesuai urutan
+            foreach ($srg as $v_srg) {
+                $data[ $v_srg['id'] ] = array(
+                    'id'     => $v_srg['id'],
+                    'nama'   => $v_srg['nama'],
+                    'tipe'   => !empty($v_srg['tipe']) ? $v_srg['tipe'] : 'data',
+                    'detail' => array()
+                );
+            }
+
+            // Kumpulkan semua id group bertipe 'data'
+            $data_group_ids = array();
+            foreach ($srg as $g) {
+                if ( (!empty($g['tipe']) ? $g['tipe'] : 'data') === 'data' ) {
+                    $data_group_ids[] = (int)$g['id'];
+                }
+            }
+
+            if ( !empty($data_group_ids) ) {
+                $in_ids = implode(',', $data_group_ids);
+
+                // Pass 0 -- inisialisasi semua item yang di-mapping di setting_report_group_item
+                // dengan saldo 0, supaya item yang belum ada transaksi tetap tampil (bukan hilang)
+                $sql_items = "
+                    select
+                        srgi.id_header,
+                        srgi.item_report_id,
+                        ir.nama                  as item_report_nama,
+                        isnull(ir.tipe, 'item')  as item_tipe,
+                        isnull(srgi.sign, 1)     as sign_val
+                    from setting_report_group_item srgi
+                    inner join item_report ir on srgi.item_report_id = ir.id
+                    where srgi.id_header in (".$in_ids.")
+                    order by srgi.id_header, srgi.urut asc
                 ";
-                $d_srgi = $m_conf->hydrateRaw( $sql );
-                
-                if ( $d_srgi->count() > 0 ) {
-                    $d_srgi = $d_srgi->toArray();
-                    
-                    if ( !isset($data[ $v_srg['id'] ]) ) {
-                        $data[ $v_srg['id'] ] = array(
-                            'id' => $v_srg['id'],
-                            'nama' => $v_srg['nama'],
-                            'detail' => null
+
+                $m_conf  = new \Model\Storage\Conf();
+                $d_items = $m_conf->hydrateRaw($sql_items);
+
+                if ( $d_items->count() > 0 ) {
+                    foreach ($d_items->toArray() as $v_item) {
+                        $group_id = $v_item['id_header'];
+                        $key      = $v_item['item_report_id'];
+                        $sign     = isset($v_item['sign_val']) ? (int)$v_item['sign_val'] : 1;
+
+                        $data[ $group_id ]['detail'][ $key ] = array(
+                            'item_report_id'   => $key,
+                            'item_report_nama' => $v_item['item_report_nama'],
+                            'item_tipe'        => $v_item['item_tipe'] ?? 'item',
+                            'debet'            => 0,
+                            'kredit'           => 0,
+                            'saldo'            => 0,
+                            'sign'             => $sign
                         );
                     }
+                }
 
-                    foreach ($d_srgi as $k_srgi => $v_srgi) {
-                        if ( $v_srgi['posisi_data'] == 'saldo' ) {
-                            $m_conf = new \Model\Storage\Conf();
-                            $sql = "
-                                select * from saldo_bulanan sb where coa = '".$v_srgi['no_coa']."' and tanggal between '".$start_date."' and '".$end_date."'
-                            ";
-                            $d_sb = $m_conf->hydrateRaw( $sql );
-                            if ( $d_sb->count() > 0 ) {
-                                $d_sb = $d_sb->toArray();
-            
-                                foreach ($d_sb as $key => $value) {
-                                    $key = $v_srgi['item_report_id'];
+                // Pass 1 -- satu query untuk semua group sekaligus (saldo kumulatif s/d end_date,
+                // dgn anchor+roll-forward kalau ada snapshot saldo_bulanan)
+                $sql = $this->buildPass1Sql($in_ids, $end_date, $anchor_date, $sql_prs_join, $sql_prs_where);
 
-                                    if ( !isset($data[ $v_srg['id'] ]['detail'][ $key ]) ) {
-                                        $data[ $v_srg['id'] ]['detail'][ $key ] = array(
-                                            'item_report_id' => $v_srgi['item_report_id'],
-                                            'item_report_nama' => $v_srgi['item_report_nama'],
-                                            'debet' => ($v_srgi['posisi'] == 'debet') ? $value['saldo_akhir'] : 0,
-                                            'kredit' => ($v_srgi['posisi'] == 'kredit') ? $value['saldo_akhir'] : 0
-                                        );
-                                    } else {
-                                        $data[ $v_srg['id'] ]['detail'][ $key ]['debet'] += ($v_srgi['posisi'] == 'debet') ? $value['saldo_akhir'] : 0;
-                                        $data[ $v_srg['id'] ]['detail'][ $key ]['kredit'] += ($v_srgi['posisi'] == 'kredit') ? $value['saldo_akhir'] : 0;
-                                    }
+                $m_conf   = new \Model\Storage\Conf();
+                $d_result = $m_conf->hydrateRaw($sql);
 
-                                    ksort($data[ $v_srg['id'] ]['detail']);
-                                }
-                            }
+                if ( $d_result->count() > 0 ) {
+                    $d_result = $d_result->toArray();
+
+                    foreach ($d_result as $value) {
+                        $group_id = $value['id_header'];
+                        $key      = $value['item_report_id'];
+                        $debet    = (float)($value['debet']  ?? 0);
+                        $kredit   = (float)($value['kredit'] ?? 0);
+                        $sign     = isset($value['sign_val']) ? (int)$value['sign_val'] : 1;
+                        $saldo    = ($debet - $kredit) * $sign;
+
+                        if ( !isset($data[ $group_id ]['detail'][ $key ]) ) {
+                            $data[ $group_id ]['detail'][ $key ] = array(
+                                'item_report_id'   => $key,
+                                'item_report_nama' => $value['item_report_nama'],
+                                'item_tipe'        => $value['item_tipe'] ?? 'item',
+                                'debet'            => $debet,
+                                'kredit'           => $kredit,
+                                'saldo'            => $saldo,
+                                'sign'             => $sign
+                            );
+                        } else {
+                            $data[ $group_id ]['detail'][ $key ]['debet']  += $debet;
+                            $data[ $group_id ]['detail'][ $key ]['kredit'] += $kredit;
+                            $data[ $group_id ]['detail'][ $key ]['saldo']  += $saldo;
                         }
+                    }
 
-                    //     $nama_kolom = 'coa_'.$v_srgi['posisi_jurnal'];
-
-                    //     $m_conf = new \Model\Storage\Conf();
-                    //     $sql = "
-                    //         select
-                    //             srgi.item_report_id as item_report_id,
-                    //             srgi.item_report_nama as item_report_nama,
-                    //             case
-                    //                 when srgi.posisi = 'debet' then
-                    //                     sum(dj.nominal)
-                    //             end as debet,
-                    //             case
-                    //                 when srgi.posisi = 'kredit' then
-                    //                     sum(dj.nominal)
-                    //             end as kredit,
-                    //             srgi.urut
-                    //         from
-                    //             (
-                    //                 select data.* from (
-                    //                     select
-                    //                         dj.id as id,
-                    //                         dj.id_header as id_header,
-                    //                         case
-                    //                             when dj.periode is not null then
-                    //                                 dj.periode
-                    //                             else
-                    //                                 dj.tanggal
-                    //                         end as tanggal,
-                    //                         dj.det_jurnal_trans_id,
-                    //                         dj.jurnal_trans_sumber_tujuan_id,
-                    //                         dj.supplier,
-                    //                         dj.perusahaan,
-                    //                         cast(dj.keterangan as varchar(250)) as keterangan,
-                    //                         dj.nominal as nominal,
-                    //                         dj.saldo,
-                    //                         dj.ref_id,
-                    //                         dj.asal,
-                    //                         dj.coa_asal,
-                    //                         dj.tujuan,
-                    //                         dj.coa_tujuan,
-                    //                         dj.unit,
-                    //                         dj.pic,
-                    //                         dj.tbl_name,
-                    //                         dj.tbl_id as tbl_id
-                    //                     from det_jurnal dj
-                    //                     where
-                    //                         dj.".$nama_kolom." = '".$v_srgi['no_coa']."'
-
-                    //                     /*
-                    //                     select
-                    //                         max(dj.id) as id,
-                    //                         max(dj.id_header) as id_header,
-                    //                         case
-                    //                             when dj.periode is not null then
-                    //                                 dj.periode
-                    //                             else
-                    //                                 dj.tanggal
-                    //                         end as tanggal,
-                    //                         dj.det_jurnal_trans_id,
-                    //                         dj.jurnal_trans_sumber_tujuan_id,
-                    //                         dj.supplier,
-                    //                         dj.perusahaan,
-                    //                         cast(dj.keterangan as varchar(250)) as keterangan,
-                    //                         max(dj.nominal) as nominal,
-                    //                         dj.saldo,
-                    //                         dj.ref_id,
-                    //                         dj.asal,
-                    //                         dj.coa_asal,
-                    //                         dj.tujuan,
-                    //                         dj.coa_tujuan,
-                    //                         dj.unit,
-                    //                         dj.pic,
-                    //                         dj.tbl_name,
-                    //                         max(dj.tbl_id) as tbl_id
-                    //                     from det_jurnal dj
-                    //                     where
-                    //                         dj.".$nama_kolom." = '".$v_srgi['no_coa']."'
-                    //                     group by
-                    //                         dj.tanggal,
-                    //                         dj.periode,
-                    //                         dj.det_jurnal_trans_id,
-                    //                         dj.jurnal_trans_sumber_tujuan_id,
-                    //                         dj.supplier,
-                    //                         dj.perusahaan,
-                    //                         cast(dj.keterangan as varchar(250)),
-                    //                         dj.saldo,
-                    //                         dj.ref_id,
-                    //                         dj.asal,
-                    //                         dj.coa_asal,
-                    //                         dj.tujuan,
-                    //                         dj.coa_tujuan,
-                    //                         dj.unit,
-                    //                         dj.pic,
-                    //                         dj.tbl_name
-                    //                     */
-                    //                 ) data
-                    //                 where
-                    //                     data.tanggal between '".$start_date."' and '".$end_date."'
-                    //             ) dj
-                    //         left join
-                    //             (
-                    //                 select srgi.*, ir.nama as item_report_nama from setting_report_group_item srgi
-                    //                 right join
-                    //                     item_report ir
-                    //                     on
-                    //                         srgi.item_report_id = ir.id
-                    //             ) srgi
-                    //             on
-                    //                 dj.".$nama_kolom." = srgi.no_coa 
-                    //         left join
-                    //             (
-                    //                 select kode, kode_gabung_perusahaan from perusahaan group by kode, kode_gabung_perusahaan
-                    //             ) p
-                    //             on
-                    //                 dj.perusahaan = p.kode
-                    //         where
-                    //             p.kode_gabung_perusahaan = '".$perusahaan."'
-                    //         group by
-                    //             srgi.item_report_id,
-                    //             srgi.item_report_nama,
-                    //             srgi.posisi,
-                    //             srgi.urut
-                    //         order by
-                    //             srgi.urut asc
-                    //     ";
-
-                    //     $d_srgi = $m_conf->hydrateRaw( $sql );
-
-                    //     if ( $d_srgi->count() > 0 ) {
-                    //         if ( !isset($data[ $v_srg['id'] ]) ) {
-                    //             $data[ $v_srg['id'] ] = array(
-                    //                 'id' => $v_srg['id'],
-                    //                 'nama' => $v_srg['nama'],
-                    //                 'detail' => null
-                    //             );
-                    //         }
-        
-                    //         $d_srgi = $d_srgi->toArray();
-        
-                    //         foreach ($d_srgi as $key => $value) {
-                    //             $key = $value['item_report_id'];
-
-                    //             if ( !isset($data[ $v_srg['id'] ]['detail'][ $key ]) ) {
-                    //                 $data[ $v_srg['id'] ]['detail'][ $key ] = array(
-                    //                     'item_report_id' => $value['item_report_id'],
-                    //                     'item_report_nama' => $value['item_report_nama'],
-                    //                     'debet' => $value['debet'],
-                    //                     'kredit' => $value['kredit']
-                    //                 );
-                    //             } else {
-                    //                 $data[ $v_srg['id'] ]['detail'][ $key ]['debet'] += $value['debet'];
-                    //                 $data[ $v_srg['id'] ]['detail'][ $key ]['kredit'] += $value['kredit'];
-                    //             }
-
-                    //             ksort($data[ $v_srg['id'] ]['detail']);
-                    //         }
-                    //     }
+                    foreach ($data_group_ids as $gid) {
+                        ksort($data[ $gid ]['detail']);
                     }
                 }
             }
+
+            // Pass 2 -- hitung group tipe 'subtotal' (mis. TOTAL AKTIVA, TOTAL PASSIVA)
+            foreach ($srg as $v_srg) {
+                if ( $data[ $v_srg['id'] ]['tipe'] !== 'subtotal' ) continue;
+
+                $ref_ids = array_filter(array_map('trim', explode(',', $v_srg['ref_group_ids'] ?? '')));
+                $sub_d = 0; $sub_k = 0; $sub_s = 0;
+
+                foreach ($ref_ids as $ref_id) {
+                    $ref_id = (int)$ref_id;
+                    if ( !empty($data[$ref_id]['detail']) ) {
+                        foreach ($data[$ref_id]['detail'] as $det) {
+                            $sub_d += (float)($det['debet']  ?? 0);
+                            $sub_k += (float)($det['kredit'] ?? 0);
+                            // 'saldo' item di sini sudah signed ((debet-kredit)*sign), tinggal dijumlah
+                            $sub_s += (float)($det['saldo']  ?? 0);
+                        }
+                    }
+                }
+
+                $data[ $v_srg['id'] ]['detail'] = array(
+                    array(
+                        'debet'     => $sub_d,
+                        'kredit'    => $sub_k,
+                        'saldo'     => $sub_s,
+                        'item_tipe' => 'subtotal',
+                        'sign'      => 1
+                    )
+                );
+            }
         }
 
-        // cetak_r( $data, 1 );
-
         $content['data'] = $data;
-        $html = $this->load->view($this->path.'list', $content, TRUE);
+        echo $this->load->view($this->path.'list', $content, TRUE);
+    }
+
+    /**
+     * Detail per item Neraca (di-klik dari list) -- pecah 1 item jadi baris per No. COA
+     * yang di-mapping ke item itu di setting_report_group_item, beserta saldo akhirnya.
+     * Pakai anchor+roll-forward yang sama dengan getData() supaya angkanya konsisten.
+     */
+    public function formDetail()
+    {
+        $params = $this->input->get('params');
+
+        $detail = $this->getDetailCoa( $params['id_header'], $params['item_report_id'], $params['bulan'], $params['tahun'], $params['perusahaan'] );
+
+        $content['data']   = $params;
+        $content['detail'] = $detail;
+        $html = $this->load->view($this->path.'detail', $content, TRUE);
 
         echo $html;
+    }
+
+    public function getDetailCoa( $id_header, $item_report_id, $bulan, $tahun, $perusahaan )
+    {
+        $id_header      = (int)$id_header;
+        $item_report_id = (int)$item_report_id;
+
+        $end_date    = $this->resolveEndDate($bulan, substr($tahun, 0, 4));
+        $anchor_date = $this->getAnchorDate($end_date);
+
+        $sql_tgl_bawah = !empty($anchor_date) ? "and tanggal > '".$anchor_date." 23:59:59'" : "";
+
+        list($sql_prs_join, $sql_prs_where) = $this->buildPrsJoin($perusahaan, 'x.unit');
+        if ( !empty($sql_prs_where) ) {
+            $sql_prs_where = str_replace("and (prs.kode", "and (x.no_coa is null or prs.kode", $sql_prs_where);
+        }
+
+        $sql_snapshot = "";
+        if ( !empty($anchor_date) ) {
+            $sql_snapshot = "
+                union all
+
+                select
+                    coa as no_coa,
+                    isnull(saldo_akhir, 0) as debet,
+                    0 as kredit,
+                    unit
+                from saldo_bulanan
+                where
+                    tanggal = '".$anchor_date."' and
+                    coa in (select no_coa from setting_report_group_item where id_header = ".$id_header." and item_report_id = ".$item_report_id.")
+            ";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                srgi.no_coa,
+                c.nama_coa,
+                isnull(sum(x.debet), 0)  as debet,
+                isnull(sum(x.kredit), 0) as kredit,
+                isnull(srgi.sign, 1)     as sign_val
+            from (
+                select no_coa, sign from setting_report_group_item
+                where id_header = ".$id_header." and item_report_id = ".$item_report_id."
+            ) srgi
+            left join
+                (
+                    select coa1.* from coa coa1
+                    right join (select max(id) as id, coa from coa group by coa) coa2 on coa1.id = coa2.id
+                ) c
+                on c.coa = srgi.no_coa
+            left join
+                (
+                    select
+                        coa_tujuan as no_coa,
+                        nominal as debet,
+                        0 as kredit,
+                        case when unit_tujuan is not null then unit_tujuan else unit end as unit
+                    from det_jurnal
+                    where tanggal <= '".$end_date."' ".$sql_tgl_bawah."
+
+                    union all
+
+                    select
+                        coa_asal as no_coa,
+                        0 as debet,
+                        nominal as kredit,
+                        unit
+                    from det_jurnal
+                    where tanggal <= '".$end_date."' ".$sql_tgl_bawah."
+                    ".$sql_snapshot."
+                ) x
+                on x.no_coa = srgi.no_coa
+            ".$sql_prs_join."
+            where 1=1 ".$sql_prs_where."
+            group by srgi.no_coa, c.nama_coa, srgi.sign
+            order by srgi.no_coa asc
+        ";
+
+        $d_result = $m_conf->hydrateRaw($sql);
+
+        $data = null;
+        if ( $d_result->count() > 0 ) {
+            $data = array();
+            foreach ($d_result->toArray() as $v) {
+                $debet  = (float)($v['debet']  ?? 0);
+                $kredit = (float)($v['kredit'] ?? 0);
+                $sign   = isset($v['sign_val']) ? (int)$v['sign_val'] : 1;
+
+                $data[] = array(
+                    'no_coa'      => $v['no_coa'],
+                    'nama_coa'    => $v['nama_coa'],
+                    'saldo_akhir' => ($debet - $kredit) * $sign
+                );
+            }
+        }
+
+        return $data;
     }
 }

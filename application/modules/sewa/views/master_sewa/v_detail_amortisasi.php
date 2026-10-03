@@ -55,13 +55,13 @@
                     </td>
 
                     <td style="vertical-align: middle; text-align: center;">
-                        <!-- KOLOM ACTION: Pemicu 2 (onclick) -->
-                        <button type="button" 
-                                class="btn btn-danger btn-sm btn-delete-amort" 
-                                onclick="ms.hapusDanCek(this)" 
-                                data-index="<?php echo $index; ?>">
-                            <i class="fa fa-trash"></i>
-                        </button>
+                        <?php if(isset($a['status'])): ?>
+                            <?php if($a['status'] == 0): ?>
+                                <button type="button" class="btn btn-danger btn-sm btn-delete-amort"  onclick="ms.hapusDanCek(this)"  data-index="<?php echo $index; ?>">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>

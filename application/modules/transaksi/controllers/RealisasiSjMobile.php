@@ -1279,14 +1279,14 @@ class RealisasiSjMobile extends Public_Controller {
         //     }
         // }
 
-        // Modules::run( 'base/InsertJurnal/exec', $this->url, 5048, 5048, 2);
+        Modules::run( 'base/InsertJurnal/exec', $this->url, 14053, 14053, 2);
 
-        $array = array(
-            11655
-        );
+        // $array = array(
+        //     11655
+        // );
 
-        foreach ($array as $k_val => $v_val) {
-            Modules::run( 'base/InsertJurnal/exec', $this->url, $v_val, $v_val, 2);
-        }
+        // foreach ($array as $k_val => $v_val) {
+        //     Modules::run( 'base/InsertJurnal/exec', $this->url, $v_val, $v_val, 2);
+        // }
     }
 }
