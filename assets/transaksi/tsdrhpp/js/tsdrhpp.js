@@ -620,6 +620,11 @@ var tsdrhpp = {
     }, // end - tutup_siklus
 
 	save: function(elm) {
+		// Pengaman klik ganda: abaikan kalau simpan sebelumnya masih berjalan
+		if ( tsdrhpp.sedang_simpan === true ) {
+			return;
+		}
+
 		$('.modal').modal('hide');
 
 		var jenis = $(elm).attr('data-jenis');
@@ -911,6 +916,8 @@ var tsdrhpp = {
 			'data_rhpp': data_rhpp
 		};
 
+		tsdrhpp.sedang_simpan = true;
+
 		$.ajax({
 			url : 'transaksi/TSDRHPP/tutup_siklus',
 			data : {
@@ -931,6 +938,13 @@ var tsdrhpp = {
 					bootbox.alert( data.message );
 				}
 			},
+			error : function(){
+				hideLoading();
+				bootbox.alert( 'Gagal menghubungi server saat menyimpan RHPP. Cek Riwayat RHPP sebelum mencoba lagi (data mungkin sudah tersimpan).' );
+			},
+			complete : function(){
+				tsdrhpp.sedang_simpan = false;
+			}
 		});
 	}, // end - save
 
