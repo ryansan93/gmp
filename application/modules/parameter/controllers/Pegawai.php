@@ -567,7 +567,7 @@ class Pegawai extends Public_Controller
 			$report['log_tables'] = $this->cloneTableRows('log_tables', "tbl_name = 'karyawan' AND tbl_id = ?", array($karyawanId));
 			$report['log_history'] = $this->cloneLogHistoryRows($logIds);
 
-			$deskripsi_provenance = 'di-injek dari GMP oleh ' . $this->userdata['detail_user']['nama_detuser'];
+			$deskripsi_provenance = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
 			$this->dbConn()->statement("
 				INSERT INTO [{$gmlDb}].dbo.[log_tables] ([tbl_name],[tbl_id],[user_id],[waktu],[deskripsi],[_action])
 				VALUES ('karyawan', ?, ?, GETDATE(), ?, 'insert')

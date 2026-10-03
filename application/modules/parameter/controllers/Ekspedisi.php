@@ -1079,7 +1079,7 @@ class Ekspedisi extends Public_Controller {
 			$report['log_tables'] = $this->cloneTableRows('log_tables', "tbl_name = 'ekspedisi' AND tbl_id = ?", array($ekspedisiId));
 			$report['log_history'] = $this->cloneLogHistoryRows($logIds);
 
-			$deskripsi_provenance = 'di-injek dari GMP oleh ' . $this->userdata['detail_user']['nama_detuser'];
+			$deskripsi_provenance = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
 			$this->dbConn()->statement("
 				INSERT INTO [{$gmlDb}].dbo.[log_tables] ([tbl_name],[tbl_id],[user_id],[waktu],[deskripsi],[_action])
 				VALUES ('ekspedisi', ?, ?, GETDATE(), ?, 'insert')
@@ -1087,6 +1087,10 @@ class Ekspedisi extends Public_Controller {
 
 			$this->result['status'] = 1;
 			$this->result['message'] = "Data ekspedisi {$ekspedisi->nama} ({$nomor}) berhasil di-clone ke GML.";
+			// Ringkasan salin file lampiran supaya kelihatan kalau ada file yg dilewati (mis. app_path salah / file sumber tdk ada)
+			$lf = $report['lampiran_file'];
+			$this->result['message'] .= '<br><br>File lampiran: ' . (int) $lf['copied'] . ' disalin, ' . (int) $lf['identik'] . ' identik (dilewati), ' . (int) $lf['renamed'] . ' diganti nama, ' . (int) $lf['dilewati'] . ' dilewati.'
+			    . ( empty($lf['catatan']) ? '' : '<br>' . implode('<br>', array_map('htmlspecialchars', $lf['catatan'])) );
 			$this->result['content'] = $report;
 		} catch (\Exception $e) {
 			$this->result['message'] = 'Gagal clone ke GML: ' . $e->getMessage();
