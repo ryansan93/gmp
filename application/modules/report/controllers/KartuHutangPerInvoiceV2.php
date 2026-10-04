@@ -440,6 +440,18 @@ class KartuHutangPerInvoiceV2 extends Public_Controller {
 
                 union all
 
+                /* DN DOC (dn_post_det, jenis_dn='DOC') -- sama seperti DN OVK: DN MENAMBAH hutang invoice (kebalikan CN).
+                   Mulai 2026-09 ada DN DOC (price adjustment, dijurnal lewat memorial Cr 21180.200). Pembayaran realisasi sudah
+                   memuat nilai DN, jadi tanpa cabang ini hutang DOC tampak kurang & saldo negatif sebesar total DN. */
+                select dpd.nomor, dp.tanggal, kpd_dn.supplier, dpd.pakai as total, konfird_dn.unit, dp.no_dn as kode_trans, 'DN' as jenis_trans, 'DOC' as jenis_hutang
+                from dn_post_det dpd
+                left join dn_post dp on dp.id = dpd.id_header
+                left join konfirmasi_pembayaran_doc kpd_dn on kpd_dn.nomor = dpd.nomor
+                left join #konfir_helper konfird_dn on konfird_dn.nomor = dpd.nomor
+                where dp.jenis_dn = 'DOC'
+
+                union all
+
                 /* DN (dn_post_det, jenis_dn='OVK') -- BEDA arah dari CN: DN justru MENAMBAH hutang,
                    bukan mengurangi. Terverifikasi empiris: invoice BYV/10/25/00156 (konfirmasi
                    18.259.299,25) + DN ini (91.018,50) = 18.350.317,75, PERSIS sama dgn Realisasi

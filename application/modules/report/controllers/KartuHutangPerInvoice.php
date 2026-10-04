@@ -371,6 +371,18 @@ class KartuHutangPerInvoice extends Public_Controller {
 
                 union all
 
+                /* DN DOC (dn_post_det, jenis_dn='DOC') -- sama seperti DN OVK: DN MENAMBAH hutang invoice (kebalikan CN).
+                   Mulai 2026-09 ada DN DOC (price adjustment, dijurnal lewat memorial Cr 21180.200). Pembayaran realisasi sudah
+                   memuat nilai DN, jadi tanpa cabang ini hutang DOC tampak kurang & saldo negatif sebesar total DN. */
+                select dpd.nomor, dp.tanggal, kpd_dn.supplier, dpd.pakai as total, konfird_dn.unit, dp.no_dn as kode_trans, 'DN' as jenis_trans, 'DOC' as jenis_hutang
+                from dn_post_det dpd
+                left join dn_post dp on dp.id = dpd.id_header
+                left join konfirmasi_pembayaran_doc kpd_dn on kpd_dn.nomor = dpd.nomor
+                left join #v2_kh_doc konfird_dn on konfird_dn.nomor = dpd.nomor
+                where dp.jenis_dn = 'DOC'
+
+                union all
+
                 select dpd.nomor, dp.tanggal, kpv.supplier, dpd.pakai as total, konfirv2.unit, dp.no_dn as kode_trans, 'DN' as jenis_trans, (case when kpv.supplier = '19B004' then 'OVK ORP' else 'OVK NON ORP' end) as jenis_hutang
                 from dn_post_det dpd
                 left join dn_post dp on dp.id = dpd.id_header
