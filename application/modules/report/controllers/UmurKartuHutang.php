@@ -65,6 +65,7 @@ class UmurKartuHutang extends Public_Controller {
             array('value' => 'PAKAN',       'label' => 'PAKAN'),
             array('value' => 'OVK ORP',     'label' => 'OVK ORP'),
             array('value' => 'OVK NON ORP', 'label' => 'OVK NON ORP'),
+            array('value' => 'PERALATAN',   'label' => 'PERALATAN'),
         );
     }
 
@@ -700,7 +701,7 @@ class UmurKartuHutang extends Public_Controller {
 
                         union all
 
-                        select op.tgl_order as tanggal, op.no_order as nomor, op.supplier, op.total, 'LAINNYA' as jenis_hutang from order_peralatan op
+                        select op.tgl_order as tanggal, op.no_order as nomor, op.supplier, op.total, 'PERALATAN' as jenis_hutang from order_peralatan op
                         where
                             op.tgl_order < '".$start_date."'
 
@@ -1136,7 +1137,7 @@ class UmurKartuHutang extends Public_Controller {
         
                         union all
         
-                        select op.tgl_order as tanggal, op.no_order as nomor, op.supplier, op.total, op.no_order as kode_trans, 'LAINNYA' as jenis_hutang from order_peralatan op
+                        select op.tgl_order as tanggal, op.no_order as nomor, op.supplier, op.total, op.no_order as kode_trans, 'PERALATAN' as jenis_hutang from order_peralatan op
                         where
                             op.tgl_order between '".$start_date."' and '".$end_date."'
 
@@ -1241,7 +1242,7 @@ class UmurKartuHutang extends Public_Controller {
 
                         union all
 
-                        select bp.tgl_bayar as tanggal, op.supplier, bp.no_order as nomor, 0 as debet, sum(bp.jml_bayar+bp.saldo) as kredit, bp.no_faktur as kode_trans, 'LAINNYA' as jenis_hutang from bayar_peralatan bp
+                        select bp.tgl_bayar as tanggal, op.supplier, bp.no_order as nomor, 0 as debet, sum(bp.jml_bayar+bp.saldo) as kredit, bp.no_faktur as kode_trans, 'PERALATAN' as jenis_hutang from bayar_peralatan bp
                         left join
                             order_peralatan op
                             on
