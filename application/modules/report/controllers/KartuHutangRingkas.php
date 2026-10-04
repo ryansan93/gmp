@@ -631,6 +631,15 @@ class KartuHutangRingkas extends Public_Controller {
             /* ============================================================================
                END V2-PORTED BLOCK
                ============================================================================ */
+            /* Supplier per nomor invoice: baris sumber/pembayaran yg supplier-nya kosong (mis. memorial koreksi tanpa
+               supplier) dialihkan ke supplier invoice aslinya spy tdk muncul sbg baris tanpa nama. */
+            IF OBJECT_ID('tempdb..#v2_supplier_nomor') IS NOT NULL BEGIN DROP TABLE #v2_supplier_nomor END
+            select nomor, max(supplier) as supplier
+            into #v2_supplier_nomor
+            from #v2_sumber_hutang
+            where nullif(supplier, '') is not null
+            group by nomor
+            CREATE UNIQUE CLUSTERED INDEX ix_v2_supplier_nomor ON #v2_supplier_nomor(nomor)
 
             select 
                 data.supplier,
@@ -1266,18 +1275,20 @@ class KartuHutangRingkas extends Public_Controller {
                         cast(null as varchar(10)) as unit
                     from
                     (
-                        select supplier, total as debet, 0 as kredit, case when jenis_hutang in ('OVK ORP', 'OVK NON ORP') then 'OVK' else jenis_hutang end as jenis
-                        from #v2_sumber_hutang
-                        where tanggal < '".$start_date."'
+                        select isnull(nullif(x.supplier, ''), sn.supplier) as supplier, x.total as debet, 0 as kredit, case when x.jenis_hutang in ('OVK ORP', 'OVK NON ORP') then 'OVK' else x.jenis_hutang end as jenis
+                        from #v2_sumber_hutang x
+                        left join #v2_supplier_nomor sn on sn.nomor = x.nomor
+                        where x.tanggal < '".$start_date."'
 
                         union all
 
                         /* Sama dgn Kartu Hutang Lengkap: pembayaran hanya dihitung utk invoice yg sudah ada (tanggal < awal periode);
                            pembayaran utk invoice yg belum/tdk ada di sumber hutang tidak ikut Saldo Awal. */
-                        select supplier, 0 as debet, total as kredit, case when jenis_hutang in ('OVK ORP', 'OVK NON ORP') then 'OVK' else jenis_hutang end as jenis
-                        from #v2_pembayaran
-                        where tanggal < '".$start_date."'
-                          and nomor in (select nomor from #v2_sumber_hutang where tanggal < '".$start_date."')
+                        select isnull(nullif(x.supplier, ''), sn.supplier) as supplier, 0 as debet, x.total as kredit, case when x.jenis_hutang in ('OVK ORP', 'OVK NON ORP') then 'OVK' else x.jenis_hutang end as jenis
+                        from #v2_pembayaran x
+                        left join #v2_supplier_nomor sn on sn.nomor = x.nomor
+                        where x.tanggal < '".$start_date."'
+                          and x.nomor in (select nomor from #v2_sumber_hutang where tanggal < '".$start_date."')
                     ) v2sa
                     group by
                         v2sa.supplier,
@@ -1895,15 +1906,17 @@ class KartuHutangRingkas extends Public_Controller {
                         cast(null as varchar(10)) as unit
                     from
                     (
-                        select supplier, total as debet, 0 as kredit, case when jenis_hutang in ('OVK ORP', 'OVK NON ORP') then 'OVK' else jenis_hutang end as jenis
-                        from #v2_sumber_hutang
-                        where tanggal between '".$start_date."' and '".$end_date."'
+                        select isnull(nullif(x.supplier, ''), sn.supplier) as supplier, x.total as debet, 0 as kredit, case when x.jenis_hutang in ('OVK ORP', 'OVK NON ORP') then 'OVK' else x.jenis_hutang end as jenis
+                        from #v2_sumber_hutang x
+                        left join #v2_supplier_nomor sn on sn.nomor = x.nomor
+                        where x.tanggal between '".$start_date."' and '".$end_date."'
 
                         union all
 
-                        select supplier, 0 as debet, total as kredit, case when jenis_hutang in ('OVK ORP', 'OVK NON ORP') then 'OVK' else jenis_hutang end as jenis
-                        from #v2_pembayaran
-                        where tanggal between '".$start_date."' and '".$end_date."'
+                        select isnull(nullif(x.supplier, ''), sn.supplier) as supplier, 0 as debet, x.total as kredit, case when x.jenis_hutang in ('OVK ORP', 'OVK NON ORP') then 'OVK' else x.jenis_hutang end as jenis
+                        from #v2_pembayaran x
+                        left join #v2_supplier_nomor sn on sn.nomor = x.nomor
+                        where x.tanggal between '".$start_date."' and '".$end_date."'
                     ) v2t
                     group by
                         v2t.supplier,
