@@ -471,6 +471,8 @@ class KartuHutangRingkas extends Public_Controller {
                             on
                                 konfir.nomor = dpd.nomor
                         where
+                            /* DN DOC dikecualikan: memorialnya (coa_asal 21180.200) sudah dihitung di cabang INVOICE LEWAT MEMO, jangan dobel. */
+                            dp.jenis_dn <> 'DOC' and
                             dp.tanggal < '".$start_date."'
 
                         union all
@@ -1069,6 +1071,8 @@ class KartuHutangRingkas extends Public_Controller {
                             on
                                 konfir.nomor = dpd.nomor
                         where
+                            /* DN DOC dikecualikan: memorialnya (coa_asal 21180.200) sudah dihitung di cabang INVOICE LEWAT MEMO, jangan dobel. */
+                            dp.jenis_dn <> 'DOC' and
                             dp.tanggal between '".$start_date."' and '".$end_date."'
 
                         union all
