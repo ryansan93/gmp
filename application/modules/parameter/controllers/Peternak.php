@@ -2229,9 +2229,10 @@ class Peternak extends Public_Controller {
      * Clone 1 data peternak (mitra versi terbaru beserta seluruh struktur turunannya -
      * telepon, mitra_mapping/perwakilan, kandang, bangunan_kandang, mitra_posisi,
      * lampiran + file fisiknya) dari database aplikasi ini ke database GML (perusahaan
-     * lain hasil fitur "Clone Perusahaan" - lihat base/CloneCompany.php). ID/nomor
-     * dipertahankan identik ke sumber; ditolak kalau nomor itu ternyata SUDAH ADA di
-     * GML (mencegah clone dobel/menimpa data orang lain).
+     * lain hasil fitur "Clone Perusahaan" - lihat base/CloneCompany.php). NOMOR peternak
+     * dipertahankan, tapi ID baris di GML SELALU dibuat baru (relasi antar tabel ditulis ulang) krn GML
+     * punya data sendiri yg id-nya bisa bertabrakan; seluruh penulisan ke GML dalam 1 transaksi.
+     * Ditolak kalau nomor itu ternyata SUDAH ADA di GML (mencegah clone dobel/menimpa data orang lain).
      *
      * Cross-database dikerjakan lewat query T-SQL 3-bagian (mis. [GML_ERP_TEST].dbo.mitra)
      * di koneksi 'default' yg SAMA (bukan koneksi PDO kedua) - valid krn kedua database
@@ -2258,6 +2259,12 @@ class Peternak extends Public_Controller {
         }
 
         $nomor = $this->input->post('nomor');
+
+        $conn = $this->dbConn();
+        $transaksiAktif = false;
+        $lampiranRows = array();
+        $lampiranMap = array();
+        $report = array();
 
         try {
             if ( empty($nomor) ) {
@@ -2299,6 +2306,14 @@ class Peternak extends Public_Controller {
                     display_json($this->result);
                     return;
                 }
+            }
+
+            // NOTE: seluruh penulisan ke GML (termasuk hapus data lama utk injek ulang) dibungkus
+            // SATU transaksi - kalau gagal di tengah jalan tidak ada sisa data setengah jadi di GML.
+            $conn->beginTransaction();
+            $transaksiAktif = true;
+
+            if ( !empty($existing) ) {
                 $this->deleteGmlMitraCascade($gmlDb, $existing['id'], $nomor);
             }
 
@@ -2312,8 +2327,6 @@ class Peternak extends Public_Controller {
                 $inMapping = implode(',', array_map('intval', $mappingIds));
                 $kandangIds = array_map(function($r){ return $r['id']; }, $this->dbConn()->select("SELECT id FROM kandang WHERE mitra_mapping IN ({$inMapping})"));
             }
-
-            $report = array();
 
             // NOTE: 4. lookup pendukung - lokasi (kecamatan mitra + tiap kandang) & perusahaan,
             // supaya alamat/nama perusahaan tidak kosong di GML.
@@ -2335,25 +2348,42 @@ class Peternak extends Public_Controller {
                 }
             }
 
-            // NOTE: 5. data inti peternak.
-            $report['mitra'] = $this->cloneTableRows('mitra', 'id = ?', array($mitraId));
-            $report['telepon_mitra'] = $this->cloneTableRows('telepon_mitra', 'mitra = ?', array($mitraId));
-            $report['mitra_mapping'] = $this->cloneTableRows('mitra_mapping', 'mitra = ?', array($mitraId));
+            // NOTE: 5. data inti peternak. ID di GML SELALU dibuat baru (max+1 / identity GML), TIDAK
+            // memakai id sumber - GML punya data sendiri sejak dipisah dari GMP sehingga id sumber bisa
+            // bertabrakan dgn data lain di GML (kasus 26M0900: id mitra 2040 & lampiran 15883 sudah
+            // dipakai peternak lain di GML). Relasi antar tabel ditulis ulang pakai peta id lama->baru.
+            $mitraMap = $this->cloneTableRowsRemap('mitra', 'id = ?', array($mitraId), array('_prev_mitra' => 'NULL'));
+            $newMitraId = (int) $mitraMap[$mitraId];
+            $report['mitra'] = count($mitraMap);
 
+            $report['telepon_mitra'] = count($this->cloneTableRowsRemap('telepon_mitra', 'mitra = ?', array($mitraId), array(
+                'mitra' => (string) $newMitraId,
+            )));
+            $mappingMap = $this->cloneTableRowsRemap('mitra_mapping', 'mitra = ?', array($mitraId), array(
+                'mitra' => (string) $newMitraId,
+            ));
+            $report['mitra_mapping'] = count($mappingMap);
+
+            $kandangMap = array();
+            $report['bangunan_kandang'] = 0;
             if ( !empty($kandangIds) ) {
                 $inMapping = implode(',', array_map('intval', $mappingIds));
-                $report['kandang'] = $this->cloneTableRows('kandang', "mitra_mapping IN ({$inMapping})");
+                $kandangMap = $this->cloneTableRowsRemap('kandang', "mitra_mapping IN ({$inMapping})", array(), array(
+                    'mitra_mapping' => $this->mapExpr($mappingMap, 's.[mitra_mapping]'),
+                ));
 
                 $inKandang = implode(',', array_map('intval', $kandangIds));
-                $report['bangunan_kandang'] = $this->cloneTableRows('bangunan_kandang', "kandang IN ({$inKandang})");
-            } else {
-                $report['kandang'] = 0;
-                $report['bangunan_kandang'] = 0;
+                $report['bangunan_kandang'] = count($this->cloneTableRowsRemap('bangunan_kandang', "kandang IN ({$inKandang})", array(), array(
+                    'kandang' => $this->mapExpr($kandangMap, 's.[kandang]'),
+                )));
             }
+            $report['kandang'] = count($kandangMap);
 
-            $report['mitra_posisi'] = $this->cloneTableRows('mitra_posisi', 'nomor = ?', array($nomor));
+            $report['mitra_posisi'] = count($this->cloneTableRowsRemap('mitra_posisi', 'nomor = ?', array($nomor), array(
+                'kandang' => $this->mapExpr($kandangMap, 's.[kandang]'),
+            )));
 
-            // NOTE: 6. lampiran (mitra + tiap kandang) + file fisiknya.
+            // NOTE: 6. lampiran (mitra + tiap kandang). File fisiknya disalin SETELAH transaksi commit.
             $lampiranWhere = "(tabel = 'mitra' AND tabel_id = ?)";
             $lampiranBinds = array($mitraId);
             if ( !empty($kandangIds) ) {
@@ -2362,22 +2392,36 @@ class Peternak extends Public_Controller {
             }
 
             $lampiranRows = $this->dbConn()->select("SELECT * FROM lampiran WHERE {$lampiranWhere}", $lampiranBinds);
-            $report['lampiran'] = $this->cloneTableRows('lampiran', $lampiranWhere, $lampiranBinds);
-            $report['lampiran_file'] = $this->copyLampiranFiles($lampiranRows);
+            $lampiranMap = $this->cloneTableRowsRemap('lampiran', $lampiranWhere, $lampiranBinds, array(
+                'tabel_id' => "CASE WHEN s.[tabel] = 'mitra' THEN " . $newMitraId . " ELSE " . $this->mapExpr($kandangMap, 's.[tabel_id]') . " END",
+            ));
+            $report['lampiran'] = count($lampiranMap);
 
             // NOTE: 7. riwayat log_tables (kolom "Keterangan" di list Peternak dibaca dari
             // sini) + snapshot log_history (write-only, tidak ada fitur yg membacanya balik,
             // tetap di-clone atas permintaan eksplisit utk kelengkapan audit) + 1 catatan baru
             // langsung di GML sbg jejak provenance data hasil clone.
-            $logIds = array_map(function($r){ return $r['id']; }, $this->dbConn()->select("SELECT id FROM log_tables WHERE tbl_name = 'mitra' AND tbl_id = ?", array($mitraId)));
-            $report['log_tables'] = $this->cloneTableRows('log_tables', "tbl_name = 'mitra' AND tbl_id = ?", array($mitraId));
-            $report['log_history'] = $this->cloneLogHistoryRows($logIds);
+            $logMap = $this->cloneTableRowsRemap('log_tables', "tbl_name = 'mitra' AND tbl_id = ?", array($mitraId), array(
+                'tbl_id' => "'" . $newMitraId . "'",
+            ));
+            $report['log_tables'] = count($logMap);
+            $report['log_history'] = $this->cloneLogHistoryRows($logMap);
 
             $deskripsi_provenance = 'di-submit oleh ' . $this->userdata['detail_user']['nama_detuser'];
             $this->dbConn()->statement("
                 INSERT INTO [{$gmlDb}].dbo.[log_tables] ([tbl_name],[tbl_id],[user_id],[waktu],[deskripsi],[_action])
                 VALUES ('mitra', ?, ?, GETDATE(), ?, 'insert')
-            ", array($mitraId, $this->userid, $deskripsi_provenance));
+            ", array((string) $newMitraId, $this->userid, $deskripsi_provenance));
+
+            $conn->commit();
+            $transaksiAktif = false;
+
+            // NOTE: 8. file fisik lampiran (di luar transaksi - file tdk bisa di-rollback). Update path
+            // (kalau nama file bentrok & di-rename) dicari lewat id BARU di GML.
+            foreach ($lampiranRows as $i => $row) {
+                $lampiranRows[$i]['id'] = isset($lampiranMap[$row['id']]) ? $lampiranMap[$row['id']] : $row['id'];
+            }
+            $report['lampiran_file'] = $this->copyLampiranFiles($lampiranRows);
 
             $this->result['status'] = 1;
             $this->result['message'] = "Data peternak {$mitra->nama} ({$nomor}) berhasil di-clone ke GML.";
@@ -2387,6 +2431,9 @@ class Peternak extends Public_Controller {
                 . ( empty($lf['catatan']) ? '' : '<br>' . implode('<br>', array_map('htmlspecialchars', $lf['catatan'])) );
             $this->result['content'] = $report;
         } catch (\Exception $e) {
+            if ( $transaksiAktif ) {
+                try { $conn->rollBack(); } catch (\Exception $e2) {}
+            }
             $this->result['message'] = 'Gagal clone ke GML: ' . $e->getMessage();
         }
 
@@ -2518,6 +2565,108 @@ class Peternak extends Public_Controller {
     }
 
     /**
+     * Ambil MAX(id) tabel di GML sambil mengunci tabel itu sampai transaksi selesai (TABLOCKX +
+     * HOLDLOCK) supaya 2 clone bersamaan tidak membagikan id yg sama. Hanya valid di dalam transaksi.
+     */
+    private function lockMaxId($gmlDb, $tbl)
+    {
+        $row = $this->dbConn()->selectOne("SELECT ISNULL(MAX([id]), 0) AS mx FROM [{$gmlDb}].dbo.[{$tbl}] WITH (TABLOCKX, HOLDLOCK)");
+        return (int) $row['mx'];
+    }
+
+    /**
+     * Ekspresi SQL pemetaan id lama -> id baru dari array [lama => baru] (lewat tabel VALUES inline).
+     * $colExpr = kolom/ekspresi sumber yg dipetakan. Peta kosong -> NULL, id yg tidak ada di peta -> NULL.
+     */
+    private function mapExpr($map, $colExpr)
+    {
+        if ( empty($map) ) {
+            return 'NULL';
+        }
+        $vals = array();
+        foreach ($map as $old => $new) {
+            $vals[] = '(' . (int) $old . ',' . (int) $new . ')';
+        }
+        return "(SELECT v.n FROM (VALUES " . implode(',', $vals) . ") v(o, n) WHERE v.o = {$colExpr})";
+    }
+
+    /**
+     * Clone baris tabel $tbl (yg cocok $whereSql di sumber) ke tabel yg sama di GML dgn ID BARU:
+     *  - tabel TANPA identity: id baru = MAX(id) GML + 1, berurutan sesuai urutan id sumber;
+     *  - tabel dgn identity: kolom id dilewati, diisi identity GML sendiri.
+     * $overrides = [kolom => ekspresi SQL] pengganti nilai kolom itu (alias sumber = s), dipakai utk menulis
+     * ulang kolom relasi (FK) dgn id baru. Return peta [id lama => id baru]. Harus dipanggil di dlm transaksi.
+     */
+    private function cloneTableRowsRemap($tbl, $whereSql, $whereBinds = array(), $overrides = array())
+    {
+        $gmlDb = $this->getGmlDbName();
+
+        $cols = $this->dbConn()->select("
+            SELECT c.name, c.is_identity, c.is_computed
+            FROM sys.columns c
+            WHERE c.object_id = OBJECT_ID(?)
+            ORDER BY c.column_id
+        ", array($tbl));
+
+        $srcRows = $this->dbConn()->select("SELECT [id] FROM [{$tbl}] WHERE {$whereSql} ORDER BY [id]", $whereBinds);
+        $srcIds = array_map(function($r){ return (int) $r['id']; }, $srcRows);
+        if ( empty($srcIds) ) {
+            return array();
+        }
+
+        $insertCols = array();
+        $selectExprs = array();
+        $hasIdentity = false;
+        foreach ($cols as $c) {
+            if ( !empty($c['is_computed']) ) {
+                continue;
+            }
+            if ( !empty($c['is_identity']) ) {
+                $hasIdentity = true;
+                continue;
+            }
+            $insertCols[] = '[' . $c['name'] . ']';
+            $selectExprs[] = array_key_exists($c['name'], $overrides) ? $overrides[$c['name']] : 's.[' . $c['name'] . ']';
+        }
+
+        if ( empty($insertCols) ) {
+            throw new Exception("Tabel '{$tbl}' tidak ditemukan di skema (pastikan skema GML sudah di-clone lewat fitur Clone Perusahaan).");
+        }
+
+        $targetTbl = "[{$gmlDb}].dbo.[{$tbl}]";
+        $base = $this->lockMaxId($gmlDb, $tbl);
+
+        if ( !$hasIdentity ) {
+            $idx = array_search('[id]', $insertCols);
+            if ( $idx === false ) {
+                throw new Exception("Tabel '{$tbl}' tidak punya kolom id.");
+            }
+            $selectExprs[$idx] = "({$base} + ROW_NUMBER() OVER (ORDER BY s.[id]))";
+        }
+
+        $this->dbConn()->statement(
+            "INSERT INTO {$targetTbl} (" . implode(', ', $insertCols) . ") SELECT " . implode(', ', $selectExprs) . " FROM [{$tbl}] s WHERE {$whereSql} ORDER BY s.[id]",
+            $whereBinds
+        );
+
+        if ( $hasIdentity ) {
+            $newRows = $this->dbConn()->select("SELECT [id] FROM {$targetTbl} WHERE [id] > ? ORDER BY [id]", array($base));
+            $newIds = array_map(function($r){ return (int) $r['id']; }, $newRows);
+        } else {
+            $newIds = array();
+            foreach ($srcIds as $i => $_) {
+                $newIds[] = $base + $i + 1;
+            }
+        }
+
+        if ( count($newIds) !== count($srcIds) ) {
+            throw new Exception("Jumlah baris '{$tbl}' yang masuk ke GML (" . count($newIds) . ") tidak sama dgn sumber (" . count($srcIds) . ").");
+        }
+
+        return array_combine($srcIds, $newIds);
+    }
+
+    /**
      * Clone baris log_history.log_tables (snapshot JSON per perubahan, ditulis Event.php
      * saat save/update/delete) yg id_header-nya ada di $logTableIds, dari koneksi 'log'
      * (log_history_gmp_erp2) ke 'gml_log' (log_history_GML_ERP_TEST) - pasangan database
@@ -2528,10 +2677,10 @@ class Peternak extends Public_Controller {
      * ada tampilan di GML yg butuh ini. Return 0 (skip diam2, bukan error) kalau koneksi
      * 'log'/'gml_log' belum lengkap dikonfigurasi.
      */
-    private function cloneLogHistoryRows($logTableIds)
+    private function cloneLogHistoryRows($logMap)
     {
-        $logTableIds = array_values(array_unique(array_filter($logTableIds, function($v){ return !empty($v); })));
-        if ( empty($logTableIds) ) {
+        // $logMap = [id log_tables sumber => id log_tables baru di GML] -> id_header di log_history GML ditulis ulang.
+        if ( empty($logMap) ) {
             return 0;
         }
 
@@ -2545,15 +2694,16 @@ class Peternak extends Public_Controller {
 
         $sourceLogDb = $conn['log']['database'];
         $targetLogDb = $conn['gml_log']['database'];
-        $inIds = implode(',', array_map('intval', $logTableIds));
+        $inOld = implode(',', array_map('intval', array_keys($logMap)));
+        $inNew = implode(',', array_map('intval', array_values($logMap)));
 
         $this->dbConn()->statement("
             INSERT INTO [{$targetLogDb}].dbo.[log_tables] ([id_header], [_json])
-            SELECT [id_header], [_json] FROM [{$sourceLogDb}].dbo.[log_tables]
-            WHERE id_header IN ({$inIds})
+            SELECT " . $this->mapExpr($logMap, 's.[id_header]') . ", s.[_json] FROM [{$sourceLogDb}].dbo.[log_tables] s
+            WHERE s.id_header IN ({$inOld})
         ");
 
-        $countRow = $this->dbConn()->selectOne("SELECT COUNT(*) AS jml FROM [{$targetLogDb}].dbo.[log_tables] WHERE id_header IN ({$inIds})");
+        $countRow = $this->dbConn()->selectOne("SELECT COUNT(*) AS jml FROM [{$targetLogDb}].dbo.[log_tables] WHERE id_header IN ({$inNew})");
         return (int) $countRow['jml'];
     }
 
