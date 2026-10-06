@@ -170,19 +170,19 @@ class VerifikasiPembayaran extends Public_Controller
             from
             (
                 select
-                    rpd.transaksi as jenis_transaksi,
+                    (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) as jenis_transaksi,
                     case
-                        when rpd.transaksi like 'OA PAKAN' then
+                        when (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'OA PAKAN' then
                             'ekspedisi'
-                        when rpd.transaksi like 'PLASMA' then
+                        when (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'PLASMA' then
                             'mitra'
                         else
                             'supplier'
                     end as jenis_supl,
                     case
-                        when rpd.transaksi like 'OA PAKAN' then
+                        when (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'OA PAKAN' then
                             rp.ekspedisi
-                        when rpd.transaksi like 'PLASMA' then
+                        when (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'PLASMA' then
                             rp.peternak
                         else
                             rp.supplier
@@ -203,6 +203,11 @@ class VerifikasiPembayaran extends Public_Controller
                     'realisasi_pembayaran' as tbl_name
                 from realisasi_pembayaran_det rpd
                 left join
+                    dn dd
+                    on
+                        dd.nomor = rpd.no_bayar and
+                        rpd.transaksi = 'DN'
+                left join
                     realisasi_pembayaran rp
                     on
                         rpd.id_header = rp.id
@@ -214,6 +219,7 @@ class VerifikasiPembayaran extends Public_Controller
                     rp.status = ".$status."
                 group by
                     rpd.transaksi,
+                    dd.jenis_dn,
                     rp.ekspedisi,
                     rp.peternak,
                     rp.supplier,
@@ -457,17 +463,17 @@ class VerifikasiPembayaran extends Public_Controller
                 (
                     select
                         case
-                            when rpd.transaksi like 'OA PAKAN' then
+                            when (case when rpd.transaksi = 'DN' then (case (select top 1 dd.jenis_dn from dn dd where dd.nomor = rpd.no_bayar) when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'OA PAKAN' then
                                 'ekspedisi'
-                            when rpd.transaksi like 'PLASMA' then
+                            when (case when rpd.transaksi = 'DN' then (case (select top 1 dd.jenis_dn from dn dd where dd.nomor = rpd.no_bayar) when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'PLASMA' then
                                 'mitra'
                             else
                                 'supplier'
                         end as jenis_supl,
                         case
-                            when rpd.transaksi like 'OA PAKAN' then
+                            when (case when rpd.transaksi = 'DN' then (case (select top 1 dd.jenis_dn from dn dd where dd.nomor = rpd.no_bayar) when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'OA PAKAN' then
                                 rp.ekspedisi
-                            when rpd.transaksi like 'PLASMA' then
+                            when (case when rpd.transaksi = 'DN' then (case (select top 1 dd.jenis_dn from dn dd where dd.nomor = rpd.no_bayar) when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'PLASMA' then
                                 rp.peternak
                             else
                                 rp.supplier
@@ -694,6 +700,21 @@ class VerifikasiPembayaran extends Public_Controller
                                 '' as lampiran,
                                 'SEWA' as jenis
                             from ms_sewa_termin t
+
+                            union all
+
+                            select
+                                d.tanggal as tanggal,
+                                d.nomor as kode_trans,
+                                cast(d.nomor as varchar(50)) as no_inv,
+                                cast(null as varchar(50)) as no_sj,
+                                d.tot_dn as bruto,
+                                0 as pph,
+                                '' as lampiran,
+                                'DN' as jenis
+                            from dn d
+                            where
+                                d.tipe_dn = 'LANGSUNG'
                         ) konfir_pembayaran
                         on
                             rpd.no_bayar = konfir_pembayaran.kode_trans
@@ -1193,7 +1214,7 @@ class VerifikasiPembayaran extends Public_Controller
                 // (kredit bank tanpa lawan). Hapus kondisi hanyaSewa() setelah setting jurnal dibuat.
                 \Model\Storage\MsSewaTermin_model::terapkanDariRealisasi($data['id'], 1);
 
-                if ( !\Model\Storage\MsSewaTermin_model::hanyaSewa($data['id']) ) {
+                if ( !\Model\Storage\Dn_model::tanpaJurnalOtomatis($data['id']) ) {
                     Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, $data['tbl_name'], $data['tgl_bayar']);
                 }
 
@@ -1390,7 +1411,7 @@ class VerifikasiPembayaran extends Public_Controller
                     $tgl_bayar = $data['tgl_bayar'];
                 }
 
-                if ( !\Model\Storage\MsSewaTermin_model::hanyaSewa($data['id']) ) {
+                if ( !\Model\Storage\Dn_model::tanpaJurnalOtomatis($data['id']) ) {
                     Modules::run( 'base/InsertJurnal/exec', $this->url, $data['id'], $data['id'], 2, null, $tgl_bayar);
                 }
 

@@ -2,7 +2,7 @@
 	<?php foreach ($data as $k_data => $v_data): ?>
 		<tr>
 			<td><?php echo tglIndonesia($v_data['tgl_bayar'], '-', ' '); ?></td>
-			<td class="transaksi" data-val="<?php echo $v_data['transaksi']; ?>"><?php echo $v_data['transaksi']; ?></td>
+			<td class="transaksi" data-val="<?php echo $v_data['transaksi']; ?>"><?php echo ($v_data['transaksi'] == 'DN') ? $v_data['no_bayar'] : $v_data['transaksi']; ?></td>
 			<td class="no_bayar" data-val="<?php echo $v_data['no_bayar']; ?>">
 				<?php if ( isset($v_data['lampiran']) && !empty($v_data['lampiran']) ) { ?>
 					<a href="uploads/<?php echo $v_data['lampiran']; ?>" target="_blank">

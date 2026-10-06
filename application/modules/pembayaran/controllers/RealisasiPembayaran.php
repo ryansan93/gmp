@@ -723,6 +723,17 @@ class RealisasiPembayaran extends Public_Controller
             $data = $this->get_rencana_pembayaran_sewa( $params, $id );
         }
         
+        // DN langsung (dn.tipe_dn = LANGSUNG): tagihan mandiri, ikut Jenis Transaksi yang dipilih
+        // (DOC -> DN DOC, PAKAN -> DN PKN, OVK -> DN OVK, PLASMA -> DN RHPP, OA PAKAN -> DN OA)
+        if ( !empty($params['jenis_transaksi']) ) {
+            $dn_langsung = $this->get_rencana_pembayaran_dn( $params, $id );
+            if ( count($dn_langsung) > 0 ) {
+                foreach ($dn_langsung as $k => $v) {
+                    $data[] = $v;
+                }
+            }
+        }
+
         $content['data'] = $data;
         $html = $this->load->view('pembayaran/realisasi_pembayaran/list_rencana_pembayaran', $content, true);
 
@@ -847,6 +858,179 @@ class RealisasiPembayaran extends Public_Controller
 
         return $data;
     }
+    /*
+     * DN LANGSUNG: Debit Note bertipe LANGSUNG (dn.tipe_dn) dibayar tanpa dipasang ke invoice.
+     * 1 DN = 1 baris tagihan; kunci no_bayar = dn.nomor, transaksi = 'DN'.
+     * Nilai terbayar = jumlah rpd.bayar dari realisasi berstatus 2 (dibayar); DN yang sedang
+     * diajukan di realisasi lain (status 1) tidak ditawarkan lagi.
+     * Penerima: supplier (DOC/PKN/OVK/NS), plasma (RHPP) atau ekspedisi (OA) sesuai jenis pembayaran.
+     */
+    public function get_rencana_pembayaran_dn($params, $id)
+    {
+        $data = array();
+
+        $id = !empty($id) ? (int) $id : 0;
+
+        // jenis transaksi yang dipilih -> jenis DN
+        $map_dn = array('doc' => 'DOC', 'pakan' => 'PKN', 'voadip' => 'OVK', 'peternak' => 'RHPP', 'oa pakan' => 'OA');
+
+        $jenis_dn = array();
+        foreach ( (array) $params['jenis_transaksi'] as $v_jt ) {
+            if ( isset($map_dn[ $v_jt ]) ) {
+                $jenis_dn[] = $map_dn[ $v_jt ];
+            }
+        }
+
+        $penerima = array();
+        if ( $params['jenis_pembayaran'] == 'supplier' ) {
+            $penerima = !empty($params['supplier']) ? (array) $params['supplier'] : array();
+        } else if ( $params['jenis_pembayaran'] == 'plasma' ) {
+            $penerima = !empty($params['mitra']) ? (array) $params['mitra'] : array();
+        } else if ( $params['jenis_pembayaran'] == 'ekspedisi' ) {
+            $penerima = !empty($params['ekspedisi']) ? (array) $params['ekspedisi'] : array();
+        }
+
+        if ( empty($jenis_dn) || empty($penerima) ) {
+            return $data;
+        }
+
+        $sql_unit = "";
+        if ( $params['jenis_pembayaran'] == 'supplier' && !empty($params['kode_unit_ovk']) && !in_array('all', $params['kode_unit_ovk']) ) {
+            $sql_unit = "and d.unit in ('".implode("', '", $params['kode_unit_ovk'])."')";
+        }
+
+        $m_conf = new \Model\Storage\Conf();
+        $sql = "
+            select
+                d.id,
+                d.nomor,
+                d.jenis_dn,
+                d.tanggal,
+                d.no_dok,
+                d.ket_dn,
+                d.tot_dn,
+                d.unit,
+                d.path,
+                isnull(byr.bayar, 0) as terbayar,
+                coalesce(s.nama, m.nama, e.nama) as nama_penerima
+            from dn d
+            left join
+                (
+                    select p1.nomor, p1.nama from pelanggan p1
+                    right join
+                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' and jenis <> 'ekspedisi' group by nomor) p2
+                        on
+                            p1.id = p2.id
+                ) s
+                on
+                    s.nomor = d.supplier and d.jenis_dn in ('DOC', 'PKN', 'OVK', 'NS')
+            left join
+                (
+                    select m1.nomor, m1.nama from mitra m1
+                    right join
+                        (select max(id) as id, nomor from mitra group by nomor) m2
+                        on
+                            m1.id = m2.id
+                ) m
+                on
+                    m.nomor = d.supplier and d.jenis_dn = 'RHPP'
+            left join
+                (
+                    select e1.nomor, e1.nama from ekspedisi e1
+                    right join
+                        (select max(id) as id, nomor from ekspedisi group by nomor) e2
+                        on
+                            e1.id = e2.id
+                ) e
+                on
+                    e.nomor = d.supplier and d.jenis_dn = 'OA'
+            left join
+                (
+                    select rpd.no_bayar, sum(rpd.bayar) as bayar
+                    from realisasi_pembayaran_det rpd
+                    left join
+                        realisasi_pembayaran rp
+                        on
+                            rp.id = rpd.id_header
+                    where
+                        rpd.transaksi = 'DN' and
+                        rp.status = 2 and
+                        rp.id <> ".$id."
+                    group by
+                        rpd.no_bayar
+                ) byr
+                on
+                    byr.no_bayar = d.nomor
+            where
+                d.tipe_dn = 'LANGSUNG' and
+                d.jenis_dn in ('".implode("', '", $jenis_dn)."') and
+                d.supplier in ('".implode("', '", $penerima)."') and
+                d.tanggal between '".$params['start_date']."' and '".$params['end_date']."'
+                ".$sql_unit." and
+                (
+                    d.tot_dn > isnull(byr.bayar, 0)
+                    or exists (
+                        select 1 from realisasi_pembayaran_det rpd0
+                        where
+                            rpd0.id_header = ".$id." and
+                            rpd0.no_bayar = d.nomor
+                    )
+                ) and
+                not exists (
+                    select 1 from realisasi_pembayaran_det rpd1
+                    left join
+                        realisasi_pembayaran rp1
+                        on
+                            rp1.id = rpd1.id_header
+                    where
+                        rpd1.no_bayar = d.nomor and
+                        rpd1.transaksi = 'DN' and
+                        rp1.status = 1 and
+                        rp1.id <> ".$id."
+                )
+            order by
+                d.tanggal asc,
+                d.nomor asc
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_conf->count() > 0 ) {
+            foreach ( $d_conf->toArray() as $v_dn ) {
+                $d_rpd = null;
+                if ( $id > 0 ) {
+                    $m_rpd = new \Model\Storage\RealisasiPembayaranDet_model();
+                    $d_rpd = $m_rpd->where('id_header', $id)->where('no_bayar', $v_dn['nomor'])->first();
+                }
+
+                $nominal = (float) $v_dn['tot_dn'];
+                $terbayar = (float) $v_dn['terbayar'];
+                $sisa = ($nominal > $terbayar) ? $nominal - $terbayar : 0;
+
+                $data[] = array(
+                    'tgl_bayar' => substr($v_dn['tanggal'], 0, 10),
+                    'transaksi' => 'DN',
+                    'no_bayar' => $v_dn['nomor'],
+                    'no_invoice' => $v_dn['no_dok'],
+                    'periode' => substr($v_dn['tanggal'], 0, 7),
+                    'nama_penerima' => $v_dn['nama_penerima'],
+                    'tagihan' => $nominal,
+                    'dn' => 0,
+                    'cn' => 0,
+                    'pph' => 0,
+                    'netto' => $nominal,
+                    'transfer' => $terbayar,
+                    'bayar' => $terbayar,
+                    'jumlah' => $sisa,
+                    'kode_unit' => $v_dn['unit'],
+                    'checked' => ($d_rpd) ? true : false,
+                    'lampiran' => $v_dn['path']
+                );
+            }
+        }
+
+        return $data;
+    }
+
     public function get_rencana_pembayaran_doc($params, $id)
     {
         $data = array();
@@ -1872,6 +2056,47 @@ class RealisasiPembayaran extends Public_Controller
         if ( $d_conf->count() > 0 ) {
             $data = $d_conf->toArray()[0];
 
+            if ( $data['jenis_transaksi'] == 'dn' ) {
+                // DN langsung tidak punya tabel konfirmasi: jenis transaksi dari jenis DN-nya,
+                // jenis pembayaran dari penerima realisasi, rentang tanggal dari tanggal DN
+                $m_dn_j = new \Model\Storage\Conf();
+                $d_dn_j = $m_dn_j->hydrateRaw("
+                    select top 1 d.jenis_dn from dn d
+                    right join realisasi_pembayaran_det rpd on rpd.no_bayar = d.nomor
+                    where rpd.id_header = ".((int) $id)." and rpd.transaksi = 'DN'
+                ");
+                if ( $d_dn_j->count() > 0 ) {
+                    $map_jt = array('DOC' => 'doc', 'PKN' => 'pakan', 'OVK' => 'voadip', 'RHPP' => 'peternak', 'OA' => 'oa pakan');
+                    $jd = $d_dn_j->toArray()[0]['jenis_dn'];
+                    if ( isset($map_jt[ $jd ]) ) {
+                        $data['jenis_transaksi'] = $map_jt[ $jd ];
+                    }
+                }
+
+                if ( !empty($data['supplier']) ) {
+                    $data['jenis_pembayaran'] = 'supplier';
+                } else if ( !empty($data['peternak']) ) {
+                    $data['jenis_pembayaran'] = 'plasma';
+                } else {
+                    $data['jenis_pembayaran'] = 'ekspedisi';
+                }
+
+                $m_conf_dn = new \Model\Storage\Conf();
+                $d_tgl_dn = $m_conf_dn->hydrateRaw("
+                    select min(d.tanggal) as start_date, max(d.tanggal) as end_date
+                    from dn d
+                    right join realisasi_pembayaran_det rpd on rpd.no_bayar = d.nomor
+                    where rpd.id_header = ".((int) $id)." and rpd.transaksi = 'DN'
+                ");
+                if ( $d_tgl_dn->count() > 0 ) {
+                    $tgl_dn = $d_tgl_dn->toArray()[0];
+                    if ( !empty($tgl_dn['start_date']) ) {
+                        $data['start_date'] = substr($tgl_dn['start_date'], 0, 10);
+                        $data['end_date'] = substr($tgl_dn['end_date'], 0, 10);
+                    }
+                }
+            }
+
             if ( $data['jenis_pembayaran'] == 'sewa' ) {
                 // Sewa tidak punya tabel konfirmasi: rentang tanggal diambil dari jatuh tempo termin
                 $tgl_termin = array();
@@ -2036,6 +2261,16 @@ class RealisasiPembayaran extends Public_Controller
             ";
         }
         if ( stristr($transaksi, 'peternak') !== false ) {
+            $sql = null;
+        }
+
+        if ( $transaksi == 'DN' ) {
+            $m_dn = new \Model\Storage\Dn_model();
+            $d_dn = $m_dn->where('nomor', $no_bayar)->first();
+            if ( $d_dn ) {
+                $kode_unit = $d_dn->unit;
+            }
+
             $sql = null;
         }
 
@@ -2307,6 +2542,24 @@ class RealisasiPembayaran extends Public_Controller
 
                         if ( empty($message) ) {
                             $message = 'Ada data termin sewa yang tidak di temukan, harap konfirmasi ke admin yang bersangkutan !!!<br>';
+                        }
+
+                        $message .= '<br>'.$v_det['no_bayar'];
+                    }
+
+                    continue;
+                }
+
+                // DN langsung tidak punya tabel konfirmasi: cukup pastikan DN-nya masih ada & bertipe LANGSUNG
+                if ( isset($v_det['transaksi']) && $v_det['transaksi'] == 'DN' ) {
+                    $m_dn = new \Model\Storage\Dn_model();
+                    $ada = ($m_dn->where('nomor', $v_det['no_bayar'])->where('tipe_dn', 'LANGSUNG')->count() > 0);
+
+                    if ( !$ada ) {
+                        $status = 0;
+
+                        if ( empty($message) ) {
+                            $message = 'Ada data DN langsung yang tidak di temukan, harap konfirmasi ke admin yang bersangkutan !!!<br>';
                         }
 
                         $message .= '<br>'.$v_det['no_bayar'];
