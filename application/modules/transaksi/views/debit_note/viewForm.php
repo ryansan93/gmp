@@ -12,6 +12,12 @@
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 	<div class="col-xs-12 no-padding">
+		<div class="col-xs-3 no-padding"><label class="label-control">Tipe DN</label></div>
+		<div class="col-xs-9 no-padding"><label class="label-control">: <?php echo $tipe_dn[ !empty($data['tipe_dn']) ? $data['tipe_dn'] : 'INVOICE' ]; ?></label></div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+	<div class="col-xs-12 no-padding">
 		<div class="col-xs-3 no-padding"><label class="label-control">Tanggal DN</label></div>
 		<div class="col-xs-9 no-padding"><label class="label-control">: <?php echo strtoupper(tglIndonesia($data['tanggal'], '-', ' ')); ?></label></div>
 	</div>
@@ -38,6 +44,12 @@
 	<div class="col-xs-12 no-padding">
 		<div class="col-xs-3 no-padding"><label class="label-control">Supplier</label></div>
 		<div class="col-xs-9 no-padding"><label class="label-control">: <?php echo strtoupper($data['nama_supplier'].' ('.$data['jenis'].')'); ?></label></div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+	<div class="col-xs-12 no-padding">
+		<div class="col-xs-3 no-padding"><label class="label-control">Unit</label></div>
+		<div class="col-xs-9 no-padding"><label class="label-control">: <?php echo !empty($data['unit']) ? strtoupper($data['unit']) : '-'; ?></label></div>
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">

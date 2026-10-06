@@ -72,14 +72,16 @@
 					<tr>
 						<th class="col-xs-1">Tgl. DN</th>
 						<th class="col-xs-1">No. DN</th>
-						<th class="col-xs-3">Supplier</th>
-						<th class="col-xs-5">Keterangan</th>
+						<th class="col-xs-1">Tipe</th>
+						<th class="col-xs-1">Unit</th>
+						<th class="col-xs-2">Supplier</th>
+						<th class="col-xs-4">Keterangan</th>
 						<th class="col-xs-2">Nominal</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
-						<td colspan="5">Data tidak ditemukan.</td>
+						<td colspan="7">Data tidak ditemukan.</td>
 					</tr>
 				</tbody>
 			</table>

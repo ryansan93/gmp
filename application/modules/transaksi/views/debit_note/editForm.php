@@ -25,6 +25,18 @@
 	</div>
 </div>
 <div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+	<div class="col-xs-4 no-padding">
+		<div class="col-xs-12 no-padding"><label class="label-control">Tipe DN</label></div>
+		<div class="col-xs-12 no-padding">
+			<select class="form-control tipe_dn" data-required="1">
+				<?php foreach ($tipe_dn as $key => $value): ?>
+					<option value="<?php echo $key; ?>" <?php echo ($key == (!empty($data['tipe_dn']) ? $data['tipe_dn'] : 'INVOICE')) ? 'selected' : ''; ?>><?php echo $value; ?></option>
+				<?php endforeach ?>
+			</select>
+		</div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
 	<div class="col-xs-2 no-padding" style="padding-right: 5px;">
 		<div class="col-xs-12 no-padding"><label class="label-control">Tanggal DN</label></div>
 		<div class="col-xs-12 no-padding">
@@ -60,6 +72,19 @@
 				<input type="file" onchange="showNameFile(this)" class="file_lampiran" name="" placeholder="Bukti Credit Note" data-allowtypes="pdf|PDF|jpg|JPG|jpeg|JPEG|png|PNG" style="display: none;">
 				<i class="glyphicon glyphicon-paperclip cursor-p"></i>
 			</label>
+		</div>
+	</div>
+</div>
+<div class="col-xs-12 no-padding" style="margin-bottom: 10px;">
+	<div class="col-xs-3 no-padding">
+		<div class="col-xs-12 no-padding"><label class="label-control">Unit</label></div>
+		<div class="col-xs-12 no-padding">
+			<select class="form-control unit" data-required="1">
+				<option value="">-- Pilih Unit --</option>
+				<?php foreach ($unit as $key => $value): ?>
+					<option value="<?php echo $value['kode']; ?>" <?php echo ($value['kode'] == $data['unit']) ? 'selected' : ''; ?>><?php echo strtoupper($value['kode']).' - '.strtoupper($value['nama']); ?></option>
+				<?php endforeach ?>
+			</select>
 		</div>
 	</div>
 </div>
