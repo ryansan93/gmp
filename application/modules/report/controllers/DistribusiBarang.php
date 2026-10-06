@@ -205,7 +205,7 @@ class DistribusiBarang extends Public_Controller {
                     dss.hrg_beli,
                     (dss.jumlah * dss.hrg_beli) as tot_beli,
                     krm.asal,
-                    asal.nama as nama_asal,
+                    (case when asal.nama is null and krm.asal = '' and krm.kode_trans like 'AJ%' then 'ADJUSTMENT' else asal.nama end) as nama_asal,
                     asal.kandang as kdg_asal,
                     krm.tujuan,
                     tujuan.nama as nama_tujuan,
@@ -311,6 +311,28 @@ class DistribusiBarang extends Public_Controller {
                         union all
     
                         select cast(id_asal as varchar(20)) as asal, cast(id_tujuan as varchar(20)) as tujuan, 'voadip' as jenis, no_retur as kode_trans, null as no_polisi, null as sopir, null as ekspedisi, no_retur as no_sj from retur_voadip rv
+
+                        union all
+
+                        /* ADJUSTMENT siklus (Adjustment In/Out DOC, Pakan, OVK): tidak punya dokumen pengiriman, jadi tanpa cabang ini
+                           Unit/Asal/Tujuan/No. SJ kosong. Tujuan = noreg (nama mitra, unit, kandang), No. SJ = kode adjustment. */
+                        select distinct cast('' as varchar(20)) as asal, cast(noreg as varchar(20)) as tujuan, 'pakan' as jenis, kode as kode_trans, '' as no_polisi, '' as sopir, '' as ekspedisi, kode as no_sj from adjout_pakan_siklus
+
+                        union all
+
+                        select distinct cast('' as varchar(20)) as asal, cast(noreg as varchar(20)) as tujuan, 'pakan' as jenis, kode as kode_trans, '' as no_polisi, '' as sopir, '' as ekspedisi, kode as no_sj from adjin_pakan_siklus
+
+                        union all
+
+                        select distinct cast('' as varchar(20)) as asal, cast(noreg as varchar(20)) as tujuan, 'voadip' as jenis, kode as kode_trans, '' as no_polisi, '' as sopir, '' as ekspedisi, kode as no_sj from adjout_voadip_siklus
+
+                        union all
+
+                        select distinct cast('' as varchar(20)) as asal, cast(noreg as varchar(20)) as tujuan, 'voadip' as jenis, kode as kode_trans, '' as no_polisi, '' as sopir, '' as ekspedisi, kode as no_sj from adjin_voadip_siklus
+
+                        union all
+
+                        select distinct cast('' as varchar(20)) as asal, cast(noreg as varchar(20)) as tujuan, 'doc' as jenis, kode as kode_trans, '' as no_polisi, '' as sopir, '' as ekspedisi, kode as no_sj from adjin_doc
                     ) krm
                     on
                         dss.kode_trans = krm.kode_trans and
