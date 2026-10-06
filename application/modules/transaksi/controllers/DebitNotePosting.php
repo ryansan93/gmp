@@ -101,6 +101,7 @@ class DebitNotePosting extends Public_Controller {
                         _dpd.no_dn = d.id
                 where
                     d.jenis_dn like '".$jenis_dn."'
+                    and isnull(d.tipe_dn, 'INVOICE') = 'INVOICE'
                 group by
                     d.id,
                     d.no_dok,
@@ -392,10 +393,29 @@ class DebitNotePosting extends Public_Controller {
         return $html;
     }
 
+    /**
+     * Pemakaian DN hanya boleh untuk DN bertipe DIPAKAI KE INVOICE
+     * (DN bertipe DIBAYAR LANGSUNG dibayar lewat Realisasi Pembayaran, tidak dipasang ke invoice)
+     */
+    private function cekTipeDn($id_dn) {
+        $m_dn = new \Model\Storage\Dn_model();
+        $d_dn = $m_dn->where('id', $id_dn)->first();
+
+        if ( !$d_dn ) {
+            throw new Exception('Data DN tidak ditemukan.');
+        }
+
+        if ( !empty($d_dn->tipe_dn) && $d_dn->tipe_dn != 'INVOICE' ) {
+            throw new Exception('DN '.$d_dn->nomor.' bertipe DIBAYAR LANGSUNG, tidak dapat dipakai ke invoice.');
+        }
+    }
+
     public function save() {
         $params = $this->input->post('params');
 
-        try {            
+        try {
+            $this->cekTipeDn($params['no_dn']);
+
             $m_dn = new \Model\Storage\DnPost_model();
             $m_dn->tanggal = $params['tanggal'];
             $m_dn->jenis_dn = $params['jenis_dn'];
@@ -429,7 +449,9 @@ class DebitNotePosting extends Public_Controller {
     public function edit() {
         $params = $this->input->post('params');
 
-        try {            
+        try {
+            $this->cekTipeDn($params['no_dn']);
+
             $m_dn = new \Model\Storage\DnPost_model();
             $m_dn->where('id', $params['id'])->update(
                 array(

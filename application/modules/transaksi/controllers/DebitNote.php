@@ -12,6 +12,10 @@ class DebitNote extends Public_Controller {
         'BKL' => array('nama' => 'BAKUL', 'jenis' => 'bakul'),
         'NS' => array('nama' => 'NON SAPRONAK', 'jenis' => 'supplier')
     );
+    private $tipe_dn = array(
+        'INVOICE' => 'DIPAKAI KE INVOICE (PEMAKAIAN DN)',
+        'LANGSUNG' => 'DIBAYAR LANGSUNG (TANPA INVOICE)'
+    );
     private $url;
     private $akses;
 
@@ -92,6 +96,24 @@ class DebitNote extends Public_Controller {
         echo $html;
     }
 
+    private function getUnit() {
+        $m_wilayah = new \Model\Storage\Wilayah_model();
+        $d_wilayah = $m_wilayah->where('jenis', 'UN')->orderBy('kode', 'asc')->get();
+
+        // satu baris per kode unit; nama diambil salah satu, tanpa awalan KAB / KOTA
+        $unit = array();
+        if ( $d_wilayah->count() > 0 ) {
+            foreach ( $d_wilayah->toArray() as $v_wil ) {
+                if ( !isset($unit[ $v_wil['kode'] ]) ) {
+                    $nama = trim(preg_replace('/\b(KAB|KOTA)\b\.?\s*/', '', strtoupper($v_wil['nama'])));
+                    $unit[ $v_wil['kode'] ] = array('kode' => $v_wil['kode'], 'nama' => $nama);
+                }
+            }
+        }
+
+        return array_values($unit);
+    }
+
     public function riwayat() {
         $html = null;
 
@@ -122,6 +144,8 @@ class DebitNote extends Public_Controller {
         $content['pelanggan'] = $m_plg->getDataPelanggan(0);
         $content['ekspedisi'] = $m_eks->getDataEskpedisi(0);
         $content['mitra'] = $m_mitra->getDataMitra(0);
+        $content['unit'] = $this->getUnit();
+        $content['tipe_dn'] = $this->tipe_dn;
         $content['jenis_dn'] = $this->jenis_dn;
         $content['akses'] = $this->akses;
         $html = $this->load->view($this->path.'addForm', $content, TRUE);
@@ -145,6 +169,8 @@ class DebitNote extends Public_Controller {
         $content['pelanggan'] = $m_plg->getDataPelanggan(0);
         $content['ekspedisi'] = $m_eks->getDataEskpedisi(0);
         $content['mitra'] = $m_mitra->getDataMitra(0);
+        $content['unit'] = $this->getUnit();
+        $content['tipe_dn'] = $this->tipe_dn;
         $content['jenis_dn'] = $this->jenis_dn;
         $content['akses'] = $this->akses;
         $html = $this->load->view($this->path.'editForm', $content, TRUE);
@@ -160,6 +186,7 @@ class DebitNote extends Public_Controller {
         
         $content['data'] = $data;
         $content['jenis_dn'] = $this->jenis_dn;
+        $content['tipe_dn'] = $this->tipe_dn;
         $content['akses'] = $this->akses;
         $html = $this->load->view($this->path.'viewForm', $content, TRUE);
 
@@ -190,6 +217,8 @@ class DebitNote extends Public_Controller {
             $m_dn->jenis_dn = $data['jenis_dn'];
             $m_dn->tanggal = $data['tgl_dn'];
             $m_dn->supplier = $data['supplier'];
+            $m_dn->unit = $data['unit'];
+            $m_dn->tipe_dn = $data['tipe_dn'];
             $m_dn->ket_dn = $data['ket_dn'];
             $m_dn->tot_dn = $data['nilai_dn'];
             $m_dn->no_dok = $data['no_dok'];
@@ -231,12 +260,22 @@ class DebitNote extends Public_Controller {
                 $path_name = $d_dn->path;
             }
             
+            if ( $data['tipe_dn'] == 'LANGSUNG' ) {
+                $m_conf = new \Model\Storage\Conf();
+                $d_pakai = $m_conf->hydrateRaw("select count(*) as jml from dn_post_det dpd join dn_post dp on dp.id = dpd.id_header where dp.no_dn = ".(int) $data['id']);
+                if ( $d_pakai->count() > 0 && $d_pakai->toArray()[0]['jml'] > 0 ) {
+                    throw new Exception('DN sudah dipakai ke invoice (Pemakaian DN), tipe tidak dapat diubah menjadi DIBAYAR LANGSUNG.');
+                }
+            }
+
             $m_dn = new \Model\Storage\Dn_model();
             $m_dn->where('id', $data['id'])->update(
                 array(
                     'jenis_dn' => $data['jenis_dn'],
                     'tanggal' => $data['tgl_dn'],
                     'supplier' => $data['supplier'],
+                    'unit' => $data['unit'],
+                    'tipe_dn' => $data['tipe_dn'],
                     'ket_dn' => $data['ket_dn'],
                     'tot_dn' => $data['nilai_dn'],
                     'no_dok' => $data['no_dok'],

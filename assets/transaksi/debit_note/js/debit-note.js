@@ -22,6 +22,8 @@ var dn = {
             dn.getTujuan();
         });
 		$('#riwayat').find('.supplier').select2();
+		$('#action').find('.unit').select2();
+		$('#action').find('.tipe_dn').select2();
 
         $('[data-tipe=integer],[data-tipe=angka],[data-tipe=decimal], [data-tipe=decimal3],[data-tipe=decimal4], [data-tipe=number]').each(function(){
             $(this).priceFormat(Config[$(this).data('tipe')]);
@@ -147,6 +149,8 @@ var dn = {
 						'nilai_dn': numeral.unformat($(div).find('.nilai_dn').val()),
 						'no_dok': $(div).find('.no_dok').val(),
 						'supplier': $(div).find('.supplier').select2('val'),
+						'unit': $(div).find('.unit').val(),
+						'tipe_dn': $(div).find('.tipe_dn').val(),
 						'ket_dn': $(div).find('.ket_dn').val()
 					};
                     
@@ -205,6 +209,8 @@ var dn = {
 						'nilai_dn': numeral.unformat($(div).find('.nilai_dn').val()),
 						'no_dok': $(div).find('.no_dok').val(),
 						'supplier': $(div).find('.supplier').select2('val'),
+						'unit': $(div).find('.unit').val(),
+						'tipe_dn': $(div).find('.tipe_dn').val(),
 						'ket_dn': $(div).find('.ket_dn').val()
 					};
                     
