@@ -7,6 +7,49 @@ class Dn_model extends Conf {
 	protected $primaryKey = 'id';
     public $timestamps = false;
 
+    /*
+     * TRUE bila realisasi pembayaran TIDAK boleh diposting jurnal otomatis:
+     *  - SEMUA detailnya SEWA (jurnal otomatis SEWA belum ada; diposting accounting sendiri), atau
+     *  - SEMUA detailnya SEWA / DN langsung, selama setting jurnal realisasi_pembayaran BELUM mengenali
+     *    DN langsung (docs/setting_jurnal_realisasi_dn_langsung.sql). Tanpa setting itu DN langsung hanya
+     *    menghasilkan kredit bank tanpa debet hutang. Begitu setting terpasang, DN langsung dijurnal
+     *    otomatis mengikuti jenis DN-nya (DOC / PAKAN / OVK / RHPP / OA).
+     */
+    public static function tanpaJurnalOtomatis($id_header)
+    {
+        $m_conf = new \Model\Storage\Conf();
+
+        $dn_dikenali = false;
+        $d_saj = $m_conf->hydrateRaw("
+            select top 1 case when _query like '%dnl.tipe_dn%' then 1 else 0 end as dikenali
+            from setting_automatic_jurnal
+            where tbl_name = 'realisasi_pembayaran'
+            order by tgl_berlaku desc
+        ");
+        if ( $d_saj->count() > 0 ) {
+            $dn_dikenali = ((int) $d_saj->toArray()[0]['dikenali']) == 1;
+        }
+
+        $jenis_khusus = $dn_dikenali ? "'SEWA'" : "'SEWA', 'DN'";
+
+        $sql = "
+            select
+                sum(case when rpd.transaksi in (".$jenis_khusus.") then 1 else 0 end) as khusus,
+                count(*) as semua
+            from realisasi_pembayaran_det rpd
+            where rpd.id_header = ".((int) $id_header)."
+        ";
+        $d_conf = $m_conf->hydrateRaw( $sql );
+
+        if ( $d_conf->count() > 0 ) {
+            $row = $d_conf->toArray()[0];
+
+            return ((int) $row['semua']) > 0 && ((int) $row['khusus']) == ((int) $row['semua']);
+        }
+
+        return false;
+    }
+
     public function getNextNomor($kode)
 	{
 		$id = $this->whereRaw("SUBSTRING(nomor, LEN('".$kode."')+1, 7) = '/'+cast(right(year(current_timestamp),2) as char(2))+'/'+replace(str(month(getdate()),2),' ',0)+'/'")
