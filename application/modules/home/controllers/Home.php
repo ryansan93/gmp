@@ -80,7 +80,6 @@ class Home extends Public_Controller
 		*/
 
 		// LHK
-		/*
 		$url = 'report/LHK/formAck';
 		$akses = hakAkses('/transaksi/LHK');
 		if ( !empty($akses['a_ack']) && $akses['a_ack'] == 1 ) {
@@ -98,7 +97,6 @@ class Home extends Public_Controller
 				$notif[$url]['jenis'] = 'window.open';
 			}
 		}
-		*/
 		// END - LHK
 
         return $notif;
