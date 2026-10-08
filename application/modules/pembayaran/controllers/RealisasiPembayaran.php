@@ -83,7 +83,8 @@ class RealisasiPembayaran extends Public_Controller
 
         $sql_jenis = "";
         if ( !in_array('all', $jenis) ) {
-            $sql_jenis = "and rpd.transaksi in ('".implode("', '", array_map('strtoupper', $jenis))."')";
+            // DN mengikuti jenis transaksinya (DN PKN -> PAKAN, dst), jadi filter memakai jenis hasil pemetaan
+            $sql_jenis = "and x.jt in ('".implode("', '", array_map('strtoupper', $jenis))."')";
         }
 
         $m_conf = new \Model\Storage\Conf();
@@ -130,13 +131,22 @@ class RealisasiPembayaran extends Public_Controller
                     rp.cn,
                     rp.dn,
                     rp.status,
-                    rpd.transaksi as jenis_transaksi,
+                    x.jt as jenis_transaksi,
                     rpd.bayar as jumlah
                 from realisasi_pembayaran_det rpd
+                left join
+                    dn dd
+                    on
+                        dd.nomor = rpd.no_bayar and
+                        rpd.transaksi = 'DN'
                 left join
                     realisasi_pembayaran rp
                     on
                         rpd.id_header = rp.id
+                cross apply
+                    (
+                        select (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) as jt
+                    ) x
                 left join
                     (
                         select prs1.* from perusahaan prs1
