@@ -170,19 +170,19 @@ class VerifikasiPembayaran extends Public_Controller
             from
             (
                 select
-                    (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) as jenis_transaksi,
+                    x.jt as jenis_transaksi,
                     case
-                        when (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'OA PAKAN' then
+                        when x.jt like 'OA PAKAN' then
                             'ekspedisi'
-                        when (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'PLASMA' then
+                        when x.jt like 'PLASMA' then
                             'mitra'
                         else
                             'supplier'
                     end as jenis_supl,
                     case
-                        when (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'OA PAKAN' then
+                        when x.jt like 'OA PAKAN' then
                             rp.ekspedisi
-                        when (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) like 'PLASMA' then
+                        when x.jt like 'PLASMA' then
                             rp.peternak
                         else
                             rp.supplier
@@ -215,11 +215,14 @@ class VerifikasiPembayaran extends Public_Controller
                     no_bbk nb
                     on
                         nb.tbl_id = rp.nomor
+                cross apply
+                    (
+                        select (case when rpd.transaksi = 'DN' then (case dd.jenis_dn when 'DOC' then 'DOC' when 'PKN' then 'PAKAN' when 'OVK' then 'VOADIP' when 'RHPP' then 'PLASMA' when 'OA' then 'OA PAKAN' else 'DN' end) else rpd.transaksi end) as jt
+                    ) x
                 where
                     rp.status = ".$status."
                 group by
-                    rpd.transaksi,
-                    dd.jenis_dn,
+                    x.jt,
                     rp.ekspedisi,
                     rp.peternak,
                     rp.supplier,
