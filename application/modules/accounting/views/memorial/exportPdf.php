@@ -26,11 +26,21 @@
 				padding-bottom: 0px;
 			}
 
+			/* NOTE (fix 2026-10-09): lebar konten (210mm) lebih besar dari area cetak, jadi garis kanan tabel terpotong
+			   di Save as PDF (margin bawaan Chrome ~10mm) dan sering ikut menimbulkan halaman kosong ke-2.
+			   Margin halaman dibuat tetap kecil & konten dipas ke area cetak A5 landscape (210x148mm - margin 2x5mm). */
+			@page {
+				margin: 5mm;
+			}
+
 			div.contain {
 				padding: 0px;
-				width: 210mm;
-				height: 148mm;
-				margin-bottom: 1rem;
+				/* zoom x lebar = 200mm (area cetak A5 landscape dgn margin 5mm); tinggi konten (+ baris terbilang)
+				   dikecilkan secukupnya supaya blok tanda tangan tidak terlempar ke halaman ke-2 */
+				zoom: 0.88;
+				width: 227.3mm;
+				height: auto;
+				margin: 0px;
 			}
 
 			table.maintable tbody { page-break-inside:auto }
@@ -262,9 +272,6 @@
 									<td class="col-xs-6" style="vertical-align: top;">
 										<div class="col-xs-12" style="display: inline; text-align: left; font-size: 12pt;">
 											<label style="display: inline-block; width: 100%;"><b><?php echo strtoupper($perusahaan['perusahaan']); ?></b></label>
-										</div>
-										<div class="col-xs-12" style="display: inline; text-align: left; font-size: 10pt;">
-											<label style="display: inline-block; width: 100%;"><?php echo strtoupper($perusahaan['alamat'].'<br>'.$perusahaan['d_kota']['nama'].', '.$perusahaan['d_kota']['d_provinsi_with_negara']['nama']); ?></label>
 										</div>
 									</td>
 									<td class="col-xs-6" style="vertical-align: top; font-size: 10pt;">
