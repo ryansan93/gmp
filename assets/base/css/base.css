@@ -825,3 +825,19 @@ div#sidebar-wrapper li.menu-sub-item > a.list-group-item {
     from { transform: scale(1) rotate(0deg);}
     to { transform: scale(1) rotate(360deg);}
 }
+
+/* Mode MANAJEMEN: ruang kosong tepat di bawah navbar atas (margin-bottom navbar bawaan bootstrap)
+   diberi warna orange sebagai penanda vhost manajemen. Class mode-manajemen dipasang di <body>
+   (themes/index.php). Navbar sudah position:relative, jadi ::after menempel persis di bawahnya. */
+body.mode-manajemen nav.navbar::after {
+  content: '';
+  display: block; /* bootstrap 3 memberi .navbar::after display:table (lebar 0) */
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  width: 100%;
+  height: 20px;
+  background-color: #ff9800;
+  pointer-events: none;
+}

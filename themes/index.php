@@ -25,7 +25,7 @@
 
 </head>
 
-<body>
+<body<?php echo (defined('APP_MODE') && APP_MODE === 'manajemen') ? ' class="mode-manajemen"' : ''; ?>>
 
   <div id="sidebar-overlay"></div>
   <div class="d-flex" id="wrapper">
