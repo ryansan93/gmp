@@ -1225,3 +1225,65 @@ if (! function_exists ( 'copyDiectory' )) {
     closedir($dir); 
   }
 }
+
+
+if (! function_exists ( 'terbilangAngka' )) {
+  /* Angka bulat -> kata (huruf kecil), mis. 1321 => "seribu tiga ratus dua puluh satu" */
+  function terbilangAngka($n) {
+    $n = (int) $n;
+    $huruf = array('', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas');
+
+    if ( $n < 12 ) {
+      return $huruf[ $n ];
+    } else if ( $n < 20 ) {
+      return $huruf[ $n - 10 ].' belas';
+    } else if ( $n < 100 ) {
+      return trim($huruf[ (int) floor($n / 10) ].' puluh '.terbilangAngka($n % 10));
+    } else if ( $n < 200 ) {
+      return trim('seratus '.terbilangAngka($n - 100));
+    } else if ( $n < 1000 ) {
+      return trim($huruf[ (int) floor($n / 100) ].' ratus '.terbilangAngka($n % 100));
+    } else if ( $n < 2000 ) {
+      return trim('seribu '.terbilangAngka($n - 1000));
+    } else if ( $n < 1000000 ) {
+      return trim(terbilangAngka((int) floor($n / 1000)).' ribu '.terbilangAngka($n % 1000));
+    } else if ( $n < 1000000000 ) {
+      return trim(terbilangAngka((int) floor($n / 1000000)).' juta '.terbilangAngka($n % 1000000));
+    } else if ( $n < 1000000000000 ) {
+      return trim(terbilangAngka((int) floor($n / 1000000000)).' miliar '.terbilangAngka($n % 1000000000));
+    } else {
+      return trim(terbilangAngka((int) floor($n / 1000000000000)).' triliun '.terbilangAngka($n % 1000000000000));
+    }
+  }
+}
+
+if (! function_exists ( 'terbilang' )) {
+  /*
+   * Nominal rupiah -> kalimat, mis. 1321922887.00 => "Satu Miliar Tiga Ratus Dua Puluh Satu Juta ... Rupiah".
+   * Sen (2 desimal) ditulis "... Rupiah Delapan Puluh Tujuh Sen" hanya kalau tidak nol.
+   */
+  function terbilang($angka) {
+    if ( !is_numeric($angka) ) {
+      return '';
+    }
+
+    $angka = round((float) $angka, 2);
+    $minus = ($angka < 0);
+    $angka = abs($angka);
+
+    $rupiah = (int) floor($angka);
+    $sen = (int) round(($angka - $rupiah) * 100);
+    if ( $sen >= 100 ) {
+      $rupiah += 1;
+      $sen = 0;
+    }
+
+    $kata = ($rupiah == 0) ? 'nol' : terbilangAngka($rupiah);
+    $hasil = ucwords($kata).' Rupiah';
+    if ( $sen > 0 ) {
+      $hasil .= ' '.ucwords(terbilangAngka($sen)).' Sen';
+    }
+
+    return ($minus ? 'Minus ' : '').$hasil;
+  }
+}
