@@ -514,7 +514,15 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                     on
                         op.id = opd.id_header
                 left join
-                    pelanggan supl
+                    (
+                        -- 1 baris per supplier (versi pelanggan TERBARU) - tabel pelanggan menyimpan riwayat versi
+                        -- (1 supplier bisa punya beberapa baris/nama), kalau di-join langsung 1 order tampil dobel.
+                        select supl1.* from pelanggan supl1
+                        right join
+                            (select max(id) as id, nomor from pelanggan where tipe = 'supplier' group by nomor) supl2
+                            on
+                                supl1.id = supl2.id
+                    ) supl
                     on
                         op.supplier = supl.nomor
                 left join
@@ -591,7 +599,15 @@ class PengirimanPenerimaanPakan extends Public_Controller {
                 on
                     op.id = opd.id_header
             left join
-                pelanggan supl
+                (
+                    -- 1 baris per supplier (versi pelanggan TERBARU) - tabel pelanggan menyimpan riwayat versi
+                    -- (1 supplier bisa punya beberapa baris/nama), kalau di-join langsung 1 order tampil dobel.
+                    select supl1.* from pelanggan supl1
+                    right join
+                        (select max(id) as id, nomor from pelanggan where tipe = 'supplier' group by nomor) supl2
+                        on
+                            supl1.id = supl2.id
+                ) supl
                 on
                     op.supplier = supl.nomor
             left join
